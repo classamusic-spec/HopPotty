@@ -49,6 +49,8 @@ Four Apple frameworks, collectively "Screen Time API"
 | `FamilyActivityPicker`, `FamilyActivitySelection` | FamilyControls | 15.0 | [doc](https://developer.apple.com/documentation/familycontrols/familyactivitypicker) |
 | `FamilyActivitySelection.includeEntireCategory` | FamilyControls | 15.2 | [doc](https://developer.apple.com/documentation/familycontrols/familyactivityselection/includeentirecategory) |
 | `Label(applicationToken)` (activity labels) | FamilyControls | 15.0 | [doc](https://developer.apple.com/documentation/familycontrols/displayingactivitylabels) |
+| `.familyActivityPicker(isPresented:selection:)` | SwiftUI | 15.0 | [doc](https://developer.apple.com/documentation/swiftui/view/familyactivitypicker(ispresented:selection:)) |
+| `.familyActivityPicker(headerText:footerText:isPresented:selection:)` | SwiftUI | **16.0** | [doc](https://developer.apple.com/documentation/swiftui/view/familyactivitypicker(headertext:footertext:ispresented:selection:)) |
 | `.familyActivityPicker(title:headerText:footerText:isPresented:selection:)` | SwiftUI | **26.2** | [doc](https://developer.apple.com/documentation/swiftui/view/familyactivitypicker(title:headertext:footertext:ispresented:selection:)) |
 | `FamilyControlsError` | FamilyControls | 15.0 | [doc](https://developer.apple.com/documentation/familycontrols/familycontrolserror) |
 | `FamilyActivityData` | FamilyControls | **26.4** | [doc](https://developer.apple.com/documentation/familycontrols/familyactivitydata) |

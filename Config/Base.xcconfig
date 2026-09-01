@@ -1,0 +1,121 @@
+// HopPotty — settings shared by every configuration and every target.
+//
+// This file is the project-level base. Xcode's build setting precedence is:
+//
+//     target setting  >  target .xcconfig  >  project setting  >  project .xcconfig
+//
+// project.yml deliberately puts almost nothing at the target level, so what you
+// read here is what the compiler gets. Anything a single target must override
+// (bundle identifier, entitlements path, Info.plist path) is set in project.yml
+// next to the target it belongs to, so a target's identity is readable in one
+// place.
+//
+// Nothing in this directory may contain signing material. Team IDs come from
+// Config/Secrets.xcconfig, which is git-ignored — see the bottom of this file.
+
+// ---------------------------------------------------------------------------
+// Identity
+// ---------------------------------------------------------------------------
+
+// The one string every other bundle identifier is derived from. To re-brand for
+// a different Apple Developer account, change it in Config/Secrets.xcconfig
+// rather than here, and change the matching constants in
+// HopPotty/Services/ScreenTime/ScreenTimeIdentifiers.swift.
+//
+// These values are the ones already hard-coded in ScreenTimeIdentifiers.swift.
+// They intentionally differ from the `com.<team>.hoppotty` placeholders in
+// Docs/Entitlements.md §1, which were written before that file existed.
+// Scripts/verify-config.sh fails the build if the two drift apart.
+HOPPOTTY_APP_BUNDLE_ID = com.hoppotty.app
+
+// The App Group every target must be a member of. LOAD-BEARING: it must equal
+// ScreenTimeIdentifiers.appGroupID exactly. A mismatch is silent at build time
+// and total at runtime — UserDefaults(suiteName:) returns nil and the app and
+// its extensions stop being able to see each other's state.
+HOPPOTTY_APP_GROUP = group.com.hoppotty.shared
+
+// The one-time "HopPotty Family" unlock. Must match the product identifier in
+// HopPotty/Resources/HopPotty.storekit AND the one in App Store Connect.
+HOPPOTTY_IAP_FAMILY_PRODUCT_ID = com.hoppotty.family
+
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+// ---------------------------------------------------------------------------
+// Platform — see Docs/ADR/0002-deployment-target.md
+// ---------------------------------------------------------------------------
+
+// 17.0 is bought by SwiftData and Observation, not by Screen Time. It must stay
+// equal to `.iOS(.v17)` in HopPottyKit/Package.swift; verify-config.sh checks it.
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
+
+// 1 = iPhone, 2 = iPad. Both, per the product brief.
+TARGETED_DEVICE_FAMILY = 1,2
+
+// Family Controls authorization fails outright on visionOS
+// (ScreenTimeArchitecture.md §11.11), and the Screen Time frameworks do not
+// exist on macOS. Shipping either would be shipping a build whose headline
+// feature cannot work.
+SUPPORTS_MACCATALYST = NO
+SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO
+SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO
+
+// ---------------------------------------------------------------------------
+// Swift
+// ---------------------------------------------------------------------------
+
+// Swift 6 language mode. HopPottyKit already compiles under it on Linux
+// (swift-tools-version 6.0), so the app layer inherits an already-audited core.
+SWIFT_VERSION = 6.0
+
+// Redundant under the Swift 6 language mode, stated anyway: if anyone ever pins
+// SWIFT_VERSION back to 5 to unblock something, the data-race diagnostics stay.
+SWIFT_STRICT_CONCURRENCY = complete
+
+SWIFT_EMIT_LOC_STRINGS = YES
+ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES
+
+// ---------------------------------------------------------------------------
+// Diagnostics that are on in every configuration
+// ---------------------------------------------------------------------------
+
+CLANG_ANALYZER_NONNULL = YES
+CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE
+CLANG_WARN_DOCUMENTATION_COMMENTS = YES
+CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE
+GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR
+GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE
+ENABLE_STRICT_OBJC_MSGSEND = YES
+CLANG_ENABLE_OBJC_WEAK = YES
+CLANG_ENABLE_MODULES = YES
+
+// We author every Info.plist by hand (see the four Info.plist files in the
+// repository) because the NSExtension dictionaries are the part of this project
+// most likely to be wrong, and they should be reviewable in a diff.
+GENERATE_INFOPLIST_FILE = NO
+
+ENABLE_USER_SCRIPT_SANDBOXING = YES
+DEAD_CODE_STRIPPING = YES
+
+// ---------------------------------------------------------------------------
+// Signing
+// ---------------------------------------------------------------------------
+//
+// Automatic is recommended by Apple for Family Controls specifically: with
+// automatic signing Xcode enables the capability on each App ID and, once the
+// distribution request is approved, promotes it without further work
+// (Docs/Entitlements.md §3).
+CODE_SIGN_STYLE = Automatic
+
+// Deliberately empty here. Xcode will say "Signing for <target> requires a
+// development team" until you supply one — a loud, obvious failure rather than
+// a wrong value baked into a committed file.
+HOPPOTTY_DEVELOPMENT_TEAM =
+
+// Local, git-ignored overrides: Team ID and any per-developer bundle prefix.
+// `#include?` (note the question mark) does not fail when the file is absent, so
+// a fresh clone still generates and builds up to the signing step.
+// Scripts/bootstrap.sh creates it from Config/Secrets.example.xcconfig.
+#include? "Secrets.xcconfig"
+
+DEVELOPMENT_TEAM = $(HOPPOTTY_DEVELOPMENT_TEAM)

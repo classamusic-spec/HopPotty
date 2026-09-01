@@ -166,14 +166,26 @@ public extension PottyPauseState {
 public extension ScreenTimeFailure {
     /// Whether this failure could have left a shield standing.
     ///
-    /// `noSelection`, `scheduleInvalid` and `monitoringRegistrationFailed` are
-    /// detected *before* any shield is applied, so they provably cannot. Every
-    /// other failure — including `unknown` — is ambiguous, and ambiguity always
-    /// resolves toward "assume the child's apps are blocked and clear them".
+    /// The line is drawn at *when the failure can happen*. Configuration,
+    /// authorization-request and monitoring-registration failures all occur
+    /// strictly before a shield could exist, so they provably cannot have left
+    /// one up. Everything that can happen at or after apply time is ambiguous —
+    /// including `unknown`, and including `authorizationConflict`, whose whole
+    /// meaning is "another app may now be in charge of the settings store" —
+    /// and ambiguity always resolves toward "assume the child's apps are
+    /// blocked, and clear them".
+    ///
+    /// The switch is deliberately written without a `default`, so a new failure
+    /// case cannot be added without someone deciding which side of this line it
+    /// falls on.
     var couldLeaveShieldUp: Bool {
         switch self {
-        case .noSelection, .scheduleInvalid, .monitoringRegistrationFailed: false
-        case .authorizationRevoked, .shieldApplyFailed, .shieldClearFailed, .extensionUnavailable, .unknown: true
+        case .noSelection, .scheduleInvalid, .monitoringRegistrationFailed, .monitoringLimitReached,
+             .invalidAccountType, .networkError, .authenticationMethodUnavailable:
+            false
+        case .authorizationRevoked, .shieldApplyFailed, .shieldClearFailed, .extensionUnavailable,
+             .authorizationConflict, .unknown:
+            true
         }
     }
 }
