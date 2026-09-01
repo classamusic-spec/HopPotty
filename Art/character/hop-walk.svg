@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+    <linearGradient id="hopBody" x1="0.2" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#9FE3B9"/>
+      <stop offset="0.52" stop-color="#63C88A"/>
+      <stop offset="1" stop-color="#45A971"/>
+    </linearGradient>
+    <radialGradient id="hopSheen" cx="0.34" cy="0.22" r="0.6">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hopCheek" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FF8E86" stop-opacity="0.85"/>
+      <stop offset="0.55" stop-color="#FF9F8F" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FF9F8F" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hopEyeDome" cx="0.36" cy="0.28" r="0.75">
+      <stop offset="0" stop-color="#A9E8C2"/>
+      <stop offset="1" stop-color="#4FB47B"/>
+    </radialGradient>
+    <radialGradient id="groundShadow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#243047" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#243047" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+<ellipse cx="256" cy="452" rx="132" ry="26" fill="url(#groundShadow)"/>
+
+    <g id="hop">
+      <g id="hop-bag">
+    <rect x="374" y="282" width="66" height="78" rx="24" fill="#C98A5B"/>
+    <path d="M 374 304 q 0 -22 24 -22 h 18 q 24 0 24 22 v 8 q -33 11 -66 0 Z" fill="#E0A472"/>
+    <rect x="399" y="306" width="17" height="13" rx="5" fill="#A76F46"/>
+    <rect x="374" y="282" width="66" height="78" rx="24" fill="none" stroke="#A76F46" stroke-width="3" opacity="0.45"/>
+  </g>
+      <path d="
+    M 256 186.7
+    C 330.5 186.7, 392.7 232.4, 400.8 292.2
+    C 408.9 350, 396.6 400, 340 418
+    C 300 430, 212 430, 172 418
+    C 115.4 400, 103.1 350, 111.2 292.2
+    C 119.3 232.4, 181.5 186.7, 256 186.7
+    Z" fill="url(#hopBody)"/>
+      <ellipse cx="200" cy="248" rx="96" ry="70" fill="url(#hopSheen)"/>
+      <path d="M 352 236 q 30 20 38 58" fill="none" stroke="#A76F46" stroke-width="12" stroke-linecap="round" opacity="0.92"/>
+      <g transform="translate(122 330) rotate(142)">
+    <rect x="-15" y="-15" width="69" height="30" rx="15" fill="#45A971"/>
+    <circle cx="54" cy="0" r="19" fill="#45A971"/>
+    <circle cx="50" cy="-4" r="13" fill="#63C88A" opacity="0.5"/>
+  </g><g transform="translate(392 344) rotate(46)">
+    <rect x="-15" y="-15" width="69" height="30" rx="15" fill="#45A971"/>
+    <circle cx="54" cy="0" r="19" fill="#45A971"/>
+    <circle cx="50" cy="-4" r="13" fill="#63C88A" opacity="0.5"/>
+  </g>
+      
+    <ellipse cx="256" cy="364" rx="86" ry="56" fill="#F0FBF4" opacity="0.95"/>
+    <ellipse cx="256" cy="364" rx="86" ry="56" fill="none" stroke="#DCF3E5" stroke-width="3"/>
+      <g transform="translate(204 426) scale(1 1)">
+    <ellipse cx="0" cy="2" rx="44" ry="21" fill="#45A971"/>
+    <circle cx="-27" cy="-11" r="17" fill="#45A971"/>
+    <circle cx="0" cy="-16" r="17" fill="#45A971"/>
+    <circle cx="27" cy="-11" r="17" fill="#45A971"/>
+    <ellipse cx="0" cy="4" rx="29" ry="12" fill="#9FE3B9" opacity="0.45"/>
+    <ellipse cx="0" cy="2" rx="44" ry="21" fill="none" stroke="#37905F" stroke-width="2.5" opacity="0.35"/>
+  </g><g transform="translate(330 436) scale(-1 1)">
+    <ellipse cx="0" cy="2" rx="44" ry="21" fill="#45A971"/>
+    <circle cx="-27" cy="-11" r="17" fill="#45A971"/>
+    <circle cx="0" cy="-16" r="17" fill="#45A971"/>
+    <circle cx="27" cy="-11" r="17" fill="#45A971"/>
+    <ellipse cx="0" cy="4" rx="29" ry="12" fill="#9FE3B9" opacity="0.45"/>
+    <ellipse cx="0" cy="2" rx="44" ry="21" fill="none" stroke="#37905F" stroke-width="2.5" opacity="0.35"/>
+  </g>
+      
+      <g>
+        <circle cx="194" cy="196" r="60" fill="url(#hopEyeDome)"/>
+        <ellipse cx="194" cy="196" rx="57" ry="57" fill="#FFFFFF"/>
+        <circle cx="207" cy="202" r="25" fill="#243047"/>
+        <circle cx="198" cy="191.5" r="9" fill="#FFFFFF" opacity="0.96"/>
+        <circle cx="215" cy="210.5" r="4.25" fill="#FFFFFF" opacity="0.72"/>
+      </g>
+      <g>
+        <circle cx="318" cy="196" r="60" fill="url(#hopEyeDome)"/>
+        <ellipse cx="318" cy="196" rx="57" ry="57" fill="#FFFFFF"/>
+        <circle cx="331" cy="202" r="25" fill="#243047"/>
+        <circle cx="322" cy="191.5" r="9" fill="#FFFFFF" opacity="0.96"/>
+        <circle cx="339" cy="210.5" r="4.25" fill="#FFFFFF" opacity="0.72"/>
+      </g>
+      
+    <ellipse cx="158" cy="308" rx="30" ry="19" fill="url(#hopCheek)"/>
+    <ellipse cx="354" cy="308" rx="30" ry="19" fill="url(#hopCheek)"/>
+      
+      <path d="M 202 292 Q 256 302.8 310 292 Q 300 339.1 256 341.8 Q 212 339.1 202 292 Z"
+        fill="#25603F" opacity="0.9"/>
+      <path d="M 232 329 Q 256 344.4 280 329 Q 256 337.7 232 329 Z" fill="#FF9F8F" opacity="0.85"/>
+    </g>
+</svg>
