@@ -13,7 +13,8 @@
 
 | Layer | Compiles | Tests run | How |
 | --- | --- | --- | --- |
-| `HopPottyCore` (domain, scheduling, rewards, state machine, insights, content) | ✅ Yes | ✅ Yes | Swift 6.2 on Linux, `swift test` |
+| `HopPottyCore` (domain, rewards, state machine, insights, content) | ✅ Yes | ✅ Yes | Swift 6.2 on Linux — **164 tests, 13 suites, all passing** |
+| `HopPottyCore` scheduling engine | ✅ Yes | ⚠️ **No tests yet** | Compiles; suite still being written |
 | `HopPottyDesignTokens` | ✅ Yes | ✅ Yes | Same — includes WCAG contrast assertions |
 | `HopPotty` app target (SwiftUI) | ❌ **Unverified** | ❌ No | Needs Xcode |
 | Three app extensions (Screen Time) | ❌ **Unverified** | ❌ No | Needs Xcode |
@@ -47,6 +48,12 @@ services, and feature surfaces, on top of a completed and tested core.
 - **Domain models.** Child, event, schedule, reward, pond, settings, Screen Time
   configuration. Wall-clock times are stored as `LocalTimeOfDay`, not `Date`, so
   quiet hours survive DST and travel.
+- **Potty Pause state machine.** A total reducer over every (state, event) pair,
+  returning side effects rather than performing them. The fail-safe suite caught
+  a real invariant violation: the emergency "Restore Screen Access" path
+  re-accepted whichever error state it was in, which for shield-ambiguous
+  failures kept reporting a possible shield after a clear had been issued. Fixed
+  by naming the fact the enum was missing — `errorAccessRestored(failure)`.
 - **Rewards + pond progression.** Append-only ledger with crash-safe idempotency
   keys derived only from already-durable data. 41 pond items, deterministic
   curve, exhaustive at compile time. Stars are structurally impossible to remove.

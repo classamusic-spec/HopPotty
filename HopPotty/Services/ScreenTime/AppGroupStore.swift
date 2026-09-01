@@ -7,133 +7,240 @@ import HopPottyCore
 
 /// The state boundary between the HopPotty app and its three extensions.
 ///
-/// ## Why this is the smallest thing in the codebase
+/// ## Why files and not `UserDefaults`
 ///
-/// Four processes read and write this. Three of them are extensions with hard
-/// memory ceilings, no UI, and lifetimes measured in milliseconds. None of them
-/// can ask a question and wait for an answer. Whatever is here has to be
-/// intelligible to a process that has just been woken up, knows nothing, and is
-/// about to be killed.
+/// `Docs/Entitlements.md` settles this: `UserDefaults(suiteName:)` gives no
+/// atomicity guarantee that can be reasoned about across four processes, whereas
+/// `Data.write(to:options:.atomic)` renames a complete file into place, so a
+/// reader either sees the whole previous record or the whole new one. With three
+/// extensions that can be woken at arbitrary moments and killed mid-write, that
+/// distinction is the difference between "a redundant clear" and "a record that
+/// half-parses".
 ///
-/// So it holds five kinds of value and nothing else:
+/// ## Layout
 ///
-/// | Value | Why it cannot be derived |
-/// | --- | --- |
-/// | session id | Correlates an extension callback with the app's own session |
-/// | pause state | Whether a shield is supposed to exist at all |
-/// | started / expires | The only thing that can end a pause without the app |
-/// | heartbeats | Which targets are actually running |
-/// | failure code | What to show a caregiver who asks why nothing happened |
+/// ```
+/// <group container>/HopPotty/
+///   pause.json          the active pause record         (app, monitor, shieldAction)
+///   shield.json         pre-resolved shield appearance  (app writes, shieldConfig reads)
+///   selection.json      encoded FamilyActivitySelection (app writes, monitor reads)
+///   heartbeat/<t>.json  one file per target             (each target writes only its own)
+///   outbox/<uuid>.json  extension → app reports         (extensions append, app drains)
+/// ```
 ///
-/// Plus two handoff flags, which exist because the shield action extension
-/// cannot open the containing app and has to leave a note instead
-/// (`HopPottyShieldActionExtension` documents that compromise in full).
+/// ## Writer discipline
 ///
-/// ## What is deliberately NOT here
+/// | File | Writers | Readers | Race handling |
+/// | --- | --- | --- | --- |
+/// | `pause.json` | app, monitor, shieldAction | all four | Atomic; last write wins. Safe because the record's instants are `let` and no writer may lengthen a pause — see `SharedPauseRecord`. |
+/// | `shield.json` | app only | shieldConfiguration | Single writer. |
+/// | `selection.json` | app only | monitor | Single writer. Contains opaque tokens, never identities. |
+/// | `heartbeat/<t>` | exactly one target each | app | Single writer per file by construction. |
+/// | `outbox/*` | monitor, shieldAction, shieldConfiguration | app (drains and deletes) | One file per record, so appending is a create and draining is a delete. No read-modify-write anywhere. |
 ///
-/// No child identifier. No nickname, age, or pronouns. No potty events, no
-/// notes, no timeline, no star balance, no insight. No application tokens and no
-/// encoded `FamilyActivitySelection`. No schedule.
+/// ## What never crosses this boundary
 ///
-/// The extensions do not need any of it. The device has one active child at a
-/// time and the shield is device-wide, so "which child" is a question only the
-/// app has to answer, and it answers it from its own private store by looking up
-/// `sessionID`. An App Group container is readable by every target that carries
-/// the entitlement and is included in device backups; a parenting app should put
-/// the *least* it can across that line, not the most it conveniently could.
+/// No child identifier, nickname, age, pronouns or notes. No `PottyEvent`, no
+/// star ledger, no schedule, no insight. No free-form text of any kind — see the
+/// note on `ExtensionReport`, which has no `String` field a caller could fill in.
+/// An App Group container is readable by every target holding the entitlement and
+/// is included in device backups; a parenting app puts the least it can across
+/// that line, not the most it conveniently could.
 ///
-/// ## Reader/writer map
-///
-/// | Key | App | Monitor | ShieldConfig | ShieldAction |
-/// | --- | --- | --- | --- | --- |
-/// | `sessionID` | R/W | R | R | R |
-/// | `pauseState` | R/W | R/W | R | R/W |
-/// | `startedAt` / `startedUptime` | W | R | R | R |
-/// | `expiresAt` | W | R | R | R |
-/// | `failureCode` | R/W | W | — | W |
-/// | `heartbeat(.app)` | W | — | — | — |
-/// | `heartbeat(.monitor)` | R | W | — | — |
-/// | `heartbeat(.shieldConfiguration)` | R | — | W | — |
-/// | `heartbeat(.shieldAction)` | R | — | — | W |
-/// | `childHandoffRequestedAt` | R/W | — | — | W |
-/// | `grownUpRequestedAt` | R/W | — | — | W |
-/// | `lastClear*` | R/W | W | W | W |
-///
-/// A cell that is `W` in an extension and `R` in the app is the whole point of
-/// the boundary: the extension records what it did, the app finds out later.
-public struct AppGroupStore: @unchecked Sendable {
+/// Application tokens *are* permitted in `selection.json`: they are opaque by
+/// construction, `Codable` is Apple's own persistence route for them, and the
+/// monitor extension cannot shield anything without them. They may never be
+/// logged, hashed into a key, or sent off-device.
+public struct AppGroupStore: Sendable {
 
-    // `UserDefaults` is documented as thread-safe, and every access below is a
-    // single get or set with no read-modify-write. `@unchecked Sendable` records
-    // that this is a considered claim rather than an oversight.
-    private let defaults: UserDefaults
-
-    /// Whether the real App Group container was reachable.
+    /// The container root, or `nil` when the App Group is unreachable.
     ///
-    /// `false` means the entitlement is missing or the group identifier is wrong,
-    /// and this instance is talking to a process-local `UserDefaults` that the
-    /// other three targets cannot see. Every fail-safe in HopPotty still works in
-    /// that state — because every fail-safe resolves *toward clearing*, and a
-    /// reader that sees an empty store concludes "no session, clear the shield" —
-    /// but automatic pauses will not function. The Potty Pause Lab shows this
-    /// flag first, above everything else.
-    public let isSharedStoreAvailable: Bool
+    /// `nil` means the entitlement is missing or `appGroupID` is wrong. Every
+    /// fail-safe in HopPotty still works in that state — because every fail-safe
+    /// resolves *toward clearing*, and a reader that finds no record concludes
+    /// "no session, clear the shield" — but automatic pauses will not function.
+    /// The Potty Pause Lab shows this first, above everything else.
+    public let root: URL?
 
-    /// The shared instance. Extensions build their own rather than reaching for
-    /// a global, because an extension that is about to be killed should not be
-    /// initialising app-wide singletons.
+    public var isSharedContainerAvailable: Bool { root != nil }
+
     public static let shared = AppGroupStore()
 
-    public init(suiteName: String = ScreenTimeIdentifiers.appGroupID) {
-        if let shared = UserDefaults(suiteName: suiteName) {
-            self.defaults = shared
-            self.isSharedStoreAvailable = true
-        } else {
-            // Never crash. A parenting app that traps on a provisioning mistake
-            // is a parenting app that a family cannot open to unlock their
-            // child's iPad.
-            self.defaults = .standard
-            self.isSharedStoreAvailable = false
+    public init(groupID: String = ScreenTimeIdentifiers.appGroupID) {
+        let container = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: groupID)?
+            .appendingPathComponent("HopPotty", isDirectory: true)
+        self.root = container
+        // Best-effort. A failure here is indistinguishable at read time from an
+        // empty container, and an empty container is the safe reading.
+        if let container {
+            try? FileManager.default.createDirectory(at: container, withIntermediateDirectories: true)
+            try? FileManager.default.createDirectory(at: container.appendingPathComponent("heartbeat", isDirectory: true), withIntermediateDirectories: true)
+            try? FileManager.default.createDirectory(at: container.appendingPathComponent("outbox", isDirectory: true), withIntermediateDirectories: true)
         }
     }
 
-    /// Test seam. Lets the Lab and unit tests point at a scratch suite.
-    public init(defaults: UserDefaults, isShared: Bool) {
-        self.defaults = defaults
-        self.isSharedStoreAvailable = isShared
+    /// Test and Lab seam: point the store at a scratch directory.
+    public init(root: URL?) {
+        self.root = root
+        if let root {
+            try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+            try? FileManager.default.createDirectory(at: root.appendingPathComponent("heartbeat", isDirectory: true), withIntermediateDirectories: true)
+            try? FileManager.default.createDirectory(at: root.appendingPathComponent("outbox", isDirectory: true), withIntermediateDirectories: true)
+        }
     }
 
-    // MARK: - Keys
+    // MARK: - Coding
     //
-    // Short, prefixed, and versioned. Prefixed because the App Group container
-    // is shared with anything else HopPotty may one day put there; short because
-    // these are written from a memory-constrained extension.
+    // ISO-8601 dates rather than the default `Double` reference-date encoding, so
+    // the container is legible when dumped from a device during QA. That is worth
+    // the handful of bytes: `Docs/PhysicalDeviceQA.md` asks a tester to read these
+    // files, and "2026-09-01T14:03:00Z" is a fact a person can check against a
+    // wall clock while "778430580.0" is not.
 
-    private enum Key {
-        static let schemaVersion = "hp.v"
-        static let sessionID = "hp.sid"
-        static let pauseState = "hp.state"
-        static let startedAt = "hp.t0"
-        static let startedUptime = "hp.u0"
-        static let expiresAt = "hp.t1"
-        static let failureCode = "hp.fail"
-        static let childHandoffRequestedAt = "hp.handoff"
-        static let grownUpRequestedAt = "hp.grownup"
-        static let lastClearAt = "hp.clr.t"
-        static let lastClearReason = "hp.clr.r"
+    private static let encoder: JSONEncoder = {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        return encoder
+    }()
 
-        static func heartbeat(_ target: HeartbeatTarget) -> String { "hp.hb.\(target.rawValue)" }
+    private static let decoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }()
+
+    private func url(_ component: String) -> URL? {
+        root?.appendingPathComponent(component)
     }
 
-    /// Bumped when the meaning of a key changes. A reader that finds a version it
-    /// does not understand treats the whole record as absent, which — because
-    /// absence means "clear the shield" — is the safe interpretation of a
-    /// downgrade, a restored backup, or a hand-edited plist.
-    public static let currentSchemaVersion = 1
+    /// Read and decode, or `nil`.
+    ///
+    /// Every failure — missing container, missing file, unreadable bytes,
+    /// unparseable JSON, a schema from the future — comes back as `nil`, because
+    /// every one of them means the same thing to a caller: *you do not know what
+    /// is going on, so clear the shield*. Distinguishing them would invite a
+    /// caller to treat one of them as "probably fine".
+    private func read<T: Decodable>(_ type: T.Type, from component: String) -> T? {
+        guard let url = url(component), let data = try? Data(contentsOf: url) else { return nil }
+        return try? Self.decoder.decode(type, from: data)
+    }
 
-    // MARK: - Values
+    @discardableResult
+    private func write<T: Encodable>(_ value: T, to component: String) -> Bool {
+        guard let url = url(component), let data = try? Self.encoder.encode(value) else { return false }
+        do {
+            try data.write(to: url, options: .atomic)
+            return true
+        } catch {
+            return false
+        }
+    }
 
-    /// Which target is alive.
+    private func remove(_ component: String) {
+        guard let url = url(component) else { return }
+        try? FileManager.default.removeItem(at: url)
+    }
+
+    // MARK: - Pause record
+
+    private static let pauseFile = "pause.json"
+
+    /// The active pause, if the record is present, parseable, and written by a
+    /// schema this build understands.
+    public func loadPause() -> SharedPauseRecord? {
+        guard let record = read(SharedPauseRecord.self, from: Self.pauseFile) else { return nil }
+        guard record.schemaVersion == SharedPauseRecord.currentSchemaVersion else { return nil }
+        return record
+    }
+
+    @discardableResult
+    public func savePause(_ record: SharedPauseRecord) -> Bool {
+        write(record, to: Self.pauseFile)
+    }
+
+    /// Remove the pause record.
+    ///
+    /// **Always called *after* the shield has been cleared, never before.** The
+    /// record is the only evidence that a shield might exist; deleting it first
+    /// would hide the very problem it exists to expose from every process that
+    /// runs afterwards.
+    public func clearPause() {
+        remove(Self.pauseFile)
+    }
+
+    /// Move an existing record to a new state without disturbing its instants.
+    /// A no-op when there is no record, which is correct: there is nothing to
+    /// advance, and inventing a record here would invent a shield.
+    public func advancePause(to state: SharedPauseState, failure: ScreenTimeFailure? = nil) {
+        guard var record = loadPause() else { return }
+        record.state = state
+        if let failure { record.failureCode = failure.rawValue }
+        savePause(record)
+    }
+
+    // MARK: - Shield presentation
+
+    private static let shieldFile = "shield.json"
+
+    public func loadShieldPresentation() -> ShieldPresentation? {
+        guard let presentation = read(ShieldPresentation.self, from: Self.shieldFile) else { return nil }
+        guard presentation.schemaVersion == ShieldPresentation.currentSchemaVersion else { return nil }
+        return presentation
+    }
+
+    @discardableResult
+    public func saveShieldPresentation(_ presentation: ShieldPresentation) -> Bool {
+        write(presentation, to: Self.shieldFile)
+    }
+
+    // MARK: - Selection
+    //
+    // Stored as raw bytes. This layer never decodes it, because decoding requires
+    // FamilyControls and the whole point of keeping it opaque here is that the
+    // store has no opinion about what is inside. `FamilyActivitySelectionStore`
+    // owns the encoding.
+
+    private static let selectionFile = "selection.json"
+
+    public func loadSelectionData() -> Data? {
+        guard let url = url(Self.selectionFile) else { return nil }
+        return try? Data(contentsOf: url)
+    }
+
+    @discardableResult
+    public func saveSelectionData(_ data: Data) -> Bool {
+        guard let url = url(Self.selectionFile) else { return false }
+        do {
+            try data.write(to: url, options: .atomic)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    public func clearSelectionData() {
+        remove(Self.selectionFile)
+    }
+
+    // MARK: - Heartbeats
+    //
+    // One file per target, so each target is the sole writer of its own. This is
+    // the only way to answer "is the DeviceActivity extension actually installed,
+    // signed, and being invoked?" without a debugger attached: an extension that
+    // is missing from the build or failing to launch leaves its heartbeat absent
+    // forever, and the Lab shows a dash.
+
+    public struct Heartbeat: Codable, Equatable, Sendable {
+        public let at: Date
+        public let uptime: TimeInterval
+        public init(at: Date, uptime: TimeInterval) {
+            self.at = at
+            self.uptime = uptime
+        }
+    }
+
     public enum HeartbeatTarget: String, CaseIterable, Sendable {
         case app
         case monitor
@@ -141,332 +248,217 @@ public struct AppGroupStore: @unchecked Sendable {
         case shieldAction = "shieldact"
     }
 
-    /// The pause, as the extensions need to understand it.
-    ///
-    /// Deliberately coarser than `PottyPauseState`. The extensions do not need
-    /// thirteen states; they need to know whether a shield is supposed to exist.
-    /// Mapping down to four values at the boundary means a future state added to
-    /// the app cannot silently change what an extension believes.
-    ///
-    /// The default for an unrecognised or missing value is `.idle`, and `.idle`
-    /// means "clear the shield". Every unknown resolves toward the child having
-    /// their apps.
-    public enum SharedPauseState: String, CaseIterable, Sendable {
-        /// No pause. A shield found in this state is stranded and gets cleared.
-        case idle
-        /// A shield has been asked for and not confirmed. Treated as shielded.
-        case raising
-        /// A shield is up and a pause is running.
-        case shielded
-        /// A clear is in flight. Still treated as shielded, so a second clear is
-        /// attempted rather than skipped.
-        case clearing
-
-        /// Whether a shield may exist in this state. Mirrors
-        /// `PottyPauseState.mayHaveShieldUp` and errs the same way.
-        public var mayHaveShieldUp: Bool { self != .idle }
+    private func heartbeatFile(_ target: HeartbeatTarget) -> String {
+        "heartbeat/\(target.rawValue).json"
     }
 
-    // MARK: - Session record
-
-    public var schemaVersion: Int {
-        get { defaults.integer(forKey: Key.schemaVersion) }
-        nonmutating set { defaults.set(newValue, forKey: Key.schemaVersion) }
-    }
-
-    /// An opaque per-pause identifier. A random UUID, not derived from and not
-    /// resolvable to a child. The app keeps the session-to-child mapping in its
-    /// own private store.
-    public var sessionID: String? {
-        get { defaults.string(forKey: Key.sessionID) }
-        nonmutating set { defaults.set(newValue, forKey: Key.sessionID) }
-    }
-
-    public var pauseState: SharedPauseState {
-        get {
-            guard schemaVersion == Self.currentSchemaVersion,
-                  let raw = defaults.string(forKey: Key.pauseState),
-                  let state = SharedPauseState(rawValue: raw)
-            else { return .idle }
-            return state
-        }
-        nonmutating set { defaults.set(newValue.rawValue, forKey: Key.pauseState) }
-    }
-
-    public var startedAt: Date? {
-        get { date(forKey: Key.startedAt) }
-        nonmutating set { setDate(newValue, forKey: Key.startedAt) }
-    }
-
-    /// `ProcessInfo.systemUptime` at the instant the pause started.
-    ///
-    /// The wall clock can be moved; uptime cannot, and it resets to near zero on
-    /// reboot. Storing both is what lets `ShieldReconciler` tell "the clock was
-    /// nudged" apart from "the device restarted" — two situations that both
-    /// invalidate a session and would otherwise be indistinguishable from a
-    /// `Date` alone.
-    public var startedUptime: TimeInterval? {
-        get { defaults.object(forKey: Key.startedUptime) as? TimeInterval }
-        nonmutating set {
-            if let newValue { defaults.set(newValue, forKey: Key.startedUptime) }
-            else { defaults.removeObject(forKey: Key.startedUptime) }
-        }
-    }
-
-    /// The instant the shield must be down by. Absolute, never wall-clock: a
-    /// pause survives a timezone change and a DST transition unchanged, because
-    /// an instant cannot be reinterpreted by a change of zone.
-    public var expiresAt: Date? {
-        get { date(forKey: Key.expiresAt) }
-        nonmutating set { setDate(newValue, forKey: Key.expiresAt) }
-    }
-
-    /// The last thing that went wrong, as a `ScreenTimeFailure` raw value.
-    /// A code, not a message: the sentence a caregiver reads is chosen by the app
-    /// from `HopCopy`, and extensions have no business composing user-facing text.
-    public var failureCode: ScreenTimeFailure? {
-        get {
-            guard let raw = defaults.string(forKey: Key.failureCode) else { return nil }
-            return ScreenTimeFailure(rawValue: raw)
-        }
-        nonmutating set { defaults.set(newValue?.rawValue, forKey: Key.failureCode) }
-    }
-
-    // MARK: - Handoff flags
-    //
-    // Written only by the shield action extension. See
-    // `HopPottyShieldActionExtension` for why a flag is the best available
-    // mechanism and what it costs.
-
-    /// The child tapped "Let's Go!" on the shield.
-    public var childHandoffRequestedAt: Date? {
-        get { date(forKey: Key.childHandoffRequestedAt) }
-        nonmutating set { setDate(newValue, forKey: Key.childHandoffRequestedAt) }
-    }
-
-    /// The child tapped "Need a grown-up?" on the shield. This never unlocks
-    /// anything on its own — a child can tap it, so it only raises a flag that a
-    /// caregiver resolves behind the parent gate.
-    public var grownUpRequestedAt: Date? {
-        get { date(forKey: Key.grownUpRequestedAt) }
-        nonmutating set { setDate(newValue, forKey: Key.grownUpRequestedAt) }
-    }
-
-    // MARK: - Clear audit
-    //
-    // One instant and one reason. Not a log: a log in shared storage grows
-    // without bound in a process that cannot prune it. This is the answer to
-    // "why did the apps come back?", which is the question a caregiver actually
-    // asks, and the Lab shows it.
-
-    public private(set) var lastClearAt: Date? {
-        get { date(forKey: Key.lastClearAt) }
-        nonmutating set { setDate(newValue, forKey: Key.lastClearAt) }
-    }
-
-    public private(set) var lastClearReason: String? {
-        get { defaults.string(forKey: Key.lastClearReason) }
-        nonmutating set { defaults.set(newValue, forKey: Key.lastClearReason) }
-    }
-
-    public func recordClear(reason: String, at instant: Date) {
-        lastClearAt = instant
-        lastClearReason = reason
-    }
-
-    // MARK: - Heartbeats
-
-    public func heartbeat(_ target: HeartbeatTarget) -> Date? {
-        date(forKey: Key.heartbeat(target))
+    public func heartbeat(_ target: HeartbeatTarget) -> Heartbeat? {
+        read(Heartbeat.self, from: heartbeatFile(target))
     }
 
     /// Stamp a heartbeat. Called at the top of every extension entry point and on
     /// every app foreground.
-    ///
-    /// This is the only way to answer "is the DeviceActivity extension actually
-    /// installed and being invoked?" without a device attached to a debugger. An
-    /// extension that is missing from the build, mis-signed, or failing to launch
-    /// leaves its heartbeat `nil` forever, and the Lab shows a dash.
-    public func beat(_ target: HeartbeatTarget, at instant: Date = Date()) {
-        setDate(instant, forKey: Key.heartbeat(target))
+    public func beat(
+        _ target: HeartbeatTarget,
+        at instant: Date = Date(),
+        uptime: TimeInterval = ProcessInfo.processInfo.systemUptime
+    ) {
+        write(Heartbeat(at: instant, uptime: uptime), to: heartbeatFile(target))
     }
 
-    /// The most recent heartbeat from any target. Used by `ShieldReconciler` as a
-    /// last-resort staleness check against a corrupt `expiresAt`.
     public var mostRecentHeartbeat: Date? {
-        HeartbeatTarget.allCases.compactMap(heartbeat).max()
+        HeartbeatTarget.allCases.compactMap { heartbeat($0)?.at }.max()
     }
 
-    // MARK: - Compound operations
+    // MARK: - Outbox
     //
-    // Grouped so a caller cannot write half a session. There is no cross-process
-    // lock here and none is needed: only the app ever *begins* a session, and
-    // every reader treats a partially written record as absent, which clears.
+    // Append-only, one file per record. Appending is a create and draining is a
+    // delete, so there is no read-modify-write across the process boundary
+    // anywhere in the design.
 
-    /// Record that a pause is starting. Written before the shield is applied, so
-    /// a crash between the two leaves a record that says "shield may be up" —
-    /// the conservative direction.
-    public func beginSession(id: String, startedAt: Date, expiresAt: Date, uptime: TimeInterval) {
-        schemaVersion = Self.currentSchemaVersion
-        sessionID = id
-        self.startedAt = startedAt
-        self.expiresAt = expiresAt
-        startedUptime = uptime
-        childHandoffRequestedAt = nil
-        grownUpRequestedAt = nil
-        failureCode = nil
-        pauseState = .raising
+    /// A hard cap on the outbox, enforced on every append.
+    ///
+    /// An unbounded directory in shared storage is a slow leak that nothing on
+    /// the extension side is in a position to notice: the app drains it, and an
+    /// app that is never opened never drains. Sixty records is several days of
+    /// ordinary use and a few minutes of a pathological retry loop, which is
+    /// exactly the case worth bounding.
+    public static let outboxCapacity = 60
+
+    private var outboxDirectory: URL? { url("outbox") }
+
+    /// Append one report. Never throws and never blocks: an extension that cannot
+    /// file a report must still return a shield configuration or a shield action.
+    public func appendReport(_ report: ExtensionReport) {
+        guard let directory = outboxDirectory else { return }
+        guard let data = try? Self.encoder.encode(report) else { return }
+        let file = directory.appendingPathComponent("\(report.id).json")
+        try? data.write(to: file, options: .atomic)
+        pruneOutbox()
     }
 
-    /// Wipe the session record. Called *after* a successful clear, never before:
-    /// the record is what tells a later process that a shield might exist, so
-    /// removing it first would hide the very problem it exists to expose.
-    public func endSession() {
-        pauseState = .idle
-        sessionID = nil
-        startedAt = nil
-        expiresAt = nil
-        startedUptime = nil
-        childHandoffRequestedAt = nil
-        grownUpRequestedAt = nil
+    /// Read every report, oldest first.
+    public func loadReports() -> [ExtensionReport] {
+        guard let directory = outboxDirectory else { return [] }
+        let files = (try? FileManager.default.contentsOfDirectory(
+            at: directory, includingPropertiesForKeys: nil
+        )) ?? []
+        return files
+            .compactMap { file -> ExtensionReport? in
+                guard let data = try? Data(contentsOf: file) else { return nil }
+                guard let report = try? Self.decoder.decode(ExtensionReport.self, from: data) else {
+                    // A record this build cannot parse is deleted rather than
+                    // left to be retried forever. It is diagnostic data; losing
+                    // one is a smaller problem than a permanently stuck outbox.
+                    try? FileManager.default.removeItem(at: file)
+                    return nil
+                }
+                return report.schemaVersion == ExtensionReport.currentSchemaVersion ? report : nil
+            }
+            .sorted { $0.at < $1.at }
     }
 
-    /// Everything, as values, for the Lab's dump and for `ShieldReconciler`'s
-    /// pure decision function. Taking one snapshot means the reconciler decides
-    /// against a single consistent view instead of re-reading keys that another
-    /// process may change underneath it.
-    public func snapshot(now: Date = Date(), uptime: TimeInterval = ProcessInfo.processInfo.systemUptime) -> AppGroupSnapshot {
+    /// Read every report and delete it in the same pass.
+    ///
+    /// Only the app calls this. Delivery is at-most-once from the app's point of
+    /// view — a crash between the read and the delete loses a record — which is
+    /// acceptable *only because* nothing safety-critical depends on the outbox.
+    /// A shield is never cleared because a report said so; it is cleared because
+    /// `ShieldReconciler` decided so from `pause.json`. The outbox exists to
+    /// award a star and to fill in the timeline, and the reward ledger is
+    /// idempotent (Contract §4.2), so a replayed record is harmless too.
+    public func drainReports() -> [ExtensionReport] {
+        let reports = loadReports()
+        guard let directory = outboxDirectory else { return reports }
+        for report in reports {
+            try? FileManager.default.removeItem(at: directory.appendingPathComponent("\(report.id).json"))
+        }
+        return reports
+    }
+
+    private func pruneOutbox() {
+        guard let directory = outboxDirectory else { return }
+        let files = (try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.contentModificationDateKey]
+        )) ?? []
+        guard files.count > Self.outboxCapacity else { return }
+        let sorted = files.sorted { lhs, rhs in
+            let l = (try? lhs.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+            let r = (try? rhs.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+            return l < r
+        }
+        for file in sorted.prefix(files.count - Self.outboxCapacity) {
+            try? FileManager.default.removeItem(at: file)
+        }
+    }
+
+    // MARK: - Snapshot and reset
+
+    /// One consistent read of everything the reconciler and the Lab need.
+    ///
+    /// Taking a snapshot means the reconciler decides against a single view
+    /// rather than re-reading files another process may change underneath it.
+    public func snapshot(
+        now: Date = Date(),
+        uptime: TimeInterval = ProcessInfo.processInfo.systemUptime
+    ) -> AppGroupSnapshot {
         AppGroupSnapshot(
-            isSharedStoreAvailable: isSharedStoreAvailable,
-            schemaVersion: schemaVersion,
-            sessionID: sessionID,
-            pauseState: pauseState,
-            startedAt: startedAt,
-            startedUptime: startedUptime,
-            expiresAt: expiresAt,
-            failureCode: failureCode,
-            childHandoffRequestedAt: childHandoffRequestedAt,
-            grownUpRequestedAt: grownUpRequestedAt,
-            lastClearAt: lastClearAt,
-            lastClearReason: lastClearReason,
+            isSharedContainerAvailable: isSharedContainerAvailable,
+            containerPath: root?.path,
+            pause: loadPause(),
+            hasShieldPresentation: loadShieldPresentation() != nil,
+            hasSelectionData: loadSelectionData() != nil,
             heartbeats: Dictionary(
-                uniqueKeysWithValues: HeartbeatTarget.allCases.map { ($0, heartbeat($0)) }
+                uniqueKeysWithValues: HeartbeatTarget.allCases.map { ($0, heartbeat($0)?.at) }
             ),
+            reportCount: loadReports().count,
             observedAt: now,
             observedUptime: uptime
         )
     }
 
-    /// Remove every HopPotty key. Used by the Lab's "reset environment" and by
-    /// nothing else — in particular *not* by the fail-safe path, which clears the
-    /// shield first and only then ends the session.
-    public func removeAll() {
-        let keys = [
-            Key.schemaVersion, Key.sessionID, Key.pauseState, Key.startedAt,
-            Key.startedUptime, Key.expiresAt, Key.failureCode,
-            Key.childHandoffRequestedAt, Key.grownUpRequestedAt,
-            Key.lastClearAt, Key.lastClearReason,
-        ] + HeartbeatTarget.allCases.map(Key.heartbeat)
-        for key in keys { defaults.removeObject(forKey: key) }
-    }
-
-    // MARK: - Date storage
-    //
-    // Stored as `timeIntervalSinceReferenceDate` doubles rather than `Date`
-    // objects. `UserDefaults` can store a `Date`, but a plist round-trip through
-    // a backup or a device migration is one fewer moving part when the value is
-    // a primitive. `0` is a real instant (2001-01-01), so absence is expressed by
-    // the key being missing, checked explicitly.
-
-    private func date(forKey key: String) -> Date? {
-        guard let interval = defaults.object(forKey: key) as? TimeInterval else { return nil }
-        return Date(timeIntervalSinceReferenceDate: interval)
-    }
-
-    private func setDate(_ date: Date?, forKey key: String) {
-        if let date {
-            defaults.set(date.timeIntervalSinceReferenceDate, forKey: key)
-        } else {
-            defaults.removeObject(forKey: key)
+    /// Remove everything HopPotty has written here.
+    ///
+    /// Used by the Potty Pause Lab's "reset environment", and by nothing else. In
+    /// particular **not** by the fail-safe path, which clears the shield first and
+    /// only then removes the record.
+    public func reset() {
+        clearPause()
+        remove(Self.shieldFile)
+        clearSelectionData()
+        for target in HeartbeatTarget.allCases { remove(heartbeatFile(target)) }
+        if let directory = outboxDirectory {
+            let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+            for file in files { try? FileManager.default.removeItem(at: file) }
         }
     }
 }
 
 /// A consistent read of the whole shared record.
 public struct AppGroupSnapshot: Equatable, Sendable {
-    public let isSharedStoreAvailable: Bool
-    public let schemaVersion: Int
-    public let sessionID: String?
-    public let pauseState: AppGroupStore.SharedPauseState
-    public let startedAt: Date?
-    public let startedUptime: TimeInterval?
-    public let expiresAt: Date?
-    public let failureCode: ScreenTimeFailure?
-    public let childHandoffRequestedAt: Date?
-    public let grownUpRequestedAt: Date?
-    public let lastClearAt: Date?
-    public let lastClearReason: String?
+    public let isSharedContainerAvailable: Bool
+    public let containerPath: String?
+    public let pause: SharedPauseRecord?
+    public let hasShieldPresentation: Bool
+    public let hasSelectionData: Bool
     public let heartbeats: [AppGroupStore.HeartbeatTarget: Date?]
+    public let reportCount: Int
     public let observedAt: Date
     public let observedUptime: TimeInterval
 
     public init(
-        isSharedStoreAvailable: Bool,
-        schemaVersion: Int,
-        sessionID: String?,
-        pauseState: AppGroupStore.SharedPauseState,
-        startedAt: Date?,
-        startedUptime: TimeInterval?,
-        expiresAt: Date?,
-        failureCode: ScreenTimeFailure?,
-        childHandoffRequestedAt: Date?,
-        grownUpRequestedAt: Date?,
-        lastClearAt: Date?,
-        lastClearReason: String?,
+        isSharedContainerAvailable: Bool,
+        containerPath: String?,
+        pause: SharedPauseRecord?,
+        hasShieldPresentation: Bool,
+        hasSelectionData: Bool,
         heartbeats: [AppGroupStore.HeartbeatTarget: Date?],
+        reportCount: Int,
         observedAt: Date,
         observedUptime: TimeInterval
     ) {
-        self.isSharedStoreAvailable = isSharedStoreAvailable
-        self.schemaVersion = schemaVersion
-        self.sessionID = sessionID
-        self.pauseState = pauseState
-        self.startedAt = startedAt
-        self.startedUptime = startedUptime
-        self.expiresAt = expiresAt
-        self.failureCode = failureCode
-        self.childHandoffRequestedAt = childHandoffRequestedAt
-        self.grownUpRequestedAt = grownUpRequestedAt
-        self.lastClearAt = lastClearAt
-        self.lastClearReason = lastClearReason
+        self.isSharedContainerAvailable = isSharedContainerAvailable
+        self.containerPath = containerPath
+        self.pause = pause
+        self.hasShieldPresentation = hasShieldPresentation
+        self.hasSelectionData = hasSelectionData
         self.heartbeats = heartbeats
+        self.reportCount = reportCount
         self.observedAt = observedAt
         self.observedUptime = observedUptime
     }
 
-    /// Multi-line, human-readable, and free of anything sensitive by
-    /// construction — there is nothing sensitive in the record to leak.
+    /// Human-readable, and free of anything sensitive by construction — there is
+    /// nothing sensitive in the record to leak.
     public var debugDump: [String] {
         func stamp(_ date: Date?) -> String {
             guard let date else { return "—" }
             let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withFullTime, .withColonSeparatorInTime]
-            let relative = Int(observedAt.timeIntervalSince(date))
-            return "\(formatter.string(from: date))  (\(relative)s ago)"
+            formatter.formatOptions = [.withFullDate, .withFullTime, .withColonSeparatorInTime]
+            return "\(formatter.string(from: date))  (\(Int(observedAt.timeIntervalSince(date)))s ago)"
         }
-        var lines: [String] = [
-            "shared container: \(isSharedStoreAvailable ? "available" : "UNAVAILABLE — entitlement or group id is wrong")",
-            "schema: \(schemaVersion) (expected \(AppGroupStore.currentSchemaVersion))",
-            "session: \(sessionID ?? "—")",
-            "state: \(pauseState.rawValue)",
-            "startedAt: \(stamp(startedAt))",
-            "expiresAt: \(stamp(expiresAt))",
-            "startedUptime: \(startedUptime.map { String(format: "%.0fs", $0) } ?? "—") (now \(String(format: "%.0fs", observedUptime)))",
-            "failure: \(failureCode?.rawValue ?? "—")",
-            "childHandoff: \(stamp(childHandoffRequestedAt))",
-            "grownUpRequest: \(stamp(grownUpRequestedAt))",
-            "lastClear: \(stamp(lastClearAt)) \(lastClearReason ?? "")",
+        var lines = [
+            "container: \(isSharedContainerAvailable ? (containerPath ?? "?") : "UNAVAILABLE — App Group entitlement or identifier is wrong")",
+            "shield payload: \(hasShieldPresentation ? "present" : "MISSING — extension will use its compiled-in fallback")",
+            "selection payload: \(hasSelectionData ? "present" : "absent")",
+            "outbox: \(reportCount) report(s)",
+            "uptime now: \(Int(observedUptime))s",
         ]
+        if let pause {
+            lines += [
+                "— pause record —",
+                "  session: \(pause.sessionID)",
+                "  state: \(pause.state.rawValue)",
+                "  startedAt: \(stamp(pause.startedAt))",
+                "  plannedEndAt: \(stamp(pause.plannedEndAt))",
+                "  backstopEndAt: \(stamp(pause.backstopEndAt))",
+                "  startedUptime: \(Int(pause.startedUptime))s",
+                "  failure: \(pause.failureCode ?? "—")",
+            ]
+        } else {
+            lines.append("— no pause record —")
+        }
         for target in AppGroupStore.HeartbeatTarget.allCases {
             lines.append("heartbeat \(target.rawValue): \(stamp(heartbeats[target] ?? nil))")
         }
