@@ -241,10 +241,32 @@ function cloud(cx, cy, w, { fill = 'url(#cloudFill)', opacity = 1 } = {}) {
     Z" fill="${fill}"/></g>`;
 }
 
-/** A butterfly / dragonfly wing. */
-function wing(len, wide, tilt, fill, opacity = 1) {
-  return g(`rotate(${R(tilt)})`,
-    `<path d="M 0 0 C ${R(wide * 0.9)} ${R(-len * 0.2)} ${R(wide)} ${R(-len * 0.75)} 0 ${R(-len)} C ${R(-wide * 0.35)} ${R(-len * 0.7)} ${R(-wide * 0.4)} ${R(-len * 0.2)} 0 0 Z" fill="${fill}" opacity="${opacity}"/>`);
+/** One butterfly half: a broad upper wing and a smaller rounded lower wing,
+ *  hinged at the origin so `scale(-1 1)` mirrors it exactly. */
+function butterflyHalf(fillTop, fillLow, spot) {
+  return `
+    <path d="M 2 -18 C 18 -60 58 -74 70 -50 C 82 -26 52 -4 6 -2 Z" fill="${fillTop}"/>
+    <path d="M 4 2 C 34 4 56 20 48 42 C 40 62 12 54 4 22 Z" fill="${fillLow}"/>
+    <circle cx="46" cy="-40" r="9" fill="${spot}" opacity="0.55"/>
+    <circle cx="28" cy="26" r="6" fill="${spot}" opacity="0.45"/>`;
+}
+
+/** A fern frond: leaflets stepped along a bending spine, shrinking to the tip. */
+function frond(len, bend) {
+  const at = (t) => {
+    const mt = 1 - t;
+    return [R(2 * mt * t * (bend * 0.18) + t * t * bend), R(2 * mt * t * (-len * 0.5) + t * t * -len)];
+  };
+  const spine = `<path d="M 0 0 Q ${R(bend * 0.18)} ${R(-len * 0.5)} ${R(bend)} ${R(-len)}" fill="none" stroke="${P.hopGreenDeep}" stroke-width="5" stroke-linecap="round"/>`;
+  const leaves = Array.from({ length: 7 }, (_, i) => {
+    const t = 0.12 + (i / 6) * 0.84;
+    const [x, y] = at(t);
+    const w = 26 * (1 - t * 0.8) + 5;
+    const lean = 14 + t * 26;
+    return `<ellipse cx="${R(x - w * 0.72)}" cy="${y}" rx="${R(w)}" ry="${R(w * 0.44)}" fill="url(#fernGreen)" transform="rotate(${R(-28 - lean)} ${R(x - w * 0.72)} ${y})"/>
+      <ellipse cx="${R(x + w * 0.72)}" cy="${y}" rx="${R(w)}" ry="${R(w * 0.44)}" fill="url(#fernGreen)" transform="rotate(${R(28 + lean)} ${R(x + w * 0.72)} ${y})"/>`;
+  }).join('');
+  return spine + leaves;
 }
 
 // ---------------------------------------------------------------------------
@@ -327,8 +349,11 @@ function placeFrog(cx, cy, size, inner) {
 // ===========================================================================
 const SCENE_W = 1200;
 const SCENE_H = 900;
-/** One item box (200 units) covers this many scene units at PondAnchor scale 1. */
-const ITEM_SPAN = 320;
+/** One item box (200 units) covers this many scene units at PondAnchor scale 1.
+ *  Tuned by eye against the composited preview: any larger and neighbouring
+ *  decorations touch, which is what the anchors' 0.05 minimum separation is
+ *  guarding against. */
+const ITEM_SPAN = 156;
 
 const POND_CX = SCENE_W * 0.5;
 const POND_CY = SCENE_H * 0.62;
@@ -375,57 +400,59 @@ const pondLayers = {
 // --- Decorations. All drawn inside 0 0 200 200, centred on (100, 100). ------
 const ITEMS = {
   lilyPadSmall: () => `
-    <ellipse cx="100" cy="128" rx="66" ry="16" fill="${P.pondBlueInk}" opacity="0.12"/>
-    <path d="${pad(100, 104, 68, { notch: 52 })}" fill="url(#padGreen)"/>
-    <path d="${pad(100, 96, 68, { notch: 52 })}" fill="url(#padGreenLight)"/>
-    <path d="M 100 96 l 44 -18" stroke="${P.hopGreenSoft}" stroke-width="3" stroke-linecap="round" opacity="0.5" fill="none"/>
-    <ellipse cx="76" cy="82" rx="26" ry="9" fill="#FFFFFF" opacity="0.22"/>`,
+    <ellipse cx="100" cy="118" rx="66" ry="14" fill="${P.pondBlueInk}" opacity="0.1"/>
+    <path d="${pad(100, 106, 68, { notch: 52 })}" fill="${P.hopGreenDeep}" opacity="0.55"/>
+    <path d="${pad(100, 102, 68, { notch: 52 })}" fill="url(#padGreenLight)"/>
+    <path d="M 100 102 l 42 -17" stroke="${P.hopGreenSoft}" stroke-width="3" stroke-linecap="round" opacity="0.45" fill="none"/>
+    <ellipse cx="78" cy="90" rx="26" ry="8" fill="#FFFFFF" opacity="0.2"/>`,
 
   lilyPadLarge: () => `
-    <ellipse cx="100" cy="136" rx="82" ry="18" fill="${P.pondBlueInk}" opacity="0.12"/>
-    <path d="${pad(62, 88, 46, { notch: 200 })}" fill="url(#padGreen)" opacity="0.9"/>
-    <path d="${pad(108, 110, 84, { notch: 62 })}" fill="url(#padGreen)"/>
-    <path d="${pad(108, 100, 84, { notch: 62 })}" fill="url(#padGreenLight)"/>
-    <g stroke="${P.hopGreenSoft}" stroke-width="3.4" stroke-linecap="round" fill="none" opacity="0.45">
-      <path d="M 108 100 l 54 -22"/><path d="M 108 100 l 8 -36"/><path d="M 108 100 l -58 -14"/><path d="M 108 100 l -30 30"/>
+    <ellipse cx="102" cy="128" rx="84" ry="16" fill="${P.pondBlueInk}" opacity="0.1"/>
+    <path d="${pad(58, 96, 44, { notch: 210, spread: 18 })}" fill="url(#padGreen)" opacity="0.85"/>
+    <path d="${pad(108, 110, 84, { notch: 62 })}" fill="${P.hopGreenDeep}" opacity="0.5"/>
+    <path d="${pad(108, 105, 84, { notch: 62 })}" fill="url(#padGreenLight)"/>
+    <g stroke="${P.hopGreenSoft}" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.32">
+      <path d="M 108 105 l 52 -22"/><path d="M 108 105 l 6 -34"/><path d="M 108 105 l -56 -13"/><path d="M 108 105 l -28 28"/>
     </g>
-    <ellipse cx="78" cy="82" rx="30" ry="10" fill="#FFFFFF" opacity="0.2"/>`,
+    <ellipse cx="80" cy="90" rx="30" ry="9" fill="#FFFFFF" opacity="0.18"/>`,
 
   lilyFlower: () => `
-    <ellipse cx="100" cy="146" rx="52" ry="13" fill="${P.pondBlueInk}" opacity="0.1"/>
-    <path d="${pad(100, 138, 56, { notch: 78, spread: 20 })}" fill="url(#padGreen)"/>
+    <ellipse cx="100" cy="148" rx="58" ry="13" fill="${P.pondBlueInk}" opacity="0.1"/>
+    <path d="${pad(100, 140, 62, { notch: 90, spread: 15 })}" fill="url(#padGreenLight)"/>
     ${Array.from({ length: 8 }, (_, i) => g(`translate(100 108) rotate(${i * 45 + 22})`, `<path d="${petal(58, 22)}" fill="url(#petalWhite)"/>`)).join('')}
     ${Array.from({ length: 6 }, (_, i) => g(`translate(100 106) rotate(${i * 60})`, `<path d="${petal(38, 16)}" fill="url(#petalPeach)"/>`)).join('')}
     <circle cx="100" cy="104" r="13" fill="${P.sunshine}"/>
     <circle cx="97" cy="101" r="6" fill="${P.sunshineSoft}"/>`,
 
+  // Reeds are drawn as soft arcs rather than the straight spears of pass 1 —
+  // sharp blades read as spikes, which is the wrong register for this app.
   reedsLeft: () => `
     <g fill="url(#bladeGreen)">
-      <path d="${blade(78, 172, 116, 26, 11)}"/><path d="${blade(104, 174, 148, 14, 12)}"/>
-      <path d="${blade(126, 172, 104, -22, 10)}"/>
+      <path d="${blade(76, 176, 104, 40, 11)}"/><path d="${blade(102, 178, 138, 20, 12)}"/>
+      <path d="${blade(128, 176, 96, -34, 10)}"/>
     </g>
-    <g fill="url(#bladeGreenDeep)" opacity="0.75">
-      <path d="${blade(92, 174, 82, -18, 9)}"/><path d="${blade(116, 174, 66, 20, 8)}"/>
+    <g fill="url(#bladeGreenDeep)" opacity="0.7">
+      <path d="${blade(90, 178, 74, -30, 9)}"/><path d="${blade(116, 178, 60, 30, 8)}"/>
     </g>`,
 
   reedsRight: () => g('translate(200 0) scale(-1 1)', `
     <g fill="url(#bladeGreen)">
-      <path d="${blade(78, 172, 122, 24, 11)}"/><path d="${blade(102, 174, 152, 12, 12)}"/>
-      <path d="${blade(128, 172, 96, -24, 10)}"/>
+      <path d="${blade(76, 176, 110, 38, 11)}"/><path d="${blade(100, 178, 142, 18, 12)}"/>
+      <path d="${blade(130, 176, 90, -36, 10)}"/>
     </g>
-    <g fill="url(#bladeGreenDeep)" opacity="0.75">
-      <path d="${blade(90, 174, 78, -16, 9)}"/><path d="${blade(118, 174, 62, 18, 8)}"/>
+    <g fill="url(#bladeGreenDeep)" opacity="0.7">
+      <path d="${blade(88, 178, 70, -28, 9)}"/><path d="${blade(118, 178, 58, 28, 8)}"/>
     </g>`),
 
   cattails: () => `
     <g fill="url(#bladeGreen)">
-      <path d="${blade(66, 178, 108, 22, 10)}"/><path d="${blade(134, 178, 96, -20, 10)}"/>
+      <path d="${blade(64, 180, 96, 34, 10)}"/><path d="${blade(136, 180, 84, -32, 10)}"/>
     </g>
-    ${[[84, 46, 1], [104, 30, 1.12], [124, 58, 0.9]].map(([x, top, s]) => `
-      <path d="M ${x} 178 L ${x} ${top + 40}" stroke="${P.hopGreenDeep}" stroke-width="${R(6 * s)}" stroke-linecap="round"/>
-      <rect x="${R(x - 11 * s)}" y="${top}" width="${R(22 * s)}" height="${R(52 * s)}" rx="${R(11 * s)}" fill="url(#woodGrad)"/>
-      <rect x="${R(x - 11 * s)}" y="${top}" width="${R(9 * s)}" height="${R(52 * s)}" rx="${R(5 * s)}" fill="#FFFFFF" opacity="0.18"/>
-      <path d="M ${x} ${top} q 0 -12 ${R(5 * s)} -18" stroke="${P.hopGreenDeep}" stroke-width="${R(4.5 * s)}" stroke-linecap="round" fill="none"/>`).join('')}`,
+    ${[[80, 62, 0.94, 5], [104, 40, 1.1, 0], [126, 76, 0.86, -5]].map(([x, top, s, lean]) => `
+      <path d="M ${x} 180 Q ${R(x + lean * 0.6)} ${R((180 + top) / 2)} ${R(x + lean)} ${R(top + 46 * s)}" stroke="${P.hopGreenDeep}" stroke-width="${R(6 * s)}" stroke-linecap="round" fill="none"/>
+      <path d="M ${R(x + lean)} ${R(top + 46 * s)} q 0 -18 ${R(4 * s)} -26" stroke="${P.hopGreenDeep}" stroke-width="${R(5 * s)}" stroke-linecap="round" fill="none"/>
+      <rect x="${R(x + lean - 12 * s)}" y="${R(top - 4)}" width="${R(24 * s)}" height="${R(52 * s)}" rx="${R(12 * s)}" fill="url(#woodGrad)"/>
+      <rect x="${R(x + lean - 12 * s)}" y="${R(top - 4)}" width="${R(9 * s)}" height="${R(52 * s)}" rx="${R(4.5 * s)}" fill="#FFFFFF" opacity="0.2"/>`).join('')}`,
 
   stoneSmall: () => `
     <ellipse cx="100" cy="132" rx="62" ry="14" fill="${P.midnight}" opacity="0.10"/>

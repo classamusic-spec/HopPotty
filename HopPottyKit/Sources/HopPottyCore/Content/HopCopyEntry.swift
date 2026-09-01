@@ -479,6 +479,9 @@ public protocol HopCopySection: Sendable {
 
 public extension HopCopySection {
     var entries: [HopCopyEntry] { HopCopyReflection.entries(in: self) }
+    /// The section's surface, reachable from a value rather than a metatype so
+    /// callers holding `any HopCopySection` can ask.
+    var surface: HopCopySurface { Self.surface }
 }
 
 /// Walks a section's stored properties and collects the strings in it.

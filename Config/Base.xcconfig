@@ -17,26 +17,40 @@
 // Identity
 // ---------------------------------------------------------------------------
 
-// The one string every other bundle identifier is derived from. To re-brand for
-// a different Apple Developer account, change it in Config/Secrets.xcconfig
-// rather than here, and change the matching constants in
-// HopPotty/Services/ScreenTime/ScreenTimeIdentifiers.swift.
+// The one string every other bundle identifier is derived from. The three
+// extension identifiers are this plus a suffix, which is also Apple's rule: an
+// app extension's bundle identifier must be prefixed by its host app's.
 //
-// These values are the ones already hard-coded in ScreenTimeIdentifiers.swift.
-// They intentionally differ from the `com.<team>.hoppotty` placeholders in
-// Docs/Entitlements.md §1, which were written before that file existed.
-// Scripts/verify-config.sh fails the build if the two drift apart.
-HOPPOTTY_APP_BUNDLE_ID = com.hoppotty.app
+// PLACEHOLDER. Nobody here owns `com.hoppotty`. Before the first device build,
+// replace it with a reverse-DNS prefix your Apple Developer account controls, in
+// ONE of two places:
+//
+//   * Config/Secrets.xcconfig (git-ignored) — for a personal or fork build; or
+//   * here — for the project's real, permanent identity.
+//
+// and in the same commit change the matching literals in
+// HopPotty/Services/ScreenTime/ScreenTimeIdentifiers.swift. The values here are
+// deliberately identical to those literals; Scripts/verify-config.sh fails if
+// the two ever drift apart.
+HOPPOTTY_APP_BUNDLE_ID = com.hoppotty
+
+// Suffixes for the three Screen Time extensions. Here rather than inline in
+// project.yml so the four identifiers can be read as one set, and so the set can
+// be diffed against ScreenTimeIdentifiers.swift by a script.
+HOPPOTTY_MONITOR_BUNDLE_ID = $(HOPPOTTY_APP_BUNDLE_ID).monitor
+HOPPOTTY_SHIELD_CONFIG_BUNDLE_ID = $(HOPPOTTY_APP_BUNDLE_ID).shieldconfig
+HOPPOTTY_SHIELD_ACTION_BUNDLE_ID = $(HOPPOTTY_APP_BUNDLE_ID).shieldaction
 
 // The App Group every target must be a member of. LOAD-BEARING: it must equal
 // ScreenTimeIdentifiers.appGroupID exactly. A mismatch is silent at build time
-// and total at runtime — UserDefaults(suiteName:) returns nil and the app and
-// its extensions stop being able to see each other's state.
-HOPPOTTY_APP_GROUP = group.com.hoppotty.shared
+// and total at runtime — UserDefaults(suiteName:) returns nil, the container URL
+// is unavailable, and the app and its extensions quietly stop seeing each
+// other's state while every individual target still builds, signs and runs.
+HOPPOTTY_APP_GROUP = group.com.hoppotty
 
 // The one-time "HopPotty Family" unlock. Must match the product identifier in
 // HopPotty/Resources/HopPotty.storekit AND the one in App Store Connect.
-HOPPOTTY_IAP_FAMILY_PRODUCT_ID = com.hoppotty.family
+HOPPOTTY_IAP_FAMILY_PRODUCT_ID = $(HOPPOTTY_APP_BUNDLE_ID).family
 
 // The home-screen name. Overridden in DebugMock.xcconfig so a fake-service
 // build is identifiable on the home screen.

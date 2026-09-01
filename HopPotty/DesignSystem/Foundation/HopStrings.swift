@@ -100,3 +100,26 @@ enum HopStrings {
 extension HopStrings {
     static let destructiveHint = "This cannot be undone."
 }
+
+extension HopStrings {
+    // Event sources. Descriptive, never evaluative — who wrote it down, nothing more.
+    static let sourceChildRoutine = "Logged by Hop's routine"
+    static let sourceParentManual = "Added by a grown-up"
+    static let sourcePauseCompletion = "Recorded when the pause ended"
+    static let sourceRestored = "Restored from a backup"
+    static let noteLabel = "Note"
+
+    static let timelineEmptyTitle = "Nothing logged yet"
+    static let timelineEmptyMessage = "Entries you or Hop add will appear here, newest first."
+}
+
+extension HopStrings {
+    static let timerOffDetail = "Turn it on when you want Hop to check in."
+    static let timerApproaching = "Coming up"
+    static let timerAppsPaused = "Apps are paused"
+    static let timerAppsBack = "Apps are back"
+    static let timerCooldownDetail = "HopPotty is staying quiet for a few minutes."
+    static let timerNoCountdown = "—"
+    static let timerRemainingLabel = "Time remaining"
+    static let timerUntilNextLabel = "Time until the next Potty Pause"
+}

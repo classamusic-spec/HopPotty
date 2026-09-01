@@ -216,30 +216,44 @@ public struct HopPill: View {
     }
 }
 
-#Preview("Rows") {
-    @Previewable @State var warnings = true
-    @Previewable @State var summary = false
+/// Preview host, so the previews below can own mutable state without relying on
+/// the `@Previewable` macro.
+private struct HopRowsPreviewHost: View {
+    @Environment(\.hopTheme) private var theme
+    @State private var warnings = true
+    @State private var summary = false
 
-    return ScrollView {
-        VStack(spacing: 24) {
-            HopSectionHeader("Today", action: (title: "See all", handler: {}))
-            HopSection("Reminders") {
-                HopSettingsRow(title: "Interval", value: "Every 45 minutes", icon: "timer") {}
-                HopRowDivider()
-                HopToggleRow(title: "Warning before a pause", subtitle: "A gentle nudge two minutes ahead.", icon: "bell.fill", isOn: $warnings)
-                HopRowDivider()
-                HopToggleRow(title: "Daily summary", subtitle: nil, icon: "chart.bar.fill", isOn: $summary)
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                HopSectionHeader("Today", action: (title: "See all", handler: {}))
+                HopSection("Reminders") {
+                    HopSettingsRow(title: "Interval", value: "Every 45 minutes", icon: "timer") {}
+                    HopRowDivider()
+                    HopToggleRow(
+                        title: "Warning before a pause",
+                        subtitle: "A gentle nudge two minutes ahead.",
+                        icon: "bell.fill",
+                        isOn: $warnings
+                    )
+                    HopRowDivider()
+                    HopToggleRow(title: "Daily summary", subtitle: nil, icon: "chart.bar.fill", isOn: $summary)
+                }
+                HStack {
+                    HopPill("Tried", tint: theme.color.eventTried, glyph: .tried)
+                    HopPill("Quiet hours", tint: theme.color.brandSecondary, glyph: .quietHours)
+                    HopPill("Plus", tint: theme.color.celebration)
+                }
             }
-            HStack {
-                HopPill("Tried", tint: .purple, glyph: .tried)
-                HopPill("Quiet hours", tint: .blue, glyph: .quietHours)
-                HopPill("Plus", tint: .orange)
-            }
+            .padding()
         }
-        .padding()
     }
-    .hopBackground()
-    .hopThemedRoot()
+}
+
+#Preview("Rows") {
+    HopRowsPreviewHost()
+        .hopBackground()
+        .hopThemedRoot()
 }
 
 #Preview("Rows · AX3, long values") {
