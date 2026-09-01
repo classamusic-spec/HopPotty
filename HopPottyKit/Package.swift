@@ -15,6 +15,8 @@ let package = Package(
     ],
     targets: [
         .target(name: "HopPottyDesignTokens"),
+        // Exports tokens as JSON for tooling outside the Swift build.
+        .executableTarget(name: "hoptokens", dependencies: ["HopPottyDesignTokens"]),
         .target(name: "HopPottyCore"),
         .target(name: "HopPottyFixtures", dependencies: ["HopPottyCore"]),
         .testTarget(
