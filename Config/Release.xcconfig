@@ -1,0 +1,52 @@
+// HopPotty — Release.
+//
+// The configuration that is archived, uploaded, and installed by families.
+
+#include "Base.xcconfig"
+
+// ---------------------------------------------------------------------------
+// Compilation conditions
+// ---------------------------------------------------------------------------
+//
+// Note what is NOT here: DEBUG, HOPPOTTY_DEBUG_TOOLS, HOPPOTTY_MOCK_SERVICES.
+// Adding any of the three to this file is a release-blocking defect, not a
+// convenience. Scripts/verify-config.sh fails if one appears.
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited)
+
+// ---------------------------------------------------------------------------
+// The Potty Pause Lab must be structurally unreachable
+// ---------------------------------------------------------------------------
+//
+// Belt and braces to the `#if HOPPOTTY_DEBUG_TOOLS` guards: the developer-only
+// sources are removed from the Release compile entirely, so an unguarded file
+// under HopPotty/Developer/ cannot be shipped even by accident.
+//
+// UNVERIFIED — confirm once Xcode is available: EXCLUDED_SOURCE_FILE_NAMES is
+// documented as a list of glob patterns matched against source file paths, and
+// this absolute-path form is the spelling used in Apple's own project
+// templates; it has not been exercised here. Verify with
+// `Scripts/verify-release-build.sh` (or by deleting a `#if` guard in a Lab file
+// and confirming the Release build still succeeds) before the first submission.
+// The `#if` guards remain the primary mechanism; this is the backstop.
+EXCLUDED_SOURCE_FILE_NAMES = $(SRCROOT)/HopPotty/Developer/*
+
+// ---------------------------------------------------------------------------
+// Build
+// ---------------------------------------------------------------------------
+
+SWIFT_OPTIMIZATION_LEVEL = -O
+SWIFT_COMPILATION_MODE = wholemodule
+GCC_OPTIMIZATION_LEVEL = s
+ONLY_ACTIVE_ARCH = NO
+ENABLE_TESTABILITY = NO
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+VALIDATE_PRODUCT = YES
+MTL_ENABLE_DEBUG_INFO = NO
+MTL_FAST_MATH = YES
+COPY_PHASE_STRIP = NO
+STRIP_INSTALLED_PRODUCT = YES
+STRIP_STYLE = all
+
+// See Debug.xcconfig for why these are NO here.
+SWIFT_TREAT_WARNINGS_AS_ERRORS = NO
+GCC_TREAT_WARNINGS_AS_ERRORS = NO

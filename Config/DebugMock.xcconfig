@@ -1,0 +1,31 @@
+// HopPotty — DebugMock.
+//
+// Debug, with every external service replaced by an in-memory fake chosen at
+// COMPILE time. There is no runtime switch, no launch argument and no hidden
+// settings toggle that reaches these fakes from a shipping build: the live
+// wiring in HopPotty/App/AppDependencies.swift sits in the `#else` branch of
+// `#if HOPPOTTY_MOCK_SERVICES`, so a Release build cannot contain a fake and
+// this build cannot contain the real Screen Time calls.
+//
+// What it is for:
+//
+//   * Running in the iOS Simulator. Whether Family Controls works there at all
+//     is UNVERIFIED (Docs/ScreenTimeArchitecture.md §12.7), so the simulator
+//     story must not depend on it.
+//   * Working on the app before the Family Controls distribution entitlement is
+//     approved, and on a machine with no Apple Developer account at all.
+//   * UI tests and screenshots, which need a pause that starts and ends on
+//     command.
+//
+// What it is NOT for: verifying anything about Screen Time. A green DebugMock
+// run says nothing about shields, authorization or DeviceActivity.
+
+#include "Debug.xcconfig"
+
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) HOPPOTTY_MOCK_SERVICES
+
+// A mock build is not a build anyone should be able to pick up off a desk and
+// mistake for the real app. Only the home-screen name changes: PRODUCT_NAME is
+// deliberately left alone, because it feeds PRODUCT_MODULE_NAME, which the
+// extensions' NSExtensionPrincipalClass values are written in terms of.
+HOPPOTTY_DISPLAY_NAME = HopPotty Mock

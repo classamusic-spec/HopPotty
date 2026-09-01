@@ -14,7 +14,7 @@ struct PottyPauseTotalityTests {
     func exhaustiveCasesIsExhaustive() {
         let kinds = Set(PottyPauseState.exhaustiveCases.map(\.kind))
         #expect(kinds == Set(PottyPauseState.Kind.allCases))
-        #expect(PottyPauseState.exhaustiveCases.count == 11 + 2 * ScreenTimeFailure.allCases.count)
+        #expect(PottyPauseState.exhaustiveCases.count == 11 + 3 * ScreenTimeFailure.allCases.count)
         #expect(Set(PottyPauseState.exhaustiveCases).count == PottyPauseState.exhaustiveCases.count)
     }
 

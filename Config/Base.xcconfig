@@ -38,6 +38,10 @@ HOPPOTTY_APP_GROUP = group.com.hoppotty.shared
 // HopPotty/Resources/HopPotty.storekit AND the one in App Store Connect.
 HOPPOTTY_IAP_FAMILY_PRODUCT_ID = com.hoppotty.family
 
+// The home-screen name. Overridden in DebugMock.xcconfig so a fake-service
+// build is identifiable on the home screen.
+HOPPOTTY_DISPLAY_NAME = HopPotty
+
 MARKETING_VERSION = 0.1.0
 CURRENT_PROJECT_VERSION = 1
 

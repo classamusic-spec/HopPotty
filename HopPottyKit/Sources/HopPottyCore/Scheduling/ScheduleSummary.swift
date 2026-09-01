@@ -73,8 +73,10 @@ public struct ScheduleSummary: Hashable, Sendable {
         case before(LocalTimeOfDay, label: QuietWindowLabel, days: DayCoverage)
         case between(start: LocalTimeOfDay, end: LocalTimeOfDay, label: QuietWindowLabel, days: DayCoverage)
         case after(from: LocalTimeOfDay, until: LocalTimeOfDay, label: QuietWindowLabel, days: DayCoverage)
-        /// A quiet window that covers the entire day. Pathological, but truthful
-        /// beats silent.
+        /// A quiet window that covers the entire day — the caregiver set equal
+        /// start and end times. Pathological, but a settings screen can spot this
+        /// case in the structured value and offer to fix it, which it could not do
+        /// if the summary quietly said nothing.
         case allDay(label: QuietWindowLabel, days: DayCoverage)
 
         public var label: QuietWindowLabel {
@@ -395,7 +397,7 @@ extension ScheduleSummary {
                 ["action": actionText, "interval": intervalNoun(minutes)]
             )
         case .everyClockInterval(let minutes):
-            fill(Template.activityClockTime, ["action": actionText, "interval": intervalNoun(minutes)])
+            fill(Template.activityClockTime, ["action": actionText, "interval": recurrenceNoun(minutes)])
         }
 
         let exceptClause = exceptions.isEmpty
@@ -446,6 +448,16 @@ extension ScheduleSummary {
 
     /// "3-minute", as in "a 3-minute Potty Pause".
     static func durationAdjective(_ minutes: Int) -> String { "\(minutes)-minute" }
+
+    /// The noun after "every", where English drops the "1": "every hour", never
+    /// "every 1 hour".
+    static func recurrenceNoun(_ minutes: Int) -> String {
+        if minutes >= 60, minutes % 60 == 0 {
+            let hours = minutes / 60
+            return hours == 1 ? "hour" : "\(hours) hours"
+        }
+        return "\(minutes) minutes"
+    }
 
     /// "45 minutes", "1 hour", "2 hours".
     static func intervalNoun(_ minutes: Int) -> String {

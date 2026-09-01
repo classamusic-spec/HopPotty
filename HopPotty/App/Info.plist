@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  HopPotty — application Info.plist.
+
+  Written by hand rather than generated (GENERATE_INFOPLIST_FILE = NO) so that
+  everything the system reads about this app is reviewable in a diff. Values
+  that differ per configuration come through build settings defined in
+  Config/*.xcconfig.
+
+  Deliberately absent, each for a reason:
+
+    UIBackgroundModes            DeviceActivity is the sanctioned background
+                                 mechanism; anything else invites App Review
+                                 questions we cannot answer well.
+                                 (Docs/Entitlements.md §1.)
+    NSUserTrackingUsageDescription
+                                 No tracking, no analytics SDK, no IDFA.
+    NSFamilyControlsUsageDescription
+                                 Apple documents no such key. The Family
+                                 Controls authorization sheet is system copy and
+                                 is not configurable from a usage-description
+                                 string. UNVERIFIED — if a device build ever
+                                 shows an empty purpose string in that sheet,
+                                 revisit this and cite the key that fixed it.
+    CFBundleURLTypes             HopPotty has no URL scheme. A parental-controls
+                                 app that can be driven from a link is a
+                                 parental-controls app a child can drive.
+-->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>$(HOPPOTTY_DISPLAY_NAME)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+
+	<!-- The product identifier of the one-time "HopPotty Family" unlock. Read
+	     at runtime by the purchases layer so the identifier is configured in
+	     exactly one place (Config/Base.xcconfig) and cannot drift between the
+	     StoreKit test file, App Store Connect and the code. -->
+	<key>HPFamilyUnlockProductIdentifier</key>
+	<string>$(HOPPOTTY_IAP_FAMILY_PRODUCT_ID)</string>
+
+	<!-- SwiftUI lifecycle. Multiple scenes are off: a Potty Pause is a
+	     device-wide, single-child interaction, and two live copies of the pause
+	     UI on one iPad would be two views of state that must have one reading. -->
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+
+	<!-- No storyboard. The colour comes from the asset catalog so the launch
+	     surface matches the first frame SwiftUI draws in both appearances. -->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
+
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+
+	<!-- iPhone: portrait only. A child holding a phone rotates it constantly;
+	     a routine that reflows mid-step is a routine they lose their place in.
+	     iPad: all orientations, because an iPad is as often propped as held. -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<!-- HopPotty uses only Apple's platform encryption (HTTPS via StoreKit).
+	     Declaring this avoids the export-compliance question on every upload.
+	     Re-confirm at each release: adding any custom cryptography makes this
+	     false and the declaration a false statement to Apple. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
+</plist>

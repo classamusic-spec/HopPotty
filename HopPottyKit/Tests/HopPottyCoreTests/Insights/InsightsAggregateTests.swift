@@ -45,7 +45,7 @@ struct InsightsAggregateTests {
         #expect(previous.start == InsightsFixture.date(2025, 3, 2, 0, 0))
         // The clocks went forward inside this week, so it is 167 hours long and
         // still exactly seven day rows.
-        #expect(window.duration == 167 * 3600)
+        #expect(window.duration == TimeInterval(167 * 3600))
         #expect(window.dayCount(calendar: calendar) == 7)
     }
 
@@ -115,15 +115,20 @@ struct InsightsAggregateTests {
     @Test("Entries minutes apart describe one visit")
     func entriesAreClusteredIntoVisits() {
         let events = [
+            // Three entries inside five minutes: one trip to the bathroom.
             InsightsFixture.event(at: InsightsFixture.date(2025, 3, 12, 9, 0)),
             InsightsFixture.event(at: InsightsFixture.date(2025, 3, 12, 9, 1), kind: .pee),
             InsightsFixture.event(at: InsightsFixture.date(2025, 3, 12, 9, 3), kind: .poop),
+            // Two later trips, far enough apart to stand on their own.
             InsightsFixture.event(at: InsightsFixture.date(2025, 3, 12, 11, 0)),
+            InsightsFixture.event(at: InsightsFixture.date(2025, 3, 12, 14, 0), kind: .pee),
         ]
         let insight = InsightsEngine.participation(events: events, window: .day, calendar: calendar, now: now)
 
-        #expect(insight?.visitCount == 2)
-        #expect(insight?.eventCount == 4)
+        // Five entries, three visits — the clustering, not the raw count, is what
+        // participation reports.
+        #expect(insight?.visitCount == 3)
+        #expect(insight?.eventCount == 5)
     }
 
     @Test("This period is compared with the one before it")
@@ -205,7 +210,7 @@ struct InsightsAggregateTests {
         // The one thing that can be said is the neutral one: the longest span
         // with nothing recorded, 16:00 to 10:00 the next morning.
         let dry = try? #require(report.longestDryStretch)
-        #expect(dry?.duration == 18 * 3600)
+        #expect(dry?.duration == TimeInterval(18 * 3600))
         #expect(dry?.accidentCount == 6)
     }
 

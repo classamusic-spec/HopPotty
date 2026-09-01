@@ -481,7 +481,11 @@ public extension HopCopySection {
     var entries: [HopCopyEntry] { HopCopyReflection.entries(in: self) }
 }
 
-/// Walks a section's stored properties and collects every string in it.
+/// Walks a section's stored properties and collects the strings in it.
+///
+/// Reflection is the point: it makes the catalog self-describing, so the tests
+/// see exactly what the app sees and a newly declared string is covered by them
+/// the moment it is typed.
 public enum HopCopyReflection {
     public static func entries(in section: Any) -> [HopCopyEntry] {
         Mirror(reflecting: section).children.flatMap { child -> [HopCopyEntry] in
@@ -494,5 +498,16 @@ public enum HopCopyReflection {
             default: []
             }
         }
+    }
+
+    /// Every name-variant pair declared in a section, so the nickname-optional
+    /// rule can be checked pair by pair rather than string by string.
+    public static func nameVariants(in section: Any) -> [HopNameVariants] {
+        Mirror(reflecting: section).children.compactMap { $0.value as? HopNameVariants }
+    }
+
+    /// Every plural group declared in a section.
+    public static func pluralVariants(in section: Any) -> [HopPluralVariants] {
+        Mirror(reflecting: section).children.compactMap { $0.value as? HopPluralVariants }
     }
 }

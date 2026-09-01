@@ -72,6 +72,8 @@ public enum PottyPauseMachine {
             return reduceErrorRecoverable(failure: failure, event: event, context: context)
         case .errorRequiresParent(let failure):
             return reduceErrorRequiresParent(failure: failure, event: event, context: context)
+        case .errorAccessRestored(let failure):
+            return reduceErrorAccessRestored(failure: failure, event: event, context: context)
         }
     }
 
@@ -103,11 +105,12 @@ public enum PottyPauseMachine {
         from state: PottyPauseState,
         context: PottyPauseContext
     ) -> TransitionOutcome {
-        if state.isError {
+        if let failure = state.failure {
             // Clearing the shield does not fix a revoked permission or an empty
-            // selection, so the error stays on screen for the caregiver — but
-            // the child gets their apps back regardless.
-            return .accept(state, [
+            // selection, so the failure stays on screen for the caregiver — but
+            // the child gets their apps back regardless, and the state stops
+            // claiming a shield might still be standing.
+            return .accept(.errorAccessRestored(failure), [
                 .clearShield,
                 .cancelPauseTimer,
                 .dismissPauseScreen,
@@ -636,6 +639,44 @@ public enum PottyPauseMachine {
         case .authorizationDenied:
             return .accept(.authorizationRequired, [
                 .clearShield, .cancelMonitoring, .clearPersistedSession, .notifyParent(.authorizationNeeded),
+            ])
+        default:
+            return .refuse(state: state, event: event)
+        }
+    }
+
+    /// The failure is unresolved but the apps are back. Nothing here may raise a
+    /// shield: this state exists precisely because a caregiver asked for the
+    /// opposite, so the only ways out are fixing the cause or switching off.
+    private static func reduceErrorAccessRestored(
+        failure: ScreenTimeFailure,
+        event: PottyPauseEvent,
+        context: PottyPauseContext
+    ) -> TransitionOutcome {
+        let state = PottyPauseState.errorAccessRestored(failure)
+        switch event {
+        case .parentAcknowledgedError, .authorizationGranted, .scheduleEnabled:
+            return resumeAfterError(context: context)
+        case .retryRequested:
+            guard failure.isSelfRecoverable else {
+                return .refuse(state: state, event: event, reason: .requiresParentAction)
+            }
+            return resumeAfterError(context: context)
+        case .authorizationDenied:
+            return .accept(.authorizationRequired, [
+                .clearShield, .cancelMonitoring, .clearPersistedSession, .notifyParent(.authorizationNeeded),
+            ])
+        case .shieldCleared:
+            // Confirmation of what this state already assumed. The clear is
+            // re-issued anyway so that "entering an error state always clears"
+            // holds without exception — an invariant with a carve-out is one
+            // nobody can rely on.
+            return .accept(state, [.clearShield, .clearPersistedSession])
+        case .shieldClearFailed:
+            // The clear did not take after all, so the shield is back in
+            // question and the state must say so.
+            return .accept(.errorRequiresParent(.shieldClearFailed), [
+                .clearShield, .notifyParent(.screenTimeFailure(.shieldClearFailed)),
             ])
         default:
             return .refuse(state: state, event: event)

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Device Activity Monitor extension — Info.plist.
+
+  READ THIS BEFORE CHANGING THE NSExtension DICTIONARY.
+
+  Docs/ScreenTimeArchitecture.md §8 says "Do not hand-write
+  NSExtensionPointIdentifier", because Xcode's Screen Time API target templates
+  supply it. That advice assumes you are adding the target through Xcode. This
+  repository defines its targets in project.yml (XcodeGen) and has no Xcode, so
+  the value below IS hand-written and carries the risk that advice was warning
+  about.
+
+  UNVERIFIED — confirm against an Xcode-generated target. In Xcode, File > New >
+  Target > Device Activity Monitor, and compare the generated Info.plist's NSExtension
+  dictionary with this one. If they differ, Xcode is right and this file is
+  wrong. A wrong extension point identifier does not fail the build: the
+  extension simply is never invoked, which looks exactly like a Screen Time bug.
+
+  Principal class: a subclass of DeviceActivity.DeviceActivityMonitor. It is an
+  NSObject subclass, so the Swift class is visible to the ObjC runtime under
+  <module>.<class> without an @objc attribute.
+-->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Device Activity Monitor</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.deviceactivity.monitor-extension</string>
+		<!-- Module-qualified. $(PRODUCT_MODULE_NAME) resolves to the target
+		     name, so the Swift class must be spelled exactly as below and must
+		     not be nested inside another type. -->
+		<key>NSExtensionPrincipalClass</key>
+		<string>$(PRODUCT_MODULE_NAME).DeviceActivityMonitorExtension</string>
+	</dict>
+</dict>
+</plist>

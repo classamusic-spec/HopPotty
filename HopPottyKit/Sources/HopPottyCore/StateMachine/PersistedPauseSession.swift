@@ -79,9 +79,14 @@ public struct PersistedPauseSession: Identifiable, Hashable, Codable, Sendable {
     /// Whether the child had already engaged with the routine when this was
     /// written. Used only to decide whether an interrupted pause still earns its
     /// star — never to withhold one.
+    ///
+    /// `routineActive` and `completing` are only reachable through a tap the
+    /// child made. `restoring` is not: the ceiling timer reaches it on its own,
+    /// so it is deliberately excluded — every star HopPotty gives stands for
+    /// something the child actually did.
     public var childHadEngaged: Bool {
         switch state {
-        case .routineActive, .completing, .restoring: true
+        case .routineActive, .completing: true
         default: false
         }
     }

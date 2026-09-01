@@ -1,0 +1,56 @@
+// HopPotty — Debug.
+//
+// The configuration a developer runs on a device or simulator. It is the ONLY
+// configuration that defines HOPPOTTY_DEBUG_TOOLS.
+
+#include "Base.xcconfig"
+
+// ---------------------------------------------------------------------------
+// Compilation conditions
+// ---------------------------------------------------------------------------
+//
+// HOPPOTTY_DEBUG_TOOLS gates the Potty Pause Lab and every other developer-only
+// surface. Contract-level requirement: the Lab can start and end pauses without
+// a real Screen Time authorization, so a build that can reach it must never
+// reach a customer.
+//
+// Two independent mechanisms enforce that, because one of them is a promise and
+// the other is a fact:
+//
+//   1. This condition is absent from Release.xcconfig, so `#if
+//      HOPPOTTY_DEBUG_TOOLS` code is not compiled into a Release build.
+//   2. Release.xcconfig additionally removes HopPotty/Developer/* from the
+//      compiled sources via EXCLUDED_SOURCE_FILE_NAMES, so a file in there that
+//      someone forgot to wrap in `#if` still cannot ship.
+//
+// The second is what makes this structural rather than a convention. If a
+// Release build ever fails with "cannot find 'PottyPauseLab' in scope", that is
+// the mechanism working: the reference, not the Lab, is the defect.
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) DEBUG HOPPOTTY_DEBUG_TOOLS
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) DEBUG=1
+
+// ---------------------------------------------------------------------------
+// Build
+// ---------------------------------------------------------------------------
+
+SWIFT_OPTIMIZATION_LEVEL = -Onone
+SWIFT_COMPILATION_MODE = incremental
+GCC_OPTIMIZATION_LEVEL = 0
+ONLY_ACTIVE_ARCH = YES
+ENABLE_TESTABILITY = YES
+DEBUG_INFORMATION_FORMAT = dwarf
+VALIDATE_PRODUCT = NO
+MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE
+MTL_FAST_MATH = YES
+
+// ---------------------------------------------------------------------------
+// Warnings are errors — here, not in Release
+// ---------------------------------------------------------------------------
+//
+// Deliberately asymmetric. A warning should stop the person who introduced it,
+// at their desk, seconds after they wrote it. It should not stop a hotfix six
+// months from now because a new Xcode deprecated an API we still use correctly.
+// Release therefore compiles the same code with warnings as warnings; CI and
+// code review are what keep them at zero.
+SWIFT_TREAT_WARNINGS_AS_ERRORS = YES
+GCC_TREAT_WARNINGS_AS_ERRORS = YES

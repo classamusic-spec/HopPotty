@@ -61,6 +61,17 @@ public enum PottyPauseState: Hashable, Codable, Sendable {
     /// Something failed that a caregiver has to resolve — a revoked permission,
     /// an empty selection, a shield we could not lift.
     case errorRequiresParent(ScreenTimeFailure)
+
+    /// A failure is still unresolved, but the child's apps have been given back
+    /// and a clear has been issued: the shield is no longer in question.
+    ///
+    /// This exists because "something is broken" and "a shield may be standing"
+    /// are separate facts, and the emergency exit resolves only the second. Once
+    /// a caregiver presses "Restore Screen Access", continuing to report a
+    /// possible shield would be false — but so would discarding the failure,
+    /// which still stops Potty Pause from running. This state says both true
+    /// things at once.
+    case errorAccessRestored(ScreenTimeFailure)
 }
 
 public extension PottyPauseState {
@@ -70,7 +81,7 @@ public extension PottyPauseState {
     enum Kind: String, CaseIterable, Hashable, Sendable {
         case disabled, authorizationRequired, ready, monitoring, warningApproaching
         case pauseTriggered, shieldActive, routineActive, completing, restoring
-        case cooldown, errorRecoverable, errorRequiresParent
+        case cooldown, errorRecoverable, errorRequiresParent, errorAccessRestored
     }
 
     var kind: Kind {
@@ -88,6 +99,7 @@ public extension PottyPauseState {
         case .cooldown: .cooldown
         case .errorRecoverable: .errorRecoverable
         case .errorRequiresParent: .errorRequiresParent
+        case .errorAccessRestored: .errorAccessRestored
         }
     }
 
@@ -100,12 +112,15 @@ public extension PottyPauseState {
         ]
         all += ScreenTimeFailure.allCases.map(PottyPauseState.errorRecoverable)
         all += ScreenTimeFailure.allCases.map(PottyPauseState.errorRequiresParent)
+        all += ScreenTimeFailure.allCases.map(PottyPauseState.errorAccessRestored)
         return all
     }
 
     var failure: ScreenTimeFailure? {
         switch self {
-        case .errorRecoverable(let failure), .errorRequiresParent(let failure): failure
+        case .errorRecoverable(let failure), .errorRequiresParent(let failure),
+             .errorAccessRestored(let failure):
+            failure
         default: nil
         }
     }
@@ -136,6 +151,11 @@ public extension PottyPauseState {
             false
         case .errorRecoverable(let failure), .errorRequiresParent(let failure):
             failure.couldLeaveShieldUp
+        case .errorAccessRestored:
+            // A clear was issued for this state specifically. If it did not take,
+            // the executor reports `shieldClearFailed` and we re-enter an error
+            // that does claim a possible shield.
+            false
         }
     }
 

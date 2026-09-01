@@ -41,6 +41,7 @@ enum PauseFixture {
     static func context(
         now: Date = PauseFixture.now,
         mode: PottyPauseMode = .routine,
+        triggerBasis: PottyTriggerBasis = .screenActivity,
         authorization: ScreenTimeAuthorizationStatus = .approved,
         hasSelection: Bool = true,
         isEnabled: Bool = true,
@@ -50,7 +51,7 @@ enum PauseFixture {
             now: now,
             childID: childID,
             sessionID: sessionID,
-            schedule: schedule(mode: mode, isEnabled: isEnabled),
+            schedule: schedule(mode: mode, triggerBasis: triggerBasis, isEnabled: isEnabled),
             authorizationStatus: authorization,
             hasSelection: hasSelection,
             activeSession: activeSession
@@ -70,6 +71,7 @@ enum PauseFixture {
             context(authorization: .restricted),
             context(hasSelection: false),
             context(mode: .gentle, hasSelection: false),
+            context(mode: .gentle, triggerBasis: .clockTime, hasSelection: false),
             context(isEnabled: false),
             context(mode: .pause, authorization: .denied, hasSelection: false),
         ]

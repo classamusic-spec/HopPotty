@@ -1041,4 +1041,14 @@ public enum HopCopy {
     public static var allEntriesSortedByKey: [HopCopyEntry] {
         allEntries.sorted { $0.key < $1.key }
     }
+
+    /// Every nickname-optional pair in the catalog.
+    public static var allNameVariants: [HopNameVariants] {
+        sections.flatMap { HopCopyReflection.nameVariants(in: $0) }
+    }
+
+    /// Every plural group in the catalog.
+    public static var allPluralVariants: [HopPluralVariants] {
+        sections.flatMap { HopCopyReflection.pluralVariants(in: $0) }
+    }
 }
