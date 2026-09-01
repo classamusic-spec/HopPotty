@@ -229,18 +229,8 @@ public enum PaywallFeature: String, CaseIterable, Sendable, Identifiable {
 /// The caption is not optional and has no empty default: every spoken line has a
 /// written caption (`Docs/CONTRACTS.md` §6), and a type that cannot express a
 /// line without one is how that stays true.
-public struct HopVoiceLine: Identifiable, Hashable, Sendable {
-    /// Key into the audio catalog.
-    public let id: String
-    /// The written form, always shown when captions are on.
-    public let caption: String
-    /// Known length, when the catalog has it; drives the replay button's
-    /// progress ring.
-    public let duration: TimeInterval?
+public 
 
-    public init(id: String, caption: String, duration: TimeInterval? = nil) {
-        self.id = id
-        self.caption = caption
-        self.duration = duration
-    }
-}
+// `HopVoiceLine` was declared here while Core was being written in
+// parallel. Core owns it now (`HopPottyCore/Content/HopVoiceLine.swift`);
+// keeping a second declaration collided in the app module.

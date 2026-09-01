@@ -31,7 +31,7 @@ struct RoutineStepStage<Actions: View>: View {
                         RoutineTimerRing(
                             fraction: timerFraction,
                             diameter: stageHeight * 0.62,
-                            caption: step.id == .tryIt ? HopCopy.routine.sitTimerCaption.value : nil
+                            caption: step.id == .tryIt ? HopCopy.routine.sitTimerCaption.localized : nil
                         )
                     }
                     actions()
@@ -59,7 +59,7 @@ struct RoutineStepStage<Actions: View>: View {
                 }
 
             HStack(spacing: theme.spacing.l) {
-                HopArtwork(step.illustration, accessibilityLabel: step.illustrationLabel.value)
+                HopArtwork(step.illustration, accessibilityLabel: step.illustrationLabel.localized)
                     .padding(theme.spacing.xl)
 
                 // Hop is on every step, doing the step alongside the child. He
@@ -76,14 +76,14 @@ struct RoutineStepStage<Actions: View>: View {
 
     private var words: some View {
         VStack(spacing: theme.spacing.s) {
-            Text(step.title.value)
+            Text(step.title.localized)
                 .hopTextStyle(.childTitle)
                 .foregroundStyle(theme.color.textPrimary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
 
-            Text(step.instruction.value)
+            Text(step.instruction.localized)
                 .hopTextStyle(.childInstruction)
                 .foregroundStyle(theme.color.textSecondary)
                 .multilineTextAlignment(.center)
@@ -91,7 +91,7 @@ struct RoutineStepStage<Actions: View>: View {
 
             HopReplayButton(
                 step.voice,
-                label: HopCopy.routine.repeatButton.value,
+                label: HopCopy.routine.repeatButton.localized,
                 pulse: $replayPulse
             )
             .padding(.top, theme.spacing.xs)
@@ -129,8 +129,32 @@ struct RoutineStepStage<Actions: View>: View {
         step: PottyRoutineContent.washStep,
         timerFraction: 0.55
     ) {
-        HopPrimaryButton(HopCopy.routine.nextButton.value, icon: "arrow.right", size: .childPrimary) {}
+        HopPrimaryButton(HopCopy.routine.nextButton.localized, icon: "arrow.right", size: .childPrimary) {}
     }
+    .hopBackground(.secondary)
+    .hopThemedRoot()
+}
+
+#Preview("Routine step · AX3") {
+    RoutineStepStage(
+        step: PottyRoutineContent.tryStep,
+        timerFraction: nil
+    ) {
+        RoutineOutcomeChoices { _ in }
+    }
+    .environment(\.dynamicTypeSize, .accessibility3)
+    .hopBackground(.secondary)
+    .hopThemedRoot()
+}
+
+#Preview("Routine step · iPad") {
+    RoutineStepStage(
+        step: PottyRoutineContent.highFiveStep,
+        timerFraction: nil
+    ) {
+        HopPrimaryButton(HopCopy.routine.nextButton.localized, icon: "arrow.right", size: .childPrimary) {}
+    }
+    .frame(width: 1024, height: 768)
     .hopBackground(.secondary)
     .hopThemedRoot()
 }

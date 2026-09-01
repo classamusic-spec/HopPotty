@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Verifies that every illustration key referenced by the content layer has a
+# source drawing on disk.
+#
+# Without this, a missing drawing is invisible until someone opens the app and
+# sees a placeholder — and placeholders are easy to stop noticing. Run it in CI.
+set -uo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONTENT="$ROOT/HopPottyKit/Sources/HopPottyCore/Content"
+
+missing=0
+found=0
+while IFS= read -r key; do
+  family="${key%%.*}"
+  rest="${key#*.}"
+  asset="${rest//./-}"
+  case "$family" in
+    scene) dir="scenes" ;;
+    icon)  dir="icons" ;;
+    character) dir="character" ;;
+    pond)  dir="pond" ;;
+    *) echo "UNKNOWN FAMILY: $key"; missing=$((missing + 1)); continue ;;
+  esac
+  if [[ -f "$ROOT/Art/$dir/$asset.svg" ]]; then
+    found=$((found + 1))
+  else
+    echo "MISSING: $key  ->  Art/$dir/$asset.svg"
+    missing=$((missing + 1))
+  fi
+done < <(grep -rhoE '"(scene|icon|character)\.[A-Za-z]+\.[A-Za-z]+"' "$CONTENT" | tr -d '"' | sort -u)
+
+echo "----"
+echo "art keys resolved: $found   missing: $missing"
+[[ $missing -eq 0 ]]

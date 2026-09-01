@@ -376,8 +376,12 @@ public struct ShieldCopy: HopCopySection {
         ),
         unnamed: .child("shield.greeting.unnamed", "Potty time!")
     )
-    public let primaryButton = HopCopyEntry.child("shield.primary", "I'm going!", comment: "The child's own button. First person on purpose.")
-    public let secondaryButton = HopCopyEntry.child("shield.secondary", "Ask a grown-up")
+    // Specified verbatim in the product brief. A first-person alternative
+    // ("I'm going!" / "Ask a grown-up") reads better to some ears — no question
+    // mark for a pre-reader, and the child speaking rather than being addressed —
+    // but changing canonical copy is a product decision, not an implementation one.
+    public let primaryButton = HopCopyEntry.child("shield.primary", "Let's Go!", comment: "Primary shield button. Canonical brand copy.")
+    public let secondaryButton = HopCopyEntry.child("shield.secondary", "Need a grown-up?", comment: "Secondary shield button, routes to the parent gate.")
     public let returning = HopCopyEntry.child(
         "shield.returning",
         "Your game comes back soon.",
@@ -897,7 +901,7 @@ public struct ParentGateCopy: HopCopySection {
 public struct PurchaseCopy: HopCopySection {
     public static let surface: HopCopySurface = .purchase
 
-    public let title = HopCopyEntry.parent("purchase.title", "HopPotty Complete")
+    public let title = HopCopyEntry.parent("purchase.title", "HopPotty Family")
     public let subtitle = HopCopyEntry.parent("purchase.subtitle", "One purchase. Every feature, for good.")
     public let featureChildren = HopCopyEntry.parent("purchase.feature.children", "Every child in the family")
     public let featurePond = HopCopyEntry.parent("purchase.feature.pond", "The whole pond collection")

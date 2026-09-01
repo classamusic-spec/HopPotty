@@ -58,6 +58,13 @@ enum HopLog {
         /// Recovering a pause session after process death.
         case restoration
         /// Store lifecycle, migration, repository writes, export and deletion.
+        ///
+        /// Also the channel for **bundled-resource and device-capability**
+        /// diagnostics — a voice asset that is declared but missing, a haptic
+        /// engine that will not start. Those are "what is actually on this
+        /// device" questions, which is the same question this category answers
+        /// for the store, and folding them in here keeps the category list at
+        /// the eight the spec names rather than growing one per subsystem.
         case persistence
         /// Local notification permission and scheduling.
         case notification

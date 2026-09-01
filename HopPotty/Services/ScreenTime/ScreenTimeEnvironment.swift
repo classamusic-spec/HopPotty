@@ -32,6 +32,33 @@ public final class ScreenTimeEnvironment {
     public let monitoring: any ActivityMonitoringProviding
     public let appGroup: AppGroupStore
 
+    /// The environment this build should use.
+    ///
+    /// Mirrors `ServiceContainer.resolved` so the two are wired the same way at
+    /// the call site — but note the asymmetry, which is deliberate. The other
+    /// mock services are ordinary types that a Release binary contains and simply
+    /// never selects. `MockScreenTimeService` is not: it is inside `#if DEBUG`,
+    /// so in Release **the `switch` below does not exist and there is nothing to
+    /// select.** A fake haptics service is a cosmetic defect; a fake Screen Time
+    /// service would report `believesShieldIsUp == false` while a real shield
+    /// stands, which would make HopPotty's own fail-safe believe there is nothing
+    /// to clear. That is worth a stronger guarantee than convention.
+    ///
+    /// The `configuration` parameter is accepted in both configurations so call
+    /// sites are written once.
+    public static func resolved(
+        configuration: AppBuildConfiguration = .resolved
+    ) -> ScreenTimeEnvironment {
+        #if DEBUG
+        switch configuration {
+        case .live: return live()
+        case .mock: return preview(.authorized)
+        }
+        #else
+        return live()
+        #endif
+    }
+
     /// The one production path.
     public static func live() -> ScreenTimeEnvironment {
         let appGroup = AppGroupStore.shared

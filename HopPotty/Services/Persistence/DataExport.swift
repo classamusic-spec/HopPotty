@@ -497,3 +497,73 @@ private struct ExportedSettings: Encodable {
         // last open is not information about the child anyway.
     }
 }
+
+// MARK: - Feature-layer port
+
+/// What the parent screens need from export: a file on disk they can hand to
+/// the share sheet.
+@MainActor
+protocol DataExportProviding: AnyObject {
+    /// Writes the export into the app's own container and returns its URL.
+    ///
+    /// **Nothing leaves the device here.** The file lands in the app's caches
+    /// directory; moving it anywhere else is the caregiver's deliberate act in
+    /// the share sheet, which is the only place that decision belongs.
+    func exportArchive(for childID: UUID?, authorization: ParentAuthorization) async throws -> URL
+}
+
+extension DataExportService: DataExportProviding {
+
+    func exportArchive(
+        for childID: UUID?,
+        authorization: ParentAuthorization
+    ) async throws -> URL {
+        var options = DataExportOptions.complete
+        if let childID { options.children = [childID] }
+        return try await writeArchive(options: options, authorization: authorization).url
+    }
+
+    /// The export written to a file, with its manifest.
+    ///
+    /// Caches rather than Documents: an export is a derived artefact the family
+    /// has already been handed. Leaving copies in Documents would accumulate a
+    /// folder of a child's toilet history that nobody remembers making, and
+    /// caches are evictable, which is the correct lifetime for it.
+    func writeArchive(
+        options: DataExportOptions = .complete,
+        authorization: ParentAuthorization
+    ) async throws -> (url: URL, manifest: DataExportManifest) {
+        let result = try await export(options: options, authorization: authorization)
+        let directory = try FileManager.default.url(
+            for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true
+        ).appendingPathComponent("Exports", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+
+        let url = directory.appendingPathComponent(result.suggestedFileName)
+        do {
+            // `.atomic` so a share sheet opened at the wrong moment cannot pick
+            // up a half-written file. `.completeFileProtection` so the export
+            // is unreadable while the device is locked — it holds the same
+            // health record the store does, and it now lives in a directory
+            // other processes can be pointed at.
+            try result.data.write(to: url, options: [.atomic, .completeFileProtection])
+        } catch {
+            HopLog.persistence.error(
+                "export write failed error=\(HopLog.safeDescription(error), privacy: .public)"
+            )
+            throw PersistenceError.saveFailed
+        }
+        return (url, result.manifest)
+    }
+
+    /// Removes previously written exports.
+    ///
+    /// Called after the share sheet closes and by "Reset app": a file holding a
+    /// child's history should not outlive the reason it was made.
+    func clearWrittenArchives() {
+        guard let directory = try? FileManager.default.url(
+            for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: false
+        ).appendingPathComponent("Exports", isDirectory: true) else { return }
+        try? FileManager.default.removeItem(at: directory)
+    }
+}

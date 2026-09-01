@@ -56,7 +56,7 @@ struct PottyRoutineView: View {
         HStack(spacing: theme.spacing.m) {
             HopIconButton(
                 systemImage: "hand.raised.fill",
-                accessibilityLabel: HopCopy.routine.helpButton.value,
+                accessibilityLabel: HopCopy.routine.helpButton.localized,
                 action: onAskForHelp
             )
 
@@ -64,7 +64,7 @@ struct PottyRoutineView: View {
 
             HopStepIndicator(total: model.stepCount, current: model.currentStepNumber)
                 .accessibilityLabel(
-                    HopCopy.a11y.progressDots.filled([
+                    HopCopy.a11y.progressDots.localized(filling: [
                         1: .count(model.currentStepNumber),
                         2: .count(model.stepCount),
                     ])
@@ -74,7 +74,7 @@ struct PottyRoutineView: View {
 
             HopIconButton(
                 systemImage: "xmark",
-                accessibilityLabel: HopCopy.routine.leaveButton.value,
+                accessibilityLabel: HopCopy.routine.leaveButton.localized,
                 action: { model.leave() }
             )
         }
@@ -121,7 +121,7 @@ struct PottyRoutineView: View {
                     RoutineOutcomeChoices { model.recordOutcome($0) }
                 } else {
                     HopPrimaryButton(
-                        HopCopy.routine.nextButton.value,
+                        HopCopy.routine.nextButton.localized,
                         icon: "arrow.right",
                         size: .childPrimary
                     ) {
@@ -133,7 +133,7 @@ struct PottyRoutineView: View {
                     // Secondary and parent-sized: skipping is a real, blameless
                     // option, but it is not one of the answers, so it must not
                     // compete with the three that are.
-                    HopSecondaryButton(HopCopy.routine.skipButton.value, icon: "forward.fill") {
+                    HopSecondaryButton(HopCopy.routine.skipButton.localized, icon: "forward.fill") {
                         model.skip()
                     }
                 }

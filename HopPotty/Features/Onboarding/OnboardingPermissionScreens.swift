@@ -76,10 +76,11 @@ struct AuthorizationScreen: View {
             title: title,
             message: message,
             primaryTitle: primaryTitle,
+            skipTitle: skipTitle,
             isWorking: model.isWorking,
             canGoBack: model.canGoBack,
             onPrimary: primaryAction,
-            onSkip: status.isRetryable && status == .denied ? { model.advance() } : nil,
+            onSkip: skipAction,
             onBack: model.goBack
         ) {
             VStack(alignment: .leading, spacing: theme.spacing.m) {
@@ -111,6 +112,17 @@ struct AuthorizationScreen: View {
 
     private var message: String? {
         status == .notDetermined ? HopCopy.onboarding.screenTimeBody.localized : nil
+    }
+
+    /// Offered only after a denial, and worded as continuing rather than
+    /// giving up: gentle mode is a real way to use HopPotty, not a consolation.
+    private var skipTitle: String? {
+        status == .denied ? HopCopy.common.notNow.localized : nil
+    }
+
+    private var skipAction: (() -> Void)? {
+        guard status == .denied else { return nil }
+        return { model.advance() }
     }
 
     private var primaryTitle: String {

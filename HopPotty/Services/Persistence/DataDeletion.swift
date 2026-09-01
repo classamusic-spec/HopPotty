@@ -145,6 +145,37 @@ struct DeletionReceipt: Sendable {
     /// The UI can mention it; nothing is wrong, but a receipt that silently
     /// disagrees with the sheet is how trust is lost.
     let differedFromPlan: Bool
+
+    init(
+        scope: DeletionScope,
+        childNickname: String?,
+        counts: DeletionCounts,
+        completedAt: Date,
+        differedFromPlan: Bool = false
+    ) {
+        self.scope = scope
+        self.childNickname = childNickname
+        self.counts = counts
+        self.completedAt = completedAt
+        self.differedFromPlan = differedFromPlan
+    }
+
+    // MARK: The four numbers the confirmation sentence uses
+    //
+    // "This permanently removes 47 potty events for Maya from this device."
+    // The sheet reads these; `counts` carries the full breakdown for the
+    // detail rows underneath.
+
+    /// The nickname, or `nil` for an unnamed child or a whole-app reset. The
+    /// copy layer picks between "Maya's history" and "this child's history".
+    var childName: String? { childNickname }
+    var events: Int { counts.pottyEvents }
+    /// Stars **removed**. Zero for "Clear history", which never costs a star.
+    var stars: Int { counts.starsRemoved }
+    var decorations: Int { counts.pondItems }
+    var children: Int { counts.profiles }
+
+    var isEmpty: Bool { counts.removesNothing }
 }
 
 // MARK: - Service
@@ -361,4 +392,83 @@ enum DeletionError: Error, Equatable {
     /// The gate was passed for something else — opening the parent area, say.
     /// A destructive action needs an approval that was about destruction.
     case wrongAuthorization
+}
+
+// MARK: - Feature-layer port
+
+/// What the parent screens need from deletion: a receipt before, and a receipt
+/// after. Named for the feature layer so a view never holds the service class.
+@MainActor
+protocol DataDeletionProviding: AnyObject {
+    /// Counts what deleting this child would remove. Nothing is touched.
+    func receipt(forChild childID: UUID) async throws -> DeletionReceipt
+    /// Counts what resetting the app would remove. Nothing is touched.
+    func receiptForEverything() async throws -> DeletionReceipt
+    @discardableResult
+    func deleteChild(_ childID: UUID, authorization: ParentAuthorization) async throws -> DeletionReceipt
+    @discardableResult
+    func deleteEverything(authorization: ParentAuthorization) async throws -> DeletionReceipt
+}
+
+extension DataDeletionService: DataDeletionProviding {
+
+    /// A preview rendered as a receipt, so the sheet and the confirmation read
+    /// from the same shape and cannot describe different things.
+    func receipt(forChild childID: UUID) async throws -> DeletionReceipt {
+        try await previewReceipt(for: .childProfile(childID: childID))
+    }
+
+    func receiptForEverything() async throws -> DeletionReceipt {
+        try await previewReceipt(for: .entireApp)
+    }
+
+    @discardableResult
+    func deleteChild(
+        _ childID: UUID,
+        authorization: ParentAuthorization
+    ) async throws -> DeletionReceipt {
+        // The plan is rebuilt here rather than passed in, so this entry point
+        // cannot act on numbers older than the tap that triggered it.
+        try await perform(plan(for: .childProfile(childID: childID)), authorization: authorization)
+    }
+
+    @discardableResult
+    func deleteEverything(authorization: ParentAuthorization) async throws -> DeletionReceipt {
+        try await perform(plan(for: .entireApp), authorization: authorization)
+    }
+
+    /// Clearing the timeline while keeping every star. Its own method because
+    /// its receipt reads differently: `stars` is zero and `counts.starsKept`
+    /// is the number the sheet should reassure with.
+    @discardableResult
+    func clearHistory(
+        for childID: UUID,
+        authorization: ParentAuthorization
+    ) async throws -> DeletionReceipt {
+        try await perform(plan(for: .childHistory(childID: childID)), authorization: authorization)
+    }
+
+    /// Emptying the ledger and the pond. The only path that removes a star, and
+    /// it says so in its receipt.
+    @discardableResult
+    func resetRewards(
+        for childID: UUID,
+        authorization: ParentAuthorization
+    ) async throws -> DeletionReceipt {
+        try await perform(plan(for: .childRewards(childID: childID)), authorization: authorization)
+    }
+
+    private func previewReceipt(for scope: DeletionScope) async throws -> DeletionReceipt {
+        let plan = try await plan(for: scope)
+        return DeletionReceipt(
+            scope: scope,
+            childNickname: plan.childNickname,
+            counts: plan.counts,
+            // The instant the numbers were counted. A preview is not a
+            // completion, and dating it now is what lets the UI notice a stale
+            // sheet.
+            completedAt: plan.preparedAt,
+            differedFromPlan: false
+        )
+    }
 }

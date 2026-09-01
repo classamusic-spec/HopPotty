@@ -3,7 +3,7 @@ import Foundation
 /// Strings the design system itself owns.
 ///
 /// The engineering contract routes all user-visible text through `HopCopy`
-/// (`HopPottyCore/Content/`), which does not exist yet. These are component
+/// (`HopPottyCore/Content/`), which now exists. These are the component
 /// mechanics — a close button's label, a glyph's VoiceOver description, the
 /// word "Step" in a step indicator — not product copy, and they are gathered in
 /// one file precisely so the migration to `HopCopy` is a single mechanical

@@ -32,7 +32,7 @@ struct PondCollectionStrip: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: theme.spacing.m) {
-            Text(HopCopy.pond.collectionTitle.value)
+            Text(HopCopy.pond.collectionTitle.localized)
                 .hopTextStyle(.parentTitle)
                 .foregroundStyle(theme.color.textPrimary)
                 .accessibilityAddTraits(.isHeader)
@@ -53,12 +53,12 @@ struct PondCollectionStrip: View {
             }
             .scrollIndicators(.hidden)
 
-            Text(HopCopy.pond.tapHint.value)
+            Text(HopCopy.pond.tapHint.localized)
                 .hopTextStyle(.parentCallout)
                 .foregroundStyle(theme.color.textSecondary)
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(HopCopy.pond.collectionTitle.value)
+        .accessibilityLabel(HopCopy.pond.collectionTitle.localized)
     }
 }
 
@@ -72,14 +72,14 @@ private struct PondCollectionTile: View {
     let side: CGFloat
     let onTap: () -> Void
 
-    private var name: String { PondItemNaming.name(for: item.id).value }
+    private var name: String { PondItemNaming.name(for: item.id).localized }
 
     /// What VoiceOver says about the tile's state. Never a deficit: an item
     /// still coming is announced by what it costs, not by what is missing.
     private var stateDescription: String {
         isUnlocked
-            ? HopCopy.pond.itemUnlocked.value
-            : HopCopy.pond.itemLocked.resolved(for: item.starCost)
+            ? HopCopy.pond.itemUnlocked.localized
+            : HopCopy.pond.itemLocked.localized(for: item.starCost)
     }
 
     var body: some View {

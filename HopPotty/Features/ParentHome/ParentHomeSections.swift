@@ -15,9 +15,10 @@ struct TodayMetricsRow: View {
 
     let snapshot: ParentHomeModel.Snapshot
 
+    /// Three across at every width. The tiles are short, and a caregiver
+    /// comparing today's three numbers wants them on one line, not reflowed.
     private var columns: [GridItem] {
-        let count = horizontalSizeClass == .regular ? 3 : 3
-        return Array(repeating: GridItem(.flexible(), spacing: 12), count: count)
+        Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
     }
 
     var body: some View {

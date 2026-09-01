@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-<defs><linearGradient id="towelGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFE9F7"/><stop offset="1" stop-color="#A6D6EE"/></linearGradient></defs>
+<defs><linearGradient id="towelGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A8DCF2"/><stop offset="1" stop-color="#6FC0E2"/></linearGradient></defs>
 <g id="quiz-towel"><circle cx="60" cy="60" r="58" fill="#E0F4FC"/>
-    <rect x="18" y="30" width="84" height="9" rx="4.5" fill="#D8CEC1"/>
-    <path d="M 30 34 h 60 q 8 0 8 8 v 46 q 0 10 -10 10 h -56 q -10 0 -10 -10 v -46 q 0 -8 8 -8 Z" fill="url(#towelGrad)"/>
-    <path d="M 30 34 h 26 v 64 h -18 q -10 0 -10 -10 v -46 q 0 -8 2 -8 Z" fill="#FFFFFF" opacity="0.3"/>
-    <rect x="26" y="56" width="72" height="10" rx="5" fill="#FFFFFF" opacity="0.7"/>
-    <path d="M 34 98 q 30 8 60 0" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.6"/></g>
+    <rect x="18" y="26" width="84" height="10" rx="5" fill="#D8CEC1"/>
+    <path d="M 30 30 h 60 q 6 0 6 8 v 46 q 0 6 -7 6 q -8 -8 -14 0 q -8 8 -16 0 q -8 -8 -16 0 q -7 6 -13 0 v -52 q 0 -8 6 -8 Z" fill="url(#towelGrad)"/>
+    <path d="M 30 30 h 22 v 62 q -8 4 -16 -2 q -12 2 -12 -8 v -44 q 0 -8 6 -8 Z" fill="#FFFFFF" opacity="0.32"/>
+    <rect x="26" y="54" width="68" height="9" rx="4.5" fill="#FFFFFF" opacity="0.8"/>
+    <path d="M 62 32 v 58" stroke="#2A87AC" stroke-width="2.6" opacity="0.18"/></g>
 </svg>

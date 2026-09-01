@@ -24,7 +24,7 @@ enum ParentSystemSettings {
 struct LocalTimePicker: View {
     // `@ViewBuilder` because the two branches are different concrete types.
     @Binding var time: LocalTimeOfDay
-    var label: String?
+    var label: String? = nil
     var calendar: Calendar = .current
 
     @ViewBuilder

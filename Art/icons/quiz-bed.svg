@@ -2,8 +2,8 @@
 <defs><radialGradient id="lavenderBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#D6D0F7"/><stop offset="1" stop-color="#6F63C0"/></radialGradient><linearGradient id="woodGradV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#C98A5B"/></linearGradient></defs>
 <g id="quiz-bed"><circle cx="60" cy="60" r="58" fill="#FFF3D4"/>
     <ellipse cx="60" cy="98" rx="42" ry="5" fill="#A87A0C" opacity="0.12"/>
-    <rect x="16" y="44" width="12" height="52" rx="6" fill="url(#woodGradV)"/>
-    <rect x="94" y="62" width="12" height="34" rx="6" fill="url(#woodGradV)"/>
+    <path d="M 14 40 q 0 -10 10 -10 q 10 0 10 10 v 56 h -20 Z" fill="url(#woodGradV)"/>
+    <path d="M 88 60 q 0 -8 9 -8 q 9 0 9 8 v 36 h -18 Z" fill="url(#woodGradV)"/>
     <rect x="20" y="70" width="82" height="20" rx="9" fill="#F4F1EC"/>
     <path d="M 28 70 h 68 q 10 0 10 10 v 4 h -78 Z" fill="url(#lavenderBall)" opacity="0.9"/>
     <path d="M 28 62 q 0 -12 14 -12 h 16 q 14 0 14 12 v 8 h -44 Z" fill="#FFF9F2"/>

@@ -102,7 +102,7 @@ public struct HopCelebrationView: View {
 
                 Spacer(minLength: 0)
 
-                HopPrimaryButton(HopStrings.celebrationContinue, size: .childPrimary, action: handBack)
+                HopPrimaryButton(HopStrings.celebrationContinue, size: .childPrimary) { handBack() }
                     .opacity(sequencer.beat >= .starsArrive ? 1 : 0)
                     .padding(.bottom, theme.spacing.xxxl)
             }

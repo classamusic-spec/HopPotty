@@ -26,7 +26,7 @@ import Foundation
 /// 3. Every transition into an error state emits `.clearShield`. An error state
 ///    is by definition one where HopPotty does not know what is true.
 /// 4. `.parentRestoredAccess`, `.scheduleDisabled` and `.authorizationRevoked`
-///    are accepted from all thirteen states and never refused.
+///    are accepted from all fourteen states and never refused.
 /// 5. Cold start always clears, whatever it finds — see the recovery section.
 public enum PottyPauseMachine {
 

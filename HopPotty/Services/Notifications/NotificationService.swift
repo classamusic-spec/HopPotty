@@ -142,7 +142,6 @@ enum NotificationPermission: String, Sendable, CaseIterable {
     case authorized
     /// Quiet delivery — straight to Notification Center, no banner.
     case provisional
-    case unknown
 
     /// Whether a scheduled notification will actually reach anyone.
     var canDeliver: Bool { self == .authorized || self == .provisional }
@@ -178,12 +177,20 @@ final class NotificationState {
 protocol NotificationProviding: AnyObject {
     var state: NotificationState { get }
 
+    /// The current permission, for a caller that wants the value rather than
+    /// the observable box. Always `state.permission`.
+    var permission: NotificationPermission { get }
+
     /// Reads the current system permission. Cheap; call on foreground.
     func refreshPermission() async
 
     /// Asks the system. Call only from a screen that has already explained why.
     @discardableResult
     func requestAuthorization() async -> NotificationPermission
+
+    /// Spelling used by the parent settings screen. Identical behaviour.
+    @discardableResult
+    func requestPermission() async -> NotificationPermission
 
     /// Schedules the heads-up for one child, replacing any warning already
     /// scheduled for that child.
@@ -210,6 +217,7 @@ protocol NotificationProviding: AnyObject {
 @MainActor
 final class NotificationService: NotificationProviding {
     let state: NotificationState
+    var permission: NotificationPermission { state.permission }
     private let center: UNUserNotificationCenter
     private let clock: any HopClock
 
@@ -263,7 +271,10 @@ final class NotificationService: NotificationProviding {
         case .authorized: return .authorized
         case .provisional: return .provisional
         case .ephemeral: return .authorized
-        @unknown default: return .unknown
+        // A status this build does not know maps to `.notDetermined`, not to
+        // `.denied`: "we cannot tell" should leave the caregiver able to ask,
+        // and must never look like a refusal they never gave.
+        @unknown default: return .notDetermined
         }
     }
 
@@ -392,6 +403,7 @@ final class NotificationService: NotificationProviding {
 @MainActor
 final class MockNotificationService: NotificationProviding {
     let state: NotificationState
+    var permission: NotificationPermission { state.permission }
     private(set) var scheduledWarnings: [UUID: Date] = [:]
     private(set) var summaryTime: LocalTimeOfDay?
     private(set) var cancelledAllCount = 0
@@ -428,5 +440,16 @@ final class MockNotificationService: NotificationProviding {
 
     func pendingCount() async -> Int {
         scheduledWarnings.count + (summaryTime == nil ? 0 : 1)
+    }
+}
+
+// MARK: - Feature-layer spelling
+
+extension NotificationProviding {
+    /// `requestAuthorization()` under the name the parent settings screen uses.
+    /// One implementation, two call sites, no second code path to keep honest.
+    @discardableResult
+    func requestPermission() async -> NotificationPermission {
+        await requestAuthorization()
     }
 }

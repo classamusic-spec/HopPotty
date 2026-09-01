@@ -49,7 +49,7 @@ struct RoutineOutcomeChoices: View {
 
     var body: some View {
         VStack(spacing: theme.spacing.l) {
-            Text(HopCopy.routine.outcomeQuestion.value)
+            Text(HopCopy.routine.outcomeQuestion.localized)
                 .hopTextStyle(.childTitle)
                 .foregroundStyle(theme.color.textPrimary)
                 .multilineTextAlignment(.center)
@@ -62,7 +62,7 @@ struct RoutineOutcomeChoices: View {
         // One container, so VoiceOver reads the question and then the three
         // answers as a single group in the order they are drawn.
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(HopCopy.routine.outcomeQuestion.value)
+        .accessibilityLabel(HopCopy.routine.outcomeQuestion.localized)
     }
 
     @ViewBuilder
@@ -145,14 +145,14 @@ private struct RoutineOutcomeChoice: View {
                 .onEnded { _ in isPressed = false }
         )
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(choice.copy.value)
+        .accessibilityLabel(choice.copy.localized)
         .accessibilityAddTraits(.isButton)
     }
 
     private var content: some View {
         VStack(spacing: theme.spacing.s) {
             HopGlyphBadge(choice.glyph, tint: choice.tint, diameter: glyphDiameter)
-            Text(choice.copy.value)
+            Text(choice.copy.localized)
                 .hopTextStyle(.buttonLarge)
                 .foregroundStyle(theme.color.textPrimary)
                 .multilineTextAlignment(.center)

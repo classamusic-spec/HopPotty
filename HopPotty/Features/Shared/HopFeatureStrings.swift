@@ -51,6 +51,10 @@ enum HopFeatureStrings {
     static let readyTitle = "Ready when you are"
     static let readyGentleNote = "Reminders are on. Apps are not paused."
 
+    static let activeHoursStart = "Starts"
+    static let activeHoursEnd = "Ends"
+    static let activeChildMarker = "Currently shown"
+
     // MARK: Schedule preview
 
     /// Heading above the plain-language rendering of the schedule.

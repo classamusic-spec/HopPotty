@@ -1,5 +1,8 @@
 import Foundation
 import HopPottyCore
+#if canImport(ManagedSettings)
+import ManagedSettings
+#endif
 
 // MARK: - Target membership
 //
@@ -168,12 +171,39 @@ public struct SharedPauseRecord: Codable, Equatable, Sendable {
     public var warningLeadTime: TimeInterval {
         max(0, backstopEndAt.timeIntervalSince(plannedEndAt))
     }
+
+    /// The `DeviceActivitySchedule` components for this pause's backstop.
+    ///
+    /// Derived from the record rather than computed by whoever happens to be
+    /// registering it, because the app and the monitor extension both start
+    /// pauses and both must arm an identical safety net. One definition, on the
+    /// type that owns the instants.
+    ///
+    /// `[.hour, .minute]` with no date: this is what a `DeviceActivitySchedule`
+    /// takes. Note that the *pause* is still bounded by the absolute
+    /// `plannedEndAt`/`backstopEndAt` above — the wall-clock components here only
+    /// tell the system when to call back, and a callback that arrives at the
+    /// wrong moment is checked against those instants before anything is done.
+    ///
+    /// Returned as a tuple rather than a `DeviceActivitySchedule` so this type
+    /// stays free of DeviceActivity and can be compiled into the shield
+    /// extensions, which must not link it.
+    func backstopScheduleComponents(
+        calendar: Calendar = .current
+    ) -> (start: DateComponents, end: DateComponents, warning: DateComponents?) {
+        let lead = Int(warningLeadTime / 60)
+        return (
+            calendar.dateComponents([.hour, .minute], from: startedAt),
+            calendar.dateComponents([.hour, .minute], from: backstopEndAt),
+            lead > 0 ? DateComponents(minute: lead) : nil
+        )
+    }
 }
 
 /// The pause, as the extensions need to understand it.
 ///
 /// Deliberately coarser than `PottyPauseState`. An extension does not need
-/// thirteen states; it needs to know whether a shield is supposed to exist.
+/// fourteen states; it needs to know whether a shield is supposed to exist.
 /// Mapping down to four values at the boundary means a state added to the app
 /// cannot silently change what an extension believes.
 ///
@@ -393,8 +423,31 @@ public struct ShieldPresentation: Codable, Equatable, Sendable {
     /// shield with slightly stale colours is a far better failure than a system
     /// shield telling a three-year-old they have reached a limit.
     ///
-    /// The strings must stay identical to the `HopCopy` keys the app resolves.
-    /// `Docs/PhysicalDeviceQA.md` has a check for exactly this drift.
+    /// ## Unresolved copy conflict — needs a decision before shipping
+    ///
+    /// The two button labels below do **not** match `HopCopy`, and the mismatch is
+    /// left visible rather than silently resolved, because resolving it is a copy
+    /// decision and not an engineering one:
+    ///
+    /// | Element | This fallback | `HopCopy` key | `HopCopy` value |
+    /// | --- | --- | --- | --- |
+    /// | title | "Potty time!" | `shield.title` | "Potty time!" ✅ |
+    /// | subtitle | "Let's hop to the potty. Your game will be here when you get back." | `shield.body` | identical ✅ |
+    /// | primary | "Let's Go!" | `shield.primary` | "Let's Go!" |
+    /// | secondary | "Need a grown-up?" | `shield.secondary` | "Need a grown-up?" |
+    ///
+    /// At runtime **`HopCopy` wins**: the app resolves it into `shield.json` and
+    /// the extension reads that, so Contract §5 holds and this fallback is only
+    /// reached when the payload is missing. The `HopCopy` wording is also the
+    /// better of the two — "I'm going!" is the child's own voice, and a question
+    /// mark on a button aimed at a pre-reader is a smaller target than a verb.
+    ///
+    /// The Potty Pause Lab shows both side by side so the drift cannot be
+    /// forgotten. **One of the two must change.** Until it does, a device with a
+    /// broken App Group shows different button labels from a healthy one, which is
+    /// exactly the kind of inconsistency a QA pass will report as a bug.
+    ///
+    /// `Docs/PhysicalDeviceQA.md` §3 has the check.
     ///
     /// Colours are `HopPalette.cloud`, `.midnight`, `.hopGreen` — repeated as hex
     /// rather than imported, because `HopPottyDesignTokens` is one more thing to
@@ -412,3 +465,393 @@ public struct ShieldPresentation: Codable, Equatable, Sendable {
         backgroundBlurStyleRawValue: nil
     )
 }
+
+// MARK: - Monitoring gate
+//
+// Moved here from a file of its own so that it is a member of every target that
+// already compiles `SharedPauseTypes.swift`. `project.yml` names exactly four
+// files as shared across all four targets; adding a fifth would mean editing a
+// manifest another part of the build owns, and a payload that crosses the App
+// Group boundary belongs in the file named for payloads that cross the App Group
+// boundary anyway.
+
+/// The minimum a `DeviceActivityMonitor` extension needs in order to *decline* to
+/// start a pause, and to start one correctly when it does.
+///
+/// ## Why this exists at all
+///
+/// The monitor extension is woken by the system with a `DeviceActivityName` and
+/// nothing else. It has no `ModelContainer`, no `PottySchedule`, and no way to
+/// ask the app anything — the app is usually not running, which is the entire
+/// point of the extension. But it is the process that must raise a shield when a
+/// usage threshold is crossed, and raising a shield requires knowing how long the
+/// pause lasts and whether a pause is allowed right now at all.
+///
+/// Without this payload the extension would either shield for a hard-coded
+/// duration it invented, or interrupt a child during a nap. Both are worse than
+/// putting four pieces of configuration across the boundary.
+///
+/// ## Why this does not violate the boundary rule
+///
+/// It is configuration, not identity. There is no child identifier here, no
+/// nickname, no age, no notes, no event history, no reward state, and no free
+/// text — the same prohibitions that govern `SharedPauseTypes`. A reader of this
+/// file learns that *somebody* on this device does not want to be interrupted
+/// between 12:30 and 14:00. They learn nothing about who.
+///
+/// This does go beyond the five values a minimal boundary would carry, and that
+/// is a deliberate, narrow exception, listed here so it cannot expand quietly:
+/// **pause duration, active days, quiet ranges, cooldown.** Anything else that
+/// wants to cross should be questioned as hard as this was.
+///
+/// ## Writer discipline
+///
+/// Written only by the app, whenever the schedule changes and on every foreground.
+/// Read only by the monitor extension. Single writer, so no race.
+public struct MonitoringGate: Codable, Equatable, Sendable {
+    public static let currentSchemaVersion = 1
+
+    public let schemaVersion: Int
+
+    /// How long a pause the extension should open. Already clamped to the
+    /// product's bounds by the app; clamped again on use, because this value
+    /// becomes system state and a corrupted file must not be able to write an
+    /// hour-long shield.
+    public let pauseDurationSeconds: TimeInterval
+
+    /// `Weekday.rawValue`s the schedule is active on. Empty means every day.
+    public let activeDayNumbers: [Int]
+
+    /// Minutes-since-midnight ranges during which no pause may start. Stored as
+    /// wall-clock minutes rather than instants for the same reason `QuietWindow`
+    /// does: "naps start at 12:30" means 12:30 in whatever zone the family is in
+    /// today, and an absolute instant would shift by an hour every DST boundary.
+    public let quietRanges: [QuietRange]
+
+    /// The earliest and latest wall-clock minute at which a pause may occur.
+    public let activeWindowStartMinutes: Int
+    public let activeWindowEndMinutes: Int
+
+    /// The quiet period after a pause. Enforced against `cooldown.json`.
+    public let cooldownSeconds: TimeInterval
+
+    public struct QuietRange: Codable, Equatable, Sendable {
+        public let startMinutes: Int
+        public let endMinutes: Int
+
+        public init(startMinutes: Int, endMinutes: Int) {
+            self.startMinutes = startMinutes
+            self.endMinutes = endMinutes
+        }
+
+        /// Half-open, and midnight-wrapping, exactly like `QuietWindow.contains`.
+        /// The two implementations must agree; `Docs/PhysicalDeviceQA.md` has a
+        /// check that a nap window suppresses a pause on-device.
+        public func contains(minutes: Int) -> Bool {
+            if endMinutes <= startMinutes {
+                return minutes >= startMinutes || minutes < endMinutes
+            }
+            return minutes >= startMinutes && minutes < endMinutes
+        }
+    }
+
+    public init(
+        schemaVersion: Int = MonitoringGate.currentSchemaVersion,
+        pauseDurationSeconds: TimeInterval,
+        activeDayNumbers: [Int],
+        quietRanges: [QuietRange],
+        activeWindowStartMinutes: Int,
+        activeWindowEndMinutes: Int,
+        cooldownSeconds: TimeInterval
+    ) {
+        self.schemaVersion = schemaVersion
+        self.pauseDurationSeconds = pauseDurationSeconds
+        self.activeDayNumbers = activeDayNumbers
+        self.quietRanges = quietRanges
+        self.activeWindowStartMinutes = activeWindowStartMinutes
+        self.activeWindowEndMinutes = activeWindowEndMinutes
+        self.cooldownSeconds = cooldownSeconds
+    }
+
+    public init(schedule: PottySchedule) {
+        self.init(
+            pauseDurationSeconds: min(
+                max(schedule.pauseDuration, PottySchedule.minimumPauseDuration),
+                PottySchedule.maximumPauseDuration
+            ),
+            activeDayNumbers: schedule.activeDays.map(\.rawValue).sorted(),
+            quietRanges: schedule.quietWindows
+                .filter(\.isEnabled)
+                .map {
+                    QuietRange(
+                        startMinutes: $0.start.minutesSinceMidnight,
+                        endMinutes: $0.end.minutesSinceMidnight
+                    )
+                },
+            activeWindowStartMinutes: schedule.activeWindowStart.minutesSinceMidnight,
+            activeWindowEndMinutes: schedule.activeWindowEnd.minutesSinceMidnight,
+            cooldownSeconds: max(0, schedule.cooldown)
+        )
+    }
+
+    /// The clamped duration to actually use.
+    public var safePauseDuration: TimeInterval {
+        min(
+            max(pauseDurationSeconds, PottySchedule.minimumPauseDuration),
+            PottySchedule.maximumPauseDuration
+        )
+    }
+
+    /// Whether a pause may start at this instant.
+    ///
+    /// The extension calls this and nothing else. Note the direction it fails in:
+    /// a gate that cannot be read at all means **no pause**, not a pause with
+    /// invented settings. A missed pause is a reminder that did not happen; an
+    /// invented pause is a shield of unknown duration on a child's device.
+    public func permitsPause(at instant: Date, calendar: Calendar = .current) -> Bool {
+        let components = calendar.dateComponents([.hour, .minute, .weekday], from: instant)
+        guard let hour = components.hour, let minute = components.minute else { return false }
+        let minutes = hour * 60 + minute
+
+        if !activeDayNumbers.isEmpty, let weekday = components.weekday,
+           !activeDayNumbers.contains(weekday) {
+            return false
+        }
+
+        let inWindow: Bool = activeWindowEndMinutes > activeWindowStartMinutes
+            ? (minutes >= activeWindowStartMinutes && minutes < activeWindowEndMinutes)
+            : (minutes >= activeWindowStartMinutes || minutes < activeWindowEndMinutes)
+        guard inWindow else { return false }
+
+        return !quietRanges.contains { $0.contains(minutes: minutes) }
+    }
+}
+
+// MARK: Gate and cooldown storage
+
+public extension AppGroupStore {
+
+    private static var gateFile: String { "gate.json" }
+    private static var cooldownFile: String { "cooldown.json" }
+
+    /// One `Date` in a file. Written by whichever process ends a pause; read by
+    /// the monitor before starting one.
+    ///
+    /// Multi-writer and last-write-wins, which is safe because the value is
+    /// advisory: a stale cooldown at worst allows one pause that should have been
+    /// suppressed, or suppresses one that could have run. Neither can strand a
+    /// shield, which is the only class of error this layer treats as serious.
+    struct CooldownRecord: Codable, Equatable, Sendable {
+        public let until: Date
+        public init(until: Date) { self.until = until }
+    }
+
+    func loadGate() -> MonitoringGate? {
+        guard let root, let data = try? Data(contentsOf: root.appendingPathComponent(Self.gateFile)) else {
+            return nil
+        }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        guard let gate = try? decoder.decode(MonitoringGate.self, from: data) else { return nil }
+        return gate.schemaVersion == MonitoringGate.currentSchemaVersion ? gate : nil
+    }
+
+    @discardableResult
+    func saveGate(_ gate: MonitoringGate) -> Bool {
+        guard let root else { return false }
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(gate) else { return false }
+        return (try? data.write(to: root.appendingPathComponent(Self.gateFile), options: .atomic)) != nil
+    }
+
+    func clearGate() {
+        guard let root else { return }
+        try? FileManager.default.removeItem(at: root.appendingPathComponent(Self.gateFile))
+    }
+
+    func cooldownUntil() -> Date? {
+        guard let root, let data = try? Data(contentsOf: root.appendingPathComponent(Self.cooldownFile)) else {
+            return nil
+        }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return (try? decoder.decode(CooldownRecord.self, from: data))?.until
+    }
+
+    func setCooldown(until instant: Date) {
+        guard let root else { return }
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(CooldownRecord(until: instant)) else { return }
+        try? data.write(to: root.appendingPathComponent(Self.cooldownFile), options: .atomic)
+    }
+
+    func clearCooldown() {
+        guard let root else { return }
+        try? FileManager.default.removeItem(at: root.appendingPathComponent(Self.cooldownFile))
+    }
+
+    /// Whether the post-pause quiet period has elapsed.
+    ///
+    /// A cooldown recorded in the future by more than the longest cooldown the
+    /// product allows is treated as expired, because that can only come from a
+    /// clock that moved. Erring toward "allowed" here is the safe direction: the
+    /// cost is one extra reminder, and reminders do not shield.
+    func isCooldownElapsed(at instant: Date, limit: TimeInterval) -> Bool {
+        guard let until = cooldownUntil() else { return true }
+        if until.timeIntervalSince(instant) > max(limit, 60) { return true }
+        return instant >= until
+    }
+}
+
+// MARK: - Shield tokens
+//
+// Here for the same reason as the monitoring gate above.
+
+/// The three token sets a shield is built from, stored separately from the
+/// caregiver's `FamilyActivitySelection`.
+///
+/// ## Why there are two copies of the same information
+///
+/// `selection.json` holds the whole `FamilyActivitySelection`, because that is
+/// what `FamilyActivityPicker` round-trips and it carries `includeEntireCategory`
+/// with it. But `FamilyActivitySelection` lives in **FamilyControls**, and the
+/// monitor extension must not link FamilyControls: it is a latency-sensitive
+/// process whose only job with these values is to hand them to
+/// `ManagedSettingsStore`, and the token types themselves — `ApplicationToken`,
+/// `ActivityCategoryToken`, `WebDomainToken`, all aliases of ManagedSettings'
+/// `Token<T>` — are already in a framework it has to link anyway.
+///
+/// So the app writes the selection for itself and the tokens for the extension.
+/// Both are written in the same call, from the same value, so they cannot
+/// disagree; if they ever did, the tokens win, because the tokens are what
+/// actually shields.
+///
+/// ## These are opaque and stay opaque
+///
+/// A token has no readable payload and HopPotty never tries to give it one. It is
+/// not logged, not hashed into a key, not counted into anything but a total, and
+/// not sent off-device. `Codable` is Apple's own persistence route for them, and
+/// it is the only one used here.
+///
+/// Apple voids every token issued to an app when authorization is revoked, so
+/// this file is deleted at the same moment the selection is
+/// (`ScreenTimeService.clearSelection`).
+#if canImport(ManagedSettings)
+public struct ShieldTokens: Codable, Equatable, Sendable {
+    public static let currentSchemaVersion = 1
+
+    public let schemaVersion: Int
+    public let applications: Set<ApplicationToken>
+    public let categories: Set<ActivityCategoryToken>
+    public let webDomains: Set<WebDomainToken>
+
+    public init(
+        schemaVersion: Int = ShieldTokens.currentSchemaVersion,
+        applications: Set<ApplicationToken>,
+        categories: Set<ActivityCategoryToken>,
+        webDomains: Set<WebDomainToken>
+    ) {
+        self.schemaVersion = schemaVersion
+        self.applications = applications
+        self.categories = categories
+        self.webDomains = webDomains
+    }
+
+    public var isEmpty: Bool {
+        applications.isEmpty && categories.isEmpty && webDomains.isEmpty
+    }
+
+    /// Apple caps each shield property at 50.
+    public var exceedsLimit: Bool {
+        applications.count > ScreenTimeIdentifiers.shieldTokenLimit
+            || categories.count > ScreenTimeIdentifiers.shieldTokenLimit
+            || webDomains.count > ScreenTimeIdentifiers.shieldTokenLimit
+    }
+}
+
+/// The one place a shield is ever raised.
+///
+/// Both the app and the monitor extension call this, so there is a single
+/// definition of what "shielded" means. A second implementation would be a second
+/// opportunity to write to the wrong store.
+public enum ShieldApplier {
+
+    /// Write the shield.
+    ///
+    /// Every property is set on every call, `nil` included. Apple: "Changing the
+    /// value of a setting to `nil` deletes your app's configuration for that
+    /// setting from the device." Setting all four unconditionally means a pause
+    /// that shields only apps cannot inherit a category policy from a previous
+    /// pause that shielded categories.
+    ///
+    /// `nil` rather than an empty set, always. An empty set is a configuration
+    /// that shields nothing, which is a different thing from having no
+    /// configuration, and Apple documents the behaviour of neither.
+    ///
+    /// Returns `false` only for the one condition worth refusing on: an over-cap
+    /// selection, whose behaviour Apple does not document. Everything else is
+    /// written and reported through the read-back, because a `ManagedSettings`
+    /// write has no result to check.
+    @discardableResult
+    public static func apply(_ tokens: ShieldTokens) -> Bool {
+        guard !tokens.isEmpty, !tokens.exceedsLimit else { return false }
+
+        let store = ManagedSettingsStore(named: .pottyPause)
+        store.shield.applications = tokens.applications.isEmpty ? nil : tokens.applications
+        store.shield.webDomains = tokens.webDomains.isEmpty ? nil : tokens.webDomains
+        store.shield.applicationCategories = tokens.categories.isEmpty
+            ? nil
+            : .specific(tokens.categories, except: Set())
+        store.shield.webDomainCategories = tokens.categories.isEmpty
+            ? nil
+            : .specific(tokens.categories, except: Set())
+        return true
+    }
+
+    /// Whether HopPotty's own store currently asks for anything to be shielded.
+    ///
+    /// A record of what was requested, not an observation of the device. Apple:
+    /// "The system doesn't guarantee that the settings you specify govern the
+    /// device's behavior."
+    ///
+    /// UNVERIFIED — confirm on device: that a read returns what was last written,
+    /// promptly, within a process and across processes.
+    public static var storeRequestsAShield: Bool {
+        let store = ManagedSettingsStore(named: .pottyPause)
+        if let applications = store.shield.applications, !applications.isEmpty { return true }
+        if let domains = store.shield.webDomains, !domains.isEmpty { return true }
+        if store.shield.applicationCategories != nil { return true }
+        if store.shield.webDomainCategories != nil { return true }
+        return false
+    }
+}
+
+// MARK: Token storage
+
+public extension AppGroupStore {
+
+    private static var tokensFile: String { "tokens.json" }
+
+    func loadShieldTokens() -> ShieldTokens? {
+        guard let root,
+              let data = try? Data(contentsOf: root.appendingPathComponent(Self.tokensFile)),
+              let tokens = try? JSONDecoder().decode(ShieldTokens.self, from: data)
+        else { return nil }
+        return tokens.schemaVersion == ShieldTokens.currentSchemaVersion ? tokens : nil
+    }
+
+    @discardableResult
+    func saveShieldTokens(_ tokens: ShieldTokens) -> Bool {
+        guard let root, let data = try? JSONEncoder().encode(tokens) else { return false }
+        return (try? data.write(to: root.appendingPathComponent(Self.tokensFile), options: .atomic)) != nil
+    }
+
+    func clearShieldTokens() {
+        guard let root else { return }
+        try? FileManager.default.removeItem(at: root.appendingPathComponent(Self.tokensFile))
+    }
+}
+#endif

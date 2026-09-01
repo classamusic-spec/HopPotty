@@ -41,8 +41,8 @@ struct RoutineCelebrationView: View {
     /// as the other line.
     private var headline: String {
         outcome?.producedOutput == true
-            ? HopCopy.celebration.successTitle.value
-            : HopCopy.celebration.triedTitle.value
+            ? HopCopy.celebration.successTitle.localized
+            : HopCopy.celebration.triedTitle.localized
     }
 
     private var spokenLine: HopPottyCore.HopVoiceLine {
@@ -89,7 +89,7 @@ struct RoutineCelebrationView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
 
-            Text(HopCopy.celebration.greeting.resolved(forNickname: context.nickname))
+            Text(HopCopy.celebration.greeting.localized(forNickname: context.nickname))
                 .hopTextStyle(.childInstruction)
                 .foregroundStyle(theme.color.textSecondary)
                 .multilineTextAlignment(.center)
@@ -103,12 +103,12 @@ struct RoutineCelebrationView: View {
             HopStarBadge(count: starsEarned, animatesArrival: true)
                 .accessibilityHidden(true)
 
-            Text(HopCopy.celebration.starsEarned.resolved(for: starsEarned))
+            Text(HopCopy.celebration.starsEarned.localized(for: starsEarned))
                 .hopTextStyle(.childTitle)
                 .foregroundStyle(theme.color.textPrimary)
                 .multilineTextAlignment(.center)
 
-            Text(HopCopy.celebration.starTotal.resolved(for: totalStars))
+            Text(HopCopy.celebration.starTotal.localized(for: totalStars))
                 .hopTextStyle(.parentBody)
                 .foregroundStyle(theme.color.textSecondary)
         }
@@ -119,10 +119,10 @@ struct RoutineCelebrationView: View {
 
     private func unlockedRow(_ item: PondItem) -> some View {
         VStack(spacing: theme.spacing.m) {
-            HopArtwork(.pondItem(item.id), accessibilityLabel: PondItemNaming.name(for: item.id).value)
+            HopArtwork(.pondItem(item.id), accessibilityLabel: PondItemNaming.name(for: item.id).localized)
                 .frame(width: 120, height: 120)
 
-            Text(HopCopy.celebration.pondUnlock.value)
+            Text(HopCopy.celebration.pondUnlock.localized)
                 .hopTextStyle(.childInstruction)
                 .foregroundStyle(theme.color.textPrimary)
                 .multilineTextAlignment(.center)
@@ -141,9 +141,9 @@ struct RoutineCelebrationView: View {
         VStack(spacing: theme.spacing.m) {
             // Present and tappable from the first frame. The celebration is
             // something the child may watch, never something they must sit out.
-            HopPrimaryButton(HopCopy.celebration.resumeButton.value, icon: "arrow.uturn.backward", size: .childPrimary, action: onFinish)
+            HopPrimaryButton(HopCopy.celebration.resumeButton.localized, icon: "arrow.uturn.backward", size: .childPrimary, action: onFinish)
 
-            HopPrimaryButton(HopCopy.celebration.seeThePond.value, icon: "leaf.fill", size: .child, action: onSeeThePond)
+            HopPrimaryButton(HopCopy.celebration.seeThePond.localized, icon: "leaf.fill", size: .child, action: onSeeThePond)
         }
     }
 

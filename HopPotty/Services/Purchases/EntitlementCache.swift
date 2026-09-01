@@ -10,7 +10,19 @@ enum HopEntitlement: String, Sendable, CaseIterable {
     case family
 
     var hasFamilyUnlock: Bool { self == .family }
+    /// The parent feature layer's spelling of the same question.
+    var isUnlocked: Bool { self == .family }
+
+    /// Children a free family can keep.
+    ///
+    /// The **second** child is the paid feature; the first child's whole
+    /// experience is not. Nothing a child has already earned is ever put behind
+    /// this — an unpaid family keeps every star and every pond decoration.
+    static let freeChildLimit = 1
 }
+
+/// The name the parent features use for the same two-case entitlement.
+typealias ParentEntitlement = HopEntitlement
 
 /// The last entitlement StoreKit verified, kept for when StoreKit cannot be
 /// reached.

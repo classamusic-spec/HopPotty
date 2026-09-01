@@ -7,9 +7,11 @@ import HopPottyDesignTokens
 /// from the environment rather than owning an engine. The default does nothing,
 /// which means a preview and a unit-test host are silent instead of broken.
 public struct HopVoicePlayback: Sendable {
-    public let play: @Sendable @MainActor (HopVoiceLine) -> Void
+    /// Deliberately un-isolated: the design system only needs to say "play
+    /// this", and the audio service decides which actor that happens on.
+    public let play: @Sendable (HopVoiceLine) -> Void
 
-    public init(play: @escaping @Sendable @MainActor (HopVoiceLine) -> Void) {
+    public init(play: @escaping @Sendable (HopVoiceLine) -> Void) {
         self.play = play
     }
 

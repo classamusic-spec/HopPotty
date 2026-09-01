@@ -2,6 +2,8 @@ const parent = require('./parent');
 const onboarding = require('./onboarding');
 const settings = require('./settings');
 const child = require('./child');
+const pond = require('./pond');
+const insights = require('./insights');
 
 module.exports = {
   '01-parent-home': { render: parent.parentHome, appearance: 'light' },
@@ -13,6 +15,9 @@ module.exports = {
   '07-routine-step1': { render: child.routineStepOne, appearance: 'light' },
   '08-routine-step3': { render: child.routineOutcome, appearance: 'light' },
   '09-routine-complete': { render: child.routineComplete, appearance: 'light' },
+  '10-hops-pond': { render: pond.hopsPond, appearance: 'light' },
   '11-game-bubble-wash': { render: child.bubbleWash, appearance: 'light' },
   '12-quiz': { render: child.quiz, appearance: 'light' },
+  '13-insights': { render: insights.insights, appearance: 'light' },
+  '14-parent-home-dark': { render: parent.parentHome, appearance: 'dark' },
 };

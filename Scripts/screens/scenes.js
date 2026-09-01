@@ -12,6 +12,7 @@
 const { T, mix, alpha } = require('./ui');
 
 const P = T.palette;
+const INK_ = P.midnight;
 
 /** Soft, irregular cloud built from overlapping circles. */
 function cloud(x, y, s, fill, op) {
@@ -67,7 +68,8 @@ function tuft(x, y, s, tone) {
  *
  * `horizon` is the fraction of the box the sky occupies.
  */
-function meadow(w, h, { horizon = 0.66, pond = false, glow = null, dim = 0 } = {}) {
+function meadow(w, h, { horizon = 0.66, pond = false, glow = null, dim = 0, propsOffset = 46 } = {}) {
+  const py = horizon * h + propsOffset;
   const y0 = h * horizon;
   const id = 'm' + Math.random().toString(36).slice(2, 7);
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block">
@@ -115,13 +117,17 @@ function meadow(w, h, { horizon = 0.66, pond = false, glow = null, dim = 0 } = {
     ${pond ? `<ellipse cx="${w * 0.5}" cy="${h * 0.93}" rx="${w * 0.46}" ry="${h * 0.1}" fill="${P.pondBlue}" opacity="0.75"/>
       <ellipse cx="${w * 0.5}" cy="${h * 0.92}" rx="${w * 0.4}" ry="${h * 0.075}" fill="${P.pondBlueLight}" opacity="0.6"/>` : ''}
 
-    ${reeds(w * 0.08, y0 + 46, 0.85)}
-    ${reeds(w * 0.94, y0 + 54, 0.72)}
-    ${tuft(w * 0.24, y0 + 42, 1, P.hopGreenDeep)}
-    ${tuft(w * 0.79, y0 + 50, 0.85, P.hopGreenDeep)}
-    ${flower(w * 0.16, y0 + 62, 0.9, P.sunshine, P.sunshineDeep)}
-    ${flower(w * 0.88, y0 + 70, 0.8, P.peachPop, P.sunshineSoft)}
-    ${flower(w * 0.36, y0 + 78, 0.7, '#FFFFFF', P.sunshine)}
+    <!-- distant tufts sit on the horizon; everything taller waits until propsOffset,
+         so a headline over the field never lands on a flower. -->
+    ${tuft(w * 0.34, y0 + 12, 0.5, mix(P.hopGreen, P.hopGreenLight, 0.5))}
+    ${tuft(w * 0.62, y0 + 16, 0.45, mix(P.hopGreen, P.hopGreenLight, 0.5))}
+    ${reeds(w * 0.08, py + 4, 0.85)}
+    ${reeds(w * 0.94, py + 12, 0.72)}
+    ${tuft(w * 0.24, py, 1, P.hopGreenDeep)}
+    ${tuft(w * 0.79, py + 8, 0.85, P.hopGreenDeep)}
+    ${flower(w * 0.16, py + 20, 0.9, P.sunshine, P.sunshineDeep)}
+    ${flower(w * 0.88, py + 28, 0.8, P.peachPop, P.sunshineSoft)}
+    ${flower(w * 0.36, py + 36, 0.7, '#FFFFFF', P.sunshine)}
 
     ${glow ? `<ellipse cx="${glow[0]}" cy="${glow[1]}" rx="${glow[2]}" ry="${glow[2] * 0.92}" fill="url(#${id}glow)"/>` : ''}
     ${dim ? `<rect width="${w}" height="${h}" fill="${P.cloud}" opacity="${dim}"/>` : ''}
@@ -129,120 +135,144 @@ function meadow(w, h, { horizon = 0.66, pond = false, glow = null, dim = 0 } = {
 }
 
 /**
- * The reward pond. `unlocked` names which decorations are in the scene, so the
- * same drawing shows a bare pond on day one and a full one later.
+ * The reward pond, proportioned for a tall phone.
+ *
+ * `unlocked` names which decorations are in the scene, so the same drawing shows
+ * a bare pond on day one and a crowded one months later. Placement follows
+ * `PondCatalog`: back to front, and nothing lands on top of anything else.
  */
 function pond(w, h, unlocked = []) {
   const has = (k) => unlocked.includes(k);
   const id = 'p' + Math.random().toString(36).slice(2, 7);
-  const waterY = h * 0.52;
+  const SKY = h * 0.28, WATER = h * 0.40, SHORE = h * 0.735;
+  const at = (fx, fy) => [w * fx, h * fy];
+
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block">
     <defs>
       <linearGradient id="${id}sky" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="${mix(P.pondBlueSoft, P.pondBlueLight, 0.3)}"/>
-        <stop offset="1" stop-color="${mix(P.cloud, P.sunshineSoft, 0.4)}"/>
+        <stop offset="0" stop-color="${mix(P.pondBlueSoft, P.pondBlueLight, 0.34)}"/>
+        <stop offset="1" stop-color="${mix(P.cloud, P.sunshineSoft, 0.45)}"/>
       </linearGradient>
       <linearGradient id="${id}water" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="${mix(P.pondBlueLight, P.pondBlue, 0.55)}"/>
-        <stop offset="1" stop-color="${mix(P.pondBlue, P.pondBlueDeep, 0.35)}"/>
+        <stop offset="0" stop-color="${mix(P.pondBlueLight, P.cloud, 0.3)}"/>
+        <stop offset="0.35" stop-color="${P.pondBlue}"/>
+        <stop offset="1" stop-color="${mix(P.pondBlue, P.pondBlueDeep, 0.5)}"/>
       </linearGradient>
       <linearGradient id="${id}bank" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="${P.hopGreenLight}"/>
-        <stop offset="1" stop-color="${mix(P.hopGreenLight, P.hopGreen, 0.7)}"/>
+        <stop offset="1" stop-color="${mix(P.hopGreenLight, P.hopGreen, 0.75)}"/>
       </linearGradient>
       <radialGradient id="${id}sun" cx="0.5" cy="0.5" r="0.5">
-        <stop offset="0" stop-color="${P.sunshine}" stop-opacity="0.45"/>
+        <stop offset="0" stop-color="${P.sunshine}" stop-opacity="0.5"/>
         <stop offset="1" stop-color="${P.sunshine}" stop-opacity="0"/>
       </radialGradient>
     </defs>
 
     <rect width="${w}" height="${h}" fill="url(#${id}sky)"/>
-    <circle cx="${w * 0.16}" cy="${h * 0.12}" r="${w * 0.3}" fill="url(#${id}sun)"/>
-    ${has('sunbeam') ? `<circle cx="${w * 0.16}" cy="${h * 0.12}" r="${w * 0.075}" fill="${P.sunshine}" opacity="0.85"/>` : ''}
-    ${has('cloudPuff') ? cloud(w * 0.74, h * 0.11, 0.9, '#FFFFFF', 0.85) : ''}
-    ${cloud(w * 0.3, h * 0.08, 0.55, '#FFFFFF', 0.4)}
-    ${has('rainbow') ? `<g opacity="0.55" fill="none" stroke-width="7" stroke-linecap="round">
+    <circle cx="${w * 0.17}" cy="${SKY * 0.42}" r="${w * 0.42}" fill="url(#${id}sun)"/>
+    ${has('sunbeam') ? `<circle cx="${w * 0.17}" cy="${SKY * 0.42}" r="${w * 0.09}" fill="${P.sunshine}" opacity="0.9"/>` : ''}
+    ${has('cloudPuff') ? cloud(w * 0.74, SKY * 0.34, 0.95, '#FFFFFF', 0.9) : ''}
+    ${cloud(w * 0.28, SKY * 0.2, 0.5, '#FFFFFF', 0.42)}
+    ${has('rainbow') ? `<g opacity="0.5" fill="none" stroke-width="8" stroke-linecap="round">
         ${[P.peachPop, P.sunshine, P.hopGreenLight, P.pondBlueLight, P.lavender].map((cc, i) =>
-          `<path d="M ${w * 0.42} ${h * 0.36} A ${w * 0.3 - i * 8} ${h * 0.26 - i * 7} 0 0 1 ${w * 1.02 - i * 16} ${h * 0.36}" stroke="${cc}"/>`).join('')}
+          `<path d="M ${w * 0.34 + i * 9} ${WATER} A ${w * 0.34 - i * 9} ${h * 0.16 - i * 8} 0 0 1 ${w * 1.06 - i * 9} ${WATER}" stroke="${cc}"/>`).join('')}
       </g>` : ''}
 
-    <!-- far bank -->
-    <path d="M 0 ${waterY - 34} C ${w * 0.24} ${waterY - 74}, ${w * 0.56} ${waterY - 70}, ${w * 0.76} ${waterY - 40}
-             C ${w * 0.88} ${waterY - 22}, ${w * 0.95} ${waterY - 30}, ${w} ${waterY - 38} L ${w} ${waterY + 20} L 0 ${waterY + 20} Z"
-          fill="${mix(P.hopGreenSoft, P.hopGreenLight, 0.5)}"/>
-    ${has('blossomTree') ? `<g transform="translate(${w * 0.12} ${waterY - 52})">
-        <rect x="-6" y="-24" width="12" height="52" rx="6" fill="${P.sand500}"/>
-        <circle cx="-18" cy="-40" r="26" fill="${mix(P.peachSoft, P.peachPop, 0.35)}"/>
-        <circle cx="14" cy="-48" r="30" fill="${mix(P.peachSoft, P.peachPop, 0.25)}"/>
-        <circle cx="2" cy="-26" r="24" fill="${mix(P.peachSoft, P.peachPop, 0.45)}"/>
-      </g>` : ''}
-    ${has('clubhouse') ? `<g transform="translate(${w * 0.52} ${waterY - 46})">
-        <rect x="-30" y="-26" width="60" height="46" rx="7" fill="${mix(P.sand300, P.sand100, 0.5)}"/>
-        <path d="M -38 -26 L 0 -54 L 38 -26 Z" fill="${P.peachDeep}" opacity="0.85"/>
-        <rect x="-9" y="-6" width="18" height="26" rx="4" fill="${P.hopGreenDeep}" opacity="0.55"/>
-      </g>` : ''}
-    ${has('birdhouse') ? `<g transform="translate(${w * 0.84} ${waterY - 52})">
-        <rect x="-2.5" y="0" width="5" height="34" rx="2.5" fill="${P.sand500}"/>
-        <rect x="-15" y="-24" width="30" height="26" rx="5" fill="${mix(P.sand300, P.cloud, 0.35)}"/>
-        <path d="M -19 -24 L 0 -40 L 19 -24 Z" fill="${P.sunshineDeep}" opacity="0.75"/>
-        <circle cx="0" cy="-12" r="6" fill="${P.sand600}" opacity="0.65"/>
-      </g>` : ''}
+    <!-- far bank, with the back-most plantings on it -->
+    <path d="M 0 ${SKY + 26} C ${w * 0.22} ${SKY - 24}, ${w * 0.58} ${SKY - 18}, ${w * 0.78} ${SKY + 18}
+             C ${w * 0.9} ${SKY + 40}, ${w * 0.96} ${SKY + 30}, ${w} ${SKY + 22} L ${w} ${WATER + 30} L 0 ${WATER + 30} Z"
+          fill="${mix(P.hopGreenSoft, P.hopGreenLight, 0.55)}"/>
+    ${has('blossomTree') ? `<g transform="translate(${w * 0.13} ${SKY + 16})">
+        <rect x="-6" y="-20" width="12" height="46" rx="6" fill="${P.sand500}"/>
+        <circle cx="-16" cy="-36" r="24" fill="${mix(P.peachSoft, P.peachPop, 0.35)}"/>
+        <circle cx="13" cy="-44" r="27" fill="${mix(P.peachSoft, P.peachPop, 0.25)}"/>
+        <circle cx="2" cy="-24" r="22" fill="${mix(P.peachSoft, P.peachPop, 0.45)}"/></g>` : ''}
+    ${has('clubhouse') ? `<g transform="translate(${w * 0.55} ${SKY + 24})">
+        <rect x="-28" y="-24" width="56" height="42" rx="7" fill="${mix(P.sand300, P.sand100, 0.5)}"/>
+        <path d="M -35 -24 L 0 -50 L 35 -24 Z" fill="${P.peachDeep}" opacity="0.85"/>
+        <rect x="-8" y="-4" width="16" height="22" rx="4" fill="${P.hopGreenDeep}" opacity="0.5"/></g>` : ''}
+    ${has('fernPatch') ? reeds(w * 0.2, SKY + 30, 0.7, true) : ''}
+    <!-- base scenery, not decorations: a pond with nothing unlocked is still a place -->
+    <g opacity="0.55">
+      <ellipse cx="${w * 0.08}" cy="${SKY + 20}" rx="42" ry="26" fill="${mix(P.hopGreenLight, P.hopGreen, 0.5)}"/>
+      <ellipse cx="${w * 0.38}" cy="${SKY + 8}" rx="34" ry="20" fill="${mix(P.hopGreenLight, P.hopGreen, 0.35)}"/>
+      <ellipse cx="${w * 0.72}" cy="${SKY + 26}" rx="46" ry="24" fill="${mix(P.hopGreenLight, P.hopGreen, 0.45)}"/>
+      <ellipse cx="${w * 0.96}" cy="${SKY + 18}" rx="30" ry="18" fill="${mix(P.hopGreenLight, P.hopGreen, 0.3)}"/>
+    </g>
+    ${tuft(w * 0.5, WATER + 4, 0.55, mix(P.hopGreen, P.hopGreenDeep, 0.2))}
+    ${tuft(w * 0.86, WATER + 2, 0.5, mix(P.hopGreen, P.hopGreenDeep, 0.2))}
+    ${tuft(w * 0.16, WATER + 6, 0.5, mix(P.hopGreen, P.hopGreenDeep, 0.2))}
 
     <!-- water -->
-    <path d="M 0 ${waterY + 4} C ${w * 0.3} ${waterY - 14}, ${w * 0.7} ${waterY - 10}, ${w} ${waterY + 6} L ${w} ${h} L 0 ${h} Z"
+    <path d="M 0 ${WATER + 8} C ${w * 0.3} ${WATER - 18}, ${w * 0.72} ${WATER - 14}, ${w} ${WATER + 10} L ${w} ${h} L 0 ${h} Z"
           fill="url(#${id}water)"/>
-    <path d="M ${w * 0.12} ${waterY + 34} q 22 -9 44 0 t 44 0" fill="none" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="3.5" stroke-linecap="round"/>
-    <path d="M ${w * 0.5} ${waterY + 62} q 22 -9 44 0 t 44 0" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="3.5" stroke-linecap="round"/>
+    <g fill="none" stroke="#FFFFFF" stroke-linecap="round">
+      <path d="M ${w * 0.08} ${WATER + 46} q 26 -10 52 0 t 52 0" stroke-opacity="0.3" stroke-width="4"/>
+      <path d="M ${w * 0.5} ${WATER + 92} q 24 -9 48 0 t 48 0" stroke-opacity="0.22" stroke-width="4"/>
+      <path d="M ${w * 0.04} ${WATER + 150} q 24 -9 48 0 t 48 0" stroke-opacity="0.18" stroke-width="4"/>
+      <path d="M ${w * 0.52} ${WATER + 196} q 22 -8 44 0 t 44 0" stroke-opacity="0.16" stroke-width="4"/>
+    </g>
+    ${has('moonReflection') ? `<ellipse cx="${w * 0.52}" cy="${WATER + 170}" rx="46" ry="14" fill="${P.sunshineSoft}" opacity=".4"/>` : ''}
 
-    <!-- near banks -->
-    <path d="M 0 ${h * 0.78} C ${w * 0.12} ${h * 0.7}, ${w * 0.2} ${h * 0.72}, ${w * 0.26} ${h * 0.82} L ${w * 0.26} ${h} L 0 ${h} Z" fill="url(#${id}bank)"/>
-    <path d="M ${w} ${h * 0.76} C ${w * 0.9} ${h * 0.69}, ${w * 0.82} ${h * 0.73}, ${w * 0.78} ${h * 0.83} L ${w * 0.78} ${h} L ${w} ${h} Z" fill="url(#${id}bank)"/>
-    <path d="M 0 ${h * 0.94} C ${w * 0.3} ${h * 0.86}, ${w * 0.7} ${h * 0.86}, ${w} ${h * 0.94} L ${w} ${h} L 0 ${h} Z" fill="${mix(P.hopGreenLight, P.hopGreen, 0.8)}"/>
+    <!-- things in the water -->
+    ${has('waterLilyCluster') ? lilyPad(...at(0.22, 0.66), 0.8, mix(P.hopGreen, P.hopGreenLight, 0.35)) : ''}
+    ${has('lilyPadLarge') ? lilyPad(...at(0.56, 0.508), 1.6, mix(P.hopGreen, P.hopGreenDeep, 0.3)) : ''}
+    ${has('lilyPadSmall') ? lilyPad(...at(0.3, 0.585), 0.95, mix(P.hopGreen, P.hopGreenDeep, 0.12)) : ''}
+    ${has('lilyFlower') ? `<g transform="translate(${w * 0.78} ${h * 0.545})">
+        ${[0, 60, 120, 180, 240, 300].map((a) => `<ellipse cx="0" cy="-8" rx="5" ry="10" fill="#FFFFFF" transform="rotate(${a})"/>`).join('')}
+        <circle r="4.4" fill="${P.sunshine}"/></g>` : ''}
+    ${has('fishOrange') ? `<g transform="translate(${w * 0.72} ${h * 0.64})">
+        <ellipse rx="17" ry="10" fill="${P.peachPop}"/><path d="M15 0 L28 -9 L28 9 Z" fill="${P.peachPop}"/>
+        <circle cx="-7" cy="-2" r="2.6" fill="${INK_}"/></g>` : ''}
+    ${has('fishBlue') ? `<g transform="translate(${w * 0.24} ${h * 0.7}) scale(-1 1)">
+        <ellipse rx="13" ry="8" fill="${P.pondBlueLight}"/><path d="M11 0 L21 -7 L21 7 Z" fill="${P.pondBlueLight}"/>
+        <circle cx="-5" cy="-2" r="2.2" fill="${INK_}"/></g>` : ''}
+    ${has('tadpoleFriend') ? `<g transform="translate(${w * 0.44} ${h * 0.685})">
+        <circle r="10" fill="${P.hopGreenDeep}"/><path d="M9 0 C 16 -7, 22 7, 28 0 C 22 4, 16 9, 9 0Z" fill="${P.hopGreenDeep}"/>
+        <circle cx="-2" cy="-3" r="2.6" fill="#FFFFFF"/></g>` : ''}
+    ${has('duckling') ? `<g transform="translate(${w * 0.66} ${h * 0.575})">
+        <ellipse rx="19" ry="14" fill="${P.sunshine}"/><circle cx="-14" cy="-14" r="11" fill="${P.sunshine}"/>
+        <path d="M -24 -14 l -9 3 9 4 z" fill="${P.sunshineDeep}"/><circle cx="-16" cy="-17" r="2" fill="${INK_}"/></g>` : ''}
+    ${has('turtleRock') ? `<g transform="translate(${w * 0.16} ${h * 0.62})">
+        <ellipse rx="20" ry="11" fill="${P.sand300}"/><ellipse cy="-6" rx="15" ry="9" fill="${mix(P.sand300, P.sand100, .4)}"/></g>` : ''}
 
-    ${has('lilyPadLarge') ? lilyPad(w * 0.59, waterY + 46, 1.15, mix(P.hopGreen, P.hopGreenDeep, 0.25)) : ''}
-    ${has('lilyPadSmall') ? lilyPad(w * 0.4, waterY + 74, 0.9, mix(P.hopGreen, P.hopGreenDeep, 0.1)) : ''}
-    ${has('waterLilyCluster') ? lilyPad(w * 0.24, waterY + 58, 0.75, mix(P.hopGreen, P.hopGreenLight, 0.4)) : ''}
-    ${has('lilyFlower') ? `<g transform="translate(${w * 0.48} ${waterY + 40})">
-        ${[0, 60, 120, 180, 240, 300].map((a) => `<ellipse cx="0" cy="-7" rx="4.6" ry="9" fill="#FFFFFF" transform="rotate(${a})"/>`).join('')}
-        <circle r="4" fill="${P.sunshine}"/></g>` : ''}
-    ${has('fishOrange') ? `<g transform="translate(${w * 0.68} ${waterY + 88})">
-        <ellipse rx="15" ry="9" fill="${P.peachPop}"/><path d="M 13 0 L 25 -8 L 25 8 Z" fill="${P.peachPop}"/>
-        <circle cx="-6" cy="-2" r="2.4" fill="${P.midnight}"/></g>` : ''}
-    ${has('fishBlue') ? `<g transform="translate(${w * 0.31} ${waterY + 96}) scale(-1 1)">
-        <ellipse rx="12" ry="7.5" fill="${P.pondBlueLight}"/><path d="M 10 0 L 20 -7 L 20 7 Z" fill="${P.pondBlueLight}"/>
-        <circle cx="-5" cy="-2" r="2" fill="${P.midnight}"/></g>` : ''}
-    ${has('duckling') ? `<g transform="translate(${w * 0.72} ${waterY + 54})">
-        <ellipse rx="18" ry="13" fill="${P.sunshine}"/><circle cx="-13" cy="-13" r="10" fill="${P.sunshine}"/>
-        <path d="M -22 -13 l -8 3 8 3 z" fill="${P.sunshineDeep}"/><circle cx="-15" cy="-15" r="1.9" fill="${P.midnight}"/></g>` : ''}
-
-    ${has('reedsLeft') ? reeds(w * 0.07, h * 0.9, 1.05, true) : ''}
-    ${has('reedsRight') ? reeds(w * 0.93, h * 0.88, 0.95, true) : ''}
-    ${has('cattails') ? reeds(w * 0.15, h * 0.96, 0.8, true) : ''}
-    ${has('stoneSmall') ? `<ellipse cx="${w * 0.17}" cy="${h * 0.9}" rx="19" ry="12" fill="${P.sand300}"/>` : ''}
-    ${has('stoneStack') ? `<g transform="translate(${w * 0.09} ${h * 0.95})">
-        <ellipse cy="0" rx="20" ry="10" fill="${P.sand300}"/><ellipse cy="-15" rx="15" ry="8" fill="${mix(P.sand300, P.sand100, 0.4)}"/>
+    <!-- near shore -->
+    <path d="M 0 ${SHORE + 12} C ${w * 0.26} ${SHORE - 26}, ${w * 0.68} ${SHORE - 22}, ${w} ${SHORE + 6} L ${w} ${h} L 0 ${h} Z"
+          fill="url(#${id}bank)"/>
+    ${has('reedsLeft') ? reeds(w * 0.08, SHORE + 16, 1.15, true) : ''}
+    ${has('reedsRight') ? reeds(w * 0.93, SHORE + 10, 1.0, true) : ''}
+    ${has('cattails') ? reeds(w * 0.19, SHORE + 30, 0.85, true) : ''}
+    ${has('stoneSmall') ? `<ellipse cx="${w * 0.3}" cy="${SHORE + 6}" rx="21" ry="13" fill="${P.sand300}"/>` : ''}
+    ${has('stoneStack') ? `<g transform="translate(${w * 0.1} ${h * 0.94})">
+        <ellipse rx="20" ry="10" fill="${P.sand300}"/><ellipse cy="-15" rx="15" ry="8" fill="${mix(P.sand300, P.sand100, 0.4)}"/>
         <ellipse cy="-27" rx="10" ry="6" fill="${P.sand300}"/></g>` : ''}
-    ${has('mushroomCluster') ? `<g transform="translate(${w * 0.31} ${h * 0.97})">
+    ${has('mushroomCluster') ? `<g transform="translate(${w * 0.42} ${h * 0.96})">
         <rect x="-4" y="-14" width="8" height="16" rx="4" fill="${P.sand100}"/>
         <path d="M -15 -13 a 15 12 0 0 1 30 0 z" fill="${P.peachDeep}"/>
-        <circle cx="-5" cy="-17" r="2.6" fill="${P.cloud}"/><circle cx="5" cy="-15" r="2" fill="${P.cloud}"/></g>` : ''}
-    ${has('flowerYellow') ? flower(w * 0.2, h * 0.97, 1, P.sunshine, P.sunshineDeep) : ''}
-    ${has('flowerPink') ? flower(w * 0.83, h * 0.96, 0.95, P.peachPop, P.sunshineSoft) : ''}
-    ${has('flowerPurple') ? flower(w * 0.93, h * 0.92, 0.85, P.lavender, P.sunshineSoft) : ''}
-    ${has('butterflyBlue') ? `<g transform="translate(${w * 0.28} ${h * 0.44})">
-        <ellipse cx="-8" cy="-3" rx="9" ry="11" fill="${P.pondBlueLight}" transform="rotate(-22)"/>
-        <ellipse cx="8" cy="-3" rx="9" ry="11" fill="${P.pondBlue}" transform="rotate(22)"/>
-        <rect x="-1.6" y="-9" width="3.2" height="17" rx="1.6" fill="${P.midnight}" opacity="0.7"/></g>` : ''}
-    ${has('dragonfly') ? `<g transform="translate(${w * 0.55} ${h * 0.38})">
-        <ellipse cx="-11" cy="-5" rx="14" ry="4.6" fill="${P.pondBlueLight}" opacity="0.85" transform="rotate(-14)"/>
-        <ellipse cx="11" cy="-5" rx="14" ry="4.6" fill="${P.pondBlueLight}" opacity="0.85" transform="rotate(14)"/>
-        <rect x="-2" y="-4" width="4" height="22" rx="2" fill="${P.lavenderDeep}"/></g>` : ''}
-    ${has('fireflies') ? [[0.86, 0.62], [0.9, 0.7], [0.8, 0.68]].map(([fx, fy]) =>
+        <circle cx="-5" cy="-17" r="2.6" fill="${P.cloud}"/></g>` : ''}
+    ${has('flowerYellow') ? flower(w * 0.16, SHORE + 22, 1.05, P.sunshine, P.sunshineDeep) : ''}
+    ${has('flowerPink') ? flower(w * 0.84, SHORE + 16, 1.0, P.peachPop, P.sunshineSoft) : ''}
+    ${has('flowerPurple') ? flower(w * 0.68, SHORE + 28, 0.9, P.lavender, P.sunshineSoft) : ''}
+    ${has('snail') ? `<g transform="translate(${w * 0.56} ${SHORE + 44})">
+        <ellipse cx="6" cy="4" rx="12" ry="5" fill="${P.sand500}"/>
+        <circle cx="0" cy="0" r="9" fill="${P.peachDeep}"/><circle cx="0" cy="0" r="4.4" fill="${P.peachSoft}"/></g>` : ''}
+
+    <!-- in front of everything -->
+    ${has('butterflyBlue') ? `<g transform="translate(${w * 0.19} ${h * 0.44})">
+        <ellipse cx="-9" cy="-3" rx="10" ry="12" fill="${P.pondBlueLight}" transform="rotate(-22)"/>
+        <ellipse cx="9" cy="-3" rx="10" ry="12" fill="${P.pondBlue}" transform="rotate(22)"/>
+        <rect x="-1.8" y="-10" width="3.6" height="19" rx="1.8" fill="${INK_}" opacity="0.7"/></g>` : ''}
+    ${has('butterflyYellow') ? `<g transform="translate(${w * 0.86} ${h * 0.47})">
+        <ellipse cx="-8" cy="-3" rx="9" ry="11" fill="${P.sunshine}" transform="rotate(-22)"/>
+        <ellipse cx="8" cy="-3" rx="9" ry="11" fill="${P.sunshineBright}" transform="rotate(22)"/>
+        <rect x="-1.6" y="-9" width="3.2" height="17" rx="1.6" fill="${INK_}" opacity="0.7"/></g>` : ''}
+    ${has('dragonfly') ? `<g transform="translate(${w * 0.6} ${h * 0.36})">
+        <ellipse cx="-12" cy="-5" rx="15" ry="5" fill="${P.pondBlueLight}" opacity="0.85" transform="rotate(-14)"/>
+        <ellipse cx="12" cy="-5" rx="15" ry="5" fill="${P.pondBlueLight}" opacity="0.85" transform="rotate(14)"/>
+        <rect x="-2" y="-4" width="4" height="24" rx="2" fill="${P.lavenderDeep}"/></g>` : ''}
+    ${has('fireflies') ? [[0.86, 0.62], [0.9, 0.68], [0.8, 0.66]].map(([fx, fy]) =>
         `<circle cx="${w * fx}" cy="${h * fy}" r="5" fill="${P.sunshine}" opacity="0.9"/>
          <circle cx="${w * fx}" cy="${h * fy}" r="11" fill="${P.sunshine}" opacity="0.28"/>`).join('') : ''}
-    ${has('signpost') ? `<g transform="translate(${w * 0.84} ${h * 0.98})">
-        <rect x="-3" y="-42" width="6" height="42" rx="3" fill="${P.sand500}"/>
-        <rect x="-20" y="-46" width="40" height="18" rx="5" fill="${mix(P.sand300, P.cloud, 0.4)}"/></g>` : ''}
   </svg>`;
 }
 
@@ -287,4 +317,51 @@ function washroom(w, h) {
   </svg>`;
 }
 
-module.exports = { meadow, pond, washroom, cloud, reeds, flower, lilyPad, tuft };
+/**
+ * The hand-washing game: warm light, a bank of foam to stand in, nothing else.
+ *
+ * An earlier version drew a basin and a tap. At this size they read as clutter
+ * competing with the bubbles, which are the only thing the child may touch.
+ */
+function soap(w, h, { foamY = 0.74 } = {}) {
+  const id = 's' + Math.random().toString(36).slice(2, 7);
+  const y = h * foamY;
+  const blob = (cx, r, o) => `<circle cx="${cx}" cy="${y + 10}" r="${r}" fill="#FFFFFF" opacity="${o}"/>`;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block">
+    <defs>
+      <linearGradient id="${id}air" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="${mix(P.pondBlueSoft, P.pondBlueLight, 0.3)}"/>
+        <stop offset="0.62" stop-color="${mix(P.pondBlueSoft, P.cloud, 0.55)}"/>
+        <stop offset="1" stop-color="${P.cloud}"/>
+      </linearGradient>
+      <radialGradient id="${id}warm" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="${P.sunshineSoft}" stop-opacity="0.7"/>
+        <stop offset="1" stop-color="${P.sunshineSoft}" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="${w}" height="${h}" fill="url(#${id}air)"/>
+    <circle cx="${w * 0.5}" cy="${y - 40}" r="${w * 0.62}" fill="url(#${id}warm)"/>
+    <g opacity="0.5">
+      <circle cx="${w * 0.14}" cy="${h * 0.2}" r="46" fill="#FFFFFF" opacity="0.35"/>
+      <circle cx="${w * 0.88}" cy="${h * 0.36}" r="62" fill="#FFFFFF" opacity="0.28"/>
+    </g>
+    <path d="M 0 ${y + 26} C ${w * 0.2} ${y - 4}, ${w * 0.8} ${y - 4}, ${w} ${y + 26} L ${w} ${h} L 0 ${h} Z"
+          fill="${mix(P.pondBlueSoft, P.cloud, 0.62)}"/>
+    ${blob(w * 0.06, 40, 0.95)}${blob(w * 0.24, 52, 0.95)}${blob(w * 0.46, 44, 0.95)}
+    ${blob(w * 0.68, 56, 0.95)}${blob(w * 0.9, 42, 0.95)}
+    <rect x="0" y="${y + 22}" width="${w}" height="${h - y - 22}" fill="${mix(P.pondBlueSoft, P.cloud, 0.42)}"/>
+    ${blob(w * 0.15, 26, 0.9)}${blob(w * 0.36, 30, 0.9)}${blob(w * 0.58, 24, 0.9)}${blob(w * 0.8, 30, 0.9)}
+    <circle cx="${w * 0.16}" cy="${y - 6}" r="13" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="${w * 0.76}" cy="${y - 16}" r="9" fill="#FFFFFF" opacity="0.7"/>
+    <circle cx="${w * 0.55}" cy="${y - 24}" r="7" fill="#FFFFFF" opacity="0.6"/>
+  </svg>`;
+}
+
+/** The calm ground for a screen that asks a question rather than shows a place. */
+function dome(w, height, fill) {
+  return `<svg width="${w}" height="${height}" viewBox="0 0 ${w} ${height}" style="display:block">
+    <path d="M 0 0 H ${w} V ${height - 62} C ${w * 0.78} ${height + 10}, ${w * 0.22} ${height + 10}, 0 ${height - 62} Z" fill="${fill}"/>
+  </svg>`;
+}
+
+module.exports = { meadow, pond, washroom, soap, dome, cloud, reeds, flower, lilyPad, tuft };

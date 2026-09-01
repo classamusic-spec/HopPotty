@@ -83,6 +83,12 @@ targets:
           # Referenced by the scheme, not bundled into the app. A StoreKit
           # configuration file inside the .app would ship test products.
           - "Resources/HopPotty.storekit"
+          # Consumed through INFOPLIST_FILE and CODE_SIGN_ENTITLEMENTS below.
+          # Without these excludes they would ALSO be picked up as resources and
+          # copied into the bundle, and a second Info.plist landing at the same
+          # path is a "multiple commands produce" build failure.
+          - "App/Info.plist"
+          - "App/HopPotty.entitlements"
           - "**/.DS_Store"
       - path: HopPotty/Resources/HopPotty.storekit
         # Visible in the navigator, member of no build phase.

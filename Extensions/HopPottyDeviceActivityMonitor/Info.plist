@@ -50,7 +50,7 @@
 		     name, so the Swift class must be spelled exactly as below and must
 		     not be nested inside another type. -->
 		<key>NSExtensionPrincipalClass</key>
-		<string>$(PRODUCT_MODULE_NAME).DeviceActivityMonitorExtension</string>
+		<string>$(PRODUCT_MODULE_NAME).HopPottyDeviceActivityMonitorExtension</string>
 	</dict>
 </dict>
 </plist>

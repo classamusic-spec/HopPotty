@@ -1,9 +1,10 @@
-const { T, c, type, statusBar, homeIndicator, svg, shadow } = require('./ui');
+const { T, c, type, statusBar, homeIndicator, svg, shadow, alpha, elevation } = require('./ui');
+const { tints } = require('./kit');
 
 /** Rounded card container matching HopCard. */
-function card(col, inner, { pad = 17, radius = T.radius.xl, elev = 'resting', bg, extra = '' } = {}) {
+function card(col, inner, { pad = 17, radius = T.radius.xl, elev = 'resting', bg, extra = '', appearance = 'light' } = {}) {
   return `<div style="background:${bg || col.surface};border-radius:${radius}px;padding:${pad}px;
-    box-shadow:${elev === 'none' ? 'none' : `0 ${elev === 'raised' ? 8 : 4}px ${elev === 'raised' ? 24 : 14}px ${col.shadow}`};${extra}">${inner}</div>`;
+    box-shadow:${elev === 'none' ? 'none' : elevation(appearance, elev)};${extra}">${inner}</div>`;
 }
 
 function pillButton(col, label, { fill, textColor, grow = true, height = 44 } = {}) {
@@ -74,11 +75,15 @@ function tabBar(col, active) {
 /** Parent dashboard. Modelled on Apple Health's density and restraint. */
 function parentHome(appearance = 'light') {
   const col = c(appearance);
+  const dark = appearance.startsWith('dark');
+  const TINT = tints(appearance);
+  const modeSoft = dark ? alpha(T.palette.hopGreen, .16) : T.palette.hopGreenSoft;
+  const modeInk = dark ? T.palette.hopGreenLight : T.palette.hopGreenInk;
   const P = T.spacing.pageCompact;
   return `
   <div style="display:flex;flex-direction:column;height:100%;background:${col.backgroundPrimary}">
     ${statusBar(col.textPrimary)}
-    <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:10px;padding:2px ${P}px 8px">
+    <div class="fit" style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:9px;padding:2px ${P}px 6px">
 
       <div style="display:flex;align-items:center;gap:12px">
         <div style="width:42px;height:42px;border-radius:21px;background:${T.palette.hopGreenSoft};
@@ -104,9 +109,9 @@ function parentHome(appearance = 'light') {
           <div style="flex:1">
             <div style="${type('parentCaption', { color: col.textSecondary, weight: 'semibold' })};text-transform:uppercase;letter-spacing:.6px;font-size:11.5px">Next Potty Pause</div>
             <div style="${type('timerHero', { color: col.textPrimary })};font-size:44px;margin-top:1px;font-variant-numeric:tabular-nums">28:14</div>
-            <div style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:4px 11px;border-radius:20px;background:${T.palette.hopGreenSoft}">
-              <div style="width:7px;height:7px;border-radius:4px;background:${T.palette.hopGreenDeep}"></div>
-              <span style="${type('parentFootnote', { color: T.palette.hopGreenInk, weight: 'semibold' })};font-size:12px">Routine Mode</span>
+            <div style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:4px 11px;border-radius:20px;background:${modeSoft}">
+              <div style="width:7px;height:7px;border-radius:4px;background:${dark ? T.palette.hopGreenLight : T.palette.hopGreenDeep}"></div>
+              <span style="${type('parentFootnote', { color: modeInk, weight: 'semibold' })};font-size:12px">Routine Mode</span>
             </div>
           </div>
           <div style="margin:-8px -6px 0 0">${svg('Art/character/hop-idle.svg', { width: 104 })}</div>
@@ -114,7 +119,7 @@ function parentHome(appearance = 'light') {
         <div style="display:flex;gap:10px;margin-top:13px">
           ${pillButton(col, 'Skip', { fill: 'transparent', textColor: col.textSecondary })}
           ${pillButton(col, 'Start Now', { fill: col.brandAction, textColor: col.textOnBrand })}
-        </div>`, { elev: 'raised' })}
+        </div>`, { elev: 'raised', appearance })}
 
       <div>
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px">
@@ -122,25 +127,25 @@ function parentHome(appearance = 'light') {
           <span style="${type('parentCallout', { color: col.brandAction, weight: 'semibold' })};font-size:14px">View all</span>
         </div>
         ${card(col, `<div style="display:flex">
-          ${metricChip(col, { glyph: 'check', value: '6', label: 'Checks', tint: T.palette.hopGreenDeep, tintSoft: T.palette.hopGreenSoft })}
-          ${metricChip(col, { glyph: 'tried', value: '5', label: 'Tried', tint: col.eventTried, tintSoft: T.palette.lavenderSoft })}
-          ${metricChip(col, { glyph: 'pee', value: '3', label: 'Pee', tint: col.eventPee, tintSoft: T.palette.pondBlueSoft })}
-          ${metricChip(col, { glyph: 'poop', value: '1', label: 'Poop', tint: col.eventPoop, tintSoft: T.palette.peachSoft })}
-        </div>`, { pad: 14 })}
+          ${metricChip(col, { glyph: 'check', value: '6', label: 'Checks', tint: TINT.check.tint, tintSoft: TINT.check.soft })}
+          ${metricChip(col, { glyph: 'tried', value: '5', label: 'Tried', tint: TINT.tried.tint, tintSoft: TINT.tried.soft })}
+          ${metricChip(col, { glyph: 'pee', value: '3', label: 'Pee', tint: TINT.pee.tint, tintSoft: TINT.pee.soft })}
+          ${metricChip(col, { glyph: 'poop', value: '1', label: 'Poop', tint: TINT.poop.tint, tintSoft: TINT.poop.soft })}
+        </div>`, { pad: 14, appearance })}
       </div>
 
       <div>
         <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15.5px;margin-bottom:6px">Today's routine</div>
         ${card(col, `
-          ${timelineRow(col, { time: '1:42 PM', label: 'Pee', glyph: 'pee', tint: col.eventPee, tintSoft: T.palette.pondBlueSoft })}
-          ${timelineRow(col, { time: '12:54 PM', label: 'Tried', glyph: 'tried', tint: col.eventTried, tintSoft: T.palette.lavenderSoft })}
-          ${timelineRow(col, { time: '11:58 AM', label: 'Poop', glyph: 'poop', tint: col.eventPoop, tintSoft: T.palette.peachSoft, last: true })}
-        `, { pad: 13 })}
+          ${timelineRow(col, { time: '1:42 PM', label: 'Pee', glyph: 'pee', tint: TINT.pee.tint, tintSoft: TINT.pee.soft })}
+          ${timelineRow(col, { time: '12:54 PM', label: 'Tried', glyph: 'tried', tint: TINT.tried.tint, tintSoft: TINT.tried.soft })}
+          ${timelineRow(col, { time: '11:58 AM', label: 'Poop', glyph: 'poop', tint: TINT.poop.tint, tintSoft: TINT.poop.soft, last: true })}
+        `, { pad: 13, appearance })}
       </div>
 
       ${card(col, `<div style="display:flex;gap:13px;align-items:flex-start">
-        <div style="width:38px;height:38px;border-radius:12px;background:${T.palette.pondBlueSoft};display:grid;place-items:center;flex:0 0 auto">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="${col.eventPee}"><rect x="3" y="13" width="3.6" height="7" rx="1.2"/><rect x="10.2" y="8" width="3.6" height="12" rx="1.2"/><rect x="17.4" y="4" width="3.6" height="16" rx="1.2"/></svg>
+        <div style="width:38px;height:38px;border-radius:12px;background:${TINT.pee.soft};display:grid;place-items:center;flex:0 0 auto">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="${TINT.pee.tint}"><rect x="3" y="13" width="3.6" height="7" rx="1.2"/><rect x="10.2" y="8" width="3.6" height="12" rx="1.2"/><rect x="17.4" y="4" width="3.6" height="16" rx="1.2"/></svg>
         </div>
         <div style="flex:1">
           <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15px">A pattern is forming</div>
@@ -148,7 +153,7 @@ function parentHome(appearance = 'light') {
           <div style="display:inline-block;margin-top:8px;padding:3px 9px;border-radius:8px;background:${col.surfaceSunken};
             ${type('parentFootnote', { color: col.textTertiary, weight: 'medium' })};font-size:10.5px">Pattern, not medical advice</div>
         </div>
-      </div>`, { pad: 13 })}
+      </div>`, { pad: 13, appearance })}
     </div>
     ${tabBar(col, 'Home')}
     ${homeIndicator(col.textPrimary)}

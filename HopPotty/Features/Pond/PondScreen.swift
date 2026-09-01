@@ -16,7 +16,7 @@ struct PondScreen: View {
     /// An item that has just arrived, handed over from a celebration. It gets a
     /// single arrival beat and then simply belongs to the pond like everything
     /// else.
-    var arrivingItem: PondItemID?
+    var arrivingItem: PondItemID? = nil
     let onLeave: () -> Void
 
     @State private var selectedItem: PondItemID?
@@ -48,13 +48,13 @@ struct PondScreen: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: theme.spacing.m) {
             VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                Text(HopCopy.pond.title.resolved(forNickname: context.nickname))
+                Text(HopCopy.pond.title.localized(forNickname: context.nickname))
                     .hopTextStyle(.childTitle)
                     .foregroundStyle(theme.color.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isHeader)
 
-                Text(HopCopy.pond.starCount.resolved(for: stars))
+                Text(HopCopy.pond.starCount.localized(for: stars))
                     .hopTextStyle(.parentBody)
                     .foregroundStyle(theme.color.textSecondary)
             }
@@ -66,7 +66,7 @@ struct PondScreen: View {
 
             HopIconButton(
                 systemImage: "xmark",
-                accessibilityLabel: HopCopy.celebration.resumeButton.value,
+                accessibilityLabel: HopCopy.celebration.resumeButton.localized,
                 action: onLeave
             )
         }
@@ -110,7 +110,7 @@ struct PondScreen: View {
         } else {
             // The pond is finished. Still a warm sentence, still no ranking, and
             // nothing to keep grinding for.
-            Text(HopCopy.pond.emptyBody.value)
+            Text(HopCopy.pond.emptyBody.localized)
                 .hopTextStyle(.childInstruction)
                 .foregroundStyle(theme.color.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -119,11 +119,11 @@ struct PondScreen: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: theme.spacing.s) {
-            Text(HopCopy.pond.emptyTitle.value)
+            Text(HopCopy.pond.emptyTitle.localized)
                 .hopTextStyle(.childTitle)
                 .foregroundStyle(theme.color.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
-            Text(HopCopy.pond.emptyBody.value)
+            Text(HopCopy.pond.emptyBody.localized)
                 .hopTextStyle(.childInstruction)
                 .foregroundStyle(theme.color.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -136,7 +136,7 @@ struct PondScreen: View {
     @ViewBuilder
     private var selectionCallout: some View {
         if let selectedItem {
-            Text(PondItemNaming.name(for: selectedItem).value)
+            Text(PondItemNaming.name(for: selectedItem).localized)
                 .hopTextStyle(.childInstruction)
                 .foregroundStyle(theme.color.textOnBrand)
                 .padding(.horizontal, theme.spacing.xl)
@@ -157,7 +157,7 @@ struct PondScreen: View {
     private func greetArrival() async {
         guard let arrivingItem else { return }
         AccessibilityNotification.Announcement(
-            HopCopy.celebration.pondUnlock.value
+            HopCopy.celebration.pondUnlock.localized
         ).post()
         selectedItem = arrivingItem
     }
@@ -175,9 +175,9 @@ private struct PondNextUpCard: View {
     let next: PondItem
 
     private var sentence: String {
-        HopCopy.pond.nextUnlock.resolved(
+        HopCopy.pond.nextUnlock.localized(
             for: progress.starsRemaining,
-            additional: [2: .text(PondItemNaming.name(for: next.id).value)]
+            additional: [2: .text(PondItemNaming.name(for: next.id).localized)]
         )
     }
 

@@ -227,16 +227,20 @@ final class PersistenceController {
 
     // MARK: - Contexts
 
-    /// A context for the main actor. One per controller: SwiftData contexts are
-    /// not thread-safe, and a second main context is a second set of unsaved
-    /// changes nobody is tracking.
-    lazy var mainContext: ModelContext? = {
-        guard let container else { return nil }
-        let context = ModelContext(container)
-        // HopPotty saves explicitly at the end of every repository write, so a
-        // failed save surfaces at the call site instead of at some later
-        // autosave nobody is awaiting.
-        context.autosaveEnabled = false
-        return context
-    }()
+    /// The container's own main-actor context, or `nil` when no container
+    /// opened.
+    ///
+    /// Deliberately `container.mainContext` and **not** `ModelContext(container)`.
+    /// The scene installs the same container with `.modelContainer(_:)`, which
+    /// binds every `@Query` to `mainContext` too. A second context here would
+    /// give the app two sets of unsaved changes on the same actor — the exact
+    /// split `RepositorySet` exists to prevent, where a deletion spanning seven
+    /// tables is one unit of work in one context and a half-deleted child in
+    /// the other.
+    ///
+    /// Autosave is left at the container's default. Every repository write ends
+    /// in an explicit `save()`, so a failure still surfaces at its call site;
+    /// turning autosave off here would also turn it off for the `@Query`-driven
+    /// edits the feature layer makes through the same context.
+    var mainContext: ModelContext? { container?.mainContext }
 }

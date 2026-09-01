@@ -194,7 +194,7 @@ public struct HopParentGate: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            HopPrimaryButton(HopStrings.gateDone, action: model.fallBackToArithmetic)
+            HopPrimaryButton(HopStrings.gateDone) { model.fallBackToArithmetic() }
         }
     }
 }

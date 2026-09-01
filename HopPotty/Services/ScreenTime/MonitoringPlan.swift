@@ -1,6 +1,16 @@
 import Foundation
 import HopPottyCore
 
+// MARK: - Target membership
+//
+// SHARED BY THE APP AND THE DEVICE ACTIVITY MONITOR EXTENSION.
+//
+// The extension needs `MonitoringPlan.backstop(for:)` so that a pause it starts
+// gets the same safety net as one the app starts. The rest of this file is dead
+// code in the extension and costs it nothing — it is Foundation arithmetic with
+// no allocations at rest — which is a better trade than two definitions of what
+// a backstop schedule is.
+
 /// What HopPotty intends to register with `DeviceActivityCenter`, computed as a
 /// value before anything is registered.
 ///
@@ -331,16 +341,18 @@ public struct MonitoringPlan: Equatable, Sendable {
     /// late, and the product would need to raise its minimum pause duration to
     /// match rather than pretend.
     public static func backstop(for record: SharedPauseRecord, calendar: Calendar = .current) -> Activity {
-        let start = calendar.dateComponents([.hour, .minute], from: record.startedAt)
-        let end = calendar.dateComponents([.hour, .minute], from: record.backstopEndAt)
-        let lead = Int(record.warningLeadTime / 60)
+        // The components come from the record itself, so the app and the monitor
+        // extension arm an identical backstop. The extension does not compile this
+        // file — it calls `backstopScheduleComponents` directly — which is exactly
+        // why the computation lives on the record and not here.
+        let components = record.backstopScheduleComponents(calendar: calendar)
         return Activity(
             name: ScreenTimeIdentifiers.backstopActivityName,
             role: .backstop,
-            intervalStart: start,
-            intervalEnd: end,
+            intervalStart: components.start,
+            intervalEnd: components.end,
             repeats: false,
-            warningTime: lead > 0 ? DateComponents(minute: lead) : nil,
+            warningTime: components.warning,
             events: []
         )
     }

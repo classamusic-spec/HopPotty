@@ -31,4 +31,29 @@ public struct HopIllustrationKey: RawRepresentable, Hashable, Sendable, Expressi
     /// Every family the exporter knows how to route. A key in an unknown family
     /// is a typo, and the content test says so.
     public static let families: Set<String> = ["scene", "icon", "character", "pond"]
+
+    /// The exported asset name for this key.
+    ///
+    /// The rule is mechanical so nobody has to maintain a lookup table: drop the
+    /// family segment, join what remains with hyphens. `icon.quiz.washHands`
+    /// becomes `quiz-washHands`, which is the basename of both the source SVG in
+    /// `Art/icons/` and the asset-catalog entry the app loads.
+    ///
+    /// Case is preserved deliberately. Lowercasing would collapse
+    /// `quiz.toiletPaper` and a hypothetical `quiz.toilet.paper` onto the same
+    /// file, and asset catalogs are case-sensitive on the platforms that matter.
+    public var assetName: String {
+        rawValue.split(separator: ".").dropFirst().joined(separator: "-")
+    }
+
+    /// The directory under `Art/` that holds this key's source drawing.
+    public var artDirectory: String {
+        switch family {
+        case "scene": "scenes"
+        case "icon": "icons"
+        case "character": "character"
+        case "pond": "pond"
+        default: "unknown"
+        }
+    }
 }

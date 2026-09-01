@@ -359,23 +359,46 @@ public struct AppGroupStore: Sendable {
     ///
     /// Taking a snapshot means the reconciler decides against a single view
     /// rather than re-reading files another process may change underneath it.
+    /// - Parameter countingReports: whether to enumerate the outbox.
+    ///
+    ///   Defaults to `false`, and the default is the important part. This method
+    ///   runs inside `ShieldReconciler.reconcile`, which runs on **every shield
+    ///   draw** — a path Apple requires to return "as quickly as possible" and
+    ///   which falls back to the system's own shield if it does not. Counting the
+    ///   outbox means decoding up to 60 JSON files for a number the reconciler
+    ///   does not read. Only the Potty Pause Lab asks for it.
     public func snapshot(
         now: Date = Date(),
-        uptime: TimeInterval = ProcessInfo.processInfo.systemUptime
+        uptime: TimeInterval = ProcessInfo.processInfo.systemUptime,
+        countingReports: Bool = false
     ) -> AppGroupSnapshot {
         AppGroupSnapshot(
             isSharedContainerAvailable: isSharedContainerAvailable,
             containerPath: root?.path,
             pause: loadPause(),
-            hasShieldPresentation: loadShieldPresentation() != nil,
-            hasSelectionData: loadSelectionData() != nil,
+            // Existence checks, not loads. Answering "is the selection present?"
+            // by reading the whole token blob into memory would be the single
+            // most expensive thing in the shield-draw path.
+            hasShieldPresentation: exists(Self.shieldFile),
+            hasSelectionData: exists(Self.selectionFile),
             heartbeats: Dictionary(
                 uniqueKeysWithValues: HeartbeatTarget.allCases.map { ($0, heartbeat($0)?.at) }
             ),
-            reportCount: loadReports().count,
+            reportCount: countingReports ? outboxFileCount() : 0,
             observedAt: now,
             observedUptime: uptime
         )
+    }
+
+    private func exists(_ component: String) -> Bool {
+        guard let url = url(component) else { return false }
+        return FileManager.default.fileExists(atPath: url.path)
+    }
+
+    /// Counts files without decoding them.
+    private func outboxFileCount() -> Int {
+        guard let directory = outboxDirectory else { return 0 }
+        return ((try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []).count
     }
 
     /// Remove everything HopPotty has written here.
@@ -384,22 +407,26 @@ public struct AppGroupStore: Sendable {
     /// particular **not** by the fail-safe path, which clears the shield first and
     /// only then removes the record.
     public func reset() {
+        // Everything in the container, not a hand-written list of the payloads
+        // that exist today. A reset that enumerates files cannot forget one; a
+        // reset that names them forgets the next one somebody adds, and a
+        // forgotten payload means the extensions act on a schedule or a token set
+        // the app believes it has thrown away.
+        //
+        // The pause record goes first regardless, so that if the enumeration
+        // fails half-way the remaining state is "no session" — which every
+        // reconciliation path reads as "clear the shield".
         clearPause()
-        remove(Self.shieldFile)
-        clearSelectionData()
-        // Defined in `ShieldTokens.swift` and `MonitoringGate.swift`, which extend
-        // this type rather than being folded into it: each owns one payload, and a
-        // reset that forgot one would leave the extensions acting on a schedule or
-        // a token set the app believes it has thrown away.
-        clearShieldTokens()
-        clearGate()
-        clearCooldown()
-        _ = takeGrownUpRequest()
-        for target in HeartbeatTarget.allCases { remove(heartbeatFile(target)) }
-        if let directory = outboxDirectory {
-            let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
-            for file in files { try? FileManager.default.removeItem(at: file) }
-        }
+        guard let root else { return }
+        let manager = FileManager.default
+        let contents = (try? manager.contentsOfDirectory(
+            at: root, includingPropertiesForKeys: nil
+        )) ?? []
+        for item in contents { try? manager.removeItem(at: item) }
+        // Re-create the two subdirectories, so a store that is used again after a
+        // reset does not silently fail every append.
+        try? manager.createDirectory(at: root.appendingPathComponent("heartbeat", isDirectory: true), withIntermediateDirectories: true)
+        try? manager.createDirectory(at: root.appendingPathComponent("outbox", isDirectory: true), withIntermediateDirectories: true)
     }
 }
 

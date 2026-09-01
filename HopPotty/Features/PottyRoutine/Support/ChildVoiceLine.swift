@@ -13,30 +13,56 @@ import HopPottyCore
 extension HopVoiceLine {
     /// The view-layer line for an authored one.
     init(content line: HopPottyCore.HopVoiceLine) {
-        self.init(id: line.id.rawValue, caption: line.caption, duration: nil)
+        self.init(id: line.id.rawValue, caption: line.localizedCaption, duration: nil)
+    }
+}
+
+extension HopPottyCore.HopVoiceLine {
+    /// The written form, through the string catalog.
+    ///
+    /// A line contributes `<id>.spoken` to `HopCopy`, plus `<id>.caption` only
+    /// when the written form differs from the spoken one — see
+    /// `HopVoiceLine.copyEntries(audience:comment:)`. Asking for the key that
+    /// does not exist would silently fall back to the authored English forever,
+    /// which is exactly the class of bug that survives a translation pass, so
+    /// the key is chosen the same way the catalog builds it.
+    var localizedCaption: String {
+        let key = hasDistinctCaption ? id.rawValue + ".caption" : id.rawValue + ".spoken"
+        return NSLocalizedString(key, tableName: nil, bundle: .main, value: caption, comment: "")
     }
 }
 
 /// Delivers a line again when a child asks to hear it.
 ///
-/// No voice bundle ships yet, so `HopVoiceResolver` resolves every line to
-/// `.captionOnly(_, because: .assetNotYetRecorded)` — that is the normal path
-/// today, not a failure. Replay therefore does two real things: it re-posts the
-/// words to VoiceOver, and the caller pulses the caption so a child using their
-/// eyes also sees that their tap did something.
+/// Every `HopVoiceLine` in HopPotty is `.planned`, so `HopVoiceResolver`
+/// resolves all of them to `.captionOnly(_, because: .assetNotYetRecorded)`.
+/// That is the shipping state, not a failure, and it is why replay is defined
+/// in terms of the *words* rather than of an audio player: re-posting the line
+/// reaches VoiceOver, and the caller pulses the on-screen caption so a child
+/// using their eyes also sees that their tap did something. An audio player
+/// added later becomes an additional delivery beside these two, not a
+/// replacement for them.
 @MainActor
 enum ChildVoiceReplay {
-    static func replay(_ line: HopPottyCore.HopVoiceLine, using resolver: HopVoiceResolver) {
-        AccessibilityNotification.Announcement(resolver.playback(for: line).caption).post()
+    static func replay(_ line: HopPottyCore.HopVoiceLine) {
+        AccessibilityNotification.Announcement(line.localizedCaption).post()
     }
 }
 
 /// A line Hop says, together with the caption that always accompanies it.
 ///
-/// Contract §6: every spoken line has a written caption. Two settings decide
-/// what a person *perceives* — `hopVoiceEnabled` and `spokenTextCaptionsEnabled`
-/// — but neither can remove the words: when captions are switched off the text
-/// is still in the accessibility tree, so VoiceOver and Braille still get it.
+/// Contract §6: every spoken line has a written caption. Two rules govern what
+/// is actually drawn, and between them a person is never left with nothing:
+///
+/// 1. **When the line is not audible, the words are always shown.** No voice
+///    bundle ships yet, so `HopVoiceResolver` resolves every line to
+///    `.captionOnly` — the text is not a caption *accompanying* audio then, it
+///    is the only delivery, and hiding it would leave a silent, wordless screen.
+///    `spokenTextCaptionsEnabled` is a preference about captions beside speech,
+///    not permission for the content to exist.
+/// 2. **When the line is audible and captions are off, the words are still in
+///    the accessibility tree** — hidden from sight, never from VoiceOver or
+///    Braille.
 struct HopSpokenLine: View {
     @Environment(\.hopTheme) private var theme
     @Environment(\.childContext) private var context
@@ -54,8 +80,14 @@ struct HopSpokenLine: View {
         self.pulse = pulse
     }
 
+    private var playback: HopVoicePlayback { context.voiceResolver.playback(for: line) }
+
+    /// Drawn whenever there is no audio to accompany, or whenever the caregiver
+    /// has asked for captions.
+    private var isVisible: Bool { !playback.isAudible || context.showsCaptions }
+
     var body: some View {
-        Text(context.voiceResolver.playback(for: line).caption)
+        Text(verbatim: line.localizedCaption)
             .hopTextStyle(style)
             .foregroundStyle(theme.color.textSecondary)
             .multilineTextAlignment(.center)
@@ -71,8 +103,8 @@ struct HopSpokenLine: View {
             // Hidden from sight, never from assistive technology: a caregiver
             // turning captions off is asking for a cleaner picture, not for the
             // words to stop existing.
-            .opacity(context.showsCaptions ? 1 : 0)
-            .frame(height: context.showsCaptions ? nil : 0)
+            .opacity(isVisible ? 1 : 0)
+            .frame(height: isVisible ? nil : 0)
             .clipped()
             .accessibilityHidden(false)
             .task(id: pulse) {
@@ -93,7 +125,6 @@ struct HopSpokenLine: View {
 /// auto-repeats and it never nags.
 struct HopReplayButton: View {
     @Environment(\.hopTheme) private var theme
-    @Environment(\.childContext) private var context
 
     private let line: HopPottyCore.HopVoiceLine
     private let label: String
@@ -112,12 +143,12 @@ struct HopReplayButton: View {
             tint: theme.color.brandAction,
             minimumTarget: theme.hitTarget.child
         ) {
-            ChildVoiceReplay.replay(line, using: context.voiceResolver)
+            ChildVoiceReplay.replay(line)
             pulse += 1
         }
         // The words themselves are the hint, so someone who cannot hear the
         // recording still learns what replaying would say.
-        .accessibilityHint(line.caption)
+        .accessibilityHint(Text(verbatim: line.localizedCaption))
     }
 }
 
@@ -128,7 +159,7 @@ struct HopReplayButton: View {
             VStack(spacing: 24) {
                 HopReplayButton(
                     PottyRoutineContent.tryStep.voice,
-                    label: HopCopy.routine.repeatButton.value,
+                    label: HopCopy.routine.repeatButton.localized,
                     pulse: $pulse
                 )
                 HopSpokenLine(PottyRoutineContent.tryStep.voice, pulse: pulse)

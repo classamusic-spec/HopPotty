@@ -70,8 +70,8 @@ struct PondSceneView: View {
         // a picture is not navigation, it is a maze; the collection strip below
         // is the linear, per-item list VoiceOver actually wants.
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(HopCopy.a11y.pondScene.resolved(forNickname: context.nickname))
-        .accessibilityValue(HopCopy.pond.starCount.resolved(for: context.totalStars))
+        .accessibilityLabel(HopCopy.a11y.pondScene.localized(forNickname: context.nickname))
+        .accessibilityValue(HopCopy.pond.starCount.localized(for: context.totalStars))
     }
 }
 
@@ -204,6 +204,29 @@ private struct PondNextItemSketch: View {
         nextUp: PondCatalog.nextUnlock(after: 180),
         onTapItem: { _ in }
     )
+    .padding()
+    .hopBackground()
+    .hopThemedRoot()
+}
+
+#Preview("Pond scene · Reduce Motion") {
+    PondSceneView(
+        unlocked: Set(PondCatalog.unlockedItems(atStars: 180).map(\.id)),
+        nextUp: PondCatalog.nextUnlock(after: 180),
+        onTapItem: { _ in }
+    )
+    .padding()
+    .hopBackground()
+    .hopThemedRoot(reduceMotion: true)
+}
+
+#Preview("Pond scene · iPad width") {
+    PondSceneView(
+        unlocked: Set(PondCatalog.unlockedItems(atStars: 408).map(\.id)),
+        nextUp: PondCatalog.nextUnlock(after: 408),
+        onTapItem: { _ in }
+    )
+    .frame(width: 900)
     .padding()
     .hopBackground()
     .hopThemedRoot()

@@ -160,16 +160,80 @@ for forbidden in HOPPOTTY_DEBUG_TOOLS HOPPOTTY_MOCKS DEBUG; do
     fi
 done
 
-if grep -q 'EXCLUDED_SOURCE_FILE_NAMES.*HopPotty/Developer' Config/Release.xcconfig; then
-    pass "Release excludes HopPotty/Developer/* from the compile"
-else
-    warn "Release no longer excludes HopPotty/Developer/* — the #if guards are the only thing left"
-fi
-
 if grep -q 'HOPPOTTY_MOCKS' Config/DebugMock.xcconfig; then
     pass "DebugMock defines HOPPOTTY_MOCKS"
 else
     fail "DebugMock does not define HOPPOTTY_MOCKS — AppBuildConfiguration would report .live"
+fi
+
+# ---------------------------------------------------------------------------
+section "Extension principal classes exist"
+# ---------------------------------------------------------------------------
+#
+# NSExtensionPrincipalClass is a STRING. Nothing checks it: not the compiler, not
+# the linker, not code signing, not App Store validation. If it names a class
+# that does not exist, or one that has been renamed, the extension builds,
+# signs, embeds, installs — and is then never instantiated. From the outside
+# that is indistinguishable from a Screen Time bug, which is the most expensive
+# thing in this project to debug.
+#
+# The extension point identifiers themselves cannot be checked here. They are
+# hand-written (Docs/ScreenTimeArchitecture.md §8 advises against that; XcodeGen
+# leaves no alternative) and only an Xcode-generated target can confirm them.
+
+check_principal () {
+    local dir="$1"
+    local plist="Extensions/$dir/Info.plist"
+    [ -f "$plist" ] || return 0
+
+    local declared
+    declared="$(sed -n 's/.*<string>\$(PRODUCT_MODULE_NAME)\.\([A-Za-z0-9_]*\)<\/string>.*/\1/p' "$plist" | head -1)"
+    if [ -z "$declared" ]; then
+        fail "$dir: NSExtensionPrincipalClass is not of the form \$(PRODUCT_MODULE_NAME).ClassName"
+        return 0
+    fi
+
+    if ls "Extensions/$dir"/*.swift >/dev/null 2>&1 &&
+       grep -qE "(final )?class ${declared}[[:space:]]*:" "Extensions/$dir"/*.swift; then
+        pass "$dir: principal class $declared is declared"
+    elif ls "Extensions/$dir"/*.swift >/dev/null 2>&1; then
+        fail "$dir: Info.plist names principal class '$declared', which no source in Extensions/$dir declares"
+    else
+        warn "$dir: no Swift sources yet — principal class '$declared' unchecked"
+    fi
+}
+
+check_principal HopPottyDeviceActivityMonitor
+check_principal HopPottyShieldConfiguration
+check_principal HopPottyShieldAction
+
+# ---------------------------------------------------------------------------
+section "Developer-only sources are guarded"
+# ---------------------------------------------------------------------------
+#
+# The Release configuration removes HopPotty/Developer/* from the compile with
+# EXCLUDED_SOURCE_FILE_NAMES, and every file in there is additionally wrapped in
+# a compilation condition Release does not define. Two mechanisms, because the
+# thing being prevented — a build that can start and end a Potty Pause without a
+# real authorization reaching a family — is not a thing to protect with one.
+
+if [ -d HopPotty/Developer ]; then
+    for dev in HopPotty/Developer/*.swift; do
+        [ -e "$dev" ] || continue
+        if head -5 "$dev" | grep -qE '^#if (DEBUG|HOPPOTTY_DEBUG_TOOLS)'; then
+            # Whole file is developer-only. The type does not exist in Release.
+            pass "$(basename "$dev") is wholly inside a debug-only condition"
+        elif grep -qE '^[[:space:]]*#if (DEBUG|HOPPOTTY_DEBUG_TOOLS)' "$dev" && grep -qE '^[[:space:]]*#else' "$dev"; then
+            # The seam pattern: a modifier or shim that must compile in BOTH
+            # configurations, with the release branch containing no reference to
+            # anything developer-only. DeveloperSurface.swift is the example.
+            pass "$(basename "$dev") is a debug/release seam (#if … #else)"
+        else
+            fail "$(basename "$dev") has no debug-only guard — it would compile into a Release build"
+        fi
+    done
+else
+    warn "HopPotty/Developer does not exist"
 fi
 
 # ---------------------------------------------------------------------------

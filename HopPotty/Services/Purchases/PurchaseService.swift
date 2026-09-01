@@ -1,6 +1,39 @@
 import Foundation
 import StoreKit
 
+// MARK: - Purchase domain types
+//
+// These live with the service rather than in the feature layer because the
+// service is what produces them. They were originally declared in
+// `Features/Shared/FeatureDependencies.swift` as placeholders while the two
+// layers were built in parallel; that copy is deleted.
+
+/// A product as the paywall needs to show it.
+///
+/// The price is carried as StoreKit's already-formatted `displayPrice` string.
+/// No price is ever written down in this codebase: currency, formatting and
+/// storefront are Apple's to decide, and a hard-coded "$19.99" is wrong the
+/// moment the app is opened outside the US.
+struct HopProduct: Identifiable, Equatable, Sendable {
+    let id: String
+    let displayName: String
+    let displayPrice: String
+    let description: String
+}
+
+/// What the family has unlocked. One non-consumable, no tiers, no expiry.
+enum ParentEntitlement: Equatable, Sendable {
+    case free
+    case family
+
+    var isUnlocked: Bool { self == .family }
+
+    /// Children a free family can keep. The second child is the paid feature;
+    /// the first child's whole experience is not.
+    static let freeChildLimit = 1
+}
+
+
 // MARK: - Product identity
 
 /// The App Store products HopPotty sells. There is one.
@@ -23,6 +56,9 @@ struct HopProductDisplay: Sendable, Equatable, Identifiable {
     /// StoreKit's localised price string. The only price HopPotty ever renders.
     let displayPrice: String
 }
+
+/// The name the parent features use for the same value.
+typealias HopProduct = HopProductDisplay
 
 // MARK: - Outcomes
 
@@ -96,6 +132,18 @@ final class EntitlementState {
 protocol PurchaseProviding: AnyObject {
     var state: EntitlementState { get }
 
+    /// The current entitlement, for a caller that wants the value rather than
+    /// the observable box. Always `state.entitlement`.
+    var entitlement: HopEntitlement { get }
+
+    /// The family unlock as the paywall renders it. `nil` until StoreKit
+    /// answers — which is also the offline state, and the paywall shows its
+    /// features and hides its price rather than inventing one.
+    var product: HopProduct? { get }
+
+    /// `loadProducts()` under the singular name the paywall uses.
+    func loadProduct() async
+
     /// Loads products so a price can be shown. Safe to call repeatedly.
     func loadProducts() async
 
@@ -138,6 +186,8 @@ protocol PurchaseProviding: AnyObject {
 @MainActor
 final class PurchaseService: PurchaseProviding {
     let state = EntitlementState()
+    var entitlement: HopEntitlement { state.entitlement }
+    var product: HopProduct? { state.familyProduct }
 
     private let cache: EntitlementCache
     private let clock: any HopClock
@@ -346,6 +396,8 @@ final class PurchaseService: PurchaseProviding {
 @MainActor
 final class MockPurchaseService: PurchaseProviding {
     let state = EntitlementState()
+    var entitlement: HopEntitlement { state.entitlement }
+    var product: HopProduct? { state.familyProduct }
     private(set) var purchaseAttempts = 0
     private(set) var restoreAttempts = 0
     /// What the next purchase should do, so a test can drive every branch.
@@ -381,4 +433,11 @@ final class MockPurchaseService: PurchaseProviding {
         restoreAttempts += 1
         return state.hasFamilyUnlock ? .restored : .nothingToRestore
     }
+}
+
+// MARK: - Feature-layer spelling
+
+extension PurchaseProviding {
+    /// The paywall's singular name for `loadProducts()`.
+    func loadProduct() async { await loadProducts() }
 }

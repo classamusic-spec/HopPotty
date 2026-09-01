@@ -116,7 +116,7 @@ final class OnboardingModel {
     // MARK: Test pause
 
     func runTestPause() async {
-        guard let childID = environment.activeChild?.id ?? (try? await persistedChildID()) else { return }
+        guard let childID = await resolvedChildID() else { return }
         isWorking = true
         defer { isWorking = false }
         let schedule = state.draft.schedule(for: childID)
@@ -167,8 +167,12 @@ final class OnboardingModel {
 
     func dismissFailure() { failure = nil }
 
-    private func persistedChildID() async throws -> UUID? {
-        try await environment.repositories.profiles.allProfiles().first?.id
+    /// The child the test pause runs for. During onboarding there may be no
+    /// saved profile yet — the draft is the record until the final screen — so
+    /// the store is consulted only as a fallback.
+    private func resolvedChildID() async -> UUID? {
+        if let id = environment.activeChild?.id { return id }
+        return try? await environment.repositories.profiles.allProfiles().first?.id
     }
 
     private func persist() {

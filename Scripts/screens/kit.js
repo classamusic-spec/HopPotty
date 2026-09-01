@@ -172,6 +172,7 @@ const MARK = {
   chart: (f, s = 20) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="${f}"><rect x="3" y="12" width="4" height="8.5" rx="1.4"/><rect x="10" y="7" width="4" height="13.5" rx="1.4"/><rect x="17" y="3.5" width="4" height="17" rx="1.4"/></svg>`,
   gear: (f, s = 20) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="${f}"><path d="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2zm8.4 3.6c0 .5 0 1-.1 1.5l2 1.6-2 3.4-2.4-1a7.6 7.6 0 0 1-2.5 1.5l-.4 2.5h-4l-.4-2.5a7.6 7.6 0 0 1-2.5-1.5l-2.4 1-2-3.4 2-1.6a8.6 8.6 0 0 1 0-3l-2-1.6 2-3.4 2.4 1a7.6 7.6 0 0 1 2.5-1.5L10 2h4l.4 2.5a7.6 7.6 0 0 1 2.5 1.5l2.4-1 2 3.4-2 1.6c.1.5.1 1 .1 1.5z"/></svg>`,
   droplets: (f, s = 20) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="${f}"><circle cx="8" cy="9" r="4.2"/><circle cx="16.4" cy="14.6" r="5.4"/></svg>`,
+  check: (f, s = 20) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="${f}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 12.6 9.6 17.6 19.4 6.6"/></svg>`,
   leaf: (f, s = 20) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="${f}"><path d="M20 4C9.5 4 4 9 4 16c0 1.5.3 2.8.8 4l1.7-1.6C7.6 13 12 9.8 18 9c-4.6 1.6-7.8 4.6-9.4 9.6 3 1.3 6.6.9 8.9-1.4C20.6 14.4 20.6 8 20 4z"/></svg>`,
 };
 

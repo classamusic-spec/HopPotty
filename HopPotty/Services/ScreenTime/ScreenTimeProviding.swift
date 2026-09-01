@@ -135,6 +135,9 @@ public protocol ScreenTimeProviding: AnyObject {
     func drainExtensionReports() -> [ExtensionReport]
 
     /// Everything the Potty Pause Lab needs to show, and nothing sensitive.
+    ///
+    /// Enumerates the outbox, unlike the snapshot the reconciler takes — this one
+    /// is for a human reading a screen, not for the shield-draw path.
     func appGroupSnapshot(now: Date) -> AppGroupSnapshot
 }
 

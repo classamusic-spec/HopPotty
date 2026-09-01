@@ -72,10 +72,10 @@ const HOP = {
 // they are his species — but distinct skins, so a child never mistakes a
 // decoration for Hop himself.
 const HOP_MINT = {
-  bodyLight: '#D6F4E2', bodyMid: '#A6E4C0', bodyDeep: '#7CCFA2', bodyShadow: '#5FB588',
+  bodyLight: '#CBF0DA', bodyMid: '#93DDB2', bodyDeep: '#6BC496', bodyShadow: '#54AD7E',
   belly: '#FBFFFC', bellyEdge: '#E6F6EC', ink: '#3C8F63', mouth: '#49996E',
   cheek: '#FF9F8F', eyeWhite: '#FFFFFF', pupil: '#243047',
-  domeLight: '#E2F7EA', domeDeep: '#8AD7AC',
+  domeLight: '#DCF5E6', domeDeep: '#7BCFA1',
 };
 const HOP_BLUE = {
   bodyLight: '#C4EBF8', bodyMid: '#6FC7E8', bodyDeep: '#4FAACE', bodyShadow: '#2A87AC',
@@ -110,7 +110,7 @@ const DEFS = {
 
   // -- Sky / weather --
   skyPond: lin('skyPond', [[0, '#CFEDF9'], [0.55, P.pondBlueSoft], [1, P.sunshineSoft]]),
-  skyWarm: lin('skyWarm', [[0, '#DCEFF8'], [0.48, P.pondBlueSoft], [0.8, P.sunshineSoft], [1, '#FFF1E6']]),
+  skyWarm: lin('skyWarm', [[0, '#CFE9F6'], [0.42, '#E6F5FB'], [0.75, P.sunshineSoft], [1, '#FFF0E2']]),
   skyHaze: lin('skyHaze', [[0, P.cloud, 0], [0.55, P.cloud, 0.12], [1, P.cloud, 0.8]]),
   sunGlow: rad('sunGlow', [[0, P.sunshine, 0.95], [0.45, P.sunshine, 0.45], [1, P.sunshine, 0]]),
   sunDisc: rad('sunDisc', [[0, '#FFF0C2'], [1, P.sunshine]], { cx: 0.4, cy: 0.35, r: 0.75 }),
@@ -157,14 +157,15 @@ const DEFS = {
   blueBall: rad('blueBall', [[0, '#BDE9F8'], [1, P.pondBlueDeep]], { cx: 0.35, cy: 0.3, r: 0.8 }),
   handGrad: lin('handGrad', [[0, P.handLight], [1, P.handMid]], { x1: 0.2, x2: 0.9 }),
   handGradDeep: lin('handGradDeep', [[0, P.handMid], [1, P.handDeep]], { x1: 0.2, x2: 0.9 }),
-  towelGrad: lin('towelGrad', [[0, '#CFE9F7'], [1, '#A6D6EE']]),
+  towelGrad: lin('towelGrad', [[0, '#A8DCF2'], [1, '#6FC0E2']]),
   iconWell: rad('iconWell', [[0, '#FFFFFF', 0.55], [1, '#FFFFFF', 0]], { cx: 0.35, cy: 0.28, r: 0.8 }),
 
   // -- App icon --
-  iconSky: lin('iconSky', [[0, '#8FDCAC'], [0.52, P.hopGreen], [1, '#3FA672']]),
-  iconHalo: rad('iconHalo', [[0, '#FFFFFF', 0.42], [0.62, '#FFFFFF', 0.10], [1, '#FFFFFF', 0]], { cx: 0.5, cy: 0.42, r: 0.62 }),
+  iconSky: lin('iconSky', [[0, '#5FBE8C'], [0.5, '#3FA672'], [1, '#227A4E']], { x1: 0.15, x2: 0.85 }),
+  iconHalo: rad('iconHalo', [[0, '#FFFFFF', 0.3], [0.6, '#FFFFFF', 0.08], [1, '#FFFFFF', 0]], { cx: 0.5, cy: 0.42, r: 0.62 }),
   iconWater: lin('iconWater', [[0, '#7FD0EC', 0.85], [1, '#4FB6DC', 0.95]]),
-  iconVignette: rad('iconVignette', [[0.6, P.hopGreenInk, 0], [1, P.hopGreenInk, 0.28]], { r: 0.72 }),
+  iconDisc: '<clipPath id="iconDisc"><circle cx="512" cy="490" r="386"/></clipPath>',
+  iconVignette: rad('iconVignette', [[0.62, P.hopGreenInk, 0], [1, P.hopGreenInk, 0.22]], { r: 0.75 }),
 };
 
 /** Collect the defs a body actually references, transitively. */
@@ -909,32 +910,35 @@ const contactShadow = (cx, cy, rx, ry = rx * 0.2) =>
 function pottyChair(cx, baseY, s = 1) {
   return g(`translate(${cx} ${baseY}) scale(${s})`, `
     ${contactShadow(0, 4, 128, 22)}
-    <path d="M -78 -74 q -6 -50 78 -50 q 84 0 78 50 q -78 -18 -156 0 Z" fill="${P.hopGreenDeep}"/>
-    <path d="M -64 -84 q -4 -32 64 -32 q 68 0 64 32 q -64 -12 -128 0 Z" fill="url(#greenBall)"/>
-    <path d="M -90 -62 C -92 -14 -76 8 -64 14 Q 0 32 64 14 C 76 8 92 -14 90 -62 Z" fill="url(#greenBall)"/>
-    <path d="M -90 -62 C -92 -14 -76 8 -64 14 Q -40 22 -22 24 Q -58 4 -58 -62 Z" fill="#FFFFFF" opacity="0.2"/>
-    <ellipse cx="0" cy="-56" rx="100" ry="29" fill="${P.hopGreenDeep}"/>
-    <ellipse cx="0" cy="-62" rx="100" ry="29" fill="url(#padGreenLight)"/>
-    <ellipse cx="0" cy="-62" rx="54" ry="15" fill="${P.hopGreenInk}" opacity="0.5"/>
-    <ellipse cx="0" cy="-65" rx="54" ry="15" fill="${P.pondBlueSoft}"/>
-    <ellipse cx="-28" cy="-70" rx="24" ry="6" fill="#FFFFFF" opacity="0.5"/>`);
+    <path d="M -86 -70 q -8 -60 86 -60 q 94 0 86 60 q -86 -20 -172 0 Z" fill="${P.hopGreenDeep}"/>
+    <path d="M -72 -82 q -6 -38 72 -38 q 78 0 72 38 q -72 -14 -144 0 Z" fill="url(#greenBall)"/>
+    <path d="M -84 -64 C -88 -6 -70 20 -58 26 Q 0 44 58 26 C 70 20 88 -6 84 -64 Z" fill="url(#greenBall)"/>
+    <path d="M -84 -64 C -88 -6 -70 20 -58 26 Q -36 34 -20 36 Q -54 12 -54 -64 Z" fill="#FFFFFF" opacity="0.2"/>
+    <ellipse cx="0" cy="-58" rx="96" ry="28" fill="${P.hopGreenDeep}"/>
+    <ellipse cx="0" cy="-64" rx="96" ry="28" fill="url(#padGreenLight)"/>
+    <ellipse cx="0" cy="-64" rx="52" ry="14" fill="${P.hopGreenInk}" opacity="0.5"/>
+    <ellipse cx="0" cy="-67" rx="52" ry="14" fill="${P.pondBlueSoft}"/>
+    <ellipse cx="-26" cy="-72" rx="23" ry="6" fill="#FFFFFF" opacity="0.5"/>`);
 }
 
 /** A grown-up toilet, three-quarter view. Shared by Flush and the quiz icon. */
 function toilet(cx, baseY, s = 1, { lidOpen = true } = {}) {
   return g(`translate(${cx} ${baseY}) scale(${s})`, `
     ${contactShadow(0, 4, 126, 22)}
-    <path d="M -44 0 q -20 0 -16 -22 l 14 -122 h 92 l 14 122 q 4 22 -16 22 Z" fill="url(#porcelainSide)"/>
-    <path d="M -44 0 q -20 0 -16 -22 l 14 -122 h 30 l -10 144 Z" fill="#FFFFFF" opacity="0.4"/>
-    ${lidOpen ? '' : ''}
+    <path d="M -58 0 q -22 0 -18 -24 l 20 -116 h 102 l 20 116 q 4 24 -18 24 Z" fill="url(#porcelainSide)"/>
+    <path d="M -58 0 q -22 0 -18 -24 l 20 -116 h 34 l -16 140 Z" fill="#FFFFFF" opacity="0.4"/>
+    <path d="M 54 -320 q 0 -22 22 -22 h 68 q 22 0 22 22 v 128 q 0 20 -22 20 h -68 q -22 0 -22 -20 Z" fill="${P.sand300}"/>
+    <path d="M 50 -324 q 0 -22 22 -22 h 68 q 22 0 22 22 v 128 q 0 20 -22 20 h -68 q -22 0 -22 -20 Z" fill="url(#porcelainGrad)"/>
+    <path d="M 50 -324 q 0 -22 22 -22 h 18 v 170 h -18 q -22 0 -22 -20 Z" fill="#FFFFFF" opacity="0.45"/>
+    <rect x="74" y="-310" width="34" height="14" rx="7" fill="${P.pondBlue}"/>
     <path d="M -96 -186 q 0 -28 32 -28 h 112 q 32 0 32 30 q 0 52 -88 52 q -88 0 -88 -54 Z" fill="url(#porcelainGrad)"/>
-    <ellipse cx="-4" cy="-192" rx="94" ry="32" fill="${P.sand300}" opacity="0.75"/>
-    <ellipse cx="-4" cy="-198" rx="94" ry="32" fill="url(#porcelainGrad)"/>
-    <ellipse cx="-4" cy="-198" rx="60" ry="19" fill="${P.pondBlueLight}"/>
-    <ellipse cx="-4" cy="-200" rx="60" ry="19" fill="url(#waterStream)" opacity="0.75"/>
-    <path d="M 70 -296 q 0 -22 22 -22 h 64 q 22 0 22 22 v 92 q 0 20 -22 20 h -64 q -22 0 -22 -20 Z" fill="url(#porcelainGrad)"/>
-    <path d="M 70 -296 q 0 -22 22 -22 h 20 v 134 h -20 q -22 0 -22 -20 Z" fill="#FFFFFF" opacity="0.45"/>
-    <rect x="92" y="-284" width="34" height="14" rx="7" fill="${P.pondBlue}"/>`);
+    <ellipse cx="-4" cy="-192" rx="96" ry="33" fill="${P.sand300}" opacity="0.8"/>
+    <ellipse cx="-4" cy="-200" rx="96" ry="33" fill="url(#porcelainGrad)"/>
+    <ellipse cx="-4" cy="-200" rx="72" ry="24" fill="${P.sand200}" opacity="0.7"/>
+    <ellipse cx="-4" cy="-203" rx="72" ry="24" fill="${P.porcelainMid}"/>
+    <ellipse cx="-4" cy="-203" rx="54" ry="17" fill="${P.pondBlueDeep}" opacity="0.5"/>
+    <ellipse cx="-4" cy="-206" rx="54" ry="17" fill="${P.pondBlueLight}"/>
+    <rect x="34" y="-236" width="46" height="14" rx="7" fill="${P.sand200}"/>`);
 }
 
 /** A hand: a rounded palm with four fingers and a thumb, drawn from the wrist
@@ -950,19 +954,19 @@ function hand(fill, shade) {
 }
 
 const scenes = {
-  'step-try': () => `
+  'routine-try': () => `
     ${bathroom()}
     <rect x="428" y="150" width="150" height="126" rx="24" fill="#FFFFFF" opacity="0.75"/>
     <path d="M 503 150 v 126 M 428 213 h 150" stroke="${P.pondBlueSoft}" stroke-width="9"/>
     <ellipse cx="330" cy="428" rx="200" ry="30" fill="${P.lavenderSoft}"/>
-    ${pottyChair(330, 408, 1)}
-    ${g('translate(112 404) scale(0.44) translate(-256 -440)', `
+    ${pottyChair(348, 400, 1)}
+    ${g('translate(122 404) scale(0.47) translate(-256 -440)', `
       ${hopBody({ squash: 0.05 })}${hopSheen}
       ${hopArm(122, 334, 150)}${hopArm(392, 342, 34)}
       ${hopBelly()}${hopFoot(198, 438)}${hopFoot(320, 438, -1)}
       ${hopEyes({ gaze: [16, 6] })}${hopCheeks()}${hopMouth({ smile: 0.9 })}`)}`,
 
-  'step-wipe': () => `
+  'routine-wipe': () => `
     ${bathroom()}
     <rect x="128" y="120" width="344" height="22" rx="11" fill="${P.sand300}"/>
     <rect x="138" y="142" width="18" height="44" rx="9" fill="${P.sand300}"/>
@@ -983,20 +987,20 @@ const scenes = {
       <circle cx="530" cy="304" r="6" fill="${P.peach}"/>
     </g>`,
 
-  'step-flush': () => `
+  'routine-flush': () => `
     ${bathroom()}
-    ${toilet(300, 430, 0.94)}
+    ${toilet(324, 432, 1.02)}
     <g>
-      <path d="M 296 232 m -58 0 a 58 26 0 1 1 84 22" fill="none" stroke="url(#waterStream)" stroke-width="17" stroke-linecap="round"/>
-      <path d="M 296 246 m -36 0 a 36 16 0 1 1 54 14" fill="none" stroke="url(#waterStream)" stroke-width="14" stroke-linecap="round" opacity="0.85"/>
-      <path d="M 296 258 m -17 0 a 17 8 0 1 1 26 7" fill="none" stroke="url(#waterStream)" stroke-width="11" stroke-linecap="round" opacity="0.7"/>
-      <circle cx="220" cy="196" r="11" fill="${P.pondBlueLight}" opacity="0.8"/>
-      <circle cx="372" cy="214" r="8" fill="${P.pondBlueLight}" opacity="0.7"/>
-      <circle cx="346" cy="172" r="6" fill="${P.pondBlue}" opacity="0.55"/>
-      <circle cx="252" cy="160" r="5" fill="${P.pondBlue}" opacity="0.45"/>
+      <path d="M 320 228 m -62 0 a 62 27 0 1 1 90 23" fill="none" stroke="${P.pondBlueDeep}" stroke-width="16" stroke-linecap="round" opacity="0.85"/>
+      <path d="M 320 242 m -39 0 a 39 17 0 1 1 58 15" fill="none" stroke="${P.pondBlue}" stroke-width="14" stroke-linecap="round"/>
+      <path d="M 320 254 m -18 0 a 18 8 0 1 1 28 7" fill="none" stroke="${P.pondBlueLight}" stroke-width="11" stroke-linecap="round"/>
+      <circle cx="232" cy="188" r="12" fill="${P.pondBlueLight}" opacity="0.85"/>
+      <circle cx="404" cy="208" r="9" fill="${P.pondBlueLight}" opacity="0.75"/>
+      <circle cx="376" cy="162" r="7" fill="${P.pondBlue}" opacity="0.6"/>
+      <circle cx="264" cy="150" r="5.4" fill="${P.pondBlue}" opacity="0.5"/>
     </g>`,
 
-  'step-wash': () => `
+  'routine-wash': () => `
     ${bathroom({ floorY: 446 })}
     <path d="M 262 214 v -54 q 0 -34 -34 -34 h -78" stroke="${P.sand300}" stroke-width="26" fill="none" stroke-linecap="round"/>
     <path d="M 262 214 v -54 q 0 -34 -34 -34 h -78" stroke="${P.sand200}" stroke-width="14" fill="none" stroke-linecap="round"/>
@@ -1016,14 +1020,15 @@ const scenes = {
       <circle cx="104" cy="252" r="11" fill="url(#bubbleFill)"/>
     </g>`,
 
-  'step-highfive': () => `
+  'routine-highFive': () => `
     <rect x="0" y="0" width="${SW}" height="${SH}" fill="${P.hopGreenSoft}"/>
     <circle cx="320" cy="236" r="182" fill="#FFFFFF" opacity="0.6"/>
     <circle cx="320" cy="228" r="104" fill="url(#glowWarm)"/>
     ${g('translate(196 386) rotate(30) scale(0.94)', hand('url(#handGrad)', P.handDeep))}
     ${g('translate(444 386) scale(-1 1) rotate(30) scale(0.94)', hand(HOP.bodyMid, HOP.bodyShadow))}
     <g fill="#FFFFFF" opacity="0.85">
-      <circle cx="320" cy="196" r="13"/><circle cx="286" cy="176" r="8"/><circle cx="356" cy="180" r="9"/>
+      <circle cx="320" cy="206" r="16"/><circle cx="280" cy="182" r="10"/><circle cx="362" cy="186" r="11"/>
+      <circle cx="304" cy="164" r="6"/><circle cx="342" cy="158" r="7"/>
     </g>
     <g fill="${P.sunshine}">
       ${[[142, 118, 21], [500, 128, 18], [320, 54, 23], [104, 258, 14], [540, 262, 15], [232, 74, 12], [412, 86, 13]]
@@ -1044,8 +1049,11 @@ function shieldHero() {
     <path d="M 0 -262 L 96 -180 H -96 Z" fill="#FFFFFF" opacity="0.13"/>
     <path d="M -64 0 v -140 q 0 -64 64 -64 q 64 0 64 64 V 0 Z" fill="url(#woodGrad)"/>
     <path d="M -52 0 v -136 q 0 -52 52 -52 q 52 0 52 52 V 0 Z" fill="${P.woodLight}" opacity="0.45"/>
-    ${g('translate(0 -140) scale(0.62)', `<path d="${pad(0, 0, 62, { notch: 52 })}" fill="${P.hopGreenSoft}"/>`)}
-    <circle cx="34" cy="-72" r="9" fill="${P.sunshineBright}"/>`);
+    <path d="M -30 -136 q 0 -34 30 -34 q 30 0 30 34 v 26 q 0 8 -8 8 h -44 q -8 0 -8 -8 Z" fill="${P.sunshineSoft}"/>
+    <path d="M -30 -136 q 0 -34 30 -34 q -14 12 -14 34 v 34 h -8 q -8 0 -8 -8 Z" fill="#FFFFFF" opacity="0.55"/>
+    <path d="M -30 -118 h 60 M 0 -170 v 68" stroke="${P.woodDeep}" stroke-width="5" opacity="0.55"/>
+    <circle cx="36" cy="-66" r="9" fill="${P.sunshineBright}"/>
+    <path d="M -62 -6 h 124" stroke="${P.woodDeep}" stroke-width="6" opacity="0.35"/>`);
 
   const body = `
     <rect x="0" y="0" width="${W}" height="${H}" fill="url(#skyWarm)"/>
@@ -1062,13 +1070,13 @@ function shieldHero() {
       .map(([x, y, r]) => pebble(x, y, r, r * 0.42, { fill: 'url(#stoneGrad)', light: 0.6 })).join('')}
     ${door}
     ${contactShadow(430, 636, 150, 26)}
-    ${g('translate(430 636) scale(0.62) translate(-256 -440)', `
+    ${g('translate(430 636) rotate(-3) scale(0.66) translate(-256 -440)', `
       ${hopBody({ squash: 0.05 })}
       ${hopSheen}
-      ${hopArm(122, 330, 142)}${hopArm(392, 344, 46)}
+      ${hopArm(126, 342, 128)}${hopArm(390, 330, 22, 60)}
       ${hopBelly()}
-      ${hopFoot(204, 442, 1, 16)}${hopFoot(330, 436, -1)}
-      ${hopEyes({ gaze: [13, 6] })}
+      ${hopFoot(202, 444, 1, 18)}${hopFoot(332, 436, -1)}
+      ${hopEyes({ gaze: [26, 5] })}
       ${hopCheeks()}
       ${hopMouth({ open: 0.35 })}`)}
     <g fill="${P.hopGreenInk}" opacity="0.2">
@@ -1113,15 +1121,7 @@ const quizIcons = {
       <path d="M -24 -34 q 22 8 42 -2" stroke="${P.handDeep}" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.4"/>`)).join('')}`,
 
   toilet: () => `${disc(P.pondBlueSoft)}
-    ${g('translate(58 104) scale(0.3)', `
-      <path d="M -46 0 q -22 0 -18 -22 l 14 -78 h 108 l 12 78 q 4 22 -18 22 Z" fill="url(#porcelainSide)"/>
-      <path d="M -96 -190 q 0 -26 30 -26 h 116 q 34 0 34 30 q 0 54 -84 54 q -96 0 -96 -58 Z" fill="url(#porcelainGrad)"/>
-      <ellipse cx="-4" cy="-196" rx="96" ry="34" fill="${P.porcelainShade}"/>
-      <ellipse cx="-4" cy="-202" rx="96" ry="34" fill="url(#porcelainGrad)"/>
-      <ellipse cx="-4" cy="-202" rx="62" ry="20" fill="${P.pondBlueLight}"/>
-      <path d="M 62 -228 q 56 -30 74 22 q 16 46 -30 62 q -18 6 -26 -12 q 22 -12 12 -40 q -8 -22 -30 -32 Z" fill="url(#porcelainGrad)"/>
-      <path d="M 74 -300 q 0 -22 22 -22 h 66 q 22 0 22 22 v 96 q 0 20 -22 20 h -66 q -22 0 -22 -20 Z" fill="url(#porcelainGrad)"/>
-      <rect x="96" y="-288" width="34" height="14" rx="7" fill="${P.pondBlue}"/>`)}`,
+    ${toilet(52, 108, 0.29, { lidOpen: false })}`,
 
   'toilet-paper': () => `${disc(P.sunshineSoft)}
     <ellipse cx="60" cy="98" rx="30" ry="5" fill="${P.sunshineDeep}" opacity="0.12"/>
@@ -1134,20 +1134,22 @@ const quizIcons = {
     <path d="M 80 92 q 10 4 18 0" stroke="${P.sand200}" stroke-width="3" fill="none" stroke-linecap="round"/>`,
 
   towel: () => `${disc(P.pondBlueSoft)}
-    <rect x="18" y="30" width="84" height="9" rx="4.5" fill="${P.sand300}"/>
-    <path d="M 30 34 h 60 q 8 0 8 8 v 46 q 0 10 -10 10 h -56 q -10 0 -10 -10 v -46 q 0 -8 8 -8 Z" fill="url(#towelGrad)"/>
-    <path d="M 30 34 h 26 v 64 h -18 q -10 0 -10 -10 v -46 q 0 -8 2 -8 Z" fill="#FFFFFF" opacity="0.3"/>
-    <rect x="26" y="56" width="72" height="10" rx="5" fill="#FFFFFF" opacity="0.7"/>
-    <path d="M 34 98 q 30 8 60 0" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.6"/>`,
+    <rect x="18" y="26" width="84" height="10" rx="5" fill="${P.sand300}"/>
+    <path d="M 30 30 h 60 q 6 0 6 8 v 46 q 0 6 -7 6 q -8 -8 -14 0 q -8 8 -16 0 q -8 -8 -16 0 q -7 6 -13 0 v -52 q 0 -8 6 -8 Z" fill="url(#towelGrad)"/>
+    <path d="M 30 30 h 22 v 62 q -8 4 -16 -2 q -12 2 -12 -8 v -44 q 0 -8 6 -8 Z" fill="#FFFFFF" opacity="0.32"/>
+    <rect x="26" y="54" width="68" height="9" rx="4.5" fill="#FFFFFF" opacity="0.8"/>
+    <path d="M 62 32 v 58" stroke="${P.pondBlueDeep}" stroke-width="2.6" opacity="0.18"/>`,
 
   tap: () => `${disc(P.pondBlueSoft)}
-    <path d="M 92 40 h -34 q -22 0 -22 24 v 10" stroke="url(#porcelainSide)" stroke-width="15" fill="none" stroke-linecap="round"/>
-    <rect x="84" y="28" width="20" height="24" rx="9" fill="${P.sand300}"/>
-    <rect x="26" y="70" width="22" height="12" rx="5" fill="${P.porcelainShade}"/>
-    <path d="M 37 82 q -4 22 -2 30" stroke="url(#waterStream)" stroke-width="17" stroke-linecap="round" fill="none"/>
-    <path d="M 33 88 q -2 14 -1 20" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.6"/>
-    <circle cx="62" cy="96" r="10" fill="url(#bubbleFill)"/>
-    <circle cx="80" cy="80" r="7" fill="url(#bubbleFill)"/>`,
+    <rect x="88" y="26" width="18" height="34" rx="8" fill="${P.sand400}"/>
+    <path d="M 96 40 h -30 q -14 0 -14 16 v 8" stroke="${P.sand300}" stroke-width="15" fill="none" stroke-linecap="round"/>
+    <path d="M 96 40 h -30 q -14 0 -14 16 v 8" stroke="${P.sand200}" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <rect x="42" y="60" width="20" height="11" rx="5" fill="${P.sand400}"/>
+    <path d="M 52 72 v 28" stroke="${P.pondBlue}" stroke-width="19" stroke-linecap="round" fill="none"/>
+    <path d="M 47 80 v 13" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.55"/>
+    <circle cx="74" cy="90" r="9" fill="url(#bubbleFill)"/>
+    <circle cx="88" cy="74" r="6.4" fill="url(#bubbleFill)"/>
+    <circle cx="34" cy="86" r="6" fill="url(#bubbleFill)"/>`,
 
   snack: () => `${disc(P.peachSoft)}
     <ellipse cx="60" cy="100" rx="28" ry="5" fill="${P.peachInk}" opacity="0.12"/>
@@ -1157,17 +1159,17 @@ const quizIcons = {
     <path d="M 62 28 q 18 -14 26 0 q -14 14 -26 0 Z" fill="${P.hopGreen}"/>`,
 
   controller: () => `${disc(P.lavenderSoft)}
-    <path d="M 22 56 q 6 -18 24 -18 h 28 q 18 0 24 18 l 8 24 q 6 20 -12 22 q -14 2 -20 -12 h -48 q -6 14 -20 12 q -18 -2 -12 -22 Z" fill="url(#lavenderBall)"/>
-    <path d="M 22 56 q 6 -18 24 -18 h 28 q 18 0 24 18 q -38 -8 -76 0 Z" fill="#FFFFFF" opacity="0.22"/>
-    <rect x="32" y="60" width="22" height="7" rx="3.5" fill="${P.cloud}"/>
-    <rect x="39.5" y="52.5" width="7" height="22" rx="3.5" fill="${P.cloud}"/>
-    <circle cx="80" cy="58" r="6" fill="${P.sunshine}"/>
-    <circle cx="92" cy="70" r="6" fill="${P.peach}"/>`,
+    <path d="M 30 54 q 6 -16 22 -16 h 16 q 16 0 22 16 l 12 26 q 8 18 -10 21 q -15 2 -21 -13 h -32 q -6 15 -21 13 q -18 -3 -10 -21 Z" fill="url(#lavenderBall)"/>
+    <path d="M 30 54 q 6 -16 22 -16 h 16 q 16 0 22 16 q -30 -7 -60 0 Z" fill="#FFFFFF" opacity="0.22"/>
+    <rect x="30" y="61" width="22" height="7" rx="3.5" fill="${P.cloud}"/>
+    <rect x="37.5" y="53.5" width="7" height="22" rx="3.5" fill="${P.cloud}"/>
+    <circle cx="76" cy="58" r="6.4" fill="${P.sunshine}"/>
+    <circle cx="89" cy="70" r="6.4" fill="${P.peach}"/>`,
 
   bed: () => `${disc(P.sunshineSoft)}
     <ellipse cx="60" cy="98" rx="42" ry="5" fill="${P.sunshineDeep}" opacity="0.12"/>
-    <rect x="16" y="44" width="12" height="52" rx="6" fill="url(#woodGradV)"/>
-    <rect x="94" y="62" width="12" height="34" rx="6" fill="url(#woodGradV)"/>
+    <path d="M 14 40 q 0 -10 10 -10 q 10 0 10 10 v 56 h -20 Z" fill="url(#woodGradV)"/>
+    <path d="M 88 60 q 0 -8 9 -8 q 9 0 9 8 v 36 h -18 Z" fill="url(#woodGradV)"/>
     <rect x="20" y="70" width="82" height="20" rx="9" fill="${P.porcelainMid}"/>
     <path d="M 28 70 h 68 q 10 0 10 10 v 4 h -78 Z" fill="url(#lavenderBall)" opacity="0.9"/>
     <path d="M 28 62 q 0 -12 14 -12 h 16 q 14 0 14 12 v 8 h -44 Z" fill="${P.cloud}"/>
@@ -1183,11 +1185,14 @@ const quizIcons = {
       <path d="M -76 -122 q -8 -36 22 -36 h 108 q 30 0 22 36 Z" fill="#FFFFFF" opacity="0.2"/>`)}`,
 
   sink: () => `${disc(P.pondBlueSoft)}
-    <path d="M 78 44 h -20 q -14 0 -14 14 v 6" stroke="url(#porcelainSide)" stroke-width="11" fill="none" stroke-linecap="round"/>
-    <rect x="72" y="34" width="16" height="18" rx="7" fill="${P.sand300}"/>
-    <path d="M 22 64 h 76 q 8 0 6 10 l -8 24 q -3 10 -14 10 h -44 q -11 0 -14 -10 l -8 -24 q -2 -10 6 -10 Z" fill="url(#porcelainGrad)"/>
-    <path d="M 26 68 h 68 l -4 12 q -30 8 -60 0 Z" fill="${P.pondBlueLight}" opacity="0.55"/>
-    <rect x="52" y="80" width="16" height="6" rx="3" fill="${P.sand200}"/>`,
+    <path d="M 60 46 v -14 q 0 -10 10 -10 h 12" stroke="${P.sand300}" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <rect x="76" y="16" width="16" height="16" rx="7" fill="${P.sand400}"/>
+    <path d="M 47 74 q -3 18 -6 24 h 38 q -3 -6 -6 -24 Z" fill="${P.porcelainShade}"/>
+    <ellipse cx="60" cy="99" rx="26" ry="6" fill="url(#porcelainGrad)"/>
+    <path d="M 20 54 q 6 22 18 24 h 44 q 12 -2 18 -24 Z" fill="url(#porcelainGrad)"/>
+    <ellipse cx="60" cy="54" rx="40" ry="11" fill="url(#porcelainGrad)"/>
+    <ellipse cx="60" cy="55" rx="30" ry="7.4" fill="${P.pondBlueLight}"/>
+    <ellipse cx="49" cy="52" rx="13" ry="3.4" fill="#FFFFFF" opacity="0.7"/>`,
 
   bubbles: () => `${disc(P.pondBlueSoft)}
     <circle cx="48" cy="56" r="26" fill="url(#bubbleFill)"/>
@@ -1206,8 +1211,13 @@ const quizIcons = {
 // Meaning is carried by silhouette alone: an open ring, one drop, a soft coil,
 // and a drop breaking out of a broken ring. Colour is a second, optional cue —
 // every glyph is also emitted in single-ink `-mono`.
-const drop = (cx, cy, h, w) =>
-  `M ${cx} ${R(cy - h / 2)} C ${R(cx + w * 0.62)} ${R(cy - h * 0.1)} ${R(cx + w)} ${R(cy + h * 0.12)} ${cx} ${R(cy + h / 2)} C ${R(cx - w)} ${R(cy + h * 0.12)} ${R(cx - w * 0.62)} ${R(cy - h * 0.1)} ${cx} ${R(cy - h / 2)} Z`;
+const drop = (cx, cy, h, w) => {
+  const top = cy - h / 2, bot = cy + h / 2, r = w;
+  return `M ${cx} ${R(top)}
+    C ${R(cx + w * 0.5)} ${R(top + h * 0.3)} ${R(cx + r)} ${R(bot - r * 1.1)} ${R(cx + r)} ${R(bot - r)}
+    A ${R(r)} ${R(r)} 0 1 1 ${R(cx - r)} ${R(bot - r)}
+    C ${R(cx - r)} ${R(bot - r * 1.1)} ${R(cx - w * 0.5)} ${R(top + h * 0.3)} ${cx} ${R(top)} Z`;
+};
 
 const eventGlyphs = {
   // Tried: an open ring around a small centre — an attempt, outcome not stated.
@@ -1217,8 +1227,8 @@ const eventGlyphs = {
 
   // Pee: a single, solid drop.
   pee: (ink, accent) => `
-    <path d="${drop(48, 50, 62, 27)}" fill="${accent}"/>
-    <path d="M 38 56 q 2 -14 10 -22" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.55"/>`,
+    <path d="${drop(48, 50, 62, 24)}" fill="${accent}"/>
+    <path d="M 38 58 q 1 -15 8 -24" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.5"/>`,
 
   // Poop: a rounded three-tier coil. No face, no flies, no smell lines.
   poop: (ink, accent) => `
@@ -1231,10 +1241,12 @@ const eventGlyphs = {
 
   // Accident: the same drop, outside a ring that has opened up.
   accident: (ink, accent) => `
-    <circle cx="48" cy="48" r="31" fill="none" stroke="${ink}" stroke-width="8" stroke-linecap="round" stroke-dasharray="26 22" opacity="0.75"/>
-    <path d="${drop(48, 48, 50, 22)}" fill="${accent}"/>
-    <g stroke="${ink}" stroke-width="7" stroke-linecap="round" opacity="0.9">
-      <path d="M 78 18 l 10 -10"/><path d="M 18 78 l -10 10"/>
+    <circle cx="48" cy="42" r="31" fill="none" stroke="${ink}" stroke-width="8" stroke-linecap="round" stroke-dasharray="27 21" opacity="0.7"/>
+    <path d="${drop(48, 40, 46, 19)}" fill="${accent}"/>
+    <path d="M 40 46 q 1 -11 6 -18" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.45"/>
+    <g fill="${accent}">
+      <ellipse cx="48" cy="86" rx="19" ry="6"/>
+      <circle cx="24" cy="78" r="5"/><circle cx="73" cy="76" r="4.4"/>
     </g>`,
 };
 const EVENT_TINT = {
@@ -1249,22 +1261,27 @@ const EVENT_TINT = {
 // ===========================================================================
 function appIcon() {
   const S = 1024;
-  // The pause motif: two soft bars behind Hop, wide enough to read as a pause
-  // at 40pt and pale enough that they never compete with the face.
-  const pause = `<g fill="#FFFFFF" opacity="0.2">
-      <rect x="150" y="286" width="104" height="392" rx="52"/>
-      <rect x="770" y="286" width="104" height="392" rx="52"/>
-    </g>`;
+  // Pass 1 put Hop's green face on a green field and he all but disappeared.
+  // The face now sits on a Cloud disc inside the pond-green frame, which is
+  // what carries the silhouette down to 40pt.
   const body = `
     <rect width="${S}" height="${S}" fill="url(#iconSky)"/>
-    <circle cx="512" cy="430" r="470" fill="url(#iconHalo)"/>
-    ${pause}
-    <path d="M 0 792 Q 256 736 512 780 Q 768 824 1024 764 L 1024 1024 L 0 1024 Z" fill="url(#iconWater)"/>
-    <path d="M 0 836 Q 256 786 512 826 Q 768 866 1024 812" fill="none" stroke="#FFFFFF" stroke-width="14" opacity="0.35"/>
-    ${g('translate(214 872) scale(1.5)', `<path d="${pad(0, 0, 62, { notch: 44 })}" fill="${P.hopGreenDeep}" opacity="0.55"/>`)}
-    ${g('translate(820 916) scale(1.25)', `<path d="${pad(0, 0, 62, { notch: 210 })}" fill="${P.hopGreenDeep}" opacity="0.5"/>`)}
-    <ellipse cx="512" cy="812" rx="270" ry="46" fill="${P.hopGreenInk}" opacity="0.16"/>
-    ${g('translate(512 486) scale(2.02) translate(-256 -274)', `
+    <circle cx="512" cy="452" r="500" fill="url(#iconHalo)"/>
+    <circle cx="512" cy="496" r="404" fill="${P.hopGreenInk}" opacity="0.12"/>
+    <circle cx="512" cy="490" r="398" fill="${P.hopGreenSoft}"/>
+    <circle cx="512" cy="490" r="386" fill="${P.cloud}"/>
+    <g clip-path="url(#iconDisc)">
+      <g fill="${P.hopGreen}" opacity="0.14">
+        <rect x="166" y="368" width="88" height="330" rx="44"/>
+        <rect x="770" y="368" width="88" height="330" rx="44"/>
+      </g>
+      <path d="M 100 748 Q 300 706 512 742 Q 724 778 930 730 L 930 900 L 100 900 Z" fill="url(#iconWater)"/>
+      <path d="M 100 792 Q 300 754 512 786 Q 724 818 930 776" fill="none" stroke="#FFFFFF" stroke-width="13" opacity="0.4"/>
+      ${g('translate(268 828) scale(1.5)', `<path d="${pad(0, 0, 62, { notch: 46 })}" fill="${P.hopGreenDeep}" opacity="0.4"/>`)}
+      ${g('translate(760 846) scale(1.25)', `<path d="${pad(0, 0, 62, { notch: 208 })}" fill="${P.hopGreenDeep}" opacity="0.35"/>`)}
+    </g>
+    <ellipse cx="512" cy="726" rx="228" ry="32" fill="${P.hopGreenInk}" opacity="0.07"/>
+    ${g('translate(512 462) scale(1.62) translate(-256 -283)', `
       ${hopBody({})}
       ${hopSheen}
       ${hopEyes({})}

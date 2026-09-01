@@ -206,6 +206,21 @@ struct PottyPauseLab: View {
             )
             row("Shield payload", snapshot?.hasShieldPresentation == true ? "present" : "MISSING (fallback copy)")
 
+            // Copy drift between what the app publishes from `HopCopy` and what
+            // the extension falls back to when the payload is missing. Shown
+            // because a device with a broken App Group would otherwise display
+            // different button labels from a healthy one, and nobody would know.
+            row(
+                "primary: HopCopy / fallback",
+                "\(HopCopy.shield.primaryButton.value) / \(ShieldPresentation.fallback.primaryButtonLabel)",
+                warn: HopCopy.shield.primaryButton.value != ShieldPresentation.fallback.primaryButtonLabel
+            )
+            row(
+                "secondary: HopCopy / fallback",
+                "\(HopCopy.shield.secondaryButton.value) / \(ShieldPresentation.fallback.secondaryButtonLabel ?? "—")",
+                warn: HopCopy.shield.secondaryButton.value != ShieldPresentation.fallback.secondaryButtonLabel
+            )
+
             stepperRow("Test pause", value: $testPauseSeconds, range: 60...600, step: 30, unit: "s")
 
             // "Trigger test" — the full path a real trigger takes, so the shield,

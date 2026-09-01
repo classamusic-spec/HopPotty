@@ -14,21 +14,32 @@
 SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited)
 
 // ---------------------------------------------------------------------------
-// The Potty Pause Lab must be structurally unreachable
+// The Potty Pause Lab, and why EXCLUDED_SOURCE_FILE_NAMES is NOT used here
 // ---------------------------------------------------------------------------
 //
-// Belt and braces to the `#if HOPPOTTY_DEBUG_TOOLS` guards: the developer-only
-// sources are removed from the Release compile entirely, so an unguarded file
-// under HopPotty/Developer/ cannot be shipped even by accident.
+// The Lab can raise a shield over a child's apps, cancel every scheduled
+// monitor and wipe the App Group. It must not exist in a build a family can
+// install, and it does not: `PottyPauseLab` is inside `#if DEBUG`, and DEBUG is
+// defined only by Config/Debug.xcconfig. The type is absent from this binary,
+// not merely unreachable in it.
 //
-// UNVERIFIED — confirm once Xcode is available: EXCLUDED_SOURCE_FILE_NAMES is
-// documented as a list of glob patterns matched against source file paths, and
-// this absolute-path form is the spelling used in Apple's own project
-// templates; it has not been exercised here. Verify with
-// `Scripts/verify-release-build.sh` (or by deleting a `#if` guard in a Lab file
-// and confirming the Release build still succeeds) before the first submission.
-// The `#if` guards remain the primary mechanism; this is the backstop.
-EXCLUDED_SOURCE_FILE_NAMES = $(SRCROOT)/HopPotty/Developer/*
+// The obvious belt-and-braces addition would be
+//
+//     EXCLUDED_SOURCE_FILE_NAMES = $(SRCROOT)/HopPotty/Developer/*
+//
+// and it is deliberately absent, because it would break this build rather than
+// harden it. HopPotty/Developer/DeveloperSurface.swift is a *seam*: its
+// `developerSurface()` modifier compiles to `self` in the `#else` branch so that
+// call sites are written once and compile in both configurations. Excluding the
+// directory would delete that `#else` branch too, and every call site would fail
+// to compile in Release only — the worst possible place to discover it.
+//
+// What replaces it is a check rather than a build setting:
+// Scripts/verify-config.sh fails if any file under HopPotty/Developer/ is not
+// guarded by a compilation condition this configuration does not define, and it
+// runs in CI on every push. That covers the case the exclusion was meant to
+// cover — a developer-only file someone forgot to wrap — without breaking the
+// pattern that makes the guard usable.
 
 // ---------------------------------------------------------------------------
 // Build

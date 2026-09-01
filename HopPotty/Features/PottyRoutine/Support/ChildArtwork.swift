@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import HopPottyCore
 
 /// Draws an illustration named by a ``HopIllustrationKey``.

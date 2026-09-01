@@ -57,7 +57,7 @@ struct RoutineTimerRing: View {
             .frame(width: diameter, height: diameter)
             .hopBreathing(amplitude: 0.010)
             .accessibilityElement()
-            .accessibilityLabel(caption ?? HopCopy.routine.sitTimerCaption.value)
+            .accessibilityLabel(caption ?? HopCopy.routine.sitTimerCaption.localized)
             .accessibilityValue(HopStrings.progressPercent(clamped))
 
             if let caption {
@@ -110,7 +110,7 @@ extension View {
     RoutineTimerRing(
         fraction: 0.42,
         diameter: 220,
-        caption: HopCopy.routine.sitTimerCaption.value
+        caption: HopCopy.routine.sitTimerCaption.localized
     )
     .padding()
     .hopBackground()
@@ -128,7 +128,7 @@ extension View {
     RoutineTimerRing(
         fraction: 0.42,
         diameter: 220,
-        caption: HopCopy.routine.sitTimerCaption.value
+        caption: HopCopy.routine.sitTimerCaption.localized
     )
     .padding()
     .hopBackground()

@@ -160,7 +160,10 @@ HopPottyKit/                Swift package. Foundation only.
   Tests/                        ~28 suites, run on Linux in CI
 
 HopPotty/                   The iOS app target.
-  App/                        entry point, composition root, launch hooks
+  App/                        entry point, composition root, launch hooks.
+                              Owns the process; the feature graph
+                              (ParentEnvironment) is assembled by the feature
+                              layer from what this hands it.
   Core/                       build configuration, clock, parent authorization, logging
   DesignSystem/               SwiftUI realisation of the design tokens
   Features/                   one directory per surface
@@ -238,8 +241,9 @@ months later because a new Xcode deprecated an API the code still uses correctly
 Chosen by **build configuration**, never by a runtime flag. `AppEnvironment`
 resolves it once, at launch:
 
-- **Release** compiles only the live branch. The fake Screen Time service is not
-  in the binary, so no debug menu, no URL scheme and no bug can reach it.
+- **Release** compiles only the live branch. `InMemoryScreenTimeReconciler` sits
+  inside `#if HOPPOTTY_DEBUG_TOOLS`, so the fake is not in the binary at all —
+  no debug menu, no URL scheme and no bug can reach it.
 - **Debug** compiles both, and uses the live one — except inside an Xcode preview
   or a test host, which `AppBuildConfiguration.resolved` detects at runtime.
   Previews must never touch the real store or a StoreKit sandbox account.
@@ -252,23 +256,27 @@ above it.
 
 ## Debug tools
 
-The **Potty Pause Lab** (`HopPotty/Developer/`) can start and end pauses,
-inspect the App Group, and force reconciliation verdicts without a real
-authorization. A build that can reach it must never reach a family, so two
-independent mechanisms keep it out of Release:
+The **Potty Pause Lab** (`HopPotty/Developer/`) can start and end pauses, cancel
+every scheduled monitor, wipe the App Group, and force reconciliation verdicts —
+all without a real authorization. A build that can reach it must never reach a
+family, and the gate is the compiler rather than a flag:
 
-1. `HOPPOTTY_DEBUG_TOOLS` is defined only in `Config/Debug.xcconfig`, so
-   `#if HOPPOTTY_DEBUG_TOOLS` code is not compiled into a Release build; and
-2. `Config/Release.xcconfig` removes `HopPotty/Developer/*` from the compiled
-   sources entirely via `EXCLUDED_SOURCE_FILE_NAMES`, so a file someone forgot to
-   guard still cannot ship.
+- `PottyPauseLab` is inside `#if DEBUG`. In a Release build the type does not
+  exist, so there is no symbol to reach and no `if` to be turned.
+- Its entry point, `View.developerSurface()`, is a seam: the `#else` branch
+  compiles to `self` and contains no reference to the Lab, so call sites are
+  written once and compile in both configurations.
+- `HOPPOTTY_DEBUG_TOOLS` is defined only in `Config/Debug.xcconfig` and gates the
+  app layer's own developer-only code, such as the in-memory Screen Time
+  reconciler.
 
-The second is what makes it structural rather than a convention. If a Release
-build ever fails with *cannot find 'PottyPauseLab' in scope*, the mechanism is
-working and the unguarded reference is the defect.
-
-`verify-config.sh` fails if `HOPPOTTY_DEBUG_TOOLS`, `HOPPOTTY_MOCKS` or `DEBUG`
-ever appears in the Release configuration.
+`Config/Release.xcconfig` deliberately does *not* add
+`EXCLUDED_SOURCE_FILE_NAMES` for `HopPotty/Developer/*`. It would delete the
+`#else` branch above along with everything else, and every call site would then
+fail to compile in Release only — the worst place to find out. The check that
+replaces it runs in CI: `verify-config.sh` fails if any file under
+`HopPotty/Developer/` lacks a debug-only guard, and if `HOPPOTTY_DEBUG_TOOLS`,
+`HOPPOTTY_MOCKS` or `DEBUG` ever appears in the Release configuration.
 
 ---
 
@@ -368,10 +376,12 @@ Things a person with a Mac should expect to fix or confirm. They are marked
   a Screen Time bug.
 - **`NSExtensionPrincipalClass`** must match the Swift class name the extension
   actually declares, unnested and spelled exactly.
-- **`EXCLUDED_SOURCE_FILE_NAMES`** in `Config/Release.xcconfig` — the glob form
-  is from Apple's own templates but has not been exercised here.
-- **`storeKitConfiguration`** in the schemes — an XcodeGen key that may need to be
-  set in Xcode's scheme editor instead.
+- **`storeKitConfiguration`** in the schemes, and **`optional: true`** on the
+  shared source paths — both are XcodeGen spec keys taken from its documentation
+  and never exercised here. If generation fails on either, the fallbacks are
+  Xcode's scheme editor and plain (non-optional) source paths.
+- **`RootView`** is the one symbol `HopPottyApp` expects from the feature layer.
+  It assembles the feature graph; the entry point only builds the process.
 - **Family Controls in the Simulator** — Apple documents nothing either way.
 - The nine device-only questions in `Docs/ScreenTimeArchitecture.md` §12.
 

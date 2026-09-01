@@ -225,11 +225,26 @@ public final class PottyPauseEffectExecutor {
     ///   "Restore Screen Access" button on it. Under-reporting costs a child
     ///   their apps with nobody told. The asymmetry decides it.
     ///
+    /// ## The `errorAccessRestored` path specifically
+    ///
+    /// `parentRestoredAccess` is accepted from every state, including every error
+    /// state, and lands in `errorAccessRestored(failure)` — "the failure is still
+    /// unresolved, but a clear has been issued and the child's apps are back".
+    /// That state reports `mayHaveShieldUp == false`, which is only true if the
+    /// clear actually took.
+    ///
+    /// This method is what makes that claim honest. When the read-back still
+    /// shows a shield, `.shieldClearFailed` is emitted, the machine leaves
+    /// `errorAccessRestored` and re-enters `errorRequiresParent(.shieldClearFailed)`,
+    /// and a caregiver is put in front of the problem. The state machine is never
+    /// allowed to assert that a child has their apps back on the strength of a
+    /// write nobody checked.
+    ///
     /// UNVERIFIED — confirm on device: whether `ManagedSettingsStore` reads
     /// reflect writes made moments earlier in the same process. If they are
     /// eventually-consistent, this check will occasionally report a false
     /// `.shieldClearFailed`. That is the failure direction chosen above, and
-    /// `Docs/PhysicalDeviceQA.md` has a step to measure it.
+    /// `Docs/PhysicalDeviceQA.md` §9.3.2 measures it.
     private func performClear(reason: ShieldReconciler.ClearReason) {
         pauseTimer?.cancel()
         pauseTimer = nil

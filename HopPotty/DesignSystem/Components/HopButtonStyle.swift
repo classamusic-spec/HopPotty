@@ -108,6 +108,12 @@ struct HopButtonStyle: ButtonStyle {
             RoundedRectangle(cornerRadius: size.cornerRadius, style: .continuous)
         }
 
+        /// Spelled out rather than `size.fillsWidth ? .infinity : nil`, which
+        /// asks the compiler to find `.infinity` through an Optional.
+        private var maximumWidth: CGFloat? {
+            size.fillsWidth ? CGFloat.infinity : nil
+        }
+
         private var foreground: Color {
             switch appearance {
             case .filled(_, let foreground): foreground
@@ -121,7 +127,7 @@ struct HopButtonStyle: ButtonStyle {
                 .foregroundStyle(foreground)
                 .padding(.horizontal, size.horizontalPadding)
                 .frame(minHeight: size.minimumHeight)
-                .frame(maxWidth: size.fillsWidth ? .infinity : nil)
+                .frame(maxWidth: maximumWidth)
                 .background { background }
                 .modifier(theme.elevation(elevation))
                 .scaleEffect(configuration.isPressed ? size.pressedScale : 1)

@@ -20,7 +20,7 @@ struct AppSelectionSection: View {
     @Environment(ParentEnvironment.self) private var parent
 
     let childID: UUID
-    var onChange: ((ScreenTimeConfiguration) -> Void)?
+    var onChange: ((ScreenTimeConfiguration) -> Void)? = nil
 
     @State private var isPickerPresented = false
     @State private var configuration: ScreenTimeConfiguration?

@@ -1,18 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-<defs><linearGradient id="hopBody" x1="0.2" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#9FE3B9"/><stop offset="0.52" stop-color="#63C88A"/><stop offset="1" stop-color="#45A971"/></linearGradient><radialGradient id="hopCheek" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FF8E86" stop-opacity="0.85"/><stop offset="0.55" stop-color="#FF9F8F" stop-opacity="0.55"/><stop offset="1" stop-color="#FF9F8F" stop-opacity="0"/></radialGradient><radialGradient id="hopEyeDome" cx="0.36" cy="0.28" r="0.75"><stop offset="0" stop-color="#A9E8C2"/><stop offset="1" stop-color="#4FB47B"/></radialGradient><radialGradient id="hopSheen" cx="0.34" cy="0.22" r="0.6"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient><radialGradient id="iconHalo" cx="0.5" cy="0.42" r="0.62"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.42"/><stop offset="0.62" stop-color="#FFFFFF" stop-opacity="0.1"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient><linearGradient id="iconSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FDCAC"/><stop offset="0.52" stop-color="#63C88A"/><stop offset="1" stop-color="#3FA672"/></linearGradient><radialGradient id="iconVignette" cx="0.5" cy="0.5" r="0.72"><stop offset="0.6" stop-color="#1B5E39" stop-opacity="0"/><stop offset="1" stop-color="#1B5E39" stop-opacity="0.28"/></radialGradient><linearGradient id="iconWater" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FD0EC" stop-opacity="0.85"/><stop offset="1" stop-color="#4FB6DC" stop-opacity="0.95"/></linearGradient></defs>
+<defs><linearGradient id="hopBody" x1="0.2" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#9FE3B9"/><stop offset="0.52" stop-color="#63C88A"/><stop offset="1" stop-color="#45A971"/></linearGradient><radialGradient id="hopCheek" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FF8E86" stop-opacity="0.85"/><stop offset="0.55" stop-color="#FF9F8F" stop-opacity="0.55"/><stop offset="1" stop-color="#FF9F8F" stop-opacity="0"/></radialGradient><radialGradient id="hopEyeDome" cx="0.36" cy="0.28" r="0.75"><stop offset="0" stop-color="#A9E8C2"/><stop offset="1" stop-color="#4FB47B"/></radialGradient><radialGradient id="hopSheen" cx="0.34" cy="0.22" r="0.6"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient><clipPath id="iconDisc"><circle cx="512" cy="490" r="386"/></clipPath><radialGradient id="iconHalo" cx="0.5" cy="0.42" r="0.62"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.3"/><stop offset="0.6" stop-color="#FFFFFF" stop-opacity="0.08"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient><linearGradient id="iconSky" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#5FBE8C"/><stop offset="0.5" stop-color="#3FA672"/><stop offset="1" stop-color="#227A4E"/></linearGradient><radialGradient id="iconVignette" cx="0.5" cy="0.5" r="0.75"><stop offset="0.62" stop-color="#1B5E39" stop-opacity="0"/><stop offset="1" stop-color="#1B5E39" stop-opacity="0.22"/></radialGradient><linearGradient id="iconWater" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FD0EC" stop-opacity="0.85"/><stop offset="1" stop-color="#4FB6DC" stop-opacity="0.95"/></linearGradient></defs>
 
     <rect width="1024" height="1024" fill="url(#iconSky)"/>
-    <circle cx="512" cy="430" r="470" fill="url(#iconHalo)"/>
-    <g fill="#FFFFFF" opacity="0.2">
-      <rect x="150" y="286" width="104" height="392" rx="52"/>
-      <rect x="770" y="286" width="104" height="392" rx="52"/>
+    <circle cx="512" cy="452" r="500" fill="url(#iconHalo)"/>
+    <circle cx="512" cy="496" r="404" fill="#1B5E39" opacity="0.12"/>
+    <circle cx="512" cy="490" r="398" fill="#E3F5EA"/>
+    <circle cx="512" cy="490" r="386" fill="#FFF9F2"/>
+    <g clip-path="url(#iconDisc)">
+      <g fill="#63C88A" opacity="0.14">
+        <rect x="166" y="368" width="88" height="330" rx="44"/>
+        <rect x="770" y="368" width="88" height="330" rx="44"/>
+      </g>
+      <path d="M 100 748 Q 300 706 512 742 Q 724 778 930 730 L 930 900 L 100 900 Z" fill="url(#iconWater)"/>
+      <path d="M 100 792 Q 300 754 512 786 Q 724 818 930 776" fill="none" stroke="#FFFFFF" stroke-width="13" opacity="0.4"/>
+      <g transform="translate(268 828) scale(1.5)"><path d="M 21.21 26.8 A 62 28.52 0 1 1 57.49 10.68 L 0 0 Z" fill="#2F8C57" opacity="0.4"/></g>
+      <g transform="translate(760 846) scale(1.25)"><path d="M -38.17 -22.47 A 62 28.52 0 1 1 -61.85 -1.99 L 0 0 Z" fill="#2F8C57" opacity="0.35"/></g>
     </g>
-    <path d="M 0 792 Q 256 736 512 780 Q 768 824 1024 764 L 1024 1024 L 0 1024 Z" fill="url(#iconWater)"/>
-    <path d="M 0 836 Q 256 786 512 826 Q 768 866 1024 812" fill="none" stroke="#FFFFFF" stroke-width="14" opacity="0.35"/>
-    <g transform="translate(214 872) scale(1.5)"><path d="M 23.23 26.44 A 62 28.52 0 1 1 58.26 9.75 L 0 0 Z" fill="#2F8C57" opacity="0.55"/></g>
-    <g transform="translate(820 916) scale(1.25)"><path d="M -36.44 -23.07 A 62 28.52 0 1 1 -61.66 -2.98 L 0 0 Z" fill="#2F8C57" opacity="0.5"/></g>
-    <ellipse cx="512" cy="812" rx="270" ry="46" fill="#1B5E39" opacity="0.16"/>
-    <g transform="translate(512 486) scale(2.02) translate(-256 -274)">
+    <ellipse cx="512" cy="726" rx="228" ry="32" fill="#1B5E39" opacity="0.07"/>
+    <g transform="translate(512 462) scale(1.62) translate(-256 -283)">
       <path d="
     M 256 186
     C 330 186, 392 232, 400 292

@@ -82,8 +82,8 @@ struct NotificationsScreen: View {
             title: HopFeatureStrings.notificationsTitle,
             message: HopFeatureStrings.notificationsBody,
             primaryTitle: primaryTitle,
-            isWorking: model.isWorking,
             skipTitle: HopCopy.common.notNow.localized,
+            isWorking: model.isWorking,
             canGoBack: model.canGoBack,
             onPrimary: primaryAction,
             onSkip: model.advance,
@@ -139,8 +139,8 @@ struct TestPauseScreen: View {
             primaryTitle: model.draft.didTestPauseSucceed == true
                 ? HopCopy.common.next.localized
                 : HopFeatureStrings.testPauseRun,
-            isWorking: model.isWorking,
             skipTitle: HopFeatureStrings.testPauseSkip,
+            isWorking: model.isWorking,
             canGoBack: model.canGoBack,
             onPrimary: {
                 if model.draft.didTestPauseSucceed == true {

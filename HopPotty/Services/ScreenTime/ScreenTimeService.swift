@@ -74,9 +74,11 @@ public final class ScreenTimeService: ScreenTimeProviding {
         loadPersistedSelection()
     }
 
-    deinit {
-        for continuation in statusContinuations.values { continuation.finish() }
-    }
+    // No `deinit` finishing the continuations: a `deinit` is nonisolated and
+    // `statusContinuations` is main-actor state, which Swift 6 rejects. Each
+    // stream's `onTermination` removes its own entry when the consumer stops
+    // iterating, and a service that is being deallocated has no consumers left to
+    // notify anyway.
 
     // MARK: - Authorization
 
@@ -499,6 +501,6 @@ public final class ScreenTimeService: ScreenTimeProviding {
     }
 
     public func appGroupSnapshot(now: Date = Date()) -> AppGroupSnapshot {
-        appGroup.snapshot(now: now)
+        appGroup.snapshot(now: now, countingReports: true)
     }
 }

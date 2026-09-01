@@ -114,9 +114,10 @@ fake for previews, simulator runs and UI tests.
 `HopPottyKit/Sources/HopPottyCore/StateMachine/`
 
 One pure, **total** function: `reduce(state:event:context:) -> TransitionOutcome`,
-defined for every one of the 14 state kinds × 20 events (with one state per
-`ScreenTimeFailure` for the three error cases, the totality suite walks
-1,050+ pairs). Plus one recovery entry point, `recoverFromColdStart`.
+defined for every one of the 14 state kinds. Those expand to **50 distinct state
+values** — one per `ScreenTimeFailure` (13 cases) for each of the three error
+states — and there are **21 events**, so the totality and fail-safe suites walk
+all **1,050 pairs**. Plus one recovery entry point, `recoverFromColdStart`.
 
 ### 4.1 States — `PottyPauseState`
 
@@ -142,7 +143,7 @@ new failure case cannot be added without someone choosing a side).
 
 ### 4.2 Events — `PottyPauseEvent`
 
-20 cases, **none carrying a payload.** Everything a transition needs — the
+21 cases, **none carrying a payload.** Everything a transition needs — the
 instant, the schedule, the authorization status, the in-flight session — arrives
 in `PottyPauseContext`. That keeps the event set `CaseIterable`, which is what
 makes the "every state × every event" totality test writable at all.

@@ -305,23 +305,26 @@ final class HopPottyDeviceActivityMonitorExtension: DeviceActivityMonitor {
 
     /// Register the 15-minute backstop from inside the extension.
     ///
-    /// Duplicated from `ActivityMonitoringService` rather than shared, because
-    /// sharing it would mean linking the app's monitoring service — an
-    /// `@Observable @MainActor` class — into a process that has no main actor to
-    /// speak of. The duplication is nine lines and both call the same
-    /// `MonitoringPlan.backstop` to compute what to register, so the *decision*
-    /// is not duplicated, only the call.
+    /// The *call* is duplicated from `ActivityMonitoringService`; the *decision*
+    /// is not. Both ask `SharedPauseRecord.backstopScheduleComponents()` what to
+    /// register, so a pause started by the extension gets a backstop identical to
+    /// one started by the app. Sharing the call itself would mean linking the
+    /// app's monitoring service — an `@Observable @MainActor` class — into a
+    /// process that has no main actor to speak of.
+    ///
+    /// `repeats: false`, so this activity stops calling back after one interval
+    /// and cannot become an orphan that ends future pauses early.
     private func registerBackstop(for record: SharedPauseRecord) {
-        let activity = MonitoringPlan.backstop(for: record)
+        let components = record.backstopScheduleComponents()
         let schedule = DeviceActivitySchedule(
-            intervalStart: activity.intervalStart,
-            intervalEnd: activity.intervalEnd,
+            intervalStart: components.start,
+            intervalEnd: components.end,
             repeats: false,
-            warningTime: activity.warningTime
+            warningTime: components.warning
         )
         do {
             try DeviceActivityCenter().startMonitoring(
-                DeviceActivityName(hopPotty: activity.name),
+                DeviceActivityName(hopPotty: ScreenTimeIdentifiers.backstopActivityName),
                 during: schedule
             )
         } catch {

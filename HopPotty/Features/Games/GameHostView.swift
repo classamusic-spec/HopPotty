@@ -40,12 +40,12 @@ struct GameHostView<Board: View>: View {
     private var chrome: some View {
         HStack(alignment: .center, spacing: theme.spacing.m) {
             VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                Text(game.title.value)
+                Text(game.title.localized)
                     .hopTextStyle(.parentTitle)
                     .foregroundStyle(theme.color.textPrimary)
                     .accessibilityAddTraits(.isHeader)
 
-                Text(game.childDescription.value)
+                Text(game.childDescription.localized)
                     .hopTextStyle(.parentCallout)
                     .foregroundStyle(theme.color.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -57,7 +57,7 @@ struct GameHostView<Board: View>: View {
 
             HopIconButton(
                 systemImage: "checkmark",
-                accessibilityLabel: HopCopy.games.doneButton.value,
+                accessibilityLabel: HopCopy.games.doneButton.localized,
                 tint: theme.color.brandAction,
                 minimumTarget: theme.hitTarget.child,
                 action: onLeave
@@ -87,7 +87,7 @@ struct GameHostView<Board: View>: View {
                 HopCharacterStage(pose: .cheer, size: ChildStage.characterSize(for: horizontalSizeClass))
                     .accessibilityHidden(true)
 
-                Text(HopCopy.games.finished.value)
+                Text(HopCopy.games.finished.localized)
                     .hopTextStyle(.celebration)
                     .foregroundStyle(theme.color.textPrimary)
                     .multilineTextAlignment(.center)
@@ -96,8 +96,8 @@ struct GameHostView<Board: View>: View {
 
                 HopSpokenLine(HopVoice.shared.gameFinished)
 
-                HopPrimaryButton(HopCopy.games.doneButton.value, icon: "checkmark", size: .childPrimary, action: onLeave)
-                HopPrimaryButton(HopCopy.games.againButton.value, icon: "arrow.clockwise", size: .child, action: onPlayAgain)
+                HopPrimaryButton(HopCopy.games.doneButton.localized, icon: "checkmark", size: .childPrimary, action: onLeave)
+                HopPrimaryButton(HopCopy.games.againButton.localized, icon: "arrow.clockwise", size: .child, action: onPlayAgain)
             }
             .padding(theme.spacing.xxxl)
             .frame(maxWidth: ChildStage.contentWidth)

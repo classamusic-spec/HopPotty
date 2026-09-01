@@ -2,6 +2,11 @@
 import Foundation
 import SwiftUI
 import HopPottyCore
+#if DEBUG
+// Sample children live in their own module so they can never reach a real
+// family's data. Previews are the only callers.
+import HopPottyFixtures
+#endif
 
 // Fake services and the assembled `ParentEnvironment` every preview uses.
 
@@ -186,6 +191,48 @@ extension ParentEnvironment {
         var child = HopFixtures.maya
         child.nickname = String("Maximilian Bartholomew".prefix(ChildProfile.maxNicknameLength))
         return preview(children: [child])
+    }
+
+    /// A device that has never run onboarding.
+    static func previewFirstRun() -> ParentEnvironment {
+        let clock = FixedClock(now: HopFixtures.referenceDate, calendar: previewCalendar)
+        let repositories = RepositorySet(
+            profiles: InMemoryChildProfileRepository(),
+            events: InMemoryPottyEventRepository(),
+            rewards: InMemoryRewardRepository(),
+            pond: InMemoryPondProgressRepository(),
+            schedules: InMemoryScheduleRepository(),
+            screenTime: InMemoryScreenTimeConfigurationRepository(),
+            quizzes: InMemoryQuizProgressRepository(),
+            games: InMemoryGameProgressRepository(),
+            settings: InMemorySettingsRepository(AppSettings(hasCompletedOnboarding: false))
+        )
+        return ParentEnvironment(
+            repositories: repositories,
+            screenTime: PreviewScreenTimeService(authorizationStatus: .notDetermined, selectionCount: 0),
+            purchases: PreviewPurchaseService(),
+            notifications: PreviewNotificationService(permission: .notDetermined),
+            deletion: PreviewDeletionService(receipt: DeletionReceipt()),
+            export: PreviewExportService(),
+            clock: clock,
+            settings: AppSettings(hasCompletedOnboarding: false)
+        )
+    }
+
+    /// StoreKit did not answer — offline, or the product is not configured. The
+    /// paywall must describe the unlock without inventing a price.
+    static func previewOffline() -> ParentEnvironment {
+        let environment = preview()
+        return ParentEnvironment(
+            repositories: environment.repositories,
+            screenTime: environment.screenTime,
+            purchases: PreviewPurchaseService(entitlement: .free, product: nil),
+            notifications: environment.notifications,
+            deletion: environment.deletion,
+            export: environment.export,
+            clock: environment.clock,
+            settings: environment.settings
+        )
     }
 
     static var previewCalendar: Calendar {
