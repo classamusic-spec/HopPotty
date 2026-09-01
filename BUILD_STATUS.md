@@ -1,6 +1,6 @@
 # HopPotty — Build Status
 
-**Updated:** 2026-09-01
+**Updated:** 2026-09-01 (integration pass)
 **Branch:** `claude/hoppotty-ios-build-6zzfjf`
 
 > **Read this first.** This environment has **no Xcode, no iOS simulator, and no
@@ -13,8 +13,7 @@
 
 | Layer | Compiles | Tests run | How |
 | --- | --- | --- | --- |
-| `HopPottyCore` (domain, rewards, state machine, insights, content) | ✅ Yes | ✅ Yes | Swift 6.2 on Linux — **164 tests, 13 suites, all passing** |
-| `HopPottyCore` scheduling engine | ✅ Yes | ⚠️ **No tests yet** | Compiles; suite still being written |
+| `HopPottyCore` (domain, scheduling, rewards, state machine, insights, content) | ✅ Yes | ✅ Yes | Swift 6.2 on Linux — **350 tests, 28 suites, all passing** |
 | `HopPottyDesignTokens` | ✅ Yes | ✅ Yes | Same — includes WCAG contrast assertions |
 | `HopPotty` app target (SwiftUI) | ❌ **Unverified** | ❌ No | Needs Xcode |
 | Three app extensions (Screen Time) | ❌ **Unverified** | ❌ No | Needs Xcode |
@@ -62,12 +61,49 @@ services, and feature surfaces, on top of a completed and tested core.
 - **Screen render harness.** Renders screens from the *exported design tokens*,
   so a render cannot drift from what the app compiles against.
 
-## In progress
+- **Scheduling engine.** 115 tests across 9 suites. Wall-clock membership is
+  tested by converting an instant to hour/minute components rather than comparing
+  against precomputed boundary Dates — a 01:00–03:00 quiet window is one real hour
+  in spring and three in autumn, and no instant ever reads 02:xx on a
+  spring-forward day. Both trigger bases (`.screenActivity`, `.clockTime`) are
+  separate code paths.
+- **Content.** 426 copy entries, 17 quiz questions, 5 routine steps, 31 voice
+  lines (all `.planned`; the app degrades explicitly to captions). The safety
+  tests caught real shame language in first-draft copy — "No stars yet" on the
+  pond screen — and it was fixed.
+- **SwiftUI design system.** 37 files, every component in `DesignSystemAPI.md`,
+  67 previews. Hop drawn as animatable paths with poses that interpolate. Exactly
+  one `accessibilityReduceMotion` reader in the app.
+- **Screen Time layer.** Services, three extensions, App Group store, a pure
+  `ShieldReconciler` that runs on every launch, foreground, monitor callback and
+  shield-configuration invocation, a mock that cannot ship, and a DEBUG-only lab.
+  22 assumptions marked `UNVERIFIED — confirm on device` with a test step each.
+- **Platform services.** SwiftData models with a versioned schema and migration
+  plan, repositories with in-memory doubles, corruption recovery that never
+  crashes, export with no identifiers, deletion that returns counts, StoreKit 2
+  with prices only from StoreKit, notifications as a closed two-case enum.
+- **Features.** 73 files across onboarding, parent home, timer settings,
+  progress, settings, parent gate, purchases, routine, pond, games and quizzes.
+  `RootView` wires the app entry point to the feature graph.
+- **Xcode project definition.** `project.yml`, xcconfigs, plists, entitlements,
+  StoreKit config, bootstrap script, a config verifier (52 checks passing), CI.
+- **Documentation.** 20+ documents including a complete privacy data inventory.
+- **Vector art.** 90+ SVGs: eight Hop poses, a layered pond with all 41 items,
+  routine scenes, shield hero, quiz icons, event glyphs, app icon.
+- **Screen renders.** 14 screens from the exported design tokens.
 
-Scheduling engine · pause state machine · insights engine · copy and quiz
-content · SwiftUI design system · Screen Time services and three extensions ·
-platform services (SwiftData, StoreKit, notifications, audio, haptics) · pond and
-scene art · Xcode project generation · screen renders.
+## Known gaps (tracked, not hidden)
+
+- **Art coverage.** `Scripts/check-art.sh` reports 12 of 44 illustration keys
+  resolved. 29 quiz answer icons and 3 game scenes referenced by content have no
+  drawing yet; the app shows a labelled placeholder for each.
+- **Two renders over-promised the platform** — a named-app list (tokens are
+  opaque; HopPotty cannot know app names) and a custom shield layout (the shield
+  is a fixed Apple layout). Both are being redrawn to what iOS actually allows.
+- **Copy conflicts resolved in favour of the brief**: shield buttons are
+  "Let's Go!" / "Need a grown-up?" and the unlock is "HopPotty Family".
+- **Kids Category**: `AppReviewStrategy.md` recommends 4+ Health & Fitness;
+  `ReleaseChecklist.md` presumed Kids Category. Flagged as an open decision.
 
 ---
 
