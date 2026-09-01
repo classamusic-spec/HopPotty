@@ -1,16 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
 <defs><radialGradient id="greenBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#2F8C57"/></radialGradient><linearGradient id="stoneGrad" x1="0.25" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#EFEAE3"/><stop offset="1" stop-color="#C9C2B8"/></linearGradient></defs>
 <g id="item-turtleRock">
-    <ellipse cx="100" cy="158" rx="80" ry="16" fill="#15566F" opacity="0.12"/>
-    <ellipse cx="100" cy="140" rx="78" ry="30" fill="url(#stoneGrad)"/>
-    <ellipse cx="85.96" cy="129.8" rx="42.9" ry="12" fill="#FFFFFF" opacity="0.25"/>
-    <path d="M 34 108 q 4 -46 66 -46 q 62 0 66 46 Z" fill="url(#greenBall)"/>
-    <g fill="#E3F5EA" opacity="0.5">
-      <path d="M 100 68 l 18 12 l -8 20 h -20 l -8 -20 Z"/>
-      <path d="M 60 92 l 16 8 l -6 8 h -20 Z"/><path d="M 140 92 l -16 8 l 6 8 h 20 Z"/>
+    <ellipse cx="100" cy="160" rx="82" ry="16" fill="#15566F" opacity="0.12"/>
+    <ellipse cx="100" cy="142" rx="80" ry="28" fill="url(#stoneGrad)"/>
+    <ellipse cx="85.6" cy="132.48" rx="44" ry="11.2" fill="#FFFFFF" opacity="0.25"/>
+    <ellipse cx="46" cy="122" rx="18" ry="9" fill="#8FDCAC"/>
+    <ellipse cx="150" cy="124" rx="16" ry="8" fill="#8FDCAC"/>
+    <path d="M 32 114 q 6 -52 68 -52 q 62 0 68 52 Z" fill="url(#greenBall)"/>
+    <path d="M 32 114 q 6 -52 68 -52 q -28 14 -34 52 Z" fill="#FFFFFF" opacity="0.13"/>
+    <g fill="#E3F5EA" opacity="0.45">
+      <path d="M 100 70 l 20 14 l -8 22 h -24 l -8 -22 Z"/>
+      <path d="M 58 96 l 18 8 l -5 10 h -22 Z"/><path d="M 142 96 l -18 8 l 5 10 h 22 Z"/>
     </g>
-    <circle cx="160" cy="104" r="17" fill="#8FDCAC"/>
-    <circle cx="166" cy="100" r="5" fill="#243047"/>
-    <path d="M 160 110 q 10 4 14 -2" stroke="#1B5E39" stroke-width="3.4" stroke-linecap="round" fill="none"/>
-    <ellipse cx="52" cy="110" rx="16" ry="9" fill="#8FDCAC"/></g>
+    <circle cx="164" cy="104" r="19" fill="#8FDCAC"/>
+    <circle cx="172" cy="99" r="5" fill="#243047"/>
+    <path d="M 166 112 q 10 4 15 -2" stroke="#1B5E39" stroke-width="3.4" stroke-linecap="round" fill="none"/></g>
 </svg>

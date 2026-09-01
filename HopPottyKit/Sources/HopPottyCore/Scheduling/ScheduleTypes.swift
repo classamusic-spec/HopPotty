@@ -95,6 +95,16 @@ public struct ActiveQuietWindow: Hashable, Sendable {
         self.overlapping = overlapping
         self.resumesAt = resumesAt
     }
+
+    /// Real elapsed seconds of the governing occurrence, which is *not* its
+    /// wall-clock length on a day the clocks change: a 01:00–03:00 window is one
+    /// real hour in spring and three in autumn.
+    public var duration: TimeInterval { end.timeIntervalSince(start) }
+
+    /// Real seconds until quiet lifts across the whole chain.
+    public func remaining(at instant: Date) -> TimeInterval {
+        max(0, resumesAt.timeIntervalSince(instant))
+    }
 }
 
 /// Why a pause may not start right now.

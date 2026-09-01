@@ -237,13 +237,12 @@ struct CopyCatalogTests {
     @Test("Plural resolution picks the right form and fills the count")
     func pluralResolution() {
         let stars = HopCopy.pond.starCount
-        #expect(stars.resolved(for: 0) == "No stars yet")
+        #expect(stars.resolved(for: 0) == "Ready for your first star!")
         #expect(stars.resolved(for: 1) == "1 star")
         #expect(stars.resolved(for: 12) == "12 stars")
 
-        // The interesting case: the "one" form spells the count out, so the item
-        // name stays at position 2 in both forms and the caller passes the same
-        // arguments either way.
+        // A second argument keeps its position in every plural form, so the
+        // caller passes the same arguments whichever form is chosen.
         let next = HopCopy.pond.nextUnlock
         #expect(next.resolved(for: 1, additional: [2: .text("a dragonfly")]) == "1 more star and a dragonfly hops in!")
         #expect(next.resolved(for: 3, additional: [2: .text("a dragonfly")]) == "3 more stars and a dragonfly hops in!")

@@ -97,11 +97,9 @@ struct SchedulingActiveWindowTests {
         #expect(next == F.nyAt(2025, 6, 12, 7, 0))
     }
 
-    @Test("A schedule with no active day at all has no next start")
-    func noActiveDays() {
+    @Test("A single active day is still found, a week out if need be")
+    func singleActiveDayWithinHorizon() {
         var schedule = F.schedule()
-        // Not reachable through the initialiser; this asserts the search
-        // terminates rather than spinning.
         schedule.activeDays = [.monday]
         #expect(service.nextActiveWindowStart(after: F.wednesday(9, 0), in: schedule) == F.nyAt(2025, 6, 16, 7, 0))
     }

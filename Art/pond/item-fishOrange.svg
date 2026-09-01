@@ -1,10 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
 <defs><radialGradient id="peachBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B2"/><stop offset="1" stop-color="#C96755"/></radialGradient></defs>
 <g id="item-fishOrange">
-    <path d="M 46 100 q -22 -30 -30 -34 q 4 34 0 68 q 10 -6 30 -34 Z" fill="#C96755"/>
-    <ellipse cx="106" cy="100" rx="64" ry="38" fill="url(#peachBall)"/>
-    <path d="M 96 66 q 18 -22 40 -14 q -14 12 -18 22 Z" fill="#C96755" opacity="0.85"/>
-    <path d="M 90 134 q 14 18 34 12 q -12 -10 -16 -18 Z" fill="#C96755" opacity="0.7"/>
-    <ellipse cx="118" cy="92" rx="30" ry="16" fill="#FFFFFF" opacity="0.28"/>
-    <circle cx="142" cy="94" r="9" fill="#FFFFFF"/><circle cx="144" cy="94" r="5" fill="#243047"/></g>
+    <path d="M 58 100 q -26 -32 -40 -38 q 8 38 0 76 q 14 -6 40 -38 Z" fill="#FF9F8F"/>
+    <ellipse cx="108" cy="100" rx="62" ry="37" fill="url(#peachBall)"/>
+    <path d="M 100 68 q 20 -24 42 -14 q -16 12 -22 24 Z" fill="#FF9F8F" opacity="0.9"/>
+    <path d="M 96 132 q 14 20 36 12 q -14 -12 -18 -20 Z" fill="#FF9F8F" opacity="0.75"/>
+    <ellipse cx="112" cy="90" rx="32" ry="15" fill="#FFFFFF" opacity="0.3"/>
+    <circle cx="144" cy="94" r="9" fill="#FFFFFF"/><circle cx="146" cy="94" r="5" fill="#243047"/>
+    <path d="M 150 108 q 12 4 16 -2" stroke="#C96755" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7"/></g>
 </svg>

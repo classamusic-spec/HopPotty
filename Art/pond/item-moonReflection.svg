@@ -1,11 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
 <defs><radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFF3D4" stop-opacity="0.9"/><stop offset="1" stop-color="#FFF3D4" stop-opacity="0"/></radialGradient></defs>
 <g id="item-moonReflection">
-    <g opacity="0.9">
-      <ellipse cx="100" cy="100" rx="74" ry="70" fill="url(#moonGlow)"/>
-      <path d="M 46 62 q 54 -16 108 0 q -54 18 -108 0 Z" fill="#FFF3D4" opacity="0.85"/>
-      <path d="M 34 96 q 66 -20 132 0 q -66 20 -132 0 Z" fill="#FFF3D4" opacity="0.95"/>
-      <path d="M 46 130 q 54 -16 108 0 q -54 18 -108 0 Z" fill="#FFF3D4" opacity="0.8"/>
-      <path d="M 62 158 q 38 -12 76 0 q -38 12 -76 0 Z" fill="#FFF3D4" opacity="0.6"/>
+    <ellipse cx="100" cy="104" rx="84" ry="76" fill="url(#moonGlow)"/>
+    <g fill="#FFFDF0">
+      <path d="M 52 56 q 48 -14 96 0 q -48 16 -96 0 Z" opacity="0.9"/>
+      <path d="M 34 88 q 66 -19 132 0 q -66 19 -132 0 Z" opacity="0.95"/>
+      <path d="M 44 120 q 56 -16 112 0 q -56 17 -112 0 Z" opacity="0.85"/>
+      <path d="M 62 150 q 38 -11 76 0 q -38 12 -76 0 Z" opacity="0.7"/>
+    </g>
+    <g fill="#9BDCF1" opacity="0.55">
+      <path d="M 40 72 q 60 -12 120 0 q -60 6 -120 0 Z"/>
+      <path d="M 36 104 q 64 -12 128 0 q -64 6 -128 0 Z"/>
+      <path d="M 52 136 q 48 -10 96 0 q -48 6 -96 0 Z"/>
     </g></g>
 </svg>

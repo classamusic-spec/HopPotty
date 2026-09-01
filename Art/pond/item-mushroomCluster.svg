@@ -1,20 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
 <defs><radialGradient id="peachBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B2"/><stop offset="1" stop-color="#C96755"/></radialGradient></defs>
-<g id="item-mushroomCluster"><ellipse cx="100" cy="164" rx="70" ry="12" fill="#243047" opacity="0.1"/>
-      <g transform="translate(60 118) scale(0.72)">
-      <path d="M -16 0 q -4 44 0 52 q 16 6 32 0 q 4 -8 0 -52 Z" fill="#F7F1E9"/>
-      <path d="M 0 -46 q 52 0 52 34 q 0 12 -14 12 h -76 q -14 0 -14 -12 q 0 -34 52 -34 Z" fill="url(#peachBall)"/>
-      <circle cx="-18" cy="-16" r="9" fill="#FFF9F2" opacity="0.9"/>
-      <circle cx="12" cy="-26" r="7" fill="#FFF9F2" opacity="0.9"/>
-      <circle cx="28" cy="-8" r="6" fill="#FFF9F2" opacity="0.85"/></g><g transform="translate(140 124) scale(0.6)">
-      <path d="M -16 0 q -4 44 0 52 q 16 6 32 0 q 4 -8 0 -52 Z" fill="#F7F1E9"/>
-      <path d="M 0 -46 q 52 0 52 34 q 0 12 -14 12 h -76 q -14 0 -14 -12 q 0 -34 52 -34 Z" fill="url(#peachBall)"/>
-      <circle cx="-18" cy="-16" r="9" fill="#FFF9F2" opacity="0.9"/>
-      <circle cx="12" cy="-26" r="7" fill="#FFF9F2" opacity="0.9"/>
-      <circle cx="28" cy="-8" r="6" fill="#FFF9F2" opacity="0.85"/></g><g transform="translate(100 108) scale(1)">
-      <path d="M -16 0 q -4 44 0 52 q 16 6 32 0 q 4 -8 0 -52 Z" fill="#F7F1E9"/>
-      <path d="M 0 -46 q 52 0 52 34 q 0 12 -14 12 h -76 q -14 0 -14 -12 q 0 -34 52 -34 Z" fill="url(#peachBall)"/>
-      <circle cx="-18" cy="-16" r="9" fill="#FFF9F2" opacity="0.9"/>
-      <circle cx="12" cy="-26" r="7" fill="#FFF9F2" opacity="0.9"/>
-      <circle cx="28" cy="-8" r="6" fill="#FFF9F2" opacity="0.85"/></g></g>
+<g id="item-mushroomCluster"><ellipse cx="100" cy="162" rx="72" ry="12" fill="#243047" opacity="0.1"/>
+      <g transform="translate(56 156) scale(0.66)">
+      <path d="M -15 -4 q -3 40 1 48 q 14 6 28 0 q 4 -8 1 -48 Z" fill="#F7F1E9"/>
+      <path d="M -15 -4 q 8 4 15 4 v 44 q -10 0 -15 -4 Z" fill="#EBE3D8" opacity="0.7"/>
+      <path d="M 0 -48 q 46 0 46 30 q 0 10 -13 10 h -66 q -13 0 -13 -10 q 0 -30 46 -30 Z" fill="url(#peachBall)"/>
+      <path d="M 0 -48 q -30 0 -40 20 q 12 -10 26 -12 Z" fill="#FFFFFF" opacity="0.22"/>
+      <circle cx="-16" cy="-18" r="8" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="10" cy="-28" r="6.4" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="26" cy="-12" r="5.4" fill="#FFF9F2" opacity="0.85"/></g><g transform="translate(146 160) scale(0.56)">
+      <path d="M -15 -4 q -3 40 1 48 q 14 6 28 0 q 4 -8 1 -48 Z" fill="#F7F1E9"/>
+      <path d="M -15 -4 q 8 4 15 4 v 44 q -10 0 -15 -4 Z" fill="#EBE3D8" opacity="0.7"/>
+      <path d="M 0 -48 q 46 0 46 30 q 0 10 -13 10 h -66 q -13 0 -13 -10 q 0 -30 46 -30 Z" fill="url(#peachBall)"/>
+      <path d="M 0 -48 q -30 0 -40 20 q 12 -10 26 -12 Z" fill="#FFFFFF" opacity="0.22"/>
+      <circle cx="-16" cy="-18" r="8" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="10" cy="-28" r="6.4" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="26" cy="-12" r="5.4" fill="#FFF9F2" opacity="0.85"/></g><g transform="translate(102 152) scale(0.98)">
+      <path d="M -15 -4 q -3 40 1 48 q 14 6 28 0 q 4 -8 1 -48 Z" fill="#F7F1E9"/>
+      <path d="M -15 -4 q 8 4 15 4 v 44 q -10 0 -15 -4 Z" fill="#EBE3D8" opacity="0.7"/>
+      <path d="M 0 -48 q 46 0 46 30 q 0 10 -13 10 h -66 q -13 0 -13 -10 q 0 -30 46 -30 Z" fill="url(#peachBall)"/>
+      <path d="M 0 -48 q -30 0 -40 20 q 12 -10 26 -12 Z" fill="#FFFFFF" opacity="0.22"/>
+      <circle cx="-16" cy="-18" r="8" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="10" cy="-28" r="6.4" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="26" cy="-12" r="5.4" fill="#FFF9F2" opacity="0.85"/></g></g>
 </svg>

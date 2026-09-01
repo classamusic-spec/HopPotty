@@ -8,7 +8,7 @@
 // Compilation conditions
 // ---------------------------------------------------------------------------
 //
-// Note what is NOT here: DEBUG, HOPPOTTY_DEBUG_TOOLS, HOPPOTTY_MOCK_SERVICES.
+// Note what is NOT here: DEBUG, HOPPOTTY_DEBUG_TOOLS, HOPPOTTY_MOCKS.
 // Adding any of the three to this file is a release-blocking defect, not a
 // convenience. Scripts/verify-config.sh fails if one appears.
 SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited)

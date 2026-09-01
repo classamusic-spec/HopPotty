@@ -1,13 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
 <defs><radialGradient id="greenBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#2F8C57"/></radialGradient><linearGradient id="woodGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#A76F46"/></linearGradient></defs>
-<g id="item-clubhouse">
-    <ellipse cx="100" cy="176" rx="76" ry="12" fill="#243047" opacity="0.12"/>
-    <path d="M 34 116 q 0 -14 14 -14 h 104 q 14 0 14 14 v 44 q 0 12 -12 12 h -108 q -12 0 -12 -12 Z" fill="url(#woodGrad)"/>
-    <path d="M 100 30 L 178 100 q 8 8 -4 8 H 26 q -12 0 -4 -8 Z" fill="url(#greenBall)"/>
-    <path d="M 100 46 L 160 100 H 40 Z" fill="#FFFFFF" opacity="0.14"/>
-    <path d="M 76 172 v -44 q 0 -24 24 -24 q 24 0 24 24 v 44 Z" fill="#A76F46"/>
-    <circle cx="115" cy="146" r="4.6" fill="#FFD769"/>
-    <rect x="44" y="118" width="24" height="24" rx="8" fill="#E0F4FC"/>
-    <rect x="132" y="118" width="24" height="24" rx="8" fill="#E0F4FC"/>
-    <path d="M 30 108 h 140" stroke="#A76F46" stroke-width="6" stroke-linecap="round" opacity="0.5"/></g>
+<g id="item-clubhouse"><g transform="translate(100 24) scale(0.74) translate(-100 -24)">
+    <ellipse cx="100" cy="178" rx="80" ry="12" fill="#243047" opacity="0.12"/>
+    <path d="M 30 118 q 0 -12 12 -12 h 116 q 12 0 12 12 v 44 q 0 12 -12 12 h -116 q -12 0 -12 -12 Z" fill="url(#woodGrad)"/>
+    <path d="M 100 44 L 182 104 q 10 8 -4 8 H 22 q -14 0 -4 -8 Z" fill="url(#greenBall)"/>
+    <path d="M 100 58 L 158 100 H 42 Z" fill="#FFFFFF" opacity="0.14"/>
+    <path d="M 86 174 v -38 q 0 -18 14 -18 q 14 0 14 18 v 38 Z" fill="#A76F46"/>
+    <circle cx="108" cy="152" r="4" fill="#FFD769"/>
+    <circle cx="52" cy="132" r="13" fill="#E0F4FC"/>
+    <circle cx="148" cy="132" r="13" fill="#E0F4FC"/>
+    <circle cx="49" cy="129" r="5" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="145" cy="129" r="5" fill="#FFFFFF" opacity="0.8"/>
+    <rect x="26" y="106" width="148" height="8" rx="4" fill="#A76F46" opacity="0.45"/></g></g>
 </svg>

@@ -1,0 +1,35 @@
+{
+  "identifier": "6F1C4B2E-9A70-4C1D-8E55-2B7F0D3A91C4",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "19.99",
+      "familyShareable": true,
+      "internalID": "1000000001",
+      "localizations": [
+        {
+          "description": "Unlock every HopPotty feature for your whole family, once and for all. No subscription, no ads, and nothing that expires.",
+          "displayName": "HopPotty Family",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.hoppotty.family",
+      "referenceName": "HopPotty Family (one-time unlock)",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "",
+    "_developerTeamID": "",
+    "_failTransactionsEnabled": false,
+    "_lastSynchronizedDate": 0,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_timeRate": 0
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}

@@ -2,10 +2,18 @@
 //
 // Debug, with every external service replaced by an in-memory fake chosen at
 // COMPILE time. There is no runtime switch, no launch argument and no hidden
-// settings toggle that reaches these fakes from a shipping build: the live
-// wiring in HopPotty/App/AppDependencies.swift sits in the `#else` branch of
-// `#if HOPPOTTY_MOCK_SERVICES`, so a Release build cannot contain a fake and
-// this build cannot contain the real Screen Time calls.
+// settings toggle that reaches these fakes from a shipping build: the branch in
+// AppEnvironment.makeScreenTime that returns a fake is inside
+// `#if HOPPOTTY_DEBUG_TOOLS`, which Release does not define, so a Release binary
+// does not contain the fake at all.
+//
+// HOPPOTTY_MOCKS is the flag AppBuildConfiguration (Core/AppConfiguration.swift)
+// reads. That file's own header suggests setting it on Debug as well; it is set
+// HERE ONLY, deliberately. A Debug build is what you install on a device to
+// watch a real shield go up and come down, and a Debug build that quietly used a
+// fake Screen Time service would make that impossible. Previews and test hosts
+// still get fakes in plain Debug, because AppBuildConfiguration.resolved detects
+// them at runtime.
 //
 // What it is for:
 //
@@ -22,7 +30,7 @@
 
 #include "Debug.xcconfig"
 
-SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) HOPPOTTY_MOCK_SERVICES
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) HOPPOTTY_MOCKS
 
 // A mock build is not a build anyone should be able to pick up off a desk and
 // mistake for the real app. Only the home-screen name changes: PRODUCT_NAME is

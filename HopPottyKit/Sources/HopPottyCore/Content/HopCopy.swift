@@ -63,7 +63,7 @@ public struct OnboardingCopy: HopCopySection {
     )
     public let privacyDetail = HopCopyEntry.parent("onboarding.privacy.detail", "Read the privacy details")
 
-    public let nameTitle = HopCopyEntry.parent("onboarding.name.title", "What should Hop call your child?")
+    public let nameTitle = HopCopyEntry.parent("onboarding.name.title", "What can Hop call your child?")
     public let namePlaceholder = HopCopyEntry.parent("onboarding.name.placeholder", "Nickname", comment: "Text field placeholder. A first name or whatever the family uses at home.")
     public let nameFooter = HopCopyEntry.parent(
         "onboarding.name.footer",
@@ -164,7 +164,7 @@ public struct ParentHomeCopy: HopCopySection {
         zero: .parent("parentHome.summary.visits.zero", "No potty visits logged yet"),
         one: .parent(
             "parentHome.summary.visits.one",
-            "1 potty visit logged",
+            "%1$lld potty visit logged",
             placeholders: [.count(1, "visits", "Number of potty events logged today.", example: "1")]
         ),
         other: .parent(
@@ -174,10 +174,10 @@ public struct ParentHomeCopy: HopCopySection {
         )
     )
     public let summaryStars = HopPluralVariants(
-        zero: .parent("parentHome.summary.stars.zero", "No stars yet today"),
+        zero: .parent("parentHome.summary.stars.zero", "None yet today"),
         one: .parent(
             "parentHome.summary.stars.one",
-            "1 star earned today",
+            "%1$lld star earned today",
             placeholders: [.count(1, "stars", "Stars earned today.", example: "1")]
         ),
         other: .parent(
@@ -504,7 +504,7 @@ public struct CelebrationCopy: HopCopySection {
     public let starTotal = HopPluralVariants(
         one: .child(
             "celebration.total.one",
-            "1 star in your pond",
+            "%1$lld star in your pond",
             placeholders: [.count(1, "stars", "Lifetime star total.", example: "1")]
         ),
         other: .child(
@@ -550,10 +550,12 @@ public struct PondCopy: HopCopySection {
         )
     )
     public let starCount = HopPluralVariants(
-        zero: .child("pond.starCount.zero", "No stars yet"),
+        // Never "no stars": the ledger only ever grows, and the empty state
+        // should read as a beginning rather than an absence.
+        zero: .child("pond.starCount.zero", "Ready for your first star!"),
         one: .child(
             "pond.starCount.one",
-            "1 star",
+            "%1$lld star",
             placeholders: [.count(1, "stars", "Stars available to spend.", example: "1")]
         ),
         other: .child(
@@ -567,9 +569,12 @@ public struct PondCopy: HopCopySection {
     public let nextUnlock = HopPluralVariants(
         one: .child(
             "pond.nextUnlock.one",
-            "1 more star and %2$@ hops in!",
-            comment: "The count is spelled out in English, so the count slot is unused here. The item name stays at position 2 in every form.",
-            placeholders: [.text(2, "itemName", "Name of the next pond decoration.", example: "a dragonfly")]
+            "%1$lld more star and %2$@ hops in!",
+            comment: "The item name stays at position 2 in every plural form, so the caller passes the same arguments whichever form is chosen.",
+            placeholders: [
+                .count(1, "stars", "Stars still needed.", example: "1"),
+                .text(2, "itemName", "Name of the next pond decoration.", example: "a dragonfly"),
+            ]
         ),
         other: .child(
             "pond.nextUnlock.other",
@@ -583,7 +588,7 @@ public struct PondCopy: HopCopySection {
     public let itemLocked = HopPluralVariants(
         one: .child(
             "pond.item.locked.one",
-            "1 star",
+            "%1$lld star",
             placeholders: [.count(1, "stars", "Star cost of the decoration.", example: "1")]
         ),
         other: .child(
@@ -828,7 +833,7 @@ public struct ParentGateCopy: HopCopySection {
         zero: .parent("parentGate.delete.events.zero", "No logged events to remove."),
         one: .parent(
             "parentGate.delete.events.one",
-            "1 logged potty event will be removed.",
+            "%1$lld logged potty event will be removed.",
             placeholders: [.count(1, "events", "Events that will be deleted.", example: "1")]
         ),
         other: .parent(
@@ -838,10 +843,12 @@ public struct ParentGateCopy: HopCopySection {
         )
     )
     public let deleteStars = HopPluralVariants(
-        zero: .parent("parentGate.delete.stars.zero", "No stars to remove."),
+        // Matches the "earned star" wording of the other forms, and keeps the
+        // banned "no stars" phrasing out of a dialog a caregiver reads aloud.
+        zero: .parent("parentGate.delete.stars.zero", "No earned stars to remove."),
         one: .parent(
             "parentGate.delete.stars.one",
-            "1 earned star will be removed.",
+            "%1$lld earned star will be removed.",
             placeholders: [.count(1, "stars", "Stars that will be deleted.", example: "1")]
         ),
         other: .parent(
@@ -854,7 +861,7 @@ public struct ParentGateCopy: HopCopySection {
         zero: .parent("parentGate.delete.decorations.zero", "No pond decorations to remove."),
         one: .parent(
             "parentGate.delete.decorations.one",
-            "1 pond decoration will be removed.",
+            "%1$lld pond decoration will be removed.",
             placeholders: [.count(1, "decorations", "Pond items that will be deleted.", example: "1")]
         ),
         other: .parent(
@@ -873,7 +880,7 @@ public struct ParentGateCopy: HopCopySection {
     public let deleteEverythingChildren = HopPluralVariants(
         one: .parent(
             "parentGate.delete.everything.children.one",
-            "1 child profile will be removed.",
+            "%1$lld child profile will be removed.",
             placeholders: [.count(1, "children", "Profiles that will be deleted.", example: "1")]
         ),
         other: .parent(

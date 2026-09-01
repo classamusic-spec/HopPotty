@@ -166,6 +166,22 @@ struct ChildSafetyCopyTests {
         }
     }
 
+    /// "No stars" is banned outright, in parent copy too.
+    ///
+    /// The star ledger is append-only by contract (`Docs/CONTRACTS.md` §4.2):
+    /// stars are never removed, never decay and never expire. A sentence that
+    /// describes a total as an absence teaches the opposite, and a caregiver who
+    /// reads "no stars today" is the person who repeats it to the child.
+    @Test("The phrase \"no stars\" appears nowhere in the catalog")
+    func noStarsPhraseIsAbsentEverywhere() {
+        for entry in HopCopy.allEntries {
+            #expect(
+                !CopySafetyScanner.containsPhrase("no stars", in: entry.value),
+                "\(entry.key) says \"\(entry.value)\""
+            )
+        }
+    }
+
     // MARK: - The scanner itself
 
     /// The matcher is only worth having if it is precise in both directions, so

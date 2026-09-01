@@ -2,10 +2,10 @@
 <defs><linearGradient id="bladeGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FDCAC"/><stop offset="1" stop-color="#2F8C57"/></linearGradient><linearGradient id="bladeGreenDeep" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C88A"/><stop offset="1" stop-color="#1B5E39"/></linearGradient></defs>
 <g id="item-reedsLeft">
     <g fill="url(#bladeGreen)">
-      <path d="M 67 172 Q 79 108.2 104 56 Q 90.9 119.8 89 172 Z"/><path d="M 92 174 Q 101.5 92.6 118 26 Q 115.2 107.4 116 174 Z"/>
-      <path d="M 116 172 Q 115.5 114.8 104 68 Q 128.6 125.2 136 172 Z"/>
+      <path d="M 65 176 Q 80.5 118.8 116 72 Q 91.7 129.2 87 176 Z"/><path d="M 90 178 Q 101 102.1 122 40 Q 114.4 115.9 114 178 Z"/>
+      <path d="M 118 176 Q 114.5 123.2 94 80 Q 128.2 132.8 138 176 Z"/>
     </g>
-    <g fill="url(#bladeGreenDeep)" opacity="0.75">
-      <path d="M 83 174 Q 83 128.9 74 92 Q 94.7 137.1 101 174 Z"/><path d="M 108 174 Q 117 137.7 136 108 Q 125.6 144.3 124 174 Z"/>
+    <g fill="url(#bladeGreenDeep)" opacity="0.7">
+      <path d="M 81 178 Q 78 137.3 60 104 Q 90.3 144.7 99 178 Z"/><path d="M 108 178 Q 119.5 145 146 118 Q 127.6 151 124 178 Z"/>
     </g></g>
 </svg>

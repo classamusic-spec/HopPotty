@@ -251,20 +251,25 @@ function butterflyHalf(fillTop, fillLow, spot) {
     <circle cx="28" cy="26" r="6" fill="${spot}" opacity="0.45"/>`;
 }
 
-/** A fern frond: leaflets stepped along a bending spine, shrinking to the tip. */
+/** A fern frond: leaflets along a strongly arcing spine, longest in the middle.
+ *  The arc is the whole point — leaflets stacked up a straight spine read as a
+ *  conifer, which is what pass 1 produced. */
 function frond(len, bend) {
+  const cx = bend * 0.1, cy = -len * 0.62;
   const at = (t) => {
     const mt = 1 - t;
-    return [R(2 * mt * t * (bend * 0.18) + t * t * bend), R(2 * mt * t * (-len * 0.5) + t * t * -len)];
+    return [R(2 * mt * t * cx + t * t * bend), R(2 * mt * t * cy + t * t * -len)];
   };
-  const spine = `<path d="M 0 0 Q ${R(bend * 0.18)} ${R(-len * 0.5)} ${R(bend)} ${R(-len)}" fill="none" stroke="${P.hopGreenDeep}" stroke-width="5" stroke-linecap="round"/>`;
-  const leaves = Array.from({ length: 7 }, (_, i) => {
-    const t = 0.12 + (i / 6) * 0.84;
+  const spine = `<path d="M 0 0 Q ${R(cx)} ${R(cy)} ${R(bend)} ${R(-len)}" fill="none" stroke="${P.hopGreenDeep}" stroke-width="4.6" stroke-linecap="round"/>`;
+  const leaves = Array.from({ length: 8 }, (_, i) => {
+    const t = 0.1 + (i / 7) * 0.88;
     const [x, y] = at(t);
-    const w = 26 * (1 - t * 0.8) + 5;
-    const lean = 14 + t * 26;
-    return `<ellipse cx="${R(x - w * 0.72)}" cy="${y}" rx="${R(w)}" ry="${R(w * 0.44)}" fill="url(#fernGreen)" transform="rotate(${R(-28 - lean)} ${R(x - w * 0.72)} ${y})"/>
-      <ellipse cx="${R(x + w * 0.72)}" cy="${y}" rx="${R(w)}" ry="${R(w * 0.44)}" fill="url(#fernGreen)" transform="rotate(${R(28 + lean)} ${R(x + w * 0.72)} ${y})"/>`;
+    // Longest leaflets a third of the way up, tapering to a soft tip.
+    const w = (10 + 26 * Math.sin(Math.PI * Math.min(1, t * 0.86 + 0.14))) * (1 - t * 0.42);
+    const tan = Math.atan2(-len - cy * 2 + 2 * cy, bend) * 0;
+    const droop = 20 + t * 34 + tan;
+    return `<ellipse cx="${R(x - w * 0.62)}" cy="${R(y + w * 0.1)}" rx="${R(w)}" ry="${R(w * 0.4)}" fill="url(#fernGreen)" transform="rotate(${R(-34 - droop)} ${R(x - w * 0.62)} ${R(y + w * 0.1)})"/>
+      <ellipse cx="${R(x + w * 0.62)}" cy="${R(y + w * 0.1)}" rx="${R(w)}" ry="${R(w * 0.4)}" fill="${P.hopGreen}" transform="rotate(${R(34 + droop)} ${R(x + w * 0.62)} ${R(y + w * 0.1)})"/>`;
   }).join('');
   return spine + leaves;
 }
@@ -388,13 +393,15 @@ const pondLayers = {
       <path d="${blade(628, 806, 44, 10, 7)}"/><path d="${blade(648, 808, 32, -8, 6)}"/>
     </g>`,
 
+  // Kept low and thin: the near bank sits below every shore anchor (the lowest
+  // is y=0.90), so it frames the scene instead of swallowing the front row.
   foreground: () => `
-    <path d="M -20 828 Q 300 780 620 812 Q 900 840 1220 792 L 1220 920 L -20 920 Z" fill="url(#groundNear)" opacity="0.95"/>
-    <g fill="${P.hopGreenInk}" opacity="0.22">
-      <path d="${blade(90, 858, 74, 18, 11)}"/><path d="${blade(126, 862, 56, -14, 9)}"/>
-      <path d="${blade(1110, 848, 78, -18, 11)}"/><path d="${blade(1074, 852, 58, 14, 9)}"/>
+    <path d="M -20 884 Q 300 856 620 876 Q 900 894 1220 862 L 1220 920 L -20 920 Z" fill="url(#groundNear)" opacity="0.9"/>
+    <g fill="${P.hopGreenInk}" opacity="0.18">
+      <path d="${blade(74, 894, 62, 20, 10)}"/><path d="${blade(108, 898, 46, -14, 8)}"/>
+      <path d="${blade(1126, 886, 66, -20, 10)}"/><path d="${blade(1090, 890, 48, 14, 8)}"/>
     </g>
-    <ellipse cx="600" cy="900" rx="760" ry="120" fill="${P.hopGreenInk}" opacity="0.10"/>`,
+    <ellipse cx="600" cy="910" rx="760" ry="80" fill="${P.hopGreenInk}" opacity="0.08"/>`,
 };
 
 // --- Decorations. All drawn inside 0 0 200 200, centred on (100, 100). ------
@@ -471,82 +478,87 @@ const ITEMS = {
   flowerPurple: () => `${flower(100, 84, 44, { fill: 'url(#lavenderBall)', core: P.lavenderSoft, petals: 5, stemH: 74 })}`,
 
   fishOrange: () => `
-    <path d="M 46 100 q -22 -30 -30 -34 q 4 34 0 68 q 10 -6 30 -34 Z" fill="${P.peachDeep}"/>
-    <ellipse cx="106" cy="100" rx="64" ry="38" fill="url(#peachBall)"/>
-    <path d="M 96 66 q 18 -22 40 -14 q -14 12 -18 22 Z" fill="${P.peachDeep}" opacity="0.85"/>
-    <path d="M 90 134 q 14 18 34 12 q -12 -10 -16 -18 Z" fill="${P.peachDeep}" opacity="0.7"/>
-    <ellipse cx="118" cy="92" rx="30" ry="16" fill="#FFFFFF" opacity="0.28"/>
-    <circle cx="142" cy="94" r="9" fill="#FFFFFF"/><circle cx="144" cy="94" r="5" fill="${P.midnight}"/>`,
+    <path d="M 58 100 q -26 -32 -40 -38 q 8 38 0 76 q 14 -6 40 -38 Z" fill="${P.peach}"/>
+    <ellipse cx="108" cy="100" rx="62" ry="37" fill="url(#peachBall)"/>
+    <path d="M 100 68 q 20 -24 42 -14 q -16 12 -22 24 Z" fill="${P.peach}" opacity="0.9"/>
+    <path d="M 96 132 q 14 20 36 12 q -14 -12 -18 -20 Z" fill="${P.peach}" opacity="0.75"/>
+    <ellipse cx="112" cy="90" rx="32" ry="15" fill="#FFFFFF" opacity="0.3"/>
+    <circle cx="144" cy="94" r="9" fill="#FFFFFF"/><circle cx="146" cy="94" r="5" fill="${P.midnight}"/>
+    <path d="M 150 108 q 12 4 16 -2" stroke="${P.peachDeep}" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7"/>`,
 
   fishBlue: () => g('translate(200 0) scale(-1 1)', `
-    <path d="M 46 100 q -22 -30 -30 -34 q 4 34 0 68 q 10 -6 30 -34 Z" fill="${P.pondBlueDeep}"/>
-    <ellipse cx="106" cy="100" rx="60" ry="36" fill="url(#blueBall)"/>
-    <path d="M 96 68 q 18 -22 40 -14 q -14 12 -18 22 Z" fill="${P.pondBlueDeep}" opacity="0.85"/>
-    <ellipse cx="118" cy="92" rx="28" ry="15" fill="#FFFFFF" opacity="0.3"/>
-    <circle cx="140" cy="94" r="9" fill="#FFFFFF"/><circle cx="142" cy="94" r="5" fill="${P.midnight}"/>`),
+    <path d="M 58 100 q -26 -30 -40 -36 q 8 36 0 72 q 14 -6 40 -36 Z" fill="${P.pondBlueLight}"/>
+    <ellipse cx="108" cy="100" rx="58" ry="35" fill="url(#blueBall)"/>
+    <path d="M 100 70 q 20 -24 42 -14 q -16 12 -22 24 Z" fill="${P.pondBlueLight}" opacity="0.9"/>
+    <ellipse cx="112" cy="90" rx="30" ry="14" fill="#FFFFFF" opacity="0.32"/>
+    <circle cx="142" cy="94" r="9" fill="#FFFFFF"/><circle cx="144" cy="94" r="5" fill="${P.midnight}"/>
+    <path d="M 148 108 q 12 4 16 -2" stroke="${P.pondBlueDeep}" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7"/>`),
 
+  // A tadpole is a head and a tail and nothing else — pass 1 gave it fins and
+  // it read as a small fish, which the pond already has two of.
   tadpoleFriend: () => `
-    <path d="M 96 96 q -34 -6 -54 -30 q 10 30 -2 58 q 26 -18 56 -12 Z" fill="${P.hopGreenDeep}" opacity="0.9"/>
-    <circle cx="118" cy="96" r="42" fill="url(#greenBall)"/>
-    <ellipse cx="106" cy="82" rx="20" ry="12" fill="#FFFFFF" opacity="0.3"/>
-    <circle cx="134" cy="86" r="11" fill="#FFFFFF"/><circle cx="136" cy="87" r="6" fill="${P.midnight}"/>
-    <path d="M 126 114 q 14 8 26 -2" fill="none" stroke="${P.hopGreenInk}" stroke-width="5" stroke-linecap="round" opacity="0.8"/>`,
+    <path d="M 108 84 q -46 -12 -76 -36 q 18 40 0 76 q 30 -26 76 -32 Z" fill="url(#greenBall)" opacity="0.85"/>
+    <circle cx="124" cy="100" r="42" fill="url(#greenBall)"/>
+    <ellipse cx="112" cy="84" rx="21" ry="12" fill="#FFFFFF" opacity="0.32"/>
+    <circle cx="140" cy="90" r="11" fill="#FFFFFF"/><circle cx="142" cy="91" r="6" fill="${P.midnight}"/>
+    <path d="M 130 118 q 14 8 24 -2" fill="none" stroke="${P.hopGreenInk}" stroke-width="5" stroke-linecap="round" opacity="0.75"/>`,
 
-  butterflyBlue: () => `
-    ${g('translate(100 104)', `
-      ${wing(74, 52, -22, 'url(#blueBall)', 0.95)}
-      ${g('scale(-1 1)', wing(74, 52, -22, 'url(#blueBall)', 0.95))}
-      ${wing(48, 36, -152, P.pondBlueLight, 0.95)}
-      ${g('scale(-1 1)', wing(48, 36, -152, P.pondBlueLight, 0.95))}
-      <ellipse cx="0" cy="4" rx="8" ry="34" fill="${P.night600}"/>
-      <circle cx="0" cy="-32" r="10" fill="${P.night600}"/>
-      <path d="M -3 -40 q -12 -14 -20 -18" stroke="${P.night600}" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <path d="M 3 -40 q 12 -14 20 -18" stroke="${P.night600}" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <circle cx="-30" cy="-34" r="9" fill="#FFFFFF" opacity="0.45"/><circle cx="30" cy="-34" r="9" fill="#FFFFFF" opacity="0.45"/>`)}`,
+  butterflyBlue: () => g('translate(100 100)', `
+    ${butterflyHalf('url(#blueBall)', P.pondBlueLight, '#FFFFFF')}
+    ${g('scale(-1 1)', butterflyHalf('url(#blueBall)', P.pondBlueLight, '#FFFFFF'))}
+    <ellipse cx="0" cy="4" rx="5.4" ry="30" fill="${P.night600}"/>
+    <circle cx="0" cy="-28" r="8" fill="${P.night600}"/>
+    <path d="M -3 -34 q -10 -14 -18 -18" stroke="${P.night600}" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    <path d="M 3 -34 q 10 -14 18 -18" stroke="${P.night600}" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    <circle cx="-21" cy="-52" r="3.4" fill="${P.night600}"/><circle cx="21" cy="-52" r="3.4" fill="${P.night600}"/>`),
 
-  butterflyYellow: () => `
-    ${g('translate(100 104)', `
-      ${wing(72, 50, -24, 'url(#yellowBall)', 0.95)}
-      ${g('scale(-1 1)', wing(72, 50, -24, 'url(#yellowBall)', 0.95))}
-      ${wing(46, 34, -150, P.sunshineSoft, 0.98)}
-      ${g('scale(-1 1)', wing(46, 34, -150, P.sunshineSoft, 0.98))}
-      <ellipse cx="0" cy="4" rx="8" ry="33" fill="${P.woodDeep}"/>
-      <circle cx="0" cy="-31" r="10" fill="${P.woodDeep}"/>
-      <path d="M -3 -39 q -12 -14 -20 -18" stroke="${P.woodDeep}" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <path d="M 3 -39 q 12 -14 20 -18" stroke="${P.woodDeep}" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <circle cx="-29" cy="-33" r="9" fill="${P.peachSoft}" opacity="0.8"/><circle cx="29" cy="-33" r="9" fill="${P.peachSoft}" opacity="0.8"/>`)}`,
+  butterflyYellow: () => g('translate(100 100)', `
+    ${butterflyHalf('url(#yellowBall)', P.sunshineSoft, '#FFFFFF')}
+    ${g('scale(-1 1)', butterflyHalf('url(#yellowBall)', P.sunshineSoft, '#FFFFFF'))}
+    <ellipse cx="0" cy="4" rx="5.4" ry="29" fill="${P.woodDeep}"/>
+    <circle cx="0" cy="-27" r="8" fill="${P.woodDeep}"/>
+    <path d="M -3 -33 q -10 -14 -18 -18" stroke="${P.woodDeep}" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    <path d="M 3 -33 q 10 -14 18 -18" stroke="${P.woodDeep}" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    <circle cx="-21" cy="-51" r="3.4" fill="${P.woodDeep}"/><circle cx="21" cy="-51" r="3.4" fill="${P.woodDeep}"/>`),
 
-  dragonfly: () => `
-    ${g('translate(100 100)', `
-      ${g('rotate(-16)', `<ellipse cx="46" cy="-24" rx="48" ry="15" fill="${P.lavender}" opacity="0.55"/>`)}
-      ${g('rotate(16)', `<ellipse cx="-46" cy="-24" rx="48" ry="15" fill="${P.lavender}" opacity="0.55"/>`)}
-      ${g('rotate(14)', `<ellipse cx="40" cy="12" rx="42" ry="12" fill="${P.pondBlueLight}" opacity="0.5"/>`)}
-      ${g('rotate(-14)', `<ellipse cx="-40" cy="12" rx="42" ry="12" fill="${P.pondBlueLight}" opacity="0.5"/>`)}
-      <rect x="-7" y="-34" width="14" height="82" rx="7" fill="url(#lavenderBall)"/>
-      <circle cx="0" cy="-38" r="17" fill="${P.lavenderDeep}"/>
-      <circle cx="-6" cy="-42" r="6" fill="#FFFFFF" opacity="0.7"/>`)}`,
+  dragonfly: () => g('translate(100 96)', `
+    ${g('rotate(-12)', `<ellipse cx="52" cy="-16" rx="52" ry="13" fill="${P.lavender}" opacity="0.5"/>`)}
+    ${g('rotate(12)', `<ellipse cx="-52" cy="-16" rx="52" ry="13" fill="${P.lavender}" opacity="0.5"/>`)}
+    ${g('rotate(11)', `<ellipse cx="44" cy="10" rx="44" ry="11" fill="${P.pondBlueLight}" opacity="0.45"/>`)}
+    ${g('rotate(-11)', `<ellipse cx="-44" cy="10" rx="44" ry="11" fill="${P.pondBlueLight}" opacity="0.45"/>`)}
+    <path d="M -6 -22 h 12 q 3 0 3 4 l -3 62 q -6 6 -12 0 l -3 -62 q 0 -4 3 -4 Z" fill="url(#lavenderBall)"/>
+    <g fill="#FFFFFF" opacity="0.35"><rect x="-5" y="6" width="10" height="5" rx="2.5"/><rect x="-4.4" y="24" width="9" height="4.4" rx="2.2"/></g>
+    <circle cx="0" cy="-30" r="15" fill="${P.lavenderDeep}"/>
+    <circle cx="-6" cy="-34" r="5" fill="#FFFFFF" opacity="0.75"/>
+    <circle cx="7" cy="-33" r="3.4" fill="#FFFFFF" opacity="0.5"/>`),
 
   snail: () => `
-    <ellipse cx="104" cy="146" rx="66" ry="12" fill="${P.midnight}" opacity="0.1"/>
-    <path d="M 54 138 q -22 -4 -22 -22 q 0 -16 16 -18 q 14 -2 18 10 l 8 26 Z" fill="url(#greenBall)"/>
-    <path d="M 36 100 q -4 -22 6 -32" stroke="${P.hopGreenDeep}" stroke-width="6" stroke-linecap="round" fill="none"/>
-    <circle cx="42" cy="64" r="8" fill="${P.hopGreenDeep}"/><circle cx="41" cy="63" r="3.4" fill="#FFFFFF"/>
-    <path d="M 46 132 q 34 14 76 0 q 20 -6 20 -6" stroke="url(#greenBall)" stroke-width="26" stroke-linecap="round" fill="none"/>
-    <circle cx="112" cy="98" r="46" fill="url(#peachBall)"/>
-    <path d="M 112 98 m 0 -32 a 32 32 0 1 1 -22 55 a 22 22 0 1 1 26 -36 a 12 12 0 1 0 -14 20"
-      fill="none" stroke="${P.peachSoft}" stroke-width="9" stroke-linecap="round" opacity="0.85"/>`,
+    <ellipse cx="104" cy="150" rx="68" ry="12" fill="${P.midnight}" opacity="0.1"/>
+    <path d="M 40 142 q -20 -6 -18 -26 q 2 -18 20 -18 q 16 0 18 14 l 6 30 Z" fill="url(#greenBall)"/>
+    <path d="M 30 100 q -6 -24 4 -34" stroke="${P.hopGreen}" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M 46 100 q 0 -18 8 -26" stroke="${P.hopGreen}" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <circle cx="35" cy="62" r="9" fill="${P.hopGreenDeep}"/><circle cx="33" cy="60" r="3.6" fill="#FFFFFF"/>
+    <circle cx="55" cy="70" r="7.4" fill="${P.hopGreenDeep}"/><circle cx="53" cy="68" r="3" fill="#FFFFFF"/>
+    <path d="M 40 138 q 36 16 78 0 q 18 -8 22 -8" stroke="url(#greenBall)" stroke-width="26" stroke-linecap="round" fill="none"/>
+    <circle cx="114" cy="98" r="48" fill="url(#peachBall)"/>
+    <path d="M 114 98 m 0 -34 a 34 34 0 1 1 -24 58 a 23 23 0 1 1 28 -38 a 12 12 0 1 0 -15 21"
+      fill="none" stroke="${P.peachSoft}" stroke-width="10" stroke-linecap="round" opacity="0.9"/>`,
 
+  // The head is a small cap peeking over the shell. Pass 1 drew it as a wide
+  // black band across the top, which read as a bandit mask.
   ladybug: () => `
-    <ellipse cx="100" cy="142" rx="56" ry="11" fill="${P.midnight}" opacity="0.1"/>
-    <ellipse cx="100" cy="104" rx="62" ry="52" fill="url(#peachBall)"/>
-    <path d="M 100 52 a 62 52 0 0 0 0 104 Z" fill="#FFFFFF" opacity="0.12"/>
-    <path d="M 100 52 L 100 156" stroke="${P.peachInk}" stroke-width="6" opacity="0.55"/>
-    <path d="M 100 52 a 62 52 0 0 1 -58 -40 q 26 -14 58 -8 q 32 -6 58 8 a 62 52 0 0 1 -58 40 Z" fill="${P.night700}"/>
-    <circle cx="80" cy="30" r="7" fill="#FFFFFF"/><circle cx="120" cy="30" r="7" fill="#FFFFFF"/>
-    <circle cx="80" cy="30" r="3.4" fill="${P.night900}"/><circle cx="120" cy="30" r="3.4" fill="${P.night900}"/>
-    <g fill="${P.peachInk}" opacity="0.75">
-      <circle cx="74" cy="86" r="11"/><circle cx="126" cy="86" r="11"/>
-      <circle cx="70" cy="124" r="9"/><circle cx="130" cy="124" r="9"/>
+    <ellipse cx="100" cy="150" rx="54" ry="10" fill="${P.midnight}" opacity="0.1"/>
+    <circle cx="100" cy="62" r="26" fill="${P.night700}"/>
+    <circle cx="90" cy="52" r="6" fill="#FFFFFF"/><circle cx="110" cy="52" r="6" fill="#FFFFFF"/>
+    <circle cx="90" cy="53" r="3" fill="${P.night900}"/><circle cx="110" cy="53" r="3" fill="${P.night900}"/>
+    <path d="M 84 40 q -10 -12 -18 -14" stroke="${P.night700}" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M 116 40 q 10 -12 18 -14" stroke="${P.night700}" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <ellipse cx="100" cy="110" rx="58" ry="48" fill="url(#peachBall)"/>
+    <path d="M 100 62 a 58 48 0 0 0 0 96 Z" fill="#FFFFFF" opacity="0.14"/>
+    <path d="M 100 64 L 100 158" stroke="${P.peachInk}" stroke-width="5" opacity="0.45"/>
+    <g fill="${P.peachInk}" opacity="0.7">
+      <circle cx="74" cy="94" r="10"/><circle cx="126" cy="94" r="10"/>
+      <circle cx="72" cy="128" r="8"/><circle cx="128" cy="128" r="8"/>
     </g>`,
 
   rainbow: () => {
@@ -558,12 +570,13 @@ const ITEMS = {
     ${cloud(162, 154, 74, { opacity: 0.95 })}`;
   },
 
+  // Soft tapered beams, not the hard clip-art spokes of pass 1.
   sunbeam: () => `
-    <circle cx="100" cy="100" r="86" fill="url(#sunGlow)"/>
+    <circle cx="100" cy="100" r="92" fill="url(#sunGlow)"/>
     ${Array.from({ length: 8 }, (_, i) => g(`translate(100 100) rotate(${i * 45 + 22})`,
-      `<path d="M -10 -46 L 10 -46 L 5 -94 L -5 -94 Z" fill="url(#beamFade)"/>`)).join('')}
-    <circle cx="100" cy="100" r="46" fill="url(#sunDisc)"/>
-    <circle cx="86" cy="86" r="16" fill="#FFFFFF" opacity="0.35"/>`,
+      `<path d="M 0 -54 q 9 -6 11 -18 q 3 -18 -11 -30 q -14 12 -11 30 q 2 12 11 18 Z" fill="url(#beamFade)"/>`)).join('')}
+    <circle cx="100" cy="100" r="48" fill="url(#sunDisc)"/>
+    <circle cx="84" cy="84" r="15" fill="#FFFFFF" opacity="0.32"/>`,
 
   cloudPuff: () => `${cloud(100, 100, 160)}
     <ellipse cx="86" cy="86" rx="34" ry="16" fill="#FFFFFF" opacity="0.75"/>`,
@@ -579,90 +592,105 @@ const ITEMS = {
       gaze: [-8, 10], open: 0.5, arms: [[126, 320, -120, 46], [388, 340, 24]],
     }))}`,
 
-  clubhouse: () => `
-    <ellipse cx="100" cy="176" rx="76" ry="12" fill="${P.midnight}" opacity="0.12"/>
-    <path d="M 34 116 q 0 -14 14 -14 h 104 q 14 0 14 14 v 44 q 0 12 -12 12 h -108 q -12 0 -12 -12 Z" fill="url(#woodGrad)"/>
-    <path d="M 100 30 L 178 100 q 8 8 -4 8 H 26 q -12 0 -4 -8 Z" fill="url(#greenBall)"/>
-    <path d="M 100 46 L 160 100 H 40 Z" fill="#FFFFFF" opacity="0.14"/>
-    <path d="M 76 172 v -44 q 0 -24 24 -24 q 24 0 24 24 v 44 Z" fill="${P.woodDeep}"/>
-    <circle cx="115" cy="146" r="4.6" fill="${P.sunshine}"/>
-    <rect x="44" y="118" width="24" height="24" rx="8" fill="${P.pondBlueSoft}"/>
-    <rect x="132" y="118" width="24" height="24" rx="8" fill="${P.pondBlueSoft}"/>
-    <path d="M 30 108 h 140" stroke="${P.woodDeep}" stroke-width="6" stroke-linecap="round" opacity="0.5"/>`,
+  // Composed high in its box: `clubhouse` is a backdrop item anchored at
+  // y=0.33, right where the pond ellipse is tallest, so a base-heavy drawing
+  // gets sliced off by the waterline drawn over it.
+  clubhouse: () => g('translate(100 24) scale(0.74) translate(-100 -24)', `
+    <ellipse cx="100" cy="178" rx="80" ry="12" fill="${P.midnight}" opacity="0.12"/>
+    <path d="M 30 118 q 0 -12 12 -12 h 116 q 12 0 12 12 v 44 q 0 12 -12 12 h -116 q -12 0 -12 -12 Z" fill="url(#woodGrad)"/>
+    <path d="M 100 44 L 182 104 q 10 8 -4 8 H 22 q -14 0 -4 -8 Z" fill="url(#greenBall)"/>
+    <path d="M 100 58 L 158 100 H 42 Z" fill="#FFFFFF" opacity="0.14"/>
+    <path d="M 86 174 v -38 q 0 -18 14 -18 q 14 0 14 18 v 38 Z" fill="${P.woodDeep}"/>
+    <circle cx="108" cy="152" r="4" fill="${P.sunshine}"/>
+    <circle cx="52" cy="132" r="13" fill="${P.pondBlueSoft}"/>
+    <circle cx="148" cy="132" r="13" fill="${P.pondBlueSoft}"/>
+    <circle cx="49" cy="129" r="5" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="145" cy="129" r="5" fill="#FFFFFF" opacity="0.8"/>
+    <rect x="26" y="106" width="148" height="8" rx="4" fill="${P.woodDeep}" opacity="0.45"/>`),
 
+  // Hanging items carry their own bough. Without it they float in mid-air with
+  // a cord running off to nothing.
   lantern: () => `
-    <path d="M 100 8 v 22" stroke="${P.woodDeep}" stroke-width="6" stroke-linecap="round"/>
-    <path d="M 78 30 q 22 -16 44 0 Z" fill="${P.woodDeep}"/>
-    <rect x="72" y="28" width="56" height="10" rx="5" fill="${P.woodDeep}"/>
-    <circle cx="100" cy="98" r="66" fill="url(#glowWarm)"/>
-    <path d="M 78 40 q 22 -8 44 0 v 60 q 0 22 -22 22 q -22 0 -22 -22 Z" fill="url(#yellowBall)"/>
-    <path d="M 84 44 q 8 -3 16 -3 v 74 q -16 -2 -16 -20 Z" fill="#FFFFFF" opacity="0.4"/>
-    <rect x="70" y="118" width="60" height="12" rx="6" fill="${P.woodDeep}"/>
-    <circle cx="100" cy="138" r="6" fill="${P.woodDeep}"/>`,
+    <path d="M 22 16 q 44 12 92 4 q 40 -6 66 4" stroke="url(#woodGrad)" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <g fill="${P.hopGreen}" opacity="0.85">
+      <ellipse cx="44" cy="12" rx="12" ry="6" transform="rotate(-18 44 12)"/>
+      <ellipse cx="150" cy="12" rx="11" ry="5.6" transform="rotate(16 150 12)"/>
+    </g>
+    <path d="M 100 18 v 12" stroke="${P.woodDeep}" stroke-width="4.4" stroke-linecap="round"/>
+    <circle cx="100" cy="34" r="9" fill="none" stroke="${P.woodDeep}" stroke-width="5"/>
+    <circle cx="100" cy="100" r="70" fill="url(#glowWarm)"/>
+    <path d="M 68 48 q 32 -12 64 0 q 6 2 4 8 h -72 q -2 -6 4 -8 Z" fill="${P.woodDeep}"/>
+    <path d="M 72 58 h 56 v 44 q 0 26 -28 26 q -28 0 -28 -26 Z" fill="url(#yellowBall)"/>
+    <path d="M 78 60 q 8 -2 14 -2 v 66 q -14 -4 -14 -22 Z" fill="#FFFFFF" opacity="0.42"/>
+    <rect x="66" y="124" width="68" height="12" rx="6" fill="${P.woodDeep}"/>
+    <path d="M 92 136 h 16 l -4 12 h -8 Z" fill="${P.woodDeep}"/>`,
 
   signpost: () => `
-    <ellipse cx="100" cy="180" rx="52" ry="10" fill="${P.midnight}" opacity="0.12"/>
-    <rect x="92" y="52" width="17" height="126" rx="8" fill="url(#woodGradV)"/>
-    <path d="M 26 62 h 108 l 26 24 l -26 24 H 26 q -8 0 -8 -8 V 70 q 0 -8 8 -8 Z" fill="url(#woodGrad)"/>
-    <path d="M 26 62 h 108 l 12 11 H 26 Z" fill="#FFFFFF" opacity="0.18"/>
-    ${g('translate(72 86) scale(0.42)', `<path d="${pad(0, 6, 66, { notch: 52 })}" fill="${P.hopGreenSoft}"/>`)}
-    <circle cx="112" cy="86" r="9" fill="${P.sunshineSoft}"/>
-    <path d="M 60 178 q 20 -10 40 0" stroke="${P.hopGreenDeep}" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.5"/>`,
+    <ellipse cx="100" cy="182" rx="50" ry="10" fill="${P.midnight}" opacity="0.12"/>
+    <rect x="92" y="60" width="16" height="120" rx="8" fill="url(#woodGradV)"/>
+    <path d="M 24 66 h 106 l 28 26 l -28 26 H 24 q -8 0 -8 -8 V 74 q 0 -8 8 -8 Z" fill="url(#woodGrad)"/>
+    <path d="M 24 66 h 106 l 11 10 H 20 q 0 -10 4 -10 Z" fill="#FFFFFF" opacity="0.2"/>
+    <path d="M 40 92 h 74 m -18 -16 l 18 16 l -18 16" stroke="${P.cloud}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.92"/>
+    <path d="M 62 180 q 22 -12 44 0" stroke="${P.hopGreenDeep}" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.45"/>`,
 
   waterLilyCluster: () => `
-    <ellipse cx="100" cy="150" rx="88" ry="18" fill="${P.pondBlueInk}" opacity="0.1"/>
-    <path d="${pad(52, 118, 50, { notch: 200 })}" fill="url(#padGreen)"/>
-    <path d="${pad(148, 128, 44, { notch: 340 })}" fill="url(#padGreen)"/>
-    <path d="${pad(100, 106, 62, { notch: 62 })}" fill="url(#padGreenLight)"/>
-    ${Array.from({ length: 8 }, (_, i) => g(`translate(96 88) rotate(${i * 45 + 22})`, `<path d="${petal(40, 15)}" fill="url(#petalWhite)"/>`)).join('')}
-    ${Array.from({ length: 5 }, (_, i) => g(`translate(96 88) rotate(${i * 72})`, `<path d="${petal(26, 11)}" fill="url(#petalPeach)"/>`)).join('')}
-    <circle cx="96" cy="88" r="9" fill="${P.sunshine}"/>
-    <circle cx="152" cy="112" r="7" fill="${P.peachSoft}"/>`,
+    <ellipse cx="100" cy="146" rx="88" ry="16" fill="${P.pondBlueInk}" opacity="0.1"/>
+    <path d="${pad(48, 122, 48, { notch: 200, spread: 18 })}" fill="url(#padGreen)"/>
+    <path d="${pad(152, 130, 42, { notch: 340, spread: 18 })}" fill="url(#padGreen)"/>
+    <path d="${pad(100, 116, 60, { notch: 90, spread: 16 })}" fill="url(#padGreenLight)"/>
+    ${Array.from({ length: 8 }, (_, i) => g(`translate(96 92) rotate(${i * 45 + 22})`, `<path d="${petal(40, 15)}" fill="url(#petalWhite)"/>`)).join('')}
+    ${Array.from({ length: 5 }, (_, i) => g(`translate(96 92) rotate(${i * 72})`, `<path d="${petal(26, 11)}" fill="url(#petalPeach)"/>`)).join('')}
+    <circle cx="96" cy="92" r="9" fill="${P.sunshine}"/>
+    <circle cx="150" cy="116" r="7" fill="${P.peachSoft}"/>`,
 
   mushroomCluster: () => {
     const shroom = (x, y, s) => g(`translate(${x} ${y}) scale(${s})`, `
-      <path d="M -16 0 q -4 44 0 52 q 16 6 32 0 q 4 -8 0 -52 Z" fill="${P.sand100}"/>
-      <path d="M 0 -46 q 52 0 52 34 q 0 12 -14 12 h -76 q -14 0 -14 -12 q 0 -34 52 -34 Z" fill="url(#peachBall)"/>
-      <circle cx="-18" cy="-16" r="9" fill="${P.cloud}" opacity="0.9"/>
-      <circle cx="12" cy="-26" r="7" fill="${P.cloud}" opacity="0.9"/>
-      <circle cx="28" cy="-8" r="6" fill="${P.cloud}" opacity="0.85"/>`);
-    return `<ellipse cx="100" cy="164" rx="70" ry="12" fill="${P.midnight}" opacity="0.1"/>
-      ${shroom(60, 118, 0.72)}${shroom(140, 124, 0.6)}${shroom(100, 108, 1)}`;
+      <path d="M -15 -4 q -3 40 1 48 q 14 6 28 0 q 4 -8 1 -48 Z" fill="${P.sand100}"/>
+      <path d="M -15 -4 q 8 4 15 4 v 44 q -10 0 -15 -4 Z" fill="${P.sand200}" opacity="0.7"/>
+      <path d="M 0 -48 q 46 0 46 30 q 0 10 -13 10 h -66 q -13 0 -13 -10 q 0 -30 46 -30 Z" fill="url(#peachBall)"/>
+      <path d="M 0 -48 q -30 0 -40 20 q 12 -10 26 -12 Z" fill="#FFFFFF" opacity="0.22"/>
+      <circle cx="-16" cy="-18" r="8" fill="${P.cloud}" opacity="0.9"/>
+      <circle cx="10" cy="-28" r="6.4" fill="${P.cloud}" opacity="0.9"/>
+      <circle cx="26" cy="-12" r="5.4" fill="${P.cloud}" opacity="0.85"/>`);
+    return `<ellipse cx="100" cy="162" rx="72" ry="12" fill="${P.midnight}" opacity="0.1"/>
+      ${shroom(56, 156, 0.66)}${shroom(146, 160, 0.56)}${shroom(102, 152, 0.98)}`;
   },
 
-  fernPatch: () => {
-    const frond = (x, y, len, tilt, s) => g(`translate(${x} ${y}) rotate(${tilt}) scale(${s})`, `
-      <path d="M 0 0 Q ${R(len * 0.1)} ${R(-len * 0.55)} 0 ${R(-len)}" stroke="${P.hopGreenDeep}" stroke-width="6" fill="none" stroke-linecap="round"/>
-      ${Array.from({ length: 6 }, (_, i) => {
-        const t = i / 5, yy = -len * (0.16 + t * 0.76), w = 30 * (1 - t * 0.72);
-        return `<ellipse cx="${R(-w * 0.7)}" cy="${R(yy)}" rx="${R(w)}" ry="${R(w * 0.42)}" fill="url(#fernGreen)" transform="rotate(${R(-22 - t * 12)} ${R(-w * 0.7)} ${R(yy)})"/>
-                <ellipse cx="${R(w * 0.7)}" cy="${R(yy)}" rx="${R(w)}" ry="${R(w * 0.42)}" fill="url(#fernGreen)" transform="rotate(${R(22 + t * 12)} ${R(w * 0.7)} ${R(yy)})"/>`;
-      }).join('')}`);
-    return `${frond(62, 176, 118, -18, 0.9)}${frond(140, 176, 106, 20, 0.85)}${frond(100, 180, 148, 0, 1)}`;
-  },
+  // Ferns arch. Pass 1 stacked leaflets up a straight spine and the result
+  // read as a stand of conifers.
+  fernPatch: () => `
+    ${g('translate(96 182)', frond(104, -74))}
+    ${g('translate(104 182)', frond(98, 72))}
+    ${g('translate(100 184)', frond(128, -14))}
+    ${g('translate(100 184)', frond(112, 34))}`,
 
   duckling: () => `
-    <ellipse cx="100" cy="150" rx="70" ry="14" fill="${P.pondBlueInk}" opacity="0.12"/>
-    <path d="M 34 132 q 6 -50 62 -50 q 56 0 62 50 q -62 20 -124 0 Z" fill="url(#yellowBall)"/>
-    <circle cx="130" cy="78" r="36" fill="url(#yellowBall)"/>
-    <circle cx="119" cy="66" r="13" fill="#FFF6D4" opacity="0.7"/>
-    <path d="M 160 78 q 22 -6 22 8 q 0 12 -22 8 Z" fill="${P.peach}"/>
-    <circle cx="142" cy="70" r="8" fill="#FFFFFF"/><circle cx="144" cy="71" r="4.6" fill="${P.midnight}"/>
-    <path d="M 62 108 q 26 -14 48 4 q -22 20 -48 -4 Z" fill="${P.sunshineBright}" opacity="0.85"/>
-    <path d="M 40 140 q 60 20 120 0" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.5"/>`,
+    <ellipse cx="100" cy="152" rx="70" ry="13" fill="${P.pondBlueInk}" opacity="0.12"/>
+    <ellipse cx="88" cy="118" rx="60" ry="42" fill="url(#yellowBall)"/>
+    <path d="M 122 90 q 10 -14 20 -18" stroke="${P.sunshineBright}" stroke-width="18" stroke-linecap="round" fill="none"/>
+    <circle cx="140" cy="70" r="34" fill="url(#yellowBall)"/>
+    <circle cx="130" cy="58" r="13" fill="#FFF6D4" opacity="0.6"/>
+    <path d="M 168 66 q 24 -4 24 10 q 0 12 -24 8 Z" fill="${P.peach}"/>
+    <path d="M 168 76 q 14 2 22 0" stroke="${P.peachDeep}" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <circle cx="150" cy="62" r="8" fill="#FFFFFF"/><circle cx="152" cy="63" r="4.6" fill="${P.midnight}"/>
+    <path d="M 62 106 q 32 -12 54 12 q -28 20 -54 -12 Z" fill="${P.sunshineBright}" opacity="0.9"/>
+    <path d="M 74 116 q 20 -4 34 6" stroke="${P.sunshineSoft}" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7"/>
+    <path d="M 34 146 q 66 20 132 -4" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.55"/>`,
 
   turtleRock: () => `
-    <ellipse cx="100" cy="158" rx="80" ry="16" fill="${P.pondBlueInk}" opacity="0.12"/>
-    ${pebble(100, 140, 78, 30)}
-    <path d="M 34 108 q 4 -46 66 -46 q 62 0 66 46 Z" fill="url(#greenBall)"/>
-    <g fill="${P.hopGreenSoft}" opacity="0.5">
-      <path d="M 100 68 l 18 12 l -8 20 h -20 l -8 -20 Z"/>
-      <path d="M 60 92 l 16 8 l -6 8 h -20 Z"/><path d="M 140 92 l -16 8 l 6 8 h 20 Z"/>
+    <ellipse cx="100" cy="160" rx="82" ry="16" fill="${P.pondBlueInk}" opacity="0.12"/>
+    ${pebble(100, 142, 80, 28)}
+    <ellipse cx="46" cy="122" rx="18" ry="9" fill="${P.hopGreenLight}"/>
+    <ellipse cx="150" cy="124" rx="16" ry="8" fill="${P.hopGreenLight}"/>
+    <path d="M 32 114 q 6 -52 68 -52 q 62 0 68 52 Z" fill="url(#greenBall)"/>
+    <path d="M 32 114 q 6 -52 68 -52 q -28 14 -34 52 Z" fill="#FFFFFF" opacity="0.13"/>
+    <g fill="${P.hopGreenSoft}" opacity="0.45">
+      <path d="M 100 70 l 20 14 l -8 22 h -24 l -8 -22 Z"/>
+      <path d="M 58 96 l 18 8 l -5 10 h -22 Z"/><path d="M 142 96 l -18 8 l 5 10 h 22 Z"/>
     </g>
-    <circle cx="160" cy="104" r="17" fill="${P.hopGreenLight}"/>
-    <circle cx="166" cy="100" r="5" fill="${P.midnight}"/>
-    <path d="M 160 110 q 10 4 14 -2" stroke="${P.hopGreenInk}" stroke-width="3.4" stroke-linecap="round" fill="none"/>
-    <ellipse cx="52" cy="110" rx="16" ry="9" fill="${P.hopGreenLight}"/>`,
+    <circle cx="164" cy="104" r="19" fill="${P.hopGreenLight}"/>
+    <circle cx="172" cy="99" r="5" fill="${P.midnight}"/>
+    <path d="M 166 112 q 10 4 15 -2" stroke="${P.hopGreenInk}" stroke-width="3.4" stroke-linecap="round" fill="none"/>`,
 
   starLantern: () => {
     const star = (cx, cy, r, inner, fill) => {
@@ -673,95 +701,131 @@ const ITEMS = {
       });
       return `<path d="M ${pts.join(' L ')} Z" fill="${fill}" stroke="${fill}" stroke-width="14" stroke-linejoin="round"/>`;
     };
-    return `<path d="M 100 8 v 26" stroke="${P.woodDeep}" stroke-width="6" stroke-linecap="round"/>
-      <circle cx="100" cy="106" r="82" fill="url(#glowWarm)"/>
-      ${star(100, 106, 66, 30, P.sunshine)}
-      ${star(96, 100, 40, 18, '#FFF0C2')}`;
+    return `<path d="M 26 14 q 40 14 78 6 q 38 -8 70 2" stroke="url(#woodGrad)" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <g fill="${P.hopGreen}" opacity="0.85">
+        <ellipse cx="48" cy="10" rx="11" ry="5.6" transform="rotate(-18 48 10)"/>
+        <ellipse cx="146" cy="10" rx="10" ry="5" transform="rotate(16 146 10)"/>
+      </g>
+      <path d="M 100 16 v 14" stroke="${P.woodDeep}" stroke-width="4.4" stroke-linecap="round"/>
+      <rect x="86" y="28" width="28" height="10" rx="5" fill="${P.woodDeep}"/>
+      <circle cx="100" cy="110" r="86" fill="url(#glowWarm)"/>
+      ${star(100, 110, 62, 28, P.sunshine)}
+      ${star(97, 105, 36, 16, '#FFF3CE')}`;
   },
 
   windChime: () => `
-    <path d="M 100 12 v 20" stroke="${P.woodDeep}" stroke-width="5" stroke-linecap="round"/>
-    <ellipse cx="100" cy="42" rx="52" ry="14" fill="url(#woodGrad)"/>
-    <ellipse cx="100" cy="38" rx="52" ry="14" fill="${P.woodLight}"/>
-    ${[[58, 92, P.lavender], [82, 118, P.pondBlue], [118, 108, P.sunshine], [142, 84, P.peach]].map(([x, len, c]) => `
-      <path d="M ${x} 44 v ${R(len - 40)}" stroke="${P.sand300}" stroke-width="3" opacity="0.8"/>
-      <rect x="${x - 8}" y="${R(len - 4)}" width="16" height="52" rx="8" fill="${c}"/>
-      <rect x="${x - 8}" y="${R(len - 4)}" width="6" height="52" rx="3" fill="#FFFFFF" opacity="0.35"/>`).join('')}
-    <path d="M 100 44 v 96" stroke="${P.sand300}" stroke-width="3" opacity="0.8"/>
-    ${g('translate(100 158)', `<path d="${pad(0, 0, 26, { notch: 90, spread: 26 })}" fill="url(#padGreen)"/>`)}`,
+    <path d="M 100 22 v 14" stroke="${P.woodDeep}" stroke-width="4.6" stroke-linecap="round"/>
+    <ellipse cx="100" cy="46" rx="42" ry="11" fill="${P.woodDeep}"/>
+    <ellipse cx="100" cy="42" rx="42" ry="11" fill="${P.woodLight}"/>
+    ${[[66, 82, P.lavender], [86, 100, P.pondBlue], [114, 94, P.sunshine], [134, 78, P.peach]].map(([x, top, c]) => `
+      <path d="M ${x} 48 v ${R(top - 48)}" stroke="${P.sand300}" stroke-width="2.6" opacity="0.85"/>
+      <rect x="${x - 6.4}" y="${top}" width="13" height="42" rx="6.5" fill="${c}"/>
+      <rect x="${x - 6.4}" y="${top}" width="4.6" height="42" rx="2.3" fill="#FFFFFF" opacity="0.35"/>`).join('')}
+    <path d="M 100 48 v 78" stroke="${P.sand300}" stroke-width="2.6" opacity="0.85"/>
+    ${g('translate(100 138) scale(0.72)', `<path d="${pad(0, 0, 30, { notch: 90, spread: 22 })}" fill="url(#padGreenLight)"/>`)}`,
 
   birdhouse: () => `
-    <rect x="92" y="120" width="16" height="62" rx="8" fill="url(#woodGradV)"/>
-    <path d="M 44 76 q 0 -12 14 -12 h 84 q 14 0 14 12 v 46 q 0 12 -14 12 h -84 q -14 0 -14 -12 Z" fill="url(#woodGrad)"/>
-    <path d="M 100 18 L 172 72 q 8 6 -2 6 H 30 q -10 0 -2 -6 Z" fill="url(#peachBall)"/>
-    <circle cx="100" cy="94" r="21" fill="${P.woodDeep}"/>
-    <circle cx="100" cy="90" r="15" fill="${P.night800}" opacity="0.55"/>
-    <rect x="94" y="112" width="12" height="20" rx="6" fill="${P.woodDeep}"/>
-    <circle cx="146" cy="52" r="16" fill="${P.sunshine}"/>
-    <circle cx="152" cy="48" r="4" fill="${P.midnight}"/>
-    <path d="M 160 54 q 12 -2 12 4 q -8 4 -12 0 Z" fill="${P.peach}"/>`,
+    <rect x="92" y="122" width="16" height="60" rx="8" fill="url(#woodGradV)"/>
+    <path d="M 44 80 q 0 -12 14 -12 h 84 q 14 0 14 12 v 44 q 0 12 -14 12 h -84 q -14 0 -14 -12 Z" fill="url(#woodGrad)"/>
+    <path d="M 100 24 L 176 76 q 10 6 -4 6 H 28 q -14 0 -4 -6 Z" fill="url(#peachBall)"/>
+    <path d="M 100 36 L 156 74 H 44 Z" fill="#FFFFFF" opacity="0.15"/>
+    <circle cx="100" cy="98" r="20" fill="${P.woodDeep}"/>
+    <circle cx="100" cy="96" r="14" fill="${P.night800}" opacity="0.5"/>
+    <rect x="94" y="116" width="12" height="18" rx="6" fill="${P.woodDeep}"/>
+    <ellipse cx="140" cy="128" rx="17" ry="15" fill="${P.sunshine}"/>
+    <circle cx="150" cy="122" r="3.6" fill="${P.midnight}"/>
+    <path d="M 156 128 q 12 -1 12 4 q -8 4 -12 0 Z" fill="${P.peach}"/>
+    <path d="M 128 136 q -12 6 -16 12" stroke="${P.sunshineBright}" stroke-width="7" stroke-linecap="round" fill="none"/>`,
 
+  // Reads as a path now: overlapping rows that shrink and tighten with distance.
   pebblePath: () => `
-    ${pebble(38, 128, 34, 15, { fill: 'url(#stoneGrad)' })}
-    ${pebble(96, 138, 42, 18, { fill: 'url(#stoneGradCool)' })}
-    ${pebble(158, 126, 32, 14, { fill: 'url(#stoneGrad)' })}
-    ${pebble(66, 100, 28, 12, { fill: 'url(#stoneGradCool)' })}
-    ${pebble(128, 96, 30, 13, { fill: 'url(#stoneGrad)' })}
-    ${pebble(98, 70, 24, 11, { fill: 'url(#stoneGradCool)' })}`,
+    ${pebble(52, 152, 36, 15, { fill: 'url(#stoneGradCool)' })}
+    ${pebble(122, 156, 40, 16, { fill: 'url(#stoneGrad)' })}
+    ${pebble(84, 124, 32, 13, { fill: 'url(#stoneGrad)' })}
+    ${pebble(140, 120, 28, 12, { fill: 'url(#stoneGradCool)' })}
+    ${pebble(62, 98, 26, 11, { fill: 'url(#stoneGradCool)' })}
+    ${pebble(112, 92, 24, 10, { fill: 'url(#stoneGrad)' })}
+    ${pebble(88, 70, 19, 8, { fill: 'url(#stoneGrad)' })}
+    ${pebble(126, 62, 15, 6.6, { fill: 'url(#stoneGradCool)' })}`,
 
   driftwood: () => `
-    <ellipse cx="100" cy="146" rx="82" ry="12" fill="${P.midnight}" opacity="0.1"/>
-    <path d="M 22 116 q -6 -30 24 -32 q 40 -4 76 -2 q 34 2 56 6 q 22 4 20 18 q -2 14 -24 16 q -40 4 -80 2 q -40 -2 -72 -8 Z" fill="url(#woodGrad)"/>
-    <path d="M 40 96 q 60 -8 130 4" stroke="${P.woodLight}" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.65"/>
-    <ellipse cx="42" cy="104" rx="12" ry="16" fill="${P.woodDeep}" opacity="0.55"/>
+    <ellipse cx="100" cy="148" rx="80" ry="12" fill="${P.midnight}" opacity="0.1"/>
+    <path d="M 18 118 q -4 -20 18 -26 q 18 -5 34 -3 q 34 -14 60 -2 q 30 -2 50 6 q 22 9 18 22 q -4 13 -26 15 q -34 3 -70 0 q -38 -3 -66 -8 q -16 -3 -18 -4 Z" fill="url(#woodGrad)"/>
+    <path d="M 38 100 q 56 -10 122 6" stroke="${P.woodLight}" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <path d="M 44 122 q 60 8 110 2" stroke="${P.woodDeep}" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.35"/>
+    <ellipse cx="40" cy="108" rx="11" ry="15" fill="${P.woodDeep}" opacity="0.5"/>
+    <path d="M 150 92 q 16 -14 30 -14 q -12 8 -18 20" fill="${P.woodDeep}" opacity="0.75"/>
     <g fill="url(#bladeGreen)">
-      <path d="${blade(140, 88, 46, 12, 7)}"/><path d="${blade(154, 90, 34, -10, 6)}"/>
+      <path d="${blade(112, 92, 42, 16, 7)}"/><path d="${blade(126, 94, 30, -12, 6)}"/>
     </g>`,
 
+  // One tapered trunk with real branches reaching into the canopy. Pass 1's
+  // two-legged fork read as a slingshot.
   blossomTree: () => `
-    <ellipse cx="100" cy="184" rx="66" ry="12" fill="${P.midnight}" opacity="0.1"/>
-    <path d="M 92 184 q -6 -52 -22 -74 q 20 12 26 26 q 2 -34 6 -50 q 8 20 8 52 q 12 -18 30 -26 q -20 22 -28 72 Z" fill="url(#woodGradV)"/>
-    <circle cx="64" cy="76" r="40" fill="url(#blossomCloud)"/>
-    <circle cx="136" cy="72" r="36" fill="url(#blossomCloud)"/>
-    <circle cx="100" cy="46" r="44" fill="url(#blossomCloud)"/>
-    <circle cx="98" cy="94" r="30" fill="url(#blossomCloud)"/>
-    <g fill="${P.peach}" opacity="0.5">
-      <circle cx="72" cy="52" r="6"/><circle cx="120" cy="46" r="5"/><circle cx="98" cy="80" r="5"/><circle cx="46" cy="86" r="5"/>
+    <ellipse cx="100" cy="186" rx="60" ry="11" fill="${P.midnight}" opacity="0.1"/>
+    <path d="M 88 186 q -4 -56 4 -84 q 3 -12 8 -12 q 5 0 8 12 q 8 28 4 84 Z" fill="url(#woodGradV)"/>
+    <g stroke="url(#woodGradV)" stroke-linecap="round" fill="none">
+      <path d="M 98 116 q -16 -14 -30 -20" stroke-width="9"/>
+      <path d="M 102 108 q 18 -14 32 -18" stroke-width="8"/>
+      <path d="M 100 96 q -4 -18 -2 -28" stroke-width="7"/>
+    </g>
+    <circle cx="62" cy="80" r="34" fill="url(#blossomCloud)"/>
+    <circle cx="138" cy="76" r="31" fill="url(#blossomCloud)"/>
+    <circle cx="100" cy="50" r="40" fill="url(#blossomCloud)"/>
+    <circle cx="76" cy="104" r="24" fill="url(#blossomCloud)"/>
+    <circle cx="124" cy="102" r="22" fill="url(#blossomCloud)"/>
+    <g fill="#FFFFFF" opacity="0.45">
+      <circle cx="84" cy="34" r="13"/><circle cx="52" cy="66" r="10"/><circle cx="128" cy="62" r="9"/>
+    </g>
+    <g fill="${P.peach}" opacity="0.45">
+      <circle cx="72" cy="56" r="5"/><circle cx="118" cy="44" r="4.4"/><circle cx="96" cy="86" r="4.4"/><circle cx="146" cy="94" r="4"/>
     </g>
     <g fill="${P.peachSoft}">
-      <ellipse cx="148" cy="128" rx="7" ry="4.6" transform="rotate(28 148 128)"/>
-      <ellipse cx="52" cy="140" rx="6" ry="4" transform="rotate(-24 52 140)"/>
-      <ellipse cx="124" cy="158" rx="5.6" ry="3.6" transform="rotate(14 124 158)"/>
+      <ellipse cx="152" cy="134" rx="7" ry="4.6" transform="rotate(28 152 134)"/>
+      <ellipse cx="48" cy="142" rx="6" ry="4" transform="rotate(-24 48 142)"/>
+      <ellipse cx="128" cy="164" rx="5.6" ry="3.6" transform="rotate(14 128 164)"/>
     </g>`,
 
   fireflies: () => {
-    const fly = (x, y, r, o) => `<circle cx="${x}" cy="${y}" r="${R(r * 3.4)}" fill="url(#glowWarm)" opacity="${o}"/>
-      <circle cx="${x}" cy="${y}" r="${r}" fill="#FFF3C8"/>`;
-    return `${fly(58, 62, 9, 0.95)}${fly(132, 44, 7, 0.8)}${fly(96, 108, 10, 1)}
-      ${fly(150, 128, 7.4, 0.85)}${fly(50, 150, 6, 0.7)}${fly(112, 168, 5.4, 0.6)}`;
+    const fly = (x, y, r, o) => `<circle cx="${x}" cy="${y}" r="${R(r * 4)}" fill="url(#glowWarm)" opacity="${o}"/>
+      <circle cx="${x}" cy="${y}" r="${R(r * 1.7)}" fill="${P.sunshine}" opacity="0.75"/>
+      <circle cx="${x}" cy="${y}" r="${r}" fill="#FFFDF0"/>`;
+    return `${fly(56, 60, 8, 0.95)}${fly(134, 44, 6, 0.85)}${fly(96, 106, 9.4, 1)}
+      ${fly(152, 126, 6.6, 0.9)}${fly(48, 148, 5.4, 0.8)}${fly(114, 166, 4.6, 0.7)}
+      <g stroke="${P.sunshine}" stroke-width="2.6" stroke-linecap="round" fill="none" opacity="0.35">
+        <path d="M 66 74 q 14 12 26 26"/><path d="M 122 58 q -10 16 -18 32"/>
+      </g>`;
   },
 
+  // A moon *on the water*: a pale disc broken into ripple bands. Pass 1 used
+  // bare cream on cream and vanished; the blue rim is what makes it read.
   moonReflection: () => `
-    <g opacity="0.9">
-      <ellipse cx="100" cy="100" rx="74" ry="70" fill="url(#moonGlow)"/>
-      <path d="M 46 62 q 54 -16 108 0 q -54 18 -108 0 Z" fill="${P.sunshineSoft}" opacity="0.85"/>
-      <path d="M 34 96 q 66 -20 132 0 q -66 20 -132 0 Z" fill="${P.sunshineSoft}" opacity="0.95"/>
-      <path d="M 46 130 q 54 -16 108 0 q -54 18 -108 0 Z" fill="${P.sunshineSoft}" opacity="0.8"/>
-      <path d="M 62 158 q 38 -12 76 0 q -38 12 -76 0 Z" fill="${P.sunshineSoft}" opacity="0.6"/>
+    <ellipse cx="100" cy="104" rx="84" ry="76" fill="url(#moonGlow)"/>
+    <g fill="#FFFDF0">
+      <path d="M 52 56 q 48 -14 96 0 q -48 16 -96 0 Z" opacity="0.9"/>
+      <path d="M 34 88 q 66 -19 132 0 q -66 19 -132 0 Z" opacity="0.95"/>
+      <path d="M 44 120 q 56 -16 112 0 q -56 17 -112 0 Z" opacity="0.85"/>
+      <path d="M 62 150 q 38 -11 76 0 q -38 12 -76 0 Z" opacity="0.7"/>
+    </g>
+    <g fill="${P.pondBlueLight}" opacity="0.55">
+      <path d="M 40 72 q 60 -12 120 0 q -60 6 -120 0 Z"/>
+      <path d="M 36 104 q 64 -12 128 0 q -64 6 -128 0 Z"/>
+      <path d="M 52 136 q 48 -10 96 0 q -48 6 -96 0 Z"/>
     </g>`,
 
   pondSwing: () => `
-    <path d="M 20 22 q 80 -14 160 0" stroke="url(#woodGrad)" stroke-width="14" stroke-linecap="round" fill="none"/>
-    <path d="M 56 26 v 96" stroke="${P.sand300}" stroke-width="7" stroke-linecap="round"/>
-    <path d="M 144 26 v 96" stroke="${P.sand300}" stroke-width="7" stroke-linecap="round"/>
-    <rect x="40" y="120" width="120" height="26" rx="13" fill="url(#woodGrad)"/>
-    <rect x="40" y="120" width="120" height="10" rx="5" fill="${P.woodLight}" opacity="0.6"/>
-    <g fill="${P.hopGreen}" opacity="0.85">
-      <ellipse cx="34" cy="18" rx="16" ry="9" transform="rotate(-18 34 18)"/>
-      <ellipse cx="166" cy="20" rx="14" ry="8" transform="rotate(16 166 20)"/>
-      <ellipse cx="100" cy="12" rx="13" ry="7"/>
+    <path d="M 14 34 q 46 -26 96 -18 q 44 7 76 -4" stroke="url(#woodGrad)" stroke-width="13" stroke-linecap="round" fill="none"/>
+    <g fill="${P.hopGreen}" opacity="0.9">
+      <ellipse cx="30" cy="22" rx="15" ry="8" transform="rotate(-24 30 22)"/>
+      <ellipse cx="72" cy="12" rx="14" ry="7.4" transform="rotate(-10 72 12)"/>
+      <ellipse cx="150" cy="14" rx="14" ry="7.4" transform="rotate(14 150 14)"/>
+      <ellipse cx="182" cy="24" rx="12" ry="6.6" transform="rotate(24 182 24)"/>
     </g>
-    <circle cx="100" cy="160" r="8" fill="${P.peach}" opacity="0.6"/>`,
+    <path d="M 62 26 v 100" stroke="${P.sand300}" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 140 22 v 104" stroke="${P.sand300}" stroke-width="6" stroke-linecap="round"/>
+    <rect x="44" y="124" width="114" height="24" rx="12" fill="url(#woodGrad)"/>
+    <rect x="44" y="124" width="114" height="9" rx="4.5" fill="${P.woodLight}" opacity="0.65"/>
+    <ellipse cx="101" cy="164" rx="46" ry="7" fill="${P.midnight}" opacity="0.08"/>`,
 };
 
 /** Mirrors PondCatalog.placement — used only to composite the review preview. */
@@ -993,9 +1057,11 @@ function shieldHero() {
     </g>
     ${flower(200, 604, 26, { fill: 'url(#yellowBall)', core: P.sunshineSoft, stemH: 46 })}
     ${flower(1010, 640, 24, { fill: 'url(#peachBall)', core: P.peachSoft, petals: 6, stemH: 44 })}
-    ${g('translate(646 336)', `
-      ${wing(46, 32, -24, P.lavender, 0.75)}${g('scale(-1 1)', wing(46, 32, -24, P.lavender, 0.75))}
-      <ellipse cx="0" cy="2" rx="5" ry="20" fill="${P.night600}" opacity="0.8"/>`)}
+    ${g('translate(646 330) scale(0.72)', `
+      ${butterflyHalf(P.lavender, P.lavenderSoft, '#FFFFFF')}
+      ${g('scale(-1 1)', butterflyHalf(P.lavender, P.lavenderSoft, '#FFFFFF'))}
+      <ellipse cx="0" cy="4" rx="5" ry="28" fill="${P.night600}" opacity="0.8"/>
+      <circle cx="0" cy="-26" r="7.4" fill="${P.night600}" opacity="0.8"/>`)}
     <ellipse cx="600" cy="700" rx="720" ry="90" fill="${P.hopGreenInk}" opacity="0.08"/>`;
   return svg({ viewBox: `0 0 ${W} ${H}`, width: W, height: H, body });
 }
@@ -1224,7 +1290,7 @@ const previewBody = [
   `<g id="layer-shore">${pondLayers.shore()}${ITEM_LAYER.shore.map(placeItem).join('')}</g>`,
   `<g id="layer-decoration">${ITEM_LAYER.decoration.map(placeItem).join('')}</g>`,
   `<g id="layer-character">${ITEM_LAYER.character.map(placeItem).join('')}
-     ${g('translate(600 630) scale(0.46) translate(-256 -300)', frog({}))}</g>`,
+     ${g('translate(636 672) scale(0.5) translate(-256 -300)', frog({}))}</g>`,
   `<g id="layer-foreground">${pondLayers.foreground()}${ITEM_LAYER.foreground.map(placeItem).join('')}</g>`,
 ].join('\n');
 write('Art/pond/pond-preview.svg', svg({ viewBox: `0 0 ${SCENE_W} ${SCENE_H}`, width: SCENE_W, height: SCENE_H, body: previewBody }));

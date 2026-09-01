@@ -1,14 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
 <defs><radialGradient id="yellowBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFE9A8"/><stop offset="1" stop-color="#FFC53D"/></radialGradient></defs>
-<g id="item-butterflyYellow">
-    <g transform="translate(100 104)">
-      <g transform="rotate(-24)"><path d="M 0 0 C 45 -14.4 50 -54 0 -72 C -17.5 -50.4 -20 -14.4 0 0 Z" fill="url(#yellowBall)" opacity="0.95"/></g>
-      <g transform="scale(-1 1)"><g transform="rotate(-24)"><path d="M 0 0 C 45 -14.4 50 -54 0 -72 C -17.5 -50.4 -20 -14.4 0 0 Z" fill="url(#yellowBall)" opacity="0.95"/></g></g>
-      <g transform="rotate(-150)"><path d="M 0 0 C 30.6 -9.2 34 -34.5 0 -46 C -11.9 -32.2 -13.6 -9.2 0 0 Z" fill="#FFF3D4" opacity="0.98"/></g>
-      <g transform="scale(-1 1)"><g transform="rotate(-150)"><path d="M 0 0 C 30.6 -9.2 34 -34.5 0 -46 C -11.9 -32.2 -13.6 -9.2 0 0 Z" fill="#FFF3D4" opacity="0.98"/></g></g>
-      <ellipse cx="0" cy="4" rx="8" ry="33" fill="#A76F46"/>
-      <circle cx="0" cy="-31" r="10" fill="#A76F46"/>
-      <path d="M -3 -39 q -12 -14 -20 -18" stroke="#A76F46" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <path d="M 3 -39 q 12 -14 20 -18" stroke="#A76F46" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <circle cx="-29" cy="-33" r="9" fill="#FFE8E3" opacity="0.8"/><circle cx="29" cy="-33" r="9" fill="#FFE8E3" opacity="0.8"/></g></g>
+<g id="item-butterflyYellow"><g transform="translate(100 100)">
+    
+    <path d="M 2 -18 C 18 -60 58 -74 70 -50 C 82 -26 52 -4 6 -2 Z" fill="url(#yellowBall)"/>
+    <path d="M 4 2 C 34 4 56 20 48 42 C 40 62 12 54 4 22 Z" fill="#FFF3D4"/>
+    <circle cx="46" cy="-40" r="9" fill="#FFFFFF" opacity="0.55"/>
+    <circle cx="28" cy="26" r="6" fill="#FFFFFF" opacity="0.45"/>
+    <g transform="scale(-1 1)">
+    <path d="M 2 -18 C 18 -60 58 -74 70 -50 C 82 -26 52 -4 6 -2 Z" fill="url(#yellowBall)"/>
+    <path d="M 4 2 C 34 4 56 20 48 42 C 40 62 12 54 4 22 Z" fill="#FFF3D4"/>
+    <circle cx="46" cy="-40" r="9" fill="#FFFFFF" opacity="0.55"/>
+    <circle cx="28" cy="26" r="6" fill="#FFFFFF" opacity="0.45"/></g>
+    <ellipse cx="0" cy="4" rx="5.4" ry="29" fill="#A76F46"/>
+    <circle cx="0" cy="-27" r="8" fill="#A76F46"/>
+    <path d="M -3 -33 q -10 -14 -18 -18" stroke="#A76F46" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    <path d="M 3 -33 q 10 -14 18 -18" stroke="#A76F46" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    <circle cx="-21" cy="-51" r="3.4" fill="#A76F46"/><circle cx="21" cy="-51" r="3.4" fill="#A76F46"/></g></g>
 </svg>
