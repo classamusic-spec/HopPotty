@@ -15,7 +15,6 @@ enum HopSchemaV1: VersionedSchema {
             StoredAppSettings.self,
             StoredPottySchedule.self,
             StoredScreenTimeConfiguration.self,
-            StoredPauseSession.self,
             StoredPottyEvent.self,
             StoredRewardTransaction.self,
             StoredPondProgress.self,
@@ -72,6 +71,11 @@ typealias HopCurrentSchema = HopSchemaV1
 ///    a cascade that reaches the reward ledger would delete stars, which
 ///    contract rule 2 forbids. Deletion is explicit, counted and per-table in
 ///    `DataDeletionService` — never a side effect of a relationship.
+///
+/// 6. **Cross-process state is not in this store.** A running Potty Pause is
+///    read and written by two app extensions that cannot open SwiftData, so it
+///    lives in the App Group record instead. See the note at the foot of
+///    `StoredChildRecords.swift`.
 ///
 /// ## Adding version 2
 ///

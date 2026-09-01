@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><linearGradient id="bladeGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FDCAC"/><stop offset="1" stop-color="#2F8C57"/></linearGradient><linearGradient id="woodGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#A76F46"/></linearGradient></defs>
+<g id="item-driftwood">
+    <ellipse cx="100" cy="146" rx="82" ry="12" fill="#243047" opacity="0.1"/>
+    <path d="M 22 116 q -6 -30 24 -32 q 40 -4 76 -2 q 34 2 56 6 q 22 4 20 18 q -2 14 -24 16 q -40 4 -80 2 q -40 -2 -72 -8 Z" fill="url(#woodGrad)"/>
+    <path d="M 40 96 q 60 -8 130 4" stroke="#E0A472" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.65"/>
+    <ellipse cx="42" cy="104" rx="12" ry="16" fill="#A76F46" opacity="0.55"/>
+    <g fill="url(#bladeGreen)">
+      <path d="M 133 88 Q 139.5 62.7 152 42 Q 147.3 67.3 147 88 Z"/><path d="M 148 90 Q 148.5 71.3 144 56 Q 156.2 74.7 160 90 Z"/>
+    </g></g>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><radialGradient id="glowWarm" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.75"/><stop offset="0.5" stop-color="#FFD769" stop-opacity="0.28"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient></defs>
+<g id="item-starLantern"><path d="M 100 8 v 26" stroke="#A76F46" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="100" cy="106" r="82" fill="url(#glowWarm)"/>
+      <path d="M 100 40 L 117.63 81.73 L 162.77 85.6 L 128.53 115.27 L 138.79 159.4 L 100 136 L 61.21 159.4 L 71.47 115.27 L 37.23 85.6 L 82.37 81.73 Z" fill="#FFD769" stroke="#FFD769" stroke-width="14" stroke-linejoin="round"/>
+      <path d="M 96 60 L 106.58 85.44 L 134.04 87.64 L 113.12 105.56 L 119.51 132.36 L 96 118 L 72.49 132.36 L 78.88 105.56 L 57.96 87.64 L 85.42 85.44 Z" fill="#FFF0C2" stroke="#FFF0C2" stroke-width="14" stroke-linejoin="round"/></g>
+</svg>

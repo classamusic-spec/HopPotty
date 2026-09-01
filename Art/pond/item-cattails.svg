@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><linearGradient id="bladeGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FDCAC"/><stop offset="1" stop-color="#2F8C57"/></linearGradient><linearGradient id="woodGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#A76F46"/></linearGradient></defs>
+<g id="item-cattails">
+    <g fill="url(#bladeGreen)">
+      <path d="M 56 178 Q 66.5 118.6 88 70 Q 77.4 129.4 76 178 Z"/><path d="M 124 178 Q 124 125.2 114 82 Q 137 134.8 144 178 Z"/>
+    </g>
+    
+      <path d="M 84 178 L 84 86" stroke="#2F8C57" stroke-width="6" stroke-linecap="round"/>
+      <rect x="73" y="46" width="22" height="52" rx="11" fill="url(#woodGrad)"/>
+      <rect x="73" y="46" width="9" height="52" rx="5" fill="#FFFFFF" opacity="0.18"/>
+      <path d="M 84 46 q 0 -12 5 -18" stroke="#2F8C57" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+      <path d="M 104 178 L 104 70" stroke="#2F8C57" stroke-width="6.72" stroke-linecap="round"/>
+      <rect x="91.68" y="30" width="24.64" height="58.24" rx="12.32" fill="url(#woodGrad)"/>
+      <rect x="91.68" y="30" width="10.08" height="58.24" rx="5.6" fill="#FFFFFF" opacity="0.18"/>
+      <path d="M 104 30 q 0 -12 5.6 -18" stroke="#2F8C57" stroke-width="5.04" stroke-linecap="round" fill="none"/>
+      <path d="M 124 178 L 124 98" stroke="#2F8C57" stroke-width="5.4" stroke-linecap="round"/>
+      <rect x="114.1" y="58" width="19.8" height="46.8" rx="9.9" fill="url(#woodGrad)"/>
+      <rect x="114.1" y="58" width="8.1" height="46.8" rx="4.5" fill="#FFFFFF" opacity="0.18"/>
+      <path d="M 124 58 q 0 -12 4.5 -18" stroke="#2F8C57" stroke-width="4.05" stroke-linecap="round" fill="none"/></g>
+</svg>

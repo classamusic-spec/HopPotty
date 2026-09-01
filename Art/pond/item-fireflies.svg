@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><radialGradient id="glowWarm" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.75"/><stop offset="0.5" stop-color="#FFD769" stop-opacity="0.28"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient></defs>
+<g id="item-fireflies"><circle cx="58" cy="62" r="30.6" fill="url(#glowWarm)" opacity="0.95"/>
+      <circle cx="58" cy="62" r="9" fill="#FFF3C8"/><circle cx="132" cy="44" r="23.8" fill="url(#glowWarm)" opacity="0.8"/>
+      <circle cx="132" cy="44" r="7" fill="#FFF3C8"/><circle cx="96" cy="108" r="34" fill="url(#glowWarm)" opacity="1"/>
+      <circle cx="96" cy="108" r="10" fill="#FFF3C8"/>
+      <circle cx="150" cy="128" r="25.16" fill="url(#glowWarm)" opacity="0.85"/>
+      <circle cx="150" cy="128" r="7.4" fill="#FFF3C8"/><circle cx="50" cy="150" r="20.4" fill="url(#glowWarm)" opacity="0.7"/>
+      <circle cx="50" cy="150" r="6" fill="#FFF3C8"/><circle cx="112" cy="168" r="18.36" fill="url(#glowWarm)" opacity="0.6"/>
+      <circle cx="112" cy="168" r="5.4" fill="#FFF3C8"/></g>
+</svg>

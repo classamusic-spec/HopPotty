@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+
+<g id="event-accident">
+    <circle cx="48" cy="48" r="31" fill="none" stroke="#33415C" stroke-width="8" stroke-linecap="round" stroke-dasharray="26 22" opacity="0.75"/>
+    <path d="M 48 23 C 61.64 43 70 54 48 73 C 26 54 34.36 43 48 23 Z" fill="#AFA5EF"/>
+    <g stroke="#33415C" stroke-width="7" stroke-linecap="round" opacity="0.9">
+      <path d="M 78 18 l 10 -10"/><path d="M 18 78 l -10 10"/>
+    </g></g>
+</svg>

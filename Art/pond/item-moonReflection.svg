@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFF3D4" stop-opacity="0.9"/><stop offset="1" stop-color="#FFF3D4" stop-opacity="0"/></radialGradient></defs>
+<g id="item-moonReflection">
+    <g opacity="0.9">
+      <ellipse cx="100" cy="100" rx="74" ry="70" fill="url(#moonGlow)"/>
+      <path d="M 46 62 q 54 -16 108 0 q -54 18 -108 0 Z" fill="#FFF3D4" opacity="0.85"/>
+      <path d="M 34 96 q 66 -20 132 0 q -66 20 -132 0 Z" fill="#FFF3D4" opacity="0.95"/>
+      <path d="M 46 130 q 54 -16 108 0 q -54 18 -108 0 Z" fill="#FFF3D4" opacity="0.8"/>
+      <path d="M 62 158 q 38 -12 76 0 q -38 12 -76 0 Z" fill="#FFF3D4" opacity="0.6"/>
+    </g></g>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><radialGradient id="greenBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#2F8C57"/></radialGradient><linearGradient id="stoneGrad" x1="0.25" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#EFEAE3"/><stop offset="1" stop-color="#C9C2B8"/></linearGradient></defs>
+<g id="item-turtleRock">
+    <ellipse cx="100" cy="158" rx="80" ry="16" fill="#15566F" opacity="0.12"/>
+    <ellipse cx="100" cy="140" rx="78" ry="30" fill="url(#stoneGrad)"/>
+    <ellipse cx="85.96" cy="129.8" rx="42.9" ry="12" fill="#FFFFFF" opacity="0.25"/>
+    <path d="M 34 108 q 4 -46 66 -46 q 62 0 66 46 Z" fill="url(#greenBall)"/>
+    <g fill="#E3F5EA" opacity="0.5">
+      <path d="M 100 68 l 18 12 l -8 20 h -20 l -8 -20 Z"/>
+      <path d="M 60 92 l 16 8 l -6 8 h -20 Z"/><path d="M 140 92 l -16 8 l 6 8 h 20 Z"/>
+    </g>
+    <circle cx="160" cy="104" r="17" fill="#8FDCAC"/>
+    <circle cx="166" cy="100" r="5" fill="#243047"/>
+    <path d="M 160 110 q 10 4 14 -2" stroke="#1B5E39" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+    <ellipse cx="52" cy="110" rx="16" ry="9" fill="#8FDCAC"/></g>
+</svg>

@@ -81,4 +81,61 @@ function shadow(appearance, level = 'resting') {
   return `0 ${spec[1]}px ${spec[0]}px ${col.shadow}`;
 }
 
-module.exports = { T, c, baseCSS, type, statusBar, homeIndicator, svg, shadow, ROOT };
+
+/** A token colour at reduced opacity. Same hue, softer presence. */
+function alpha(hex, a) {
+  const h = hex.replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map((x) => x + x).join('') : h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+/** Mix two token colours. Used for scene gradients that stay inside the palette. */
+function mix(a, b, t) {
+  const v = (x) => {
+    const h = x.replace('#', '');
+    const n = parseInt(h.length === 3 ? h.split('').map((y) => y + y).join('') : h, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const [r1, g1, b1] = v(a), [r2, g2, b2] = v(b);
+  const m = (x, y) => Math.round(x + (y - x) * t);
+  return `rgb(${m(r1, r2)},${m(g1, g2)},${m(b1, b2)})`;
+}
+
+/**
+ * Elevation that reads correctly in both appearances.
+ *
+ * The raw `shadow` token is an opaque colour; a shadow needs it at a fraction
+ * of its strength or every card grows a grey halo.
+ */
+function elevation(appearance = 'light', level = 'resting') {
+  const col = c(appearance);
+  const dark = appearance.startsWith('dark');
+  const spec = {
+    resting: [1, 3, 10, dark ? 0.34 : 0.07],
+    raised: [2, 8, 22, dark ? 0.42 : 0.09],
+    floating: [4, 18, 44, dark ? 0.5 : 0.13],
+  }[level];
+  return `0 ${spec[0]}px ${spec[1]}px ${alpha(col.shadow, spec[3] * 0.7)}, ` +
+    `0 ${spec[1]}px ${spec[2]}px ${alpha(col.shadow, spec[3])}`;
+}
+
+/** True when a vector exists on disk. Art lands over time; screens adapt. */
+function hasArt(relPath) {
+  return fs.existsSync(path.join(ROOT, relPath));
+}
+
+/**
+ * The first of `candidates` that exists, or `fallback` HTML.
+ *
+ * Scene and pond art is produced alongside these screens, so a screen asks for
+ * the drawing it wants and carries its own answer for when that drawing is not
+ * there yet.
+ */
+function artOr(candidates, opts, fallback) {
+  const list = Array.isArray(candidates) ? candidates : [candidates];
+  for (const rel of list) if (hasArt(rel)) return svg(rel, opts);
+  return fallback || '';
+}
+
+module.exports = { T, c, baseCSS, type, statusBar, homeIndicator, svg, shadow, ROOT,
+  alpha, mix, elevation, hasArt, artOr };

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
+<defs><linearGradient id="shoreSand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7F1E9"/><stop offset="1" stop-color="#EBE3D8"/></linearGradient></defs>
+<g id="layer-shore">
+    <path d="M 90 568 a 510 264 0 1 0 1020 0 a 510 264 0 1 0 -1020 0 M 130 558 a 470 232 0 1 0 940 0 a 470 232 0 1 0 -940 0" fill-rule="evenodd" fill="url(#shoreSand)" opacity="0.85"/>
+    <g fill="#2F8C57" opacity="0.5">
+      <path d="M 189 704 Q 195.5 674.3 208 650 Q 203.3 679.7 203 704 Z"/><path d="M 208 706 Q 208.5 684 204 666 Q 216.2 688 220 706 Z"/>
+      <path d="M 1003 690 Q 1003.5 662.5 998 640 Q 1012.5 667.5 1017 690 Z"/><path d="M 986 692 Q 991.5 671.1 1002 654 Q 998.2 674.9 998 692 Z"/>
+      <path d="M 621 806 Q 627 781.8 638 762 Q 634.9 786.2 635 806 Z"/><path d="M 642 808 Q 643 790.4 640 776 Q 650.6 793.6 654 808 Z"/>
+    </g></g>
+</svg>

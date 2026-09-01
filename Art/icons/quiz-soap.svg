@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><radialGradient id="bubbleFill" cx="0.36" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/><stop offset="0.55" stop-color="#E0F4FC" stop-opacity="0.7"/><stop offset="1" stop-color="#9BDCF1" stop-opacity="0.55"/></radialGradient><radialGradient id="lavenderBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#D6D0F7"/><stop offset="1" stop-color="#6F63C0"/></radialGradient></defs>
+<g id="quiz-soap"><circle cx="60" cy="60" r="58" fill="#EFEDFB"/>
+    <ellipse cx="60" cy="92" rx="34" ry="6" fill="#6F63C0" opacity="0.14"/>
+    <path d="M 26 78 q 0 -22 34 -22 q 34 0 34 22 v 4 q 0 8 -10 8 h -48 q -10 0 -10 -8 Z" fill="#6F63C0"/>
+    <path d="M 26 74 q 0 -24 34 -24 q 34 0 34 24 q 0 10 -34 10 q -34 0 -34 -10 Z" fill="url(#lavenderBall)"/>
+    <ellipse cx="48" cy="62" rx="14" ry="6" fill="#FFFFFF" opacity="0.4"/>
+    <circle cx="44" cy="32" r="11" fill="url(#bubbleFill)"/>
+    <circle cx="72" cy="22" r="8" fill="url(#bubbleFill)"/>
+    <circle cx="86" cy="42" r="6" fill="url(#bubbleFill)"/></g>
+</svg>

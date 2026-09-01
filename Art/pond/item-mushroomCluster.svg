@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><radialGradient id="peachBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B2"/><stop offset="1" stop-color="#C96755"/></radialGradient></defs>
+<g id="item-mushroomCluster"><ellipse cx="100" cy="164" rx="70" ry="12" fill="#243047" opacity="0.1"/>
+      <g transform="translate(60 118) scale(0.72)">
+      <path d="M -16 0 q -4 44 0 52 q 16 6 32 0 q 4 -8 0 -52 Z" fill="#F7F1E9"/>
+      <path d="M 0 -46 q 52 0 52 34 q 0 12 -14 12 h -76 q -14 0 -14 -12 q 0 -34 52 -34 Z" fill="url(#peachBall)"/>
+      <circle cx="-18" cy="-16" r="9" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="12" cy="-26" r="7" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="28" cy="-8" r="6" fill="#FFF9F2" opacity="0.85"/></g><g transform="translate(140 124) scale(0.6)">
+      <path d="M -16 0 q -4 44 0 52 q 16 6 32 0 q 4 -8 0 -52 Z" fill="#F7F1E9"/>
+      <path d="M 0 -46 q 52 0 52 34 q 0 12 -14 12 h -76 q -14 0 -14 -12 q 0 -34 52 -34 Z" fill="url(#peachBall)"/>
+      <circle cx="-18" cy="-16" r="9" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="12" cy="-26" r="7" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="28" cy="-8" r="6" fill="#FFF9F2" opacity="0.85"/></g><g transform="translate(100 108) scale(1)">
+      <path d="M -16 0 q -4 44 0 52 q 16 6 32 0 q 4 -8 0 -52 Z" fill="#F7F1E9"/>
+      <path d="M 0 -46 q 52 0 52 34 q 0 12 -14 12 h -76 q -14 0 -14 -12 q 0 -34 52 -34 Z" fill="url(#peachBall)"/>
+      <circle cx="-18" cy="-16" r="9" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="12" cy="-26" r="7" fill="#FFF9F2" opacity="0.9"/>
+      <circle cx="28" cy="-8" r="6" fill="#FFF9F2" opacity="0.85"/></g></g>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><radialGradient id="greenBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#2F8C57"/></radialGradient><linearGradient id="woodGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#A76F46"/></linearGradient></defs>
+<g id="item-clubhouse">
+    <ellipse cx="100" cy="176" rx="76" ry="12" fill="#243047" opacity="0.12"/>
+    <path d="M 34 116 q 0 -14 14 -14 h 104 q 14 0 14 14 v 44 q 0 12 -12 12 h -108 q -12 0 -12 -12 Z" fill="url(#woodGrad)"/>
+    <path d="M 100 30 L 178 100 q 8 8 -4 8 H 26 q -12 0 -4 -8 Z" fill="url(#greenBall)"/>
+    <path d="M 100 46 L 160 100 H 40 Z" fill="#FFFFFF" opacity="0.14"/>
+    <path d="M 76 172 v -44 q 0 -24 24 -24 q 24 0 24 24 v 44 Z" fill="#A76F46"/>
+    <circle cx="115" cy="146" r="4.6" fill="#FFD769"/>
+    <rect x="44" y="118" width="24" height="24" rx="8" fill="#E0F4FC"/>
+    <rect x="132" y="118" width="24" height="24" rx="8" fill="#E0F4FC"/>
+    <path d="M 30 108 h 140" stroke="#A76F46" stroke-width="6" stroke-linecap="round" opacity="0.5"/></g>
+</svg>

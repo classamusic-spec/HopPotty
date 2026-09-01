@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
+<defs><linearGradient id="groundNear" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7CC79E"/><stop offset="1" stop-color="#5FB287"/></linearGradient></defs>
+<g id="layer-foreground">
+    <path d="M -20 828 Q 300 780 620 812 Q 900 840 1220 792 L 1220 920 L -20 920 Z" fill="url(#groundNear)" opacity="0.95"/>
+    <g fill="#1B5E39" opacity="0.22">
+      <path d="M 79 858 Q 89 817.3 108 784 Q 101.3 824.7 101 858 Z"/><path d="M 117 862 Q 118 831.2 112 806 Q 129.5 836.8 135 862 Z"/>
+      <path d="M 1099 848 Q 1100 805.1 1092 770 Q 1114.1 812.9 1121 848 Z"/><path d="M 1065 852 Q 1073 820.1 1088 794 Q 1083.1 825.9 1083 852 Z"/>
+    </g>
+    <ellipse cx="600" cy="900" rx="760" ry="120" fill="#1B5E39" opacity="0.10"/></g>
+</svg>

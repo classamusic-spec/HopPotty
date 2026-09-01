@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><linearGradient id="bladeGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FDCAC"/><stop offset="1" stop-color="#2F8C57"/></linearGradient><linearGradient id="bladeGreenDeep" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C88A"/><stop offset="1" stop-color="#1B5E39"/></linearGradient></defs>
+<g id="item-reedsRight"><g transform="translate(200 0) scale(-1 1)">
+    <g fill="url(#bladeGreen)">
+      <path d="M 67 172 Q 78.5 104.9 102 50 Q 90.5 117.1 89 172 Z"/><path d="M 90 174 Q 99 90.4 114 22 Q 112.8 105.6 114 174 Z"/>
+      <path d="M 118 172 Q 117 119.2 104 76 Q 130.2 128.8 138 172 Z"/>
+    </g>
+    <g fill="url(#bladeGreenDeep)" opacity="0.75">
+      <path d="M 81 174 Q 81.5 131.1 74 96 Q 93.1 138.9 99 174 Z"/><path d="M 110 174 Q 118.5 139.9 136 112 Q 127.2 146.1 126 174 Z"/>
+    </g></g></g>
+</svg>

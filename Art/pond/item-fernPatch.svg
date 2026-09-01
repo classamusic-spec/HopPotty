@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><linearGradient id="fernGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD9AF"/><stop offset="1" stop-color="#2F8C57"/></linearGradient></defs>
+<g id="item-fernPatch"><g transform="translate(62 176) rotate(-18) scale(0.9)">
+      <path d="M 0 0 Q 11.8 -64.9 0 -118" stroke="#2F8C57" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="-21" cy="-18.88" rx="30" ry="12.6" fill="url(#fernGreen)" transform="rotate(-22 -21 -18.88)"/>
+                <ellipse cx="21" cy="-18.88" rx="30" ry="12.6" fill="url(#fernGreen)" transform="rotate(22 21 -18.88)"/><ellipse cx="-17.98" cy="-36.82" rx="25.68" ry="10.79" fill="url(#fernGreen)" transform="rotate(-24.4 -17.98 -36.82)"/>
+                <ellipse cx="17.98" cy="-36.82" rx="25.68" ry="10.79" fill="url(#fernGreen)" transform="rotate(24.4 17.98 -36.82)"/><ellipse cx="-14.95" cy="-54.75" rx="21.36" ry="8.97" fill="url(#fernGreen)" transform="rotate(-26.8 -14.95 -54.75)"/>
+                <ellipse cx="14.95" cy="-54.75" rx="21.36" ry="8.97" fill="url(#fernGreen)" transform="rotate(26.8 14.95 -54.75)"/><ellipse cx="-11.93" cy="-72.69" rx="17.04" ry="7.16" fill="url(#fernGreen)" transform="rotate(-29.2 -11.93 -72.69)"/>
+                <ellipse cx="11.93" cy="-72.69" rx="17.04" ry="7.16" fill="url(#fernGreen)" transform="rotate(29.2 11.93 -72.69)"/><ellipse cx="-8.9" cy="-90.62" rx="12.72" ry="5.34" fill="url(#fernGreen)" transform="rotate(-31.6 -8.9 -90.62)"/>
+                <ellipse cx="8.9" cy="-90.62" rx="12.72" ry="5.34" fill="url(#fernGreen)" transform="rotate(31.6 8.9 -90.62)"/><ellipse cx="-5.88" cy="-108.56" rx="8.4" ry="3.53" fill="url(#fernGreen)" transform="rotate(-34 -5.88 -108.56)"/>
+                <ellipse cx="5.88" cy="-108.56" rx="8.4" ry="3.53" fill="url(#fernGreen)" transform="rotate(34 5.88 -108.56)"/></g><g transform="translate(140 176) rotate(20) scale(0.85)">
+      <path d="M 0 0 Q 10.6 -58.3 0 -106" stroke="#2F8C57" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="-21" cy="-16.96" rx="30" ry="12.6" fill="url(#fernGreen)" transform="rotate(-22 -21 -16.96)"/>
+                <ellipse cx="21" cy="-16.96" rx="30" ry="12.6" fill="url(#fernGreen)" transform="rotate(22 21 -16.96)"/><ellipse cx="-17.98" cy="-33.07" rx="25.68" ry="10.79" fill="url(#fernGreen)" transform="rotate(-24.4 -17.98 -33.07)"/>
+                <ellipse cx="17.98" cy="-33.07" rx="25.68" ry="10.79" fill="url(#fernGreen)" transform="rotate(24.4 17.98 -33.07)"/><ellipse cx="-14.95" cy="-49.18" rx="21.36" ry="8.97" fill="url(#fernGreen)" transform="rotate(-26.8 -14.95 -49.18)"/>
+                <ellipse cx="14.95" cy="-49.18" rx="21.36" ry="8.97" fill="url(#fernGreen)" transform="rotate(26.8 14.95 -49.18)"/><ellipse cx="-11.93" cy="-65.3" rx="17.04" ry="7.16" fill="url(#fernGreen)" transform="rotate(-29.2 -11.93 -65.3)"/>
+                <ellipse cx="11.93" cy="-65.3" rx="17.04" ry="7.16" fill="url(#fernGreen)" transform="rotate(29.2 11.93 -65.3)"/><ellipse cx="-8.9" cy="-81.41" rx="12.72" ry="5.34" fill="url(#fernGreen)" transform="rotate(-31.6 -8.9 -81.41)"/>
+                <ellipse cx="8.9" cy="-81.41" rx="12.72" ry="5.34" fill="url(#fernGreen)" transform="rotate(31.6 8.9 -81.41)"/><ellipse cx="-5.88" cy="-97.52" rx="8.4" ry="3.53" fill="url(#fernGreen)" transform="rotate(-34 -5.88 -97.52)"/>
+                <ellipse cx="5.88" cy="-97.52" rx="8.4" ry="3.53" fill="url(#fernGreen)" transform="rotate(34 5.88 -97.52)"/></g><g transform="translate(100 180) rotate(0) scale(1)">
+      <path d="M 0 0 Q 14.8 -81.4 0 -148" stroke="#2F8C57" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="-21" cy="-23.68" rx="30" ry="12.6" fill="url(#fernGreen)" transform="rotate(-22 -21 -23.68)"/>
+                <ellipse cx="21" cy="-23.68" rx="30" ry="12.6" fill="url(#fernGreen)" transform="rotate(22 21 -23.68)"/><ellipse cx="-17.98" cy="-46.18" rx="25.68" ry="10.79" fill="url(#fernGreen)" transform="rotate(-24.4 -17.98 -46.18)"/>
+                <ellipse cx="17.98" cy="-46.18" rx="25.68" ry="10.79" fill="url(#fernGreen)" transform="rotate(24.4 17.98 -46.18)"/><ellipse cx="-14.95" cy="-68.67" rx="21.36" ry="8.97" fill="url(#fernGreen)" transform="rotate(-26.8 -14.95 -68.67)"/>
+                <ellipse cx="14.95" cy="-68.67" rx="21.36" ry="8.97" fill="url(#fernGreen)" transform="rotate(26.8 14.95 -68.67)"/><ellipse cx="-11.93" cy="-91.17" rx="17.04" ry="7.16" fill="url(#fernGreen)" transform="rotate(-29.2 -11.93 -91.17)"/>
+                <ellipse cx="11.93" cy="-91.17" rx="17.04" ry="7.16" fill="url(#fernGreen)" transform="rotate(29.2 11.93 -91.17)"/><ellipse cx="-8.9" cy="-113.66" rx="12.72" ry="5.34" fill="url(#fernGreen)" transform="rotate(-31.6 -8.9 -113.66)"/>
+                <ellipse cx="8.9" cy="-113.66" rx="12.72" ry="5.34" fill="url(#fernGreen)" transform="rotate(31.6 8.9 -113.66)"/><ellipse cx="-5.88" cy="-136.16" rx="8.4" ry="3.53" fill="url(#fernGreen)" transform="rotate(-34 -5.88 -136.16)"/>
+                <ellipse cx="5.88" cy="-136.16" rx="8.4" ry="3.53" fill="url(#fernGreen)" transform="rotate(34 5.88 -136.16)"/></g></g>
+</svg>

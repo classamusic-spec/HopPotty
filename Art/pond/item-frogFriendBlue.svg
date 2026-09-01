@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><linearGradient id="hopBodyBlue" x1="0.2" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#C4EBF8"/><stop offset="0.52" stop-color="#6FC7E8"/><stop offset="1" stop-color="#4FAACE"/></linearGradient><radialGradient id="hopCheek" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FF8E86" stop-opacity="0.85"/><stop offset="0.55" stop-color="#FF9F8F" stop-opacity="0.55"/><stop offset="1" stop-color="#FF9F8F" stop-opacity="0"/></radialGradient><radialGradient id="hopEyeDomeBlue" cx="0.36" cy="0.28" r="0.75"><stop offset="0" stop-color="#BEE8F7"/><stop offset="1" stop-color="#57B2D6"/></radialGradient><radialGradient id="hopSheen" cx="0.34" cy="0.22" r="0.6"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.45"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient></defs>
+<g id="item-frogFriendBlue">
+    <ellipse cx="100" cy="176" rx="56" ry="11" fill="#243047" opacity="0.12"/>
+    <g transform="translate(100 96) scale(0.37) translate(-256 -300)"><path d="
+    M 256 188.24
+    C 331.6 188.24, 394.24 233.28, 402.56 292.64
+    C 410.88 350, 397.92 400, 340 418
+    C 300 430, 212 430, 172 418
+    C 114.08 400, 101.12 350, 109.44 292.64
+    C 117.76 233.28, 180.4 188.24, 256 188.24
+    Z" fill="url(#hopBodyBlue)"/>
+    <ellipse cx="200" cy="248" rx="96" ry="70" fill="url(#hopSheen)"/>
+    <g transform="translate(126 320) rotate(-120)">
+    <rect x="-15" y="-15" width="61" height="30" rx="15" fill="#4FAACE"/>
+    <circle cx="46" cy="0" r="19" fill="#4FAACE"/>
+    <circle cx="42" cy="-4" r="13" fill="#6FC7E8" opacity="0.5"/></g><g transform="translate(388 340) rotate(24)">
+    <rect x="-15" y="-15" width="69" height="30" rx="15" fill="#4FAACE"/>
+    <circle cx="54" cy="0" r="19" fill="#4FAACE"/>
+    <circle cx="50" cy="-4" r="13" fill="#6FC7E8" opacity="0.5"/></g>
+    <ellipse cx="256" cy="364" rx="86" ry="56" fill="#F2FBFE" opacity="0.95"/>
+  <ellipse cx="256" cy="364" rx="86" ry="56" fill="none" stroke="#DCF0F8" stroke-width="3"/>
+    <g transform="translate(190 436) scale(1 1)">
+    <ellipse cx="0" cy="2" rx="44" ry="21" fill="#4FAACE"/>
+    <circle cx="-27" cy="-11" r="17" fill="#4FAACE"/><circle cx="0" cy="-16" r="17" fill="#4FAACE"/><circle cx="27" cy="-11" r="17" fill="#4FAACE"/>
+    <ellipse cx="0" cy="4" rx="29" ry="12" fill="#C4EBF8" opacity="0.45"/></g><g transform="translate(322 436) scale(-1 1)">
+    <ellipse cx="0" cy="2" rx="44" ry="21" fill="#4FAACE"/>
+    <circle cx="-27" cy="-11" r="17" fill="#4FAACE"/><circle cx="0" cy="-16" r="17" fill="#4FAACE"/><circle cx="27" cy="-11" r="17" fill="#4FAACE"/>
+    <ellipse cx="0" cy="4" rx="29" ry="12" fill="#C4EBF8" opacity="0.45"/></g>
+    <g><circle cx="194" cy="196" r="60" fill="url(#hopEyeDomeBlue)"/>
+      <ellipse cx="194" cy="196" rx="57" ry="57" fill="#FFFFFF"/>
+      <circle cx="186" cy="206" r="25" fill="#243047"/>
+      <circle cx="177" cy="195.5" r="9" fill="#FFFFFF" opacity="0.96"/>
+      <circle cx="194" cy="214.5" r="4.25" fill="#FFFFFF" opacity="0.72"/>
+    </g><g><circle cx="318" cy="196" r="60" fill="url(#hopEyeDomeBlue)"/>
+      <ellipse cx="318" cy="196" rx="57" ry="57" fill="#FFFFFF"/>
+      <circle cx="310" cy="206" r="25" fill="#243047"/>
+      <circle cx="301" cy="195.5" r="9" fill="#FFFFFF" opacity="0.96"/>
+      <circle cx="318" cy="214.5" r="4.25" fill="#FFFFFF" opacity="0.72"/>
+    </g>
+    <ellipse cx="158" cy="308" rx="30" ry="19" fill="url(#hopCheek)"/>
+  <ellipse cx="354" cy="308" rx="30" ry="19" fill="url(#hopCheek)"/>
+    <path d="M 202 292 Q 256 304 310 292 Q 300 343 256 346 Q 212 343 202 292 Z" fill="#1B6280" opacity="0.9"/>
+      <path d="M 232 332 Q 256 348 280 332 Q 256 341 232 332 Z" fill="#FF9F8F" opacity="0.85"/></g></g>
+</svg>

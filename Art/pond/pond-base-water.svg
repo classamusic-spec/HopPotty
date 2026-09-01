@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
+<defs><linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BDCF1"/><stop offset="0.55" stop-color="#6FC7E8"/><stop offset="1" stop-color="#57B6DC"/></linearGradient></defs>
+<g id="layer-water">
+    <ellipse cx="600" cy="558" rx="470" ry="232" fill="url(#water)"/>
+    <ellipse cx="600" cy="540" rx="430" ry="186" fill="#8FD8F0" opacity="0.35"/>
+    <path d="M 330 450 q 90 -22 180 0" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" opacity="0.34"/>
+    <path d="M 700 492 q 70 -18 140 0" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity="0.26"/>
+    <path d="M 400 676 q 110 24 220 0" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" opacity="0.22"/></g>
+</svg>

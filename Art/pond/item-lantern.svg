@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><radialGradient id="glowWarm" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.75"/><stop offset="0.5" stop-color="#FFD769" stop-opacity="0.28"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient><radialGradient id="yellowBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFE9A8"/><stop offset="1" stop-color="#FFC53D"/></radialGradient></defs>
+<g id="item-lantern">
+    <path d="M 100 8 v 22" stroke="#A76F46" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 78 30 q 22 -16 44 0 Z" fill="#A76F46"/>
+    <rect x="72" y="28" width="56" height="10" rx="5" fill="#A76F46"/>
+    <circle cx="100" cy="98" r="66" fill="url(#glowWarm)"/>
+    <path d="M 78 40 q 22 -8 44 0 v 60 q 0 22 -22 22 q -22 0 -22 -22 Z" fill="url(#yellowBall)"/>
+    <path d="M 84 44 q 8 -3 16 -3 v 74 q -16 -2 -16 -20 Z" fill="#FFFFFF" opacity="0.4"/>
+    <rect x="70" y="118" width="60" height="12" rx="6" fill="#A76F46"/>
+    <circle cx="100" cy="138" r="6" fill="#A76F46"/></g>
+</svg>

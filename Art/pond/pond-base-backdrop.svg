@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
+<defs><linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A8DFC0"/><stop offset="0.5" stop-color="#8FDCAC"/><stop offset="1" stop-color="#7ECBA0"/></linearGradient><linearGradient id="hillFar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C7E9D6"/><stop offset="1" stop-color="#AEDFC4"/></linearGradient><linearGradient id="hillMid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A9DEC0"/><stop offset="1" stop-color="#8CD1A9"/></linearGradient></defs>
+<g id="layer-backdrop">
+    <path d="M -20 372 Q 190 268 430 336 Q 610 386 760 330 Q 960 258 1220 356 L 1220 460 L -20 460 Z" fill="url(#hillFar)"/>
+    <path d="M -20 408 Q 240 336 470 392 Q 700 448 940 388 Q 1090 350 1220 396 L 1220 500 L -20 500 Z" fill="url(#hillMid)" opacity="0.9"/>
+    <path d="M -20 430 Q 300 388 600 424 Q 900 460 1220 418 L 1220 920 L -20 920 Z" fill="url(#ground)"/>
+    <ellipse cx="600" cy="564" rx="522" ry="272" fill="#8FD3AE" opacity="0.45"/></g>
+</svg>

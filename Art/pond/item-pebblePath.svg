@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><linearGradient id="stoneGrad" x1="0.25" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#EFEAE3"/><stop offset="1" stop-color="#C9C2B8"/></linearGradient><linearGradient id="stoneGradCool" x1="0.25" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#E6E4EE"/><stop offset="1" stop-color="#BDB8CC"/></linearGradient></defs>
+<g id="item-pebblePath">
+    <ellipse cx="38" cy="128" rx="34" ry="15" fill="url(#stoneGrad)"/>
+    <ellipse cx="31.88" cy="122.9" rx="18.7" ry="6" fill="#FFFFFF" opacity="0.25"/>
+    <ellipse cx="96" cy="138" rx="42" ry="18" fill="url(#stoneGradCool)"/>
+    <ellipse cx="88.44" cy="131.88" rx="23.1" ry="7.2" fill="#FFFFFF" opacity="0.25"/>
+    <ellipse cx="158" cy="126" rx="32" ry="14" fill="url(#stoneGrad)"/>
+    <ellipse cx="152.24" cy="121.24" rx="17.6" ry="5.6" fill="#FFFFFF" opacity="0.25"/>
+    <ellipse cx="66" cy="100" rx="28" ry="12" fill="url(#stoneGradCool)"/>
+    <ellipse cx="60.96" cy="95.92" rx="15.4" ry="4.8" fill="#FFFFFF" opacity="0.25"/>
+    <ellipse cx="128" cy="96" rx="30" ry="13" fill="url(#stoneGrad)"/>
+    <ellipse cx="122.6" cy="91.58" rx="16.5" ry="5.2" fill="#FFFFFF" opacity="0.25"/>
+    <ellipse cx="98" cy="70" rx="24" ry="11" fill="url(#stoneGradCool)"/>
+    <ellipse cx="93.68" cy="66.26" rx="13.2" ry="4.4" fill="#FFFFFF" opacity="0.25"/></g>
+</svg>

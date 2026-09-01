@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><radialGradient id="peachBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B2"/><stop offset="1" stop-color="#C96755"/></radialGradient><linearGradient id="woodGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#A76F46"/></linearGradient><linearGradient id="woodGradV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#C98A5B"/></linearGradient></defs>
+<g id="item-birdhouse">
+    <rect x="92" y="120" width="16" height="62" rx="8" fill="url(#woodGradV)"/>
+    <path d="M 44 76 q 0 -12 14 -12 h 84 q 14 0 14 12 v 46 q 0 12 -14 12 h -84 q -14 0 -14 -12 Z" fill="url(#woodGrad)"/>
+    <path d="M 100 18 L 172 72 q 8 6 -2 6 H 30 q -10 0 -2 -6 Z" fill="url(#peachBall)"/>
+    <circle cx="100" cy="94" r="21" fill="#A76F46"/>
+    <circle cx="100" cy="90" r="15" fill="#1B2337" opacity="0.55"/>
+    <rect x="94" y="112" width="12" height="20" rx="6" fill="#A76F46"/>
+    <circle cx="146" cy="52" r="16" fill="#FFD769"/>
+    <circle cx="152" cy="48" r="4" fill="#243047"/>
+    <path d="M 160 54 q 12 -2 12 4 q -8 4 -12 0 Z" fill="#FF9F8F"/></g>
+</svg>

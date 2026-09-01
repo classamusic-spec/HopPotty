@@ -428,69 +428,17 @@ final class StoredScreenTimeConfiguration {
     }
 }
 
-// MARK: - Pause session
-
-/// The record that stands between a crash and a child who cannot open anything.
-///
-/// See `PersistedPauseSession` in Core for why it holds so little. At most one
-/// row per child exists at a time; the repository enforces that.
-@Model
-final class StoredPauseSession {
-    @Attribute(.unique) var id: UUID
-    var childID: UUID
-    /// `PottyPauseState` as JSON — it carries a `ScreenTimeFailure` in two cases.
-    var stateData: Data
-    /// The state's `Kind` raw value, denormalised so a diagnostic query does not
-    /// have to decode every blob to answer "was anything shielded?".
-    var stateKind: String
-    var startedAt: Date
-    var expiresAt: Date
-
-    init(
-        id: UUID,
-        childID: UUID,
-        stateData: Data,
-        stateKind: String,
-        startedAt: Date,
-        expiresAt: Date
-    ) {
-        self.id = id
-        self.childID = childID
-        self.stateData = stateData
-        self.stateKind = stateKind
-        self.startedAt = startedAt
-        self.expiresAt = expiresAt
-    }
-
-    convenience init(_ session: PersistedPauseSession) {
-        self.init(
-            id: session.id,
-            childID: session.childID,
-            stateData: HopStoredCoding.encode(session.state, label: "pauseState"),
-            stateKind: session.state.kind.rawValue,
-            startedAt: session.startedAt,
-            expiresAt: session.expiresAt
-        )
-    }
-
-    func apply(_ session: PersistedPauseSession) {
-        stateData = HopStoredCoding.encode(session.state, label: "pauseState")
-        stateKind = session.state.kind.rawValue
-    }
-
-    var domainValue: PersistedPauseSession {
-        PersistedPauseSession(
-            id: id,
-            childID: childID,
-            // An unreadable state decodes to `.restoring`, which is the
-            // conservative reading: `mayHaveShieldUp` is true for it, so the
-            // restoration path will clear the shield rather than leave a child
-            // locked out of their apps by a corrupted blob.
-            state: HopStoredCoding.decode(
-                PottyPauseState.self, from: stateData, fallback: .restoring, label: "pauseState"
-            ),
-            startedAt: startedAt,
-            expiresAt: expiresAt
-        )
-    }
-}
+// MARK: - Deliberately absent: the pause session
+//
+// `PersistedPauseSession` has no `@Model` here, and must not get one.
+//
+// A running pause is cross-process state: the app, the DeviceActivity monitor
+// extension and the shield-action extension all need to read and write it, and
+// two of those three cannot open a SwiftData store at all. It therefore lives
+// in the App Group record (`Services/ScreenTime/AppGroupStore.swift`), which is
+// the single source of truth for "is a shield up right now".
+//
+// Mirroring it into SwiftData would create a second answer to that question,
+// held by the one process that is *least* likely to be running when it matters.
+// The failure mode is not a stale row — it is a child locked out of their apps
+// because two stores disagreed about whether a pause had ended.

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><linearGradient id="padGreen" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#8FDCAC"/><stop offset="1" stop-color="#2F8C57"/></linearGradient><linearGradient id="padGreenLight" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#63C88A"/></linearGradient></defs>
+<g id="item-lilyPadSmall">
+    <ellipse cx="100" cy="128" rx="66" ry="16" fill="#15566F" opacity="0.12"/>
+    <path d="M 116.45 134.35 A 68 31.28 0 1 1 160.04 118.69 L 100 104 Z" fill="url(#padGreen)"/>
+    <path d="M 116.45 126.35 A 68 31.28 0 1 1 160.04 110.69 L 100 96 Z" fill="url(#padGreenLight)"/>
+    <path d="M 100 96 l 44 -18" stroke="#E3F5EA" stroke-width="3" stroke-linecap="round" opacity="0.5" fill="none"/>
+    <ellipse cx="76" cy="82" rx="26" ry="9" fill="#FFFFFF" opacity="0.22"/></g>
+</svg>

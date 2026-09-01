@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><linearGradient id="towelGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFE9F7"/><stop offset="1" stop-color="#A6D6EE"/></linearGradient></defs>
+<g id="quiz-towel"><circle cx="60" cy="60" r="58" fill="#E0F4FC"/>
+    <rect x="18" y="30" width="84" height="9" rx="4.5" fill="#D8CEC1"/>
+    <path d="M 30 34 h 60 q 8 0 8 8 v 46 q 0 10 -10 10 h -56 q -10 0 -10 -10 v -46 q 0 -8 8 -8 Z" fill="url(#towelGrad)"/>
+    <path d="M 30 34 h 26 v 64 h -18 q -10 0 -10 -10 v -46 q 0 -8 2 -8 Z" fill="#FFFFFF" opacity="0.3"/>
+    <rect x="26" y="56" width="72" height="10" rx="5" fill="#FFFFFF" opacity="0.7"/>
+    <path d="M 34 98 q 30 8 60 0" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.6"/></g>
+</svg>

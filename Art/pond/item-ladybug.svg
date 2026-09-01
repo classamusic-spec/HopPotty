@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><radialGradient id="peachBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B2"/><stop offset="1" stop-color="#C96755"/></radialGradient></defs>
+<g id="item-ladybug">
+    <ellipse cx="100" cy="142" rx="56" ry="11" fill="#243047" opacity="0.1"/>
+    <ellipse cx="100" cy="104" rx="62" ry="52" fill="url(#peachBall)"/>
+    <path d="M 100 52 a 62 52 0 0 0 0 104 Z" fill="#FFFFFF" opacity="0.12"/>
+    <path d="M 100 52 L 100 156" stroke="#8A3F30" stroke-width="6" opacity="0.55"/>
+    <path d="M 100 52 a 62 52 0 0 1 -58 -40 q 26 -14 58 -8 q 32 -6 58 8 a 62 52 0 0 1 -58 40 Z" fill="#243047"/>
+    <circle cx="80" cy="30" r="7" fill="#FFFFFF"/><circle cx="120" cy="30" r="7" fill="#FFFFFF"/>
+    <circle cx="80" cy="30" r="3.4" fill="#14192A"/><circle cx="120" cy="30" r="3.4" fill="#14192A"/>
+    <g fill="#8A3F30" opacity="0.75">
+      <circle cx="74" cy="86" r="11"/><circle cx="126" cy="86" r="11"/>
+      <circle cx="70" cy="124" r="9"/><circle cx="130" cy="124" r="9"/>
+    </g></g>
+</svg>

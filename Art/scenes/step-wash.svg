@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" width="640" height="480">
+<defs><radialGradient id="bubbleFill" cx="0.36" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/><stop offset="0.55" stop-color="#E0F4FC" stop-opacity="0.7"/><stop offset="1" stop-color="#9BDCF1" stop-opacity="0.55"/></radialGradient><linearGradient id="handGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFDCC9"/><stop offset="1" stop-color="#F5C4A9"/></linearGradient><linearGradient id="handGradDeep" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#F5C4A9"/><stop offset="1" stop-color="#DCA084"/></linearGradient><linearGradient id="porcelainSide" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#F4F1EC"/><stop offset="1" stop-color="#DAD4CB"/></linearGradient><linearGradient id="tileWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFDFA"/><stop offset="1" stop-color="#F1EDE6"/></linearGradient><linearGradient id="waterStream" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BDCF1" stop-opacity="0.95"/><stop offset="1" stop-color="#6FC7E8" stop-opacity="0.75"/></linearGradient></defs>
+<g id="step-wash">
+    
+    <rect x="0" y="0" width="640" height="480" fill="url(#tileWall)"/>
+    <circle cx="120" cy="112" r="86" fill="#E0F4FC" opacity="0.55"/>
+    <circle cx="548" cy="86" r="58" fill="#FFF3D4" opacity="0.6"/>
+    <rect x="0" y="400" width="640" height="80" fill="#F7F1E9"/>
+    <rect x="0" y="388" width="640" height="16" rx="8" fill="#EBE3D8"/>
+    <rect x="96" y="196" width="212" height="34" rx="17" fill="#EBE3D8"/>
+    <path d="M 250 196 v -46 q 0 -34 -34 -34 h -70" stroke="url(#porcelainSide)" stroke-width="26" fill="none" stroke-linecap="round"/>
+    <rect x="112" y="102" width="46" height="28" rx="14" fill="#9BDCF1"/>
+    <rect x="228" y="196" width="44" height="30" rx="12" fill="#E4DFD8"/>
+    <path d="M 250 226 q -10 74 -6 118" stroke="url(#waterStream)" stroke-width="30" stroke-linecap="round" fill="none" opacity="0.75"/>
+    <path d="M 244 236 q -6 60 -4 96" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.5"/>
+    <g>
+      <g transform="translate(196 372) rotate(-12)">
+        <path d="M 0 0 q -8 -56 26 -74 q 34 -18 62 4 q 26 20 20 60 q -6 40 -54 42 q -46 2 -54 -32 Z" fill="url(#handGrad)"/>
+        <rect x="-4" y="-84" width="26" height="46" rx="13" fill="url(#handGrad)"/>
+        <rect x="22" y="-96" width="26" height="58" rx="13" fill="url(#handGrad)"/>
+        <rect x="48" y="-92" width="26" height="54" rx="13" fill="url(#handGrad)"/>
+        <rect x="72" y="-72" width="24" height="40" rx="12" fill="url(#handGrad)"/></g>
+      <g transform="translate(340 380) scale(-1 1) rotate(-14)">
+        <path d="M 0 0 q -8 -56 26 -74 q 34 -18 62 4 q 26 20 20 60 q -6 40 -54 42 q -46 2 -54 -32 Z" fill="url(#handGradDeep)"/>
+        <rect x="-4" y="-84" width="26" height="46" rx="13" fill="url(#handGradDeep)"/>
+        <rect x="22" y="-96" width="26" height="58" rx="13" fill="url(#handGradDeep)"/>
+        <rect x="48" y="-92" width="26" height="54" rx="13" fill="url(#handGradDeep)"/>
+        <rect x="72" y="-72" width="24" height="40" rx="12" fill="url(#handGradDeep)"/></g>
+    </g>
+    <g>
+      <circle cx="188" cy="286" r="26" fill="url(#bubbleFill)"/>
+      <circle cx="352" cy="256" r="20" fill="url(#bubbleFill)"/>
+      <circle cx="404" cy="330" r="28" fill="url(#bubbleFill)"/>
+      <circle cx="150" cy="352" r="17" fill="url(#bubbleFill)"/>
+      <circle cx="392" cy="404" r="15" fill="url(#bubbleFill)"/>
+      <circle cx="286" cy="222" r="13" fill="url(#bubbleFill)"/>
+    </g></g>
+</svg>

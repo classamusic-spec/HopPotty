@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><radialGradient id="lavenderBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#D6D0F7"/><stop offset="1" stop-color="#6F63C0"/></radialGradient></defs>
+<g id="quiz-controller"><circle cx="60" cy="60" r="58" fill="#EFEDFB"/>
+    <path d="M 22 56 q 6 -18 24 -18 h 28 q 18 0 24 18 l 8 24 q 6 20 -12 22 q -14 2 -20 -12 h -48 q -6 14 -20 12 q -18 -2 -12 -22 Z" fill="url(#lavenderBall)"/>
+    <path d="M 22 56 q 6 -18 24 -18 h 28 q 18 0 24 18 q -38 -8 -76 0 Z" fill="#FFFFFF" opacity="0.22"/>
+    <rect x="32" y="60" width="22" height="7" rx="3.5" fill="#FFF9F2"/>
+    <rect x="39.5" y="52.5" width="7" height="22" rx="3.5" fill="#FFF9F2"/>
+    <circle cx="80" cy="58" r="6" fill="#FFD769"/>
+    <circle cx="92" cy="70" r="6" fill="#FF9F8F"/></g>
+</svg>

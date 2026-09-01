@@ -96,3 +96,7 @@ enum HopStrings {
     static let modeRoutineTitle = "Routine"
     static let modeRoutineDetail = "Chosen apps pause and Hop walks through the whole routine."
 }
+
+extension HopStrings {
+    static let destructiveHint = "This cannot be undone."
+}

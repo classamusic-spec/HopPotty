@@ -25,8 +25,12 @@ public struct PottyPauseDisplayState: Equatable, Sendable {
         case pausing
         /// Access is restored and the schedule is deliberately quiet.
         case cooldown
-        /// Something needs a caregiver.
+        /// Something needs a caregiver and a shield may still be up.
         case needsAttention(ScreenTimeFailure)
+        /// Something needs a caregiver, but the child's apps are already back.
+        /// Visually still an error — Potty Pause is not running — but it must
+        /// never be described as if access were being withheld.
+        case needsAttentionAccessRestored(ScreenTimeFailure)
     }
 
     public var phase: Phase
@@ -71,6 +75,7 @@ public struct PottyPauseDisplayState: Equatable, Sendable {
         case .pauseTriggered, .shieldActive, .routineActive, .completing, .restoring: .pausing
         case .cooldown: .cooldown
         case .errorRecoverable(let failure), .errorRequiresParent(let failure): .needsAttention(failure)
+        case .errorAccessRestored(let failure): .needsAttentionAccessRestored(failure)
         }
         self.init(phase: phase, mode: mode, remaining: remaining, total: total, childName: childName)
     }
@@ -81,11 +86,29 @@ public struct PottyPauseDisplayState: Equatable, Sendable {
         return min(1, max(0, 1 - remaining / total))
     }
 
+    /// The failure behind an attention state, if there is one.
+    public var failure: ScreenTimeFailure? {
+        switch phase {
+        case .needsAttention(let failure), .needsAttentionAccessRestored(let failure): failure
+        default: nil
+        }
+    }
+
+    /// Whether the child's apps are currently being held. Drives whether the
+    /// card says "apps are paused" or only "Potty Pause isn't running".
+    public var isHoldingApps: Bool {
+        switch phase {
+        case .pausing: mode.shieldsApps
+        case .off, .counting, .approaching, .cooldown, .needsAttentionAccessRestored: false
+        case .needsAttention(let failure): failure.couldLeaveShieldUp
+        }
+    }
+
     /// Whether the caregiver can usefully skip or start a pause right now.
     public var allowsManualControl: Bool {
         switch phase {
         case .counting, .approaching, .cooldown: true
-        case .off, .pausing, .needsAttention: false
+        case .off, .pausing, .needsAttention, .needsAttentionAccessRestored: false
         }
     }
 }

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<defs><radialGradient id="blueBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#BDE9F8"/><stop offset="1" stop-color="#2A87AC"/></radialGradient></defs>
+<g id="item-fishBlue"><g transform="translate(200 0) scale(-1 1)">
+    <path d="M 46 100 q -22 -30 -30 -34 q 4 34 0 68 q 10 -6 30 -34 Z" fill="#2A87AC"/>
+    <ellipse cx="106" cy="100" rx="60" ry="36" fill="url(#blueBall)"/>
+    <path d="M 96 68 q 18 -22 40 -14 q -14 12 -18 22 Z" fill="#2A87AC" opacity="0.85"/>
+    <ellipse cx="118" cy="92" rx="28" ry="15" fill="#FFFFFF" opacity="0.3"/>
+    <circle cx="140" cy="94" r="9" fill="#FFFFFF"/><circle cx="142" cy="94" r="5" fill="#243047"/></g></g>
+</svg>
