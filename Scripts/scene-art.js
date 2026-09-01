@@ -68,7 +68,15 @@ const HOP = {
   domeLight: '#A9E8C2', domeDeep: '#4FB47B',
   bagBody: '#C98A5B', bagStrap: '#A76F46', bagFlap: '#E0A472',
 };
-// A pond-blue sibling for the second frog friend: same anatomy, cooler skin.
+// Two siblings for the frog friends. Same anatomy as Hop — that is the point,
+// they are his species — but distinct skins, so a child never mistakes a
+// decoration for Hop himself.
+const HOP_MINT = {
+  bodyLight: '#D6F4E2', bodyMid: '#A6E4C0', bodyDeep: '#7CCFA2', bodyShadow: '#5FB588',
+  belly: '#FBFFFC', bellyEdge: '#E6F6EC', ink: '#3C8F63', mouth: '#49996E',
+  cheek: '#FF9F8F', eyeWhite: '#FFFFFF', pupil: '#243047',
+  domeLight: '#E2F7EA', domeDeep: '#8AD7AC',
+};
 const HOP_BLUE = {
   bodyLight: '#C4EBF8', bodyMid: '#6FC7E8', bodyDeep: '#4FAACE', bodyShadow: '#2A87AC',
   belly: '#F2FBFE', bellyEdge: '#DCF0F8', ink: '#1B6280', mouth: '#22779A',
@@ -90,6 +98,8 @@ const rad = (id, list, { cx = 0.5, cy = 0.5, r = 0.5 } = {}) =>
 const DEFS = {
   // -- Hop --
   hopBody: lin('hopBody', [[0, HOP.bodyLight], [0.52, HOP.bodyMid], [1, HOP.bodyDeep]], { x1: 0.2, x2: 0.85 }),
+  hopBodyMint: lin('hopBodyMint', [[0, HOP_MINT.bodyLight], [0.52, HOP_MINT.bodyMid], [1, HOP_MINT.bodyDeep]], { x1: 0.2, x2: 0.85 }),
+  hopEyeDomeMint: rad('hopEyeDomeMint', [[0, HOP_MINT.domeLight], [1, HOP_MINT.domeDeep]], { cx: 0.36, cy: 0.28, r: 0.75 }),
   hopBodyBlue: lin('hopBodyBlue', [[0, HOP_BLUE.bodyLight], [0.52, HOP_BLUE.bodyMid], [1, HOP_BLUE.bodyDeep]], { x1: 0.2, x2: 0.85 }),
   hopSheen: rad('hopSheen', [[0, '#FFFFFF', 0.45], [1, '#FFFFFF', 0]], { cx: 0.34, cy: 0.22, r: 0.6 }),
   hopCheek: rad('hopCheek', [[0, '#FF8E86', 0.85], [0.55, P.peach, 0.55], [1, P.peach, 0]]),
@@ -101,7 +111,7 @@ const DEFS = {
   // -- Sky / weather --
   skyPond: lin('skyPond', [[0, '#CFEDF9'], [0.55, P.pondBlueSoft], [1, P.sunshineSoft]]),
   skyWarm: lin('skyWarm', [[0, '#DCEFF8'], [0.48, P.pondBlueSoft], [0.8, P.sunshineSoft], [1, '#FFF1E6']]),
-  skyHaze: lin('skyHaze', [[0, P.cloud, 0], [1, P.cloud, 0.85]]),
+  skyHaze: lin('skyHaze', [[0, P.cloud, 0], [0.55, P.cloud, 0.12], [1, P.cloud, 0.8]]),
   sunGlow: rad('sunGlow', [[0, P.sunshine, 0.95], [0.45, P.sunshine, 0.45], [1, P.sunshine, 0]]),
   sunDisc: rad('sunDisc', [[0, '#FFF0C2'], [1, P.sunshine]], { cx: 0.4, cy: 0.35, r: 0.75 }),
   beamFade: lin('beamFade', [[0, P.sunshine, 0.42], [1, P.sunshine, 0]]),
@@ -201,9 +211,15 @@ function pad(cx, cy, r, { squash = 0.46, notch = 90, spread = 24 } = {}) {
   return `M ${x0} ${y0} A ${R(r)} ${R(r * squash)} 0 1 1 ${x1} ${y1} L ${R(cx)} ${R(cy)} Z`;
 }
 
-/** A grass blade / reed: rooted wide, curving to a point. */
+/** A grass blade / reed: rooted wide, curving to a soft tip.
+ *  The tip is a small arc, not a point — sharp spikes read as harsh, which is
+ *  the opposite of what this app is for. */
 function blade(x, baseY, h, curve, w) {
-  return `M ${R(x - w)} ${R(baseY)} Q ${R(x - w * 0.5 + curve * 0.25)} ${R(baseY - h * 0.55)} ${R(x + curve)} ${R(baseY - h)} Q ${R(x + w * 0.7 + curve * 0.2)} ${R(baseY - h * 0.45)} ${R(x + w)} ${R(baseY)} Z`;
+  const tx = x + curve, ty = baseY - h;
+  return `M ${R(x - w)} ${R(baseY)}
+    Q ${R(x - w * 0.45 + curve * 0.3)} ${R(baseY - h * 0.6)} ${R(tx - w * 0.16)} ${R(ty + w * 0.3)}
+    Q ${R(tx)} ${R(ty - w * 0.2)} ${R(tx + w * 0.2)} ${R(ty + w * 0.5)}
+    Q ${R(x + w * 0.75 + curve * 0.25)} ${R(baseY - h * 0.5)} ${R(x + w)} ${R(baseY)} Z`;
 }
 
 /** One petal, tip pointing up from (0,0). Rotate to build a flower. */
@@ -251,27 +267,27 @@ function butterflyHalf(fillTop, fillLow, spot) {
     <circle cx="28" cy="26" r="6" fill="${spot}" opacity="0.45"/>`;
 }
 
-/** A fern frond: leaflets along a strongly arcing spine, longest in the middle.
- *  The arc is the whole point — leaflets stacked up a straight spine read as a
- *  conifer, which is what pass 1 produced. */
-function frond(len, bend) {
-  const cx = bend * 0.1, cy = -len * 0.62;
-  const at = (t) => {
-    const mt = 1 - t;
-    return [R(2 * mt * t * cx + t * t * bend), R(2 * mt * t * cy + t * t * -len)];
-  };
-  const spine = `<path d="M 0 0 Q ${R(cx)} ${R(cy)} ${R(bend)} ${R(-len)}" fill="none" stroke="${P.hopGreenDeep}" stroke-width="4.6" stroke-linecap="round"/>`;
-  const leaves = Array.from({ length: 8 }, (_, i) => {
-    const t = 0.1 + (i / 7) * 0.88;
-    const [x, y] = at(t);
-    // Longest leaflets a third of the way up, tapering to a soft tip.
-    const w = (10 + 26 * Math.sin(Math.PI * Math.min(1, t * 0.86 + 0.14))) * (1 - t * 0.42);
-    const tan = Math.atan2(-len - cy * 2 + 2 * cy, bend) * 0;
-    const droop = 20 + t * 34 + tan;
-    return `<ellipse cx="${R(x - w * 0.62)}" cy="${R(y + w * 0.1)}" rx="${R(w)}" ry="${R(w * 0.4)}" fill="url(#fernGreen)" transform="rotate(${R(-34 - droop)} ${R(x - w * 0.62)} ${R(y + w * 0.1)})"/>
-      <ellipse cx="${R(x + w * 0.62)}" cy="${R(y + w * 0.1)}" rx="${R(w)}" ry="${R(w * 0.4)}" fill="${P.hopGreen}" transform="rotate(${R(34 + droop)} ${R(x + w * 0.62)} ${R(y + w * 0.1)})"/>`;
-  }).join('');
-  return spine + leaves;
+/** A fern frond drawn as one lobed, arching leaf silhouette.
+ *  Two earlier attempts stacked leaflet pairs along a spine; both read as a
+ *  small conifer. A single scalloped blade reads as foliage at any size. */
+function frond(len, bend, w = 21) {
+  const N = 7;
+  const at = (t) => [2 * (1 - t) * t * (bend * 0.15) + t * t * bend, 2 * (1 - t) * t * (-len * 0.55) + t * t * -len];
+  const half = (t) => w * Math.sin(Math.PI * Math.min(1, 0.18 + t * 0.78)) * (1 - t * 0.2);
+  const pts = Array.from({ length: N + 1 }, (_, i) => at(i / N));
+  let d = `M ${R(pts[0][0] - half(0))} ${R(pts[0][1])}`;
+  for (let i = 1; i <= N; i++) {
+    const h = half((i - 0.5) / N), hi = half(i / N);
+    const mx = (pts[i - 1][0] + pts[i][0]) / 2, my = (pts[i - 1][1] + pts[i][1]) / 2;
+    d += ` Q ${R(mx - h * 1.5)} ${R(my)} ${R(pts[i][0] - hi)} ${R(pts[i][1])}`;
+  }
+  for (let i = N - 1; i >= 0; i--) {
+    const h = half((i + 0.5) / N), hi = half(i / N);
+    const mx = (pts[i + 1][0] + pts[i][0]) / 2, my = (pts[i + 1][1] + pts[i][1]) / 2;
+    d += ` Q ${R(mx + h * 1.5)} ${R(my)} ${R(pts[i][0] + hi)} ${R(pts[i][1])}`;
+  }
+  return `<path d="${d} Z" fill="url(#fernGreen)"/>
+    <path d="M 0 0 Q ${R(bend * 0.15)} ${R(-len * 0.55)} ${R(bend)} ${R(-len)}" fill="none" stroke="${P.hopGreenSoft}" stroke-width="2.6" stroke-linecap="round" opacity="0.4"/>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -370,7 +386,7 @@ const pondLayers = {
     <rect x="0" y="0" width="${SCENE_W}" height="${SCENE_H}" fill="url(#skyPond)"/>
     ${cloud(210, 150, 190, { opacity: 0.7 })}
     ${cloud(940, 108, 150, { opacity: 0.55 })}
-    <rect x="0" y="250" width="${SCENE_W}" height="150" fill="url(#skyHaze)"/>`,
+    <rect x="0" y="0" width="${SCENE_W}" height="470" fill="url(#skyHaze)"/>`,
 
   backdrop: () => `
     <path d="M -20 372 Q 190 268 430 336 Q 610 386 760 330 Q 960 258 1220 356 L 1220 460 L -20 460 Z" fill="url(#hillFar)"/>
@@ -387,10 +403,10 @@ const pondLayers = {
 
   shore: () => `
     <path d="${ellipsePath(POND_CX, POND_CY + 10, POND_RX + 40, POND_RY + 32)} ${ellipsePath(POND_CX, POND_CY, POND_RX, POND_RY)}" fill-rule="evenodd" fill="url(#shoreSand)" opacity="0.85"/>
-    <g fill="${P.hopGreenDeep}" opacity="0.5">
-      <path d="${blade(196, 704, 54, 12, 7)}"/><path d="${blade(214, 706, 40, -10, 6)}"/>
-      <path d="${blade(1010, 690, 50, -12, 7)}"/><path d="${blade(992, 692, 38, 10, 6)}"/>
-      <path d="${blade(628, 806, 44, 10, 7)}"/><path d="${blade(648, 808, 32, -8, 6)}"/>
+    <g fill="${P.hopGreenDeep}" opacity="0.4">
+      <path d="${blade(192, 706, 52, 26, 10)}"/><path d="${blade(212, 708, 38, -22, 9)}"/><path d="${blade(204, 710, 30, 6, 8)}"/>
+      <path d="${blade(1012, 692, 50, -26, 10)}"/><path d="${blade(992, 694, 36, 22, 9)}"/><path d="${blade(1002, 696, 28, -6, 8)}"/>
+      <path d="${blade(626, 808, 42, 22, 10)}"/><path d="${blade(648, 810, 30, -18, 9)}"/>
     </g>`,
 
   // Kept low and thin: the near bank sits below every shore anchor (the lowest
@@ -407,14 +423,12 @@ const pondLayers = {
 // --- Decorations. All drawn inside 0 0 200 200, centred on (100, 100). ------
 const ITEMS = {
   lilyPadSmall: () => `
-    <ellipse cx="100" cy="118" rx="66" ry="14" fill="${P.pondBlueInk}" opacity="0.1"/>
-    <path d="${pad(100, 106, 68, { notch: 52 })}" fill="${P.hopGreenDeep}" opacity="0.55"/>
+    <path d="${pad(100, 106, 68, { notch: 52 })}" fill="${P.hopGreenDeep}" opacity="0.5"/>
     <path d="${pad(100, 102, 68, { notch: 52 })}" fill="url(#padGreenLight)"/>
     <path d="M 100 102 l 42 -17" stroke="${P.hopGreenSoft}" stroke-width="3" stroke-linecap="round" opacity="0.45" fill="none"/>
     <ellipse cx="78" cy="90" rx="26" ry="8" fill="#FFFFFF" opacity="0.2"/>`,
 
   lilyPadLarge: () => `
-    <ellipse cx="102" cy="128" rx="84" ry="16" fill="${P.pondBlueInk}" opacity="0.1"/>
     <path d="${pad(58, 96, 44, { notch: 210, spread: 18 })}" fill="url(#padGreen)" opacity="0.85"/>
     <path d="${pad(108, 110, 84, { notch: 62 })}" fill="${P.hopGreenDeep}" opacity="0.5"/>
     <path d="${pad(108, 105, 84, { notch: 62 })}" fill="url(#padGreenLight)"/>
@@ -424,8 +438,7 @@ const ITEMS = {
     <ellipse cx="80" cy="90" rx="30" ry="9" fill="#FFFFFF" opacity="0.18"/>`,
 
   lilyFlower: () => `
-    <ellipse cx="100" cy="148" rx="58" ry="13" fill="${P.pondBlueInk}" opacity="0.1"/>
-    <path d="${pad(100, 140, 62, { notch: 90, spread: 15 })}" fill="url(#padGreenLight)"/>
+    <path d="${pad(100, 142, 78, { squash: 0.34, notch: 90, spread: 13 })}" fill="url(#padGreenLight)"/>
     ${Array.from({ length: 8 }, (_, i) => g(`translate(100 108) rotate(${i * 45 + 22})`, `<path d="${petal(58, 22)}" fill="url(#petalWhite)"/>`)).join('')}
     ${Array.from({ length: 6 }, (_, i) => g(`translate(100 106) rotate(${i * 60})`, `<path d="${petal(38, 16)}" fill="url(#petalPeach)"/>`)).join('')}
     <circle cx="100" cy="104" r="13" fill="${P.sunshine}"/>
@@ -453,9 +466,9 @@ const ITEMS = {
 
   cattails: () => `
     <g fill="url(#bladeGreen)">
-      <path d="${blade(64, 180, 96, 34, 10)}"/><path d="${blade(136, 180, 84, -32, 10)}"/>
+      <path d="${blade(84, 182, 88, 30, 9)}"/><path d="${blade(118, 182, 76, -28, 9)}"/>
     </g>
-    ${[[80, 62, 0.94, 5], [104, 40, 1.1, 0], [126, 76, 0.86, -5]].map(([x, top, s, lean]) => `
+    ${[[68, 66, 0.9, 8], [102, 38, 1.06, 0], [136, 78, 0.84, -8]].map(([x, top, s, lean]) => `
       <path d="M ${x} 180 Q ${R(x + lean * 0.6)} ${R((180 + top) / 2)} ${R(x + lean)} ${R(top + 46 * s)}" stroke="${P.hopGreenDeep}" stroke-width="${R(6 * s)}" stroke-linecap="round" fill="none"/>
       <path d="M ${R(x + lean)} ${R(top + 46 * s)} q 0 -18 ${R(4 * s)} -26" stroke="${P.hopGreenDeep}" stroke-width="${R(5 * s)}" stroke-linecap="round" fill="none"/>
       <rect x="${R(x + lean - 12 * s)}" y="${R(top - 4)}" width="${R(24 * s)}" height="${R(52 * s)}" rx="${R(12 * s)}" fill="url(#woodGrad)"/>
@@ -497,8 +510,8 @@ const ITEMS = {
   // A tadpole is a head and a tail and nothing else — pass 1 gave it fins and
   // it read as a small fish, which the pond already has two of.
   tadpoleFriend: () => `
-    <path d="M 108 84 q -46 -12 -76 -36 q 18 40 0 76 q 30 -26 76 -32 Z" fill="url(#greenBall)" opacity="0.85"/>
-    <circle cx="124" cy="100" r="42" fill="url(#greenBall)"/>
+    <path d="M 108 84 C 84 74 56 104 22 96 C 54 122 82 126 108 116 Z" fill="url(#greenBall)" opacity="0.8"/>
+    <circle cx="124" cy="100" r="44" fill="url(#greenBall)"/>
     <ellipse cx="112" cy="84" rx="21" ry="12" fill="#FFFFFF" opacity="0.32"/>
     <circle cx="140" cy="90" r="11" fill="#FFFFFF"/><circle cx="142" cy="91" r="6" fill="${P.midnight}"/>
     <path d="M 130 118 q 14 8 24 -2" fill="none" stroke="${P.hopGreenInk}" stroke-width="5" stroke-linecap="round" opacity="0.75"/>`,
@@ -582,8 +595,11 @@ const ITEMS = {
     <ellipse cx="86" cy="86" rx="34" ry="16" fill="#FFFFFF" opacity="0.75"/>`,
 
   frogFriendGreen: () => `
-    <ellipse cx="100" cy="176" rx="56" ry="11" fill="${P.midnight}" opacity="0.12"/>
-    ${placeFrog(100, 96, 196, frog({ squash: 0.12, gaze: [8, 10], smile: 0.9 }))}`,
+    <ellipse cx="100" cy="176" rx="54" ry="10" fill="${P.midnight}" opacity="0.12"/>
+    ${placeFrog(100, 98, 186, frog({
+      skin: HOP_MINT, grad: 'hopBodyMint', dome: 'hopEyeDomeMint', squash: 0.22,
+      gaze: [9, 11], smile: 0.85, arms: [[124, 350, 150], [388, 350, 30]],
+    }))}`,
 
   frogFriendBlue: () => `
     <ellipse cx="100" cy="176" rx="56" ry="11" fill="${P.midnight}" opacity="0.12"/>
@@ -634,10 +650,9 @@ const ITEMS = {
     <path d="M 62 180 q 22 -12 44 0" stroke="${P.hopGreenDeep}" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.45"/>`,
 
   waterLilyCluster: () => `
-    <ellipse cx="100" cy="146" rx="88" ry="16" fill="${P.pondBlueInk}" opacity="0.1"/>
-    <path d="${pad(48, 122, 48, { notch: 200, spread: 18 })}" fill="url(#padGreen)"/>
-    <path d="${pad(152, 130, 42, { notch: 340, spread: 18 })}" fill="url(#padGreen)"/>
-    <path d="${pad(100, 116, 60, { notch: 90, spread: 16 })}" fill="url(#padGreenLight)"/>
+    <path d="${pad(50, 124, 52, { squash: 0.38, notch: 196, spread: 14 })}" fill="url(#padGreen)"/>
+    <path d="${pad(150, 130, 46, { squash: 0.38, notch: 344, spread: 14 })}" fill="url(#padGreen)"/>
+    <path d="${pad(100, 118, 62, { squash: 0.38, notch: 90, spread: 13 })}" fill="url(#padGreenLight)"/>
     ${Array.from({ length: 8 }, (_, i) => g(`translate(96 92) rotate(${i * 45 + 22})`, `<path d="${petal(40, 15)}" fill="url(#petalWhite)"/>`)).join('')}
     ${Array.from({ length: 5 }, (_, i) => g(`translate(96 92) rotate(${i * 72})`, `<path d="${petal(26, 11)}" fill="url(#petalPeach)"/>`)).join('')}
     <circle cx="96" cy="92" r="9" fill="${P.sunshine}"/>
@@ -659,27 +674,28 @@ const ITEMS = {
   // Ferns arch. Pass 1 stacked leaflets up a straight spine and the result
   // read as a stand of conifers.
   fernPatch: () => `
-    ${g('translate(96 182)', frond(104, -74))}
-    ${g('translate(104 182)', frond(98, 72))}
-    ${g('translate(100 184)', frond(128, -14))}
-    ${g('translate(100 184)', frond(112, 34))}`,
+    ${g('translate(96 186)', frond(88, -74, 19))}
+    ${g('translate(104 186)', frond(84, 72, 18))}
+    ${g('translate(92 188)', frond(112, -34, 20))}
+    ${g('translate(108 188)', frond(106, 32, 20))}`,
 
   duckling: () => `
     <ellipse cx="100" cy="152" rx="70" ry="13" fill="${P.pondBlueInk}" opacity="0.12"/>
     <ellipse cx="88" cy="118" rx="60" ry="42" fill="url(#yellowBall)"/>
     <path d="M 122 90 q 10 -14 20 -18" stroke="${P.sunshineBright}" stroke-width="18" stroke-linecap="round" fill="none"/>
     <circle cx="140" cy="70" r="34" fill="url(#yellowBall)"/>
-    <circle cx="130" cy="58" r="13" fill="#FFF6D4" opacity="0.6"/>
+    <circle cx="130" cy="58" r="12" fill="#FFF6D4" opacity="0.45"/>
     <path d="M 168 66 q 24 -4 24 10 q 0 12 -24 8 Z" fill="${P.peach}"/>
     <path d="M 168 76 q 14 2 22 0" stroke="${P.peachDeep}" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.6"/>
     <circle cx="150" cy="62" r="8" fill="#FFFFFF"/><circle cx="152" cy="63" r="4.6" fill="${P.midnight}"/>
-    <path d="M 62 106 q 32 -12 54 12 q -28 20 -54 -12 Z" fill="${P.sunshineBright}" opacity="0.9"/>
-    <path d="M 74 116 q 20 -4 34 6" stroke="${P.sunshineSoft}" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7"/>
+    <path d="M 58 98 q 28 -16 58 4 q -8 10 -20 12 q -6 7 -14 1 q -11 -1 -16 -7 q -8 -3 -8 -10 Z" fill="#FFE9A8"/>
+    <path d="M 116 102 q -8 10 -20 12 q -6 7 -14 1 q -11 -1 -16 -7" fill="none" stroke="${P.sunshineBright}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M 34 146 q 66 20 132 -4" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.55"/>`,
 
   turtleRock: () => `
     <ellipse cx="100" cy="160" rx="82" ry="16" fill="${P.pondBlueInk}" opacity="0.12"/>
-    ${pebble(100, 142, 80, 28)}
+    ${pebble(100, 142, 80, 28, { fill: 'url(#stoneGrad)', light: 0.35 })}
+    <ellipse cx="100" cy="152" rx="64" ry="12" fill="${P.sand300}" opacity="0.45"/>
     <ellipse cx="46" cy="122" rx="18" ry="9" fill="${P.hopGreenLight}"/>
     <ellipse cx="150" cy="124" rx="16" ry="8" fill="${P.hopGreenLight}"/>
     <path d="M 32 114 q 6 -52 68 -52 q 62 0 68 52 Z" fill="url(#greenBall)"/>
@@ -754,9 +770,10 @@ const ITEMS = {
     <path d="M 38 100 q 56 -10 122 6" stroke="${P.woodLight}" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.6"/>
     <path d="M 44 122 q 60 8 110 2" stroke="${P.woodDeep}" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.35"/>
     <ellipse cx="40" cy="108" rx="11" ry="15" fill="${P.woodDeep}" opacity="0.5"/>
-    <path d="M 150 92 q 16 -14 30 -14 q -12 8 -18 20" fill="${P.woodDeep}" opacity="0.75"/>
-    <g fill="url(#bladeGreen)">
-      <path d="${blade(112, 92, 42, 16, 7)}"/><path d="${blade(126, 94, 30, -12, 6)}"/>
+    <g fill="${P.hopGreen}">
+      <path d="M 118 96 q -4 -18 6 -26 q 8 10 4 26 Z"/>
+      <ellipse cx="106" cy="88" rx="13" ry="7" transform="rotate(-28 106 88)"/>
+      <ellipse cx="134" cy="90" rx="11" ry="6" transform="rotate(26 134 90)"/>
     </g>`,
 
   // One tapered trunk with real branches reaching into the canopy. Pass 1's
@@ -792,15 +809,14 @@ const ITEMS = {
       <circle cx="${x}" cy="${y}" r="${r}" fill="#FFFDF0"/>`;
     return `${fly(56, 60, 8, 0.95)}${fly(134, 44, 6, 0.85)}${fly(96, 106, 9.4, 1)}
       ${fly(152, 126, 6.6, 0.9)}${fly(48, 148, 5.4, 0.8)}${fly(114, 166, 4.6, 0.7)}
-      <g stroke="${P.sunshine}" stroke-width="2.6" stroke-linecap="round" fill="none" opacity="0.35">
-        <path d="M 66 74 q 14 12 26 26"/><path d="M 122 58 q -10 16 -18 32"/>
-      </g>`;
+`;
   },
 
   // A moon *on the water*: a pale disc broken into ripple bands. Pass 1 used
   // bare cream on cream and vanished; the blue rim is what makes it read.
   moonReflection: () => `
     <ellipse cx="100" cy="104" rx="84" ry="76" fill="url(#moonGlow)"/>
+    <ellipse cx="100" cy="104" rx="62" ry="54" fill="${P.sunshineSoft}" opacity="0.42"/>
     <g fill="#FFFDF0">
       <path d="M 52 56 q 48 -14 96 0 q -48 16 -96 0 Z" opacity="0.9"/>
       <path d="M 34 88 q 66 -19 132 0 q -66 19 -132 0 Z" opacity="0.95"/>

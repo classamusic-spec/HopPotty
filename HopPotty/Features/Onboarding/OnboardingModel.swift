@@ -18,10 +18,17 @@ final class OnboardingModel {
     private let environment: ParentEnvironment
     private let store: OnboardingStateStore
 
-    init(environment: ParentEnvironment, store: OnboardingStateStore = OnboardingStateStore()) {
+    init(
+        environment: ParentEnvironment,
+        store: OnboardingStateStore = OnboardingStateStore(),
+        initialState: OnboardingState? = nil
+    ) {
         self.environment = environment
         self.store = store
-        self.state = store.load() ?? .initial
+        // A saved state wins over the default, which is what makes an
+        // interrupted setup resume rather than restart. `initialState` exists
+        // for previews and tests, which must not read a device's defaults.
+        self.state = initialState ?? store.load() ?? .initial
     }
 
     var step: OnboardingStep { state.step }
@@ -196,3 +203,34 @@ struct OnboardingStateStore {
         defaults.removeObject(forKey: key)
     }
 }
+
+#if DEBUG
+extension OnboardingModel {
+    /// A model pinned to one step, for previews. Uses a scratch `UserDefaults`
+    /// suite so a preview never writes over a device's saved setup.
+    static func preview(
+        step: OnboardingStep,
+        authorization: ScreenTimeAuthorizationStatus = .notDetermined,
+        nickname: String? = "Maya",
+        mode: PottyPauseMode = .pause
+    ) -> OnboardingModel {
+        var state = OnboardingState()
+        state.step = step
+        state.draft.nickname = nickname
+        state.draft.mode = mode
+        state.draft.authorizationStatus = authorization
+        state.draft.fellBackToGentle = authorization == .denied || authorization == .restricted
+        state.draft.hasAppSelection = authorization.canShield
+        // Visited is the path *walked so far*, so "Back" in a preview behaves
+        // the way it does on device.
+        let path = state.plannedPath
+        let index = path.firstIndex(of: step) ?? 0
+        state.visited = Array(path.prefix(index + 1))
+        return OnboardingModel(
+            environment: .preview(authorization: authorization),
+            store: OnboardingStateStore(defaults: UserDefaults(suiteName: "hoppotty.preview") ?? .standard),
+            initialState: state
+        )
+    }
+}
+#endif

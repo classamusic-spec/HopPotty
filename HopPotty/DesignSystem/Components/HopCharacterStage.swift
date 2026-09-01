@@ -23,11 +23,15 @@ public struct HopCharacterStage: View {
 
     /// Overrides the spoken description, for the cases where the surrounding
     /// screen has already said what Hop is doing and repeating it is noise.
-    public init(pose: HopPose, size: CGFloat, ambient: Bool = true, accessibilityLabel: String?) {
+    /// Pass an empty string to make the illustration purely decorative.
+    ///
+    /// A distinct argument label, not a defaulted parameter, so this never
+    /// competes with the primary initialiser at a two-argument call site.
+    public init(pose: HopPose, size: CGFloat, ambient: Bool = true, describedAs description: String) {
         self.pose = pose
         self.size = size
         self.ambient = ambient
-        self.accessibilityLabel = accessibilityLabel
+        self.accessibilityLabel = description
     }
 
     public var body: some View {

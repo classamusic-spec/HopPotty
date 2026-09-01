@@ -142,12 +142,9 @@ struct HopReplayButton: View {
 }
 
 #Preview("Spoken line · captions off") {
-    VStack(spacing: 24) {
-        HopSpokenLine(PottyRoutineContent.washStep.voice)
-        Text(verbatim: "—")
-    }
-    .padding()
-    .childContext(ChildContext(settings: AppSettings(spokenTextCaptionsEnabled: false)))
-    .hopBackground()
-    .hopThemedRoot()
+    HopSpokenLine(PottyRoutineContent.washStep.voice)
+        .padding()
+        .childContext(ChildContext(settings: AppSettings(spokenTextCaptionsEnabled: false)))
+        .hopBackground()
+        .hopThemedRoot()
 }

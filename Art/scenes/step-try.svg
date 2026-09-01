@@ -63,7 +63,13 @@
     <path d="M 202 294 Q 256 331.4 310 294" fill="none" stroke="#2F7D52" stroke-width="11" stroke-linecap="round"/></g>
     <g opacity="0.75">
       <circle cx="560" cy="404" r="30" fill="#E3F5EA"/>
-      <path d="M 551 408 Q 558.5 378.3 572 354 Q 568.7 383.7 569 408 Z" fill="url(#bladeGreen)"/>
-      <path d="M 540 410 Q 541.5 389.1 538 372 Q 551.6 392.9 556 410 Z" fill="url(#bladeGreen)"/>
+      <path d="M 551 408
+    Q 559.55 375.6 570.56 356.7
+    Q 572 352.2 573.8 358.5
+    Q 569.75 381 569 408 Z" fill="url(#bladeGreen)"/>
+      <path d="M 540 410
+    Q 541.4 387.2 536.72 374.4
+    Q 538 370.4 539.6 376
+    Q 551.5 391 556 410 Z" fill="url(#bladeGreen)"/>
     </g></g>
 </svg>

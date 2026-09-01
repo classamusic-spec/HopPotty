@@ -11,7 +11,7 @@ const P = T.palette;
 
 /** A neutral stand-in for a third-party app mark. Never a real logo. */
 function appMark(hue, glyph) {
-  return `<div style="width:34px;height:34px;border-radius:9px;background:${hue};display:grid;place-items:center;flex:0 0 auto">${glyph}</div>`;
+  return `<div style="width:38px;height:38px;border-radius:11px;background:${hue};display:grid;place-items:center;flex:0 0 auto">${glyph}</div>`;
 }
 
 const MARKS = {
@@ -38,10 +38,10 @@ function timerSettings(appearance = 'light') {
   <div style="display:flex;flex-direction:column;height:100%;background:${col.backgroundSecondary}">
     ${statusBar(col.textPrimary)}
     ${navBar(col, 'Potty Pause', { large: true })}
-    <div style="flex:1;display:flex;flex-direction:column;gap:16px;padding:2px 20px 6px;min-height:0">
+    <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:10px;padding:2px 20px 6px;overflow:hidden">
 
       <!-- The schedule, said once, in words. Every control below only edits this sentence. -->
-      <div style="background:${dark ? alpha(P.hopGreen, .13) : P.hopGreenSoft};border-radius:${T.radius.l}px;
+      <div style="flex:0 0 auto;background:${dark ? alpha(P.hopGreen, .13) : P.hopGreenSoft};border-radius:${T.radius.l}px;
         padding:13px 15px;display:flex;gap:12px;align-items:flex-start">
         <div style="width:30px;height:30px;border-radius:15px;flex:0 0 auto;display:grid;place-items:center;
           background:${dark ? alpha(P.hopGreenLight, .2) : '#FFFFFF'}">${MARK.clock(accentInk, 17)}</div>
@@ -50,7 +50,7 @@ function timerSettings(appearance = 'light') {
             letter-spacing:.6px;text-transform:uppercase">Your schedule</div>
           <div style="${type('parentCallout', { color: dark ? col.textPrimary : accentInk })};font-size:14px;
             line-height:1.42;margin-top:3px">
-            Hop invites Maya to the potty about every 45 minutes, with a 2-minute heads-up. Pauses last 3 minutes, and stay quiet at nap and bedtime.</div>
+            Hop invites Maya about every 45 minutes, with a 2-minute heads-up. Pauses last 3 minutes and stay quiet at nap and bedtime.</div>
         </div>
       </div>
 
@@ -65,7 +65,7 @@ function timerSettings(appearance = 'light') {
           listRow(col, { label: 'Warning before a pause', value: '2 minutes', chevron: true }),
           listRow(col, { label: 'Pause length', value: '3 minutes', chevron: true, last: true }),
         ],
-        footer: 'The pause ends when this time is up, whatever happened in the bathroom.',
+        footer: 'A pause always ends when this time is up, whatever happened in the bathroom.',
       })}
 
       ${listGroup(col, appearance, {
@@ -82,7 +82,7 @@ function timerSettings(appearance = 'light') {
 
       ${listGroup(col, appearance, {
         rows: [action('Test Potty Pause'), action('Restore Screen Access', true)],
-        footer: 'Restoring lifts any pause that is up right now. Nothing about it counts against your child.',
+        footer: 'Restoring lifts any pause that is up right now.',
       })}
 
       <div style="flex:1"></div>
@@ -98,7 +98,7 @@ function chooseApps(appearance = 'light') {
   const soft = (hex) => (dark ? alpha(hex, 0.22) : mix(hex, '#FFFFFF', 0.8));
 
   const app = (name, mark, on, last) => listRow(col, {
-    icon: mark, label: name, accessory: iosSwitch(col, on), last, minHeight: 54,
+    icon: mark, label: name, accessory: iosSwitch(col, on), last, minHeight: 56,
   });
 
   return `
@@ -108,22 +108,22 @@ function chooseApps(appearance = 'light') {
       back: false,
       trailing: `<span style="${type('parentHeadline', { color: col.brandAction, weight: 'semibold' })};font-size:17px">Done</span>`,
     })}
-    <div style="flex:1;display:flex;flex-direction:column;gap:14px;padding:6px 20px 6px;min-height:0">
+    <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:11px;padding:4px 20px 4px;overflow:hidden">
 
       <div style="padding:0 2px">
         <div style="${type('parentLargeTitle', { color: col.textPrimary })};font-size:27px">Pick the apps that pause</div>
         <div style="${type('parentCallout', { color: col.textSecondary })};font-size:14.5px;margin-top:6px;line-height:1.42">
-          Usually the games and video apps your child uses most. Everything else keeps working as it does now.</div>
+          Usually the games and video apps your child uses most.</div>
       </div>
 
-      <div style="background:${col.surface};border-radius:${T.radius.l}px;padding:13px 15px;display:flex;gap:12px;
+      <div style="flex:0 0 auto;background:${col.surface};border-radius:${T.radius.l}px;padding:13px 15px;display:flex;gap:12px;
         align-items:flex-start;box-shadow:${elevation(appearance, 'resting')}">
         <div style="width:30px;height:30px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;
           background:${dark ? alpha(P.pondBlueLight, .2) : P.pondBlueSoft}">${MARK.lock(col.eventPee, 16)}</div>
         <div style="flex:1">
           <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:14.5px">Apple keeps this private</div>
           <div style="${type('parentCaption', { color: col.textSecondary })};font-size:13px;margin-top:3px;line-height:1.42">
-            The list comes from Apple's Screen Time picker. HopPotty is handed a sealed token for each app you choose — never a name, an icon, or anything that happens inside it.</div>
+            The list comes from Apple's Screen Time picker. HopPotty is handed a sealed token for each app — never a name, an icon, or what happens inside.</div>
         </div>
       </div>
 
@@ -136,6 +136,13 @@ function chooseApps(appearance = 'light') {
           app('ABCmouse', appMark(soft(P.sunshineBright), MARKS.frame(P.sunshineDeep)), false),
           app('Minecraft', appMark(soft(P.hopGreen), MARKS.blocks(P.hopGreenDeep)), true),
           app('PBS Kids', appMark(soft(P.sand300), MARKS.dot(P.sand600)), false, true),
+        ],
+      })}
+
+      ${listGroup(col, appearance, {
+        header: 'Whole categories',
+        rows: [
+          listRow(col, { label: 'Choose whole categories', sub: 'All Games, All Entertainment', chevron: true, last: true, minHeight: 52 }),
         ],
         footer: '4 apps will pause. Everything not switched on here is left completely alone.',
       })}

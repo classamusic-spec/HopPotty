@@ -1,0 +1,79 @@
+# HopPotty — continuous integration.
+#
+# What this can and cannot prove.
+#
+# It runs the HopPottyKit test suite on Linux. That is not a subset of the app's
+# tests — it is where the product's hardest logic deliberately lives: interval
+# arithmetic across daylight-saving boundaries, quiet-hour precedence, reward
+# idempotency, the Potty Pause state machine and its cold-start recovery, and the
+# child-safety copy rules. All of it is Foundation-only by construction
+# (Docs/ADR/0001-platform-agnostic-core.md), so it compiles and runs on a free
+# Linux runner in seconds, on every push.
+#
+# It cannot build the app, the three Screen Time extensions, or anything SwiftUI.
+# That needs macOS and Xcode. If this repository ever gets a macOS runner, the
+# job to add is `Scripts/bootstrap.sh && xcodebuild build -scheme HopPotty-Mock`;
+# until then, a green tick here means the domain logic is sound and says nothing
+# about the app layer. Do not read it as more than that.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hoppottykit:
+    name: HopPottyKit tests (Swift ${{ matrix.swift }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 6.2 is the toolchain the suite was last run green on.
+        # 6.0 is the floor HopPottyKit/Package.swift claims with
+        # `swift-tools-version: 6.0`. A claimed floor that is never compiled is a
+        # guess, so it is compiled here. If the 6.0 job fails, the honest fixes
+        # are to change the source or to raise the tools version — not to delete
+        # this matrix entry.
+        swift: ["6.0", "6.2"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Swift ${{ matrix.swift }}
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: ${{ matrix.swift }}
+
+      - name: Toolchain
+        run: swift --version
+
+      # Build first, so a compile failure is reported as a compile failure rather
+      # than buried in the test runner's output.
+      - name: Build
+        working-directory: HopPottyKit
+        run: swift build --build-tests
+
+      - name: Test
+        working-directory: HopPottyKit
+        run: swift test
+
+  configuration:
+    name: Build configuration checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # No Swift, no Xcode, no XcodeGen — pure text comparison. It catches the
+      # class of mistake that is invisible at build time and total at runtime:
+      # an App Group that disagrees between the entitlements and the code, a
+      # deployment target that has drifted from ADR 0002, a HOPPOTTY_DEBUG_TOOLS
+      # that has appeared in the Release configuration, or committed signing
+      # material.
+      - name: Verify configuration
+        run: Scripts/verify-config.sh

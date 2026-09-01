@@ -387,6 +387,14 @@ public struct AppGroupStore: Sendable {
         clearPause()
         remove(Self.shieldFile)
         clearSelectionData()
+        // Defined in `ShieldTokens.swift` and `MonitoringGate.swift`, which extend
+        // this type rather than being folded into it: each owns one payload, and a
+        // reset that forgot one would leave the extensions acting on a schedule or
+        // a token set the app believes it has thrown away.
+        clearShieldTokens()
+        clearGate()
+        clearCooldown()
+        _ = takeGrownUpRequest()
         for target in HeartbeatTarget.allCases { remove(heartbeatFile(target)) }
         if let directory = outboxDirectory {
             let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
@@ -463,5 +471,57 @@ public struct AppGroupSnapshot: Equatable, Sendable {
             lines.append("heartbeat \(target.rawValue): \(stamp(heartbeats[target] ?? nil))")
         }
         return lines
+    }
+}
+
+
+// MARK: - Grown-up requests
+//
+// Lives here rather than in the shield action extension that writes it, because
+// the app is what reads it and the two are different targets. A file written by
+// one target and read by another belongs in the shared layer, or the read side
+// does not compile.
+
+public extension AppGroupStore {
+    private static var grownUpRequestFile: String { "grownup.json" }
+
+    private struct GrownUpRequest: Codable {
+        let at: Date
+    }
+
+    /// Record that a child asked for a grown-up from the shield.
+    ///
+    /// One instant in one file, written only by the shield action extension. It
+    /// says that *somebody* on this device pressed a button — no identity, no
+    /// context, no free text, in keeping with everything else that crosses this
+    /// boundary. It never unlocks anything on its own: a child can press that
+    /// button, so resolving it requires an adult behind the parent gate.
+    func setGrownUpRequested(at instant: Date) {
+        guard let root else { return }
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(GrownUpRequest(at: instant)) else { return }
+        try? data.write(to: root.appendingPathComponent(Self.grownUpRequestFile), options: .atomic)
+    }
+
+    /// Read and clear. The app calls this on foreground; the request is a
+    /// one-shot, so consuming it here is what stops it being shown twice.
+    func takeGrownUpRequest() -> Date? {
+        guard let root else { return nil }
+        let url = root.appendingPathComponent(Self.grownUpRequestFile)
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let request = try? decoder.decode(GrownUpRequest.self, from: data)
+        try? FileManager.default.removeItem(at: url)
+        return request?.at
+    }
+
+    /// Whether a grown-up request is waiting, without consuming it. For the Lab.
+    func hasGrownUpRequest() -> Bool {
+        guard let root else { return false }
+        return FileManager.default.fileExists(
+            atPath: root.appendingPathComponent(Self.grownUpRequestFile).path
+        )
     }
 }

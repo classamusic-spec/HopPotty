@@ -5,11 +5,11 @@
     <ellipse cx="88" cy="118" rx="60" ry="42" fill="url(#yellowBall)"/>
     <path d="M 122 90 q 10 -14 20 -18" stroke="#FFC53D" stroke-width="18" stroke-linecap="round" fill="none"/>
     <circle cx="140" cy="70" r="34" fill="url(#yellowBall)"/>
-    <circle cx="130" cy="58" r="13" fill="#FFF6D4" opacity="0.6"/>
+    <circle cx="130" cy="58" r="12" fill="#FFF6D4" opacity="0.45"/>
     <path d="M 168 66 q 24 -4 24 10 q 0 12 -24 8 Z" fill="#FF9F8F"/>
     <path d="M 168 76 q 14 2 22 0" stroke="#C96755" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.6"/>
     <circle cx="150" cy="62" r="8" fill="#FFFFFF"/><circle cx="152" cy="63" r="4.6" fill="#243047"/>
-    <path d="M 62 106 q 32 -12 54 12 q -28 20 -54 -12 Z" fill="#FFC53D" opacity="0.9"/>
-    <path d="M 74 116 q 20 -4 34 6" stroke="#FFF3D4" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7"/>
+    <path d="M 58 98 q 28 -16 58 4 q -8 10 -20 12 q -6 7 -14 1 q -11 -1 -16 -7 q -8 -3 -8 -10 Z" fill="#FFE9A8"/>
+    <path d="M 116 102 q -8 10 -20 12 q -6 7 -14 1 q -11 -1 -16 -7" fill="none" stroke="#FFC53D" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M 34 146 q 66 20 132 -4" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.55"/></g>
 </svg>

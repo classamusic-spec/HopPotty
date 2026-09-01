@@ -13,10 +13,11 @@ struct RoutineStepStage<Actions: View>: View {
 
     let step: PottyRoutineStep
     let timerFraction: Double?
-    let onReplayVoice: () -> Void
     /// The action row. The try step passes its three answers; every other step
     /// passes a single "Next".
     @ViewBuilder var actions: () -> Actions
+
+    @State private var replayPulse = 0
 
     var body: some View {
         GeometryReader { proxy in
@@ -88,17 +89,14 @@ struct RoutineStepStage<Actions: View>: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            HopIconButton(
-                systemImage: "speaker.wave.2.fill",
-                accessibilityLabel: HopCopy.routine.repeatButton.value,
-                tint: theme.color.brandAction,
-                minimumTarget: theme.hitTarget.child,
-                action: onReplayVoice
+            HopReplayButton(
+                step.voice,
+                label: HopCopy.routine.repeatButton.value,
+                pulse: $replayPulse
             )
-            .accessibilityHint(step.voice.caption)
             .padding(.top, theme.spacing.xs)
 
-            HopSpokenLine(step.voice)
+            HopSpokenLine(step.voice, pulse: replayPulse)
         }
     }
 
@@ -118,8 +116,7 @@ struct RoutineStepStage<Actions: View>: View {
 #Preview("Routine step · try") {
     RoutineStepStage(
         step: PottyRoutineContent.tryStep,
-        timerFraction: nil,
-        onReplayVoice: {}
+        timerFraction: nil
     ) {
         RoutineOutcomeChoices { _ in }
     }
@@ -130,8 +127,7 @@ struct RoutineStepStage<Actions: View>: View {
 #Preview("Routine step · wash with ring") {
     RoutineStepStage(
         step: PottyRoutineContent.washStep,
-        timerFraction: 0.55,
-        onReplayVoice: {}
+        timerFraction: 0.55
     ) {
         HopPrimaryButton(HopCopy.routine.nextButton.value, icon: "arrow.right", size: .childPrimary) {}
     }

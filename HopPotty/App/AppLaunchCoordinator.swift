@@ -94,11 +94,7 @@ final class AppLaunchCoordinator {
         // it is safe to log publicly — and a stranded shield is exactly the bug
         // that gets debugged from a sysdiagnose someone mailed in.
         HopLog.restoration.info(
-            """
-            reconcile trigger=\(trigger.rawValue, privacy: .public) \
-            cleared=\(verdict.clears, privacy: .public) \
-            reason=\(verdict.reason?.rawValue ?? "none", privacy: .public)
-            """
+            "reconcile trigger=\(trigger.rawValue, privacy: .public) cleared=\(verdict.clears, privacy: .public) reason=\(verdict.reason?.rawValue ?? "none", privacy: .public)"
         )
         return verdict
     }

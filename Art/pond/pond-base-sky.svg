@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
-<defs><linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAF3F8"/></linearGradient><linearGradient id="skyHaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9F2" stop-opacity="0"/><stop offset="1" stop-color="#FFF9F2" stop-opacity="0.85"/></linearGradient><linearGradient id="skyPond" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFEDF9"/><stop offset="0.55" stop-color="#E0F4FC"/><stop offset="1" stop-color="#FFF3D4"/></linearGradient></defs>
+<defs><linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAF3F8"/></linearGradient><linearGradient id="skyHaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9F2" stop-opacity="0"/><stop offset="0.55" stop-color="#FFF9F2" stop-opacity="0.12"/><stop offset="1" stop-color="#FFF9F2" stop-opacity="0.8"/></linearGradient><linearGradient id="skyPond" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFEDF9"/><stop offset="0.55" stop-color="#E0F4FC"/><stop offset="1" stop-color="#FFF3D4"/></linearGradient></defs>
 <g id="layer-sky">
     <rect x="0" y="0" width="1200" height="900" fill="url(#skyPond)"/>
     <g opacity="0.7"><path d="
@@ -16,5 +16,5 @@
     a 33 33 0 0 1 60 24
     a 27 27 0 0 1 -6 54
     Z" fill="url(#cloudFill)"/></g>
-    <rect x="0" y="250" width="1200" height="150" fill="url(#skyHaze)"/></g>
+    <rect x="0" y="0" width="1200" height="470" fill="url(#skyHaze)"/></g>
 </svg>

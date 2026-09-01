@@ -354,6 +354,22 @@ public final class ScreenTimeService: ScreenTimeProviding {
             return .failure(.extensionUnavailable)
         }
 
+        // The same selection, written again as bare tokens, because the monitor
+        // extension must be able to shield without linking FamilyControls. Written
+        // from the same value in the same call so the two copies cannot disagree.
+        // See `ShieldTokens` for why there are two.
+        guard appGroup.saveShieldTokens(
+            ShieldTokens(
+                applications: selection.applicationTokens,
+                categories: selection.categoryTokens,
+                webDomains: selection.webDomainTokens
+            )
+        ) else {
+            appGroup.clearSelectionData()
+            lastFailure = .extensionUnavailable
+            return .failure(.extensionUnavailable)
+        }
+
         selectionSummary = summary
         lastFailure = summary.isEmpty ? .noSelection : nil
         return .success(summary)
@@ -363,6 +379,11 @@ public final class ScreenTimeService: ScreenTimeProviding {
         selection = FamilyActivitySelection()
         selectionSummary = .empty
         appGroup.clearSelectionData()
+        // Tokens are voided by Apple the moment authorization is revoked, and
+        // revocation is the main reason this is called. Leaving a dead token file
+        // behind would let the monitor extension try to shield with values the
+        // system no longer honours.
+        appGroup.clearShieldTokens()
     }
 
     // MARK: - Shield
@@ -374,14 +395,7 @@ public final class ScreenTimeService: ScreenTimeProviding {
     /// property returns what was last written to it, promptly, in the same
     /// process and across processes. Nothing safety-critical depends on the
     /// answer: the fail-safe keys off the App Group record, not this.
-    public var believesShieldIsUp: Bool {
-        let store = ManagedSettingsStore(named: .pottyPause)
-        if let applications = store.shield.applications, !applications.isEmpty { return true }
-        if let domains = store.shield.webDomains, !domains.isEmpty { return true }
-        if store.shield.applicationCategories != nil { return true }
-        if store.shield.webDomainCategories != nil { return true }
-        return false
-    }
+    public var believesShieldIsUp: Bool { ShieldApplier.storeRequestsAShield }
 
     public func applyShield(
         plannedDuration: TimeInterval,
@@ -413,20 +427,21 @@ public final class ScreenTimeService: ScreenTimeProviding {
             return .failure(.extensionUnavailable)
         }
 
-        let store = ManagedSettingsStore(named: .pottyPause)
-        store.shield.applications = selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
-        store.shield.webDomains = selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
-        store.shield.applicationCategories = selection.categoryTokens.isEmpty
-            ? nil
-            : .specific(selection.categoryTokens, except: Set())
-        store.shield.webDomainCategories = selection.categoryTokens.isEmpty
-            ? nil
-            : .specific(selection.categoryTokens, except: Set())
-
-        // `nil`, never an empty set. Apple: "Changing the value of a setting to
-        // `nil` deletes your app's configuration for that setting." An empty set
-        // is a configuration that shields nothing, which is a different thing and
-        // one whose behaviour Apple does not document.
+        // Raised through the same applier the monitor extension uses, so there is
+        // one definition of what "shielded" means and one store it can land in.
+        let tokens = ShieldTokens(
+            applications: selection.applicationTokens,
+            categories: selection.categoryTokens,
+            webDomains: selection.webDomainTokens
+        )
+        guard ShieldApplier.apply(tokens) else {
+            // The only refusal is an over-cap or empty selection, both of which
+            // were checked above — reaching here means the two disagree, so the
+            // record is torn down rather than left claiming a shield.
+            appGroup.clearPause()
+            lastFailure = .shieldApplyFailed
+            return .failure(.shieldApplyFailed)
+        }
 
         appGroup.advancePause(to: .shielded)
         appGroup.appendReport(

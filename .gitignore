@@ -18,3 +18,11 @@ Package.resolved
 Secrets.xcconfig
 # Generated art rasters (source of truth is the SVG)
 Art/render/
+
+# Generated Xcode project — HopPotty.xcodeproj is a build artefact produced from
+# project.yml by Scripts/bootstrap.sh. Committing it would give the repository
+# two sources of truth for the target graph, and the .pbxproj is the one nobody
+# can review.
+*.xcodeproj
+*.xcworkspace
+!*.xcworkspace/contents.xcworkspacedata

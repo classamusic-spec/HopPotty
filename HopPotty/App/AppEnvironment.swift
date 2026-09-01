@@ -91,11 +91,7 @@ final class AppEnvironment {
         let screenTime = makeScreenTime(configuration)
 
         HopLog.persistence.info(
-            """
-            environment built configuration=\(configuration.rawValue, privacy: .public) \
-            store=\(String(describing: persistence.outcome), privacy: .public) \
-            persists=\(persistence.outcome.persistsWrites, privacy: .public)
-            """
+            "environment built configuration=\(configuration.rawValue, privacy: .public) store=\(String(describing: persistence.outcome), privacy: .public) persists=\(persistence.outcome.persistsWrites, privacy: .public)"
         )
 
         return AppEnvironment(

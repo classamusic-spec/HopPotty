@@ -24,7 +24,6 @@ struct PottyRoutineView: View {
     let onAskForHelp: () -> Void
 
     @State private var model: PottyRoutineModel
-    @State private var voiceReplayToken = 0
 
     init(
         settings: AppSettings = AppSettings(),
@@ -115,8 +114,7 @@ struct PottyRoutineView: View {
     private func stepStage(_ step: PottyRoutineStep) -> some View {
         RoutineStepStage(
             step: step,
-            timerFraction: model.showsTimerRing ? model.timerFraction : nil,
-            onReplayVoice: { voiceReplayToken += 1 }
+            timerFraction: model.showsTimerRing ? model.timerFraction : nil
         ) {
             VStack(spacing: theme.spacing.l) {
                 if model.isAwaitingOutcome {

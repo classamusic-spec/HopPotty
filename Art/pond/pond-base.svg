@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
-<defs><linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAF3F8"/></linearGradient><linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A8DFC0"/><stop offset="0.5" stop-color="#8FDCAC"/><stop offset="1" stop-color="#7ECBA0"/></linearGradient><linearGradient id="groundNear" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7CC79E"/><stop offset="1" stop-color="#5FB287"/></linearGradient><linearGradient id="hillFar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C7E9D6"/><stop offset="1" stop-color="#AEDFC4"/></linearGradient><linearGradient id="hillMid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A9DEC0"/><stop offset="1" stop-color="#8CD1A9"/></linearGradient><linearGradient id="shoreSand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7F1E9"/><stop offset="1" stop-color="#EBE3D8"/></linearGradient><linearGradient id="skyHaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9F2" stop-opacity="0"/><stop offset="1" stop-color="#FFF9F2" stop-opacity="0.85"/></linearGradient><linearGradient id="skyPond" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFEDF9"/><stop offset="0.55" stop-color="#E0F4FC"/><stop offset="1" stop-color="#FFF3D4"/></linearGradient><linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BDCF1"/><stop offset="0.55" stop-color="#6FC7E8"/><stop offset="1" stop-color="#57B6DC"/></linearGradient></defs>
+<defs><linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAF3F8"/></linearGradient><linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A8DFC0"/><stop offset="0.5" stop-color="#8FDCAC"/><stop offset="1" stop-color="#7ECBA0"/></linearGradient><linearGradient id="groundNear" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7CC79E"/><stop offset="1" stop-color="#5FB287"/></linearGradient><linearGradient id="hillFar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C7E9D6"/><stop offset="1" stop-color="#AEDFC4"/></linearGradient><linearGradient id="hillMid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A9DEC0"/><stop offset="1" stop-color="#8CD1A9"/></linearGradient><linearGradient id="shoreSand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7F1E9"/><stop offset="1" stop-color="#EBE3D8"/></linearGradient><linearGradient id="skyHaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9F2" stop-opacity="0"/><stop offset="0.55" stop-color="#FFF9F2" stop-opacity="0.12"/><stop offset="1" stop-color="#FFF9F2" stop-opacity="0.8"/></linearGradient><linearGradient id="skyPond" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFEDF9"/><stop offset="0.55" stop-color="#E0F4FC"/><stop offset="1" stop-color="#FFF3D4"/></linearGradient><linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BDCF1"/><stop offset="0.55" stop-color="#6FC7E8"/><stop offset="1" stop-color="#57B6DC"/></linearGradient></defs>
 <g id="layer-sky">
     <rect x="0" y="0" width="1200" height="900" fill="url(#skyPond)"/>
     <g opacity="0.7"><path d="
@@ -16,7 +16,7 @@
     a 33 33 0 0 1 60 24
     a 27 27 0 0 1 -6 54
     Z" fill="url(#cloudFill)"/></g>
-    <rect x="0" y="250" width="1200" height="150" fill="url(#skyHaze)"/></g>
+    <rect x="0" y="0" width="1200" height="470" fill="url(#skyHaze)"/></g>
 <g id="layer-backdrop">
     <path d="M -20 372 Q 190 268 430 336 Q 610 386 760 330 Q 960 258 1220 356 L 1220 460 L -20 460 Z" fill="url(#hillFar)"/>
     <path d="M -20 408 Q 240 336 470 392 Q 700 448 940 388 Q 1090 350 1220 396 L 1220 500 L -20 500 Z" fill="url(#hillMid)" opacity="0.9"/>
@@ -30,16 +30,52 @@
     <path d="M 400 676 q 110 24 220 0" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" opacity="0.22"/></g>
 <g id="layer-shore">
     <path d="M 90 568 a 510 264 0 1 0 1020 0 a 510 264 0 1 0 -1020 0 M 130 558 a 470 232 0 1 0 940 0 a 470 232 0 1 0 -940 0" fill-rule="evenodd" fill="url(#shoreSand)" opacity="0.85"/>
-    <g fill="#2F8C57" opacity="0.5">
-      <path d="M 189 704 Q 195.5 674.3 208 650 Q 203.3 679.7 203 704 Z"/><path d="M 208 706 Q 208.5 684 204 666 Q 216.2 688 220 706 Z"/>
-      <path d="M 1003 690 Q 1003.5 662.5 998 640 Q 1012.5 667.5 1017 690 Z"/><path d="M 986 692 Q 991.5 671.1 1002 654 Q 998.2 674.9 998 692 Z"/>
-      <path d="M 621 806 Q 627 781.8 638 762 Q 634.9 786.2 635 806 Z"/><path d="M 642 808 Q 643 790.4 640 776 Q 650.6 793.6 654 808 Z"/>
+    <g fill="#2F8C57" opacity="0.4">
+      <path d="M 182 706
+    Q 195.3 674.8 216.4 657
+    Q 218 652 220 659
+    Q 206 680 202 706 Z"/><path d="M 203 708
+    Q 201.35 685.2 188.56 672.7
+    Q 190 668.2 191.8 674.5
+    Q 213.25 689 221 708 Z"/><path d="M 196 710
+    Q 202.2 692 208.72 682.4
+    Q 210 678.4 211.6 684
+    Q 211.5 695 212 710 Z"/>
+      <path d="M 1002 692
+    Q 999.7 662 984.4 645
+    Q 986 640 988 647
+    Q 1013 667 1022 692 Z"/><path d="M 983 694
+    Q 994.55 672.4 1012.56 660.7
+    Q 1014 656.2 1015.8 662.5
+    Q 1004.25 676 1001 694 Z"/><path d="M 994 696
+    Q 996.6 679.2 994.72 670.4
+    Q 996 666.4 997.6 672
+    Q 1006.5 682 1010 696 Z"/>
+      <path d="M 616 808
+    Q 628.1 782.8 646.4 769
+    Q 648 764 650 771
+    Q 639 787 636 808 Z"/><path d="M 639 810
+    Q 638.55 792 628.56 782.7
+    Q 630 778.2 631.8 784.5
+    Q 650.25 795 657 810 Z"/>
     </g></g>
 <g id="layer-foreground">
     <path d="M -20 884 Q 300 856 620 876 Q 900 894 1220 862 L 1220 920 L -20 920 Z" fill="url(#groundNear)" opacity="0.9"/>
     <g fill="#1B5E39" opacity="0.18">
-      <path d="M 64 894 Q 74 859.9 94 832 Q 85 866.1 84 894 Z"/><path d="M 100 898 Q 100.5 872.7 94 852 Q 110.8 877.3 116 898 Z"/>
-      <path d="M 1116 886 Q 1116 849.7 1106 820 Q 1129 856.3 1136 886 Z"/><path d="M 1082 890 Q 1089.5 863.6 1104 842 Q 1098.4 868.4 1098 890 Z"/>
+      <path d="M 64 894
+    Q 75.5 856.8 92.4 835
+    Q 94 830 96 837
+    Q 86.5 863 84 894 Z"/><path d="M 100 898
+    Q 100.2 870.4 92.72 854.4
+    Q 94 850.4 95.6 856
+    Q 110.5 875 116 898 Z"/>
+      <path d="M 1116 886
+    Q 1115.5 846.4 1104.4 823
+    Q 1106 818 1108 825
+    Q 1128.5 853 1136 886 Z"/><path d="M 1082 890
+    Q 1090.6 861.2 1102.72 844.4
+    Q 1104 840.4 1105.6 846
+    Q 1099.5 866 1098 890 Z"/>
     </g>
     <ellipse cx="600" cy="910" rx="760" ry="80" fill="#1B5E39" opacity="0.08"/></g>
 </svg>

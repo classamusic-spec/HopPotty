@@ -2,6 +2,7 @@
 <defs><radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFF3D4" stop-opacity="0.9"/><stop offset="1" stop-color="#FFF3D4" stop-opacity="0"/></radialGradient></defs>
 <g id="item-moonReflection">
     <ellipse cx="100" cy="104" rx="84" ry="76" fill="url(#moonGlow)"/>
+    <ellipse cx="100" cy="104" rx="62" ry="54" fill="#FFF3D4" opacity="0.42"/>
     <g fill="#FFFDF0">
       <path d="M 52 56 q 48 -14 96 0 q -48 16 -96 0 Z" opacity="0.9"/>
       <path d="M 34 88 q 66 -19 132 0 q -66 19 -132 0 Z" opacity="0.95"/>

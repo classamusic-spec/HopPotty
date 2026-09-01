@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
 <defs><radialGradient id="greenBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#2F8C57"/></radialGradient></defs>
 <g id="item-tadpoleFriend">
-    <path d="M 108 84 q -46 -12 -76 -36 q 18 40 0 76 q 30 -26 76 -32 Z" fill="url(#greenBall)" opacity="0.85"/>
-    <circle cx="124" cy="100" r="42" fill="url(#greenBall)"/>
+    <path d="M 108 84 C 84 74 56 104 22 96 C 54 122 82 126 108 116 Z" fill="url(#greenBall)" opacity="0.8"/>
+    <circle cx="124" cy="100" r="44" fill="url(#greenBall)"/>
     <ellipse cx="112" cy="84" rx="21" ry="12" fill="#FFFFFF" opacity="0.32"/>
     <circle cx="140" cy="90" r="11" fill="#FFFFFF"/><circle cx="142" cy="91" r="6" fill="#243047"/>
     <path d="M 130 118 q 14 8 24 -2" fill="none" stroke="#1B5E39" stroke-width="5" stroke-linecap="round" opacity="0.75"/></g>

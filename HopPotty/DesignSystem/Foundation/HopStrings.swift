@@ -123,3 +123,14 @@ extension HopStrings {
     static let timerRemainingLabel = "Time remaining"
     static let timerUntilNextLabel = "Time until the next Potty Pause"
 }
+
+extension HopStrings {
+    // Celebration. Praises the effort, never the outcome, and never says what
+    // did not happen.
+    static let celebrationTitle = "You did it!"
+    static func celebrationStars(_ count: Int) -> String {
+        count == 1 ? "You earned a star" : "You earned \(count) stars"
+    }
+    static func celebrationUnlocked(_ name: String) -> String { "Your pond got \(name)" }
+    static let celebrationContinue = "Back to your pond"
+}

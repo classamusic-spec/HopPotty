@@ -33,7 +33,16 @@ async function main() {
         return `${el.tagName.toLowerCase()}${el.className ? '.' + String(el.className).slice(0, 14) : ''}` +
           (t ? ` "${t}"` : '');
       };
+      for (const el of document.querySelectorAll('.fit')) {
+        if (el.scrollHeight > el.clientHeight + 1) {
+          out.clipped.push(`FIT column content ${el.scrollHeight} > available ${el.clientHeight}`);
+        }
+      }
+      // Scenes bleed past the viewport on purpose; only content can be clipped.
+      const carriesText = (el) => [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
       for (const el of document.querySelectorAll('body *')) {
+        if (el.closest('svg')) continue;
+        if (!carriesText(el) && el.tagName.toLowerCase() !== 'img') continue;
         const r = el.getBoundingClientRect();
         if (r.width === 0 || r.height === 0) continue;
         if (r.bottom > h + 0.6 || r.right > w + 0.6 || r.top < -0.6 || r.left < -0.6) {

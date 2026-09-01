@@ -1,0 +1,272 @@
+#!/usr/bin/env bash
+#
+# verify-config.sh — the checks that catch a silent misconfiguration.
+#
+# Everything here is a fact that is invisible at build time and total at runtime.
+# An App Group identifier that differs between the entitlements and the code
+# still compiles, still signs, still installs, and still launches — and then the
+# extensions cannot see the app's state and a shield never comes down. A
+# HOPPOTTY_DEBUG_TOOLS left in the Release configuration still ships, and takes
+# the Potty Pause Lab with it.
+#
+# Runs on Linux, on macOS, in CI, with no Xcode and no XcodeGen: it is text
+# comparison, nothing more. That is the point — it is the only part of the build
+# configuration this repository can genuinely verify.
+#
+# Usage: Scripts/verify-config.sh
+# Exit:  0 all checks passed  ·  1 at least one failure
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+    RED=$'\033[31m'; GREEN=$'\033[32m'; YELLOW=$'\033[33m'; BOLD=$'\033[1m'; OFF=$'\033[0m'
+else
+    RED=""; GREEN=""; YELLOW=""; BOLD=""; OFF=""
+fi
+
+FAILURES=0
+WARNINGS=0
+
+pass () { printf '  %sok%s   %s\n' "$GREEN" "$OFF" "$1"; }
+fail () { printf '  %sFAIL%s %s\n' "$RED" "$OFF" "$1"; FAILURES=$((FAILURES + 1)); }
+warn () { printf '  %swarn%s %s\n' "$YELLOW" "$OFF" "$1"; WARNINGS=$((WARNINGS + 1)); }
+section () { printf '\n%s%s%s\n' "$BOLD" "$1" "$OFF"; }
+
+# Read a build setting's raw (unexpanded) value from an xcconfig.
+setting () {
+    local file="$1" key="$2"
+    sed -n "s/^[[:space:]]*${key}[[:space:]]*=[[:space:]]*//p" "$file" | head -1 | sed 's/[[:space:]]*$//'
+}
+
+# Read a Swift `static let NAME = "value"` string literal.
+swift_literal () {
+    local file="$1" name="$2"
+    sed -n "s/.*static let ${name}[[:space:]]*=[[:space:]]*\"\([^\"]*\)\".*/\1/p" "$file" | head -1
+}
+
+BASE=Config/Base.xcconfig
+IDS=HopPotty/Services/ScreenTime/ScreenTimeIdentifiers.swift
+
+# ---------------------------------------------------------------------------
+section "Files the project definition points at"
+# ---------------------------------------------------------------------------
+
+for f in \
+    project.yml \
+    Config/Base.xcconfig Config/Debug.xcconfig Config/DebugMock.xcconfig Config/Release.xcconfig \
+    Config/Secrets.example.xcconfig \
+    HopPotty/App/Info.plist HopPotty/App/HopPotty.entitlements \
+    HopPotty/Resources/HopPotty.storekit \
+    Extensions/HopPottyDeviceActivityMonitor/Info.plist \
+    Extensions/HopPottyDeviceActivityMonitor/HopPottyDeviceActivityMonitor.entitlements \
+    Extensions/HopPottyShieldConfiguration/Info.plist \
+    Extensions/HopPottyShieldConfiguration/HopPottyShieldConfiguration.entitlements \
+    Extensions/HopPottyShieldAction/Info.plist \
+    Extensions/HopPottyShieldAction/HopPottyShieldAction.entitlements \
+    HopPottyKit/Package.swift
+do
+    [ -f "$f" ] && pass "$f" || fail "missing: $f"
+done
+
+# ---------------------------------------------------------------------------
+section "Identifiers agree between the build configuration and the code"
+# ---------------------------------------------------------------------------
+#
+# ScreenTimeIdentifiers.swift is the source of truth at runtime; the xcconfig is
+# the source of truth at build time. They describe the same four bundles and one
+# App Group, and nothing in the toolchain checks that they match.
+
+if [ ! -f "$IDS" ]; then
+    warn "$IDS not found — skipping identifier comparison (the Screen Time layer may not have landed yet)"
+else
+    APP_ID="$(setting "$BASE" HOPPOTTY_APP_BUNDLE_ID)"
+    GROUP="$(setting "$BASE" HOPPOTTY_APP_GROUP)"
+
+    # One level of $(VAR) expansion is enough for how these are written.
+    expand () { printf '%s' "${1//\$(HOPPOTTY_APP_BUNDLE_ID)/$APP_ID}"; }
+
+    MONITOR_ID="$(expand "$(setting "$BASE" HOPPOTTY_MONITOR_BUNDLE_ID)")"
+    SHIELDCFG_ID="$(expand "$(setting "$BASE" HOPPOTTY_SHIELD_CONFIG_BUNDLE_ID)")"
+    SHIELDACT_ID="$(expand "$(setting "$BASE" HOPPOTTY_SHIELD_ACTION_BUNDLE_ID)")"
+
+    compare () {
+        local label="$1" configured="$2" declared="$3"
+        if [ -z "$declared" ]; then
+            warn "$label: no constant found in ScreenTimeIdentifiers.swift"
+        elif [ "$configured" = "$declared" ]; then
+            pass "$label = $configured"
+        else
+            fail "$label: xcconfig says '$configured', ScreenTimeIdentifiers.swift says '$declared'"
+        fi
+    }
+
+    compare "App Group"        "$GROUP"        "$(swift_literal "$IDS" appGroupID)"
+    compare "app bundle id"    "$APP_ID"       "$(swift_literal "$IDS" appBundleID)"
+    compare "monitor ext id"   "$MONITOR_ID"   "$(swift_literal "$IDS" monitorBundleID)"
+    compare "shieldconfig id"  "$SHIELDCFG_ID" "$(swift_literal "$IDS" shieldConfigurationBundleID)"
+    compare "shieldaction id"  "$SHIELDACT_ID" "$(swift_literal "$IDS" shieldActionBundleID)"
+
+    case "$GROUP" in
+        group.*) pass "App Group begins with 'group.' as Apple requires" ;;
+        *)       fail "App Group '$GROUP' must begin with 'group.'" ;;
+    esac
+
+    for ext_id in "$MONITOR_ID" "$SHIELDCFG_ID" "$SHIELDACT_ID"; do
+        case "$ext_id" in
+            "$APP_ID".*) : ;;
+            *) fail "extension id '$ext_id' is not prefixed by the app id '$APP_ID', which Apple requires" ;;
+        esac
+    done
+fi
+
+# ---------------------------------------------------------------------------
+section "Deployment target is 17.0 everywhere (ADR 0002)"
+# ---------------------------------------------------------------------------
+
+DEPLOY="$(setting "$BASE" IPHONEOS_DEPLOYMENT_TARGET)"
+[ "$DEPLOY" = "17.0" ] && pass "Config/Base.xcconfig: $DEPLOY" || fail "Config/Base.xcconfig: IPHONEOS_DEPLOYMENT_TARGET is '$DEPLOY', expected 17.0"
+
+if grep -q 'iOS: "17.0"' project.yml; then
+    pass "project.yml: iOS 17.0"
+else
+    fail "project.yml: deploymentTarget iOS is not 17.0"
+fi
+
+if grep -q '\.iOS(\.v17)' HopPottyKit/Package.swift; then
+    pass "HopPottyKit/Package.swift: .iOS(.v17)"
+else
+    fail "HopPottyKit/Package.swift: platform floor is not .iOS(.v17)"
+fi
+
+# ---------------------------------------------------------------------------
+section "Debug tools cannot reach a Release build"
+# ---------------------------------------------------------------------------
+
+if grep -q 'SWIFT_ACTIVE_COMPILATION_CONDITIONS.*HOPPOTTY_DEBUG_TOOLS' Config/Debug.xcconfig; then
+    pass "Debug defines HOPPOTTY_DEBUG_TOOLS"
+else
+    fail "Debug does not define HOPPOTTY_DEBUG_TOOLS — the Lab would be unbuildable everywhere"
+fi
+
+for forbidden in HOPPOTTY_DEBUG_TOOLS HOPPOTTY_MOCKS DEBUG; do
+    if grep -E '^[[:space:]]*(SWIFT_ACTIVE_COMPILATION_CONDITIONS|GCC_PREPROCESSOR_DEFINITIONS)' Config/Release.xcconfig \
+        | grep -qw "$forbidden"; then
+        fail "Release defines $forbidden — a Release build must not contain developer surfaces"
+    else
+        pass "Release does not define $forbidden"
+    fi
+done
+
+if grep -q 'EXCLUDED_SOURCE_FILE_NAMES.*HopPotty/Developer' Config/Release.xcconfig; then
+    pass "Release excludes HopPotty/Developer/* from the compile"
+else
+    warn "Release no longer excludes HopPotty/Developer/* — the #if guards are the only thing left"
+fi
+
+if grep -q 'HOPPOTTY_MOCKS' Config/DebugMock.xcconfig; then
+    pass "DebugMock defines HOPPOTTY_MOCKS"
+else
+    fail "DebugMock does not define HOPPOTTY_MOCKS — AppBuildConfiguration would report .live"
+fi
+
+# ---------------------------------------------------------------------------
+section "Entitlements"
+# ---------------------------------------------------------------------------
+
+for ent in \
+    HopPotty/App/HopPotty.entitlements \
+    Extensions/HopPottyDeviceActivityMonitor/HopPottyDeviceActivityMonitor.entitlements \
+    Extensions/HopPottyShieldConfiguration/HopPottyShieldConfiguration.entitlements \
+    Extensions/HopPottyShieldAction/HopPottyShieldAction.entitlements
+do
+    [ -f "$ent" ] || continue
+    if grep -q '<key>com.apple.developer.family-controls</key>' "$ent"; then
+        pass "$(basename "$ent"): Family Controls"
+    else
+        fail "$(basename "$ent"): missing com.apple.developer.family-controls"
+    fi
+    if grep -q '<key>com.apple.security.application-groups</key>' "$ent"; then
+        pass "$(basename "$ent"): App Group"
+    else
+        fail "$(basename "$ent"): missing com.apple.security.application-groups"
+    fi
+    if grep -q '<key>com.apple.developer.family-controls.app-and-website-usage</key>' "$ent"; then
+        fail "$(basename "$ent"): declares the app-and-website-usage entitlement, deliberately declined in Docs/Entitlements.md §1"
+    fi
+done
+
+# ---------------------------------------------------------------------------
+section "StoreKit product identifier"
+# ---------------------------------------------------------------------------
+
+IAP_RAW="$(setting "$BASE" HOPPOTTY_IAP_FAMILY_PRODUCT_ID)"
+IAP="${IAP_RAW//\$(HOPPOTTY_APP_BUNDLE_ID)/$(setting "$BASE" HOPPOTTY_APP_BUNDLE_ID)}"
+STOREKIT_ID="$(sed -n 's/.*"productID"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' HopPotty/Resources/HopPotty.storekit | head -1)"
+
+if [ "$IAP" = "$STOREKIT_ID" ]; then
+    pass "product id = $IAP (xcconfig and .storekit agree)"
+else
+    fail "product id: xcconfig says '$IAP', HopPotty.storekit says '$STOREKIT_ID'"
+fi
+
+if grep -q '"type"[[:space:]]*:[[:space:]]*"NonConsumable"' HopPotty/Resources/HopPotty.storekit; then
+    pass "HopPotty Family is a NonConsumable"
+else
+    fail "HopPotty Family is not a NonConsumable — HopPotty is bought once, never rented"
+fi
+
+# ---------------------------------------------------------------------------
+section "No signing material is committed"
+# ---------------------------------------------------------------------------
+
+if command -v git >/dev/null 2>&1 && git rev-parse --git-dir >/dev/null 2>&1; then
+    LEAKED="$(git ls-files '*.p12' '*.mobileprovision' '*.cer' '*.certSigningRequest' 'Config/Secrets.xcconfig' 2>/dev/null || true)"
+    if [ -z "$LEAKED" ]; then
+        pass "no certificates, profiles or Secrets.xcconfig are tracked"
+    else
+        fail "signing material is tracked by git:"$'\n'"$LEAKED"
+    fi
+else
+    warn "not a git checkout — skipped the committed-secrets check"
+fi
+
+# ---------------------------------------------------------------------------
+section "Files shared by all four targets"
+# ---------------------------------------------------------------------------
+#
+# project.yml lists these individually for each extension target. They are the
+# machine-readable form of the "Target membership" comment in
+# ScreenTimeIdentifiers.swift, and they are declared `optional: true` so a rename
+# does not block generation — which is exactly why it has to be checked here.
+
+for shared in \
+    HopPotty/Services/ScreenTime/ScreenTimeIdentifiers.swift \
+    HopPotty/Services/ScreenTime/AppGroupStore.swift \
+    HopPotty/Services/ScreenTime/SharedPauseTypes.swift \
+    HopPotty/Services/ScreenTime/ShieldReconciler.swift
+do
+    if [ -f "$shared" ]; then
+        if grep -c "path: $shared" project.yml | grep -q '^3$'; then
+            pass "$(basename "$shared") is a member of all three extension targets"
+        else
+            fail "$(basename "$shared") exists but is not listed for all three extension targets in project.yml"
+        fi
+    else
+        warn "$shared is listed in project.yml but does not exist (renamed? not written yet?)"
+    fi
+done
+
+# ---------------------------------------------------------------------------
+printf '\n'
+if [ "$FAILURES" -gt 0 ]; then
+    printf '%s%d check(s) failed%s' "$RED" "$FAILURES" "$OFF"
+    [ "$WARNINGS" -gt 0 ] && printf ', %d warning(s)' "$WARNINGS"
+    printf '\n'
+    exit 1
+fi
+printf '%sAll configuration checks passed%s' "$GREEN" "$OFF"
+[ "$WARNINGS" -gt 0 ] && printf ' (%d warning(s))' "$WARNINGS"
+printf '\n'

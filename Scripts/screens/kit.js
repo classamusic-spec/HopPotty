@@ -57,7 +57,7 @@ function iconTile(bg, glyph, { size = 30, radius = 8 } = {}) {
 }
 
 /** One row of a grouped list. */
-function listRow(col, { icon, label, value, sub, accessory, chevron = false, last = false, labelColor, align = 'center', minHeight = 46 }) {
+function listRow(col, { icon, label, value, sub, accessory, chevron = false, last = false, labelColor, align = 'center', minHeight = 44 }) {
   const acc = accessory !== undefined ? accessory
     : `${value !== undefined ? `<span style="${type('parentCallout', { color: col.textSecondary })};font-size:15px;text-align:right">${value}</span>` : ''}
        ${chevron ? `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="${col.textTertiary}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><path d="M9 5l7 7-7 7"/></svg>` : ''}`;
@@ -73,8 +73,8 @@ function listRow(col, { icon, label, value, sub, accessory, chevron = false, las
 }
 
 /** A grouped-list section: optional uppercase header, a card of rows, a footer. */
-function listGroup(col, appearance, { header, rows, footer, tightTop = false }) {
-  return `<div style="${tightTop ? '' : ''}">
+function listGroup(col, appearance, { header, rows, footer }) {
+  return `<div style="flex:0 0 auto">
     ${header ? `<div style="${type('parentFootnote', { color: col.textTertiary, weight: 'semibold' })};
       font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;padding:0 16px 6px">${header}</div>` : ''}
     <div style="background:${col.surface};border-radius:${T.radius.l}px;overflow:hidden;
@@ -87,7 +87,7 @@ function listGroup(col, appearance, { header, rows, footer, tightTop = false }) 
 /** A nav bar with a back chevron, a centred title and an optional trailing item. */
 function navBar(col, title, { back = true, trailing = '', large = false } = {}) {
   if (large) {
-    return `<div style="flex:0 0 auto;padding:2px 20px 8px">
+    return `<div style="flex:0 0 auto;padding:2px 20px 4px">
       <div style="display:flex;align-items:center;justify-content:space-between;height:38px">
         ${back ? `<div style="display:flex;align-items:center;gap:2px;margin-left:-6px">
           <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="${col.brandAction}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
