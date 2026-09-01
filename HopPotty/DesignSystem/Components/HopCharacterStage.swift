@@ -7,8 +7,6 @@ import HopPottyDesignTokens
 /// stage is what carries the label, because the label depends on what Hop is
 /// doing here, not on how he is drawn.
 public struct HopCharacterStage: View {
-    @Environment(\.hopTheme) private var theme
-
     private let pose: HopPose
     private let size: CGFloat
     private let ambient: Bool
@@ -61,7 +59,6 @@ private struct HopStageLabel: ViewModifier {
 /// A small, circular Hop for a row or a toolbar. Always `idle`, never ambient:
 /// a chip that breathes in a settings list is a distraction.
 public struct HopChip: View {
-    @Environment(\.hopTheme) private var theme
     private let diameter: CGFloat
 
     public init(diameter: CGFloat = 32) {

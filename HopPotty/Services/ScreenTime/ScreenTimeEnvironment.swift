@@ -128,16 +128,29 @@ public final class ScreenTimeEnvironment {
 
 // MARK: - SwiftUI wiring
 
+/// Deliberately optional, with a `nil` default.
+///
+/// A non-optional default would have to construct *something*, and the only two
+/// candidates are a live service — which would silently start touching Screen
+/// Time inside a SwiftUI preview — and a mock, which cannot exist in a release
+/// build. `nil` forces the root view to inject one, so a screen that forgot to is
+/// a screen that shows nothing rather than one that quietly does the wrong thing
+/// to a child's device.
+///
+/// Written as an explicit `EnvironmentKey` rather than with SwiftUI's `@Entry`
+/// macro, which arrived in the iOS 18 SDK. HopPotty targets iOS 17
+/// (`Docs/ADR/0002-deployment-target.md`), and a macro that may or may not be
+/// available is not worth six saved lines in the one file that decides whether
+/// the Screen Time layer is reachable at all.
+private struct ScreenTimeEnvironmentKey: EnvironmentKey {
+    static let defaultValue: ScreenTimeEnvironment? = nil
+}
+
 public extension EnvironmentValues {
-    /// Deliberately no default value.
-    ///
-    /// An `EnvironmentValues` default would have to construct *something*, and
-    /// the only two candidates are a live service (which would silently start
-    /// touching Screen Time in a preview) and a mock (which cannot exist in
-    /// release). `nil` forces the root view to inject one, and a screen that
-    /// forgot to is a screen that shows nothing rather than a screen that quietly
-    /// does the wrong thing to a child's device.
-    @Entry var screenTimeEnvironment: ScreenTimeEnvironment?
+    var screenTimeEnvironment: ScreenTimeEnvironment? {
+        get { self[ScreenTimeEnvironmentKey.self] }
+        set { self[ScreenTimeEnvironmentKey.self] = newValue }
+    }
 }
 
 #if DEBUG

@@ -307,6 +307,12 @@ final class NotificationService: NotificationProviding {
     }
 
     func pendingCount() async -> Int {
+        await Self.pendingCount(center: center)
+    }
+
+    /// Counts pending requests without letting a `UNNotificationRequest` cross
+    /// an isolation boundary — the same reasoning as `currentPermission`.
+    private nonisolated static func pendingCount(center: UNUserNotificationCenter) async -> Int {
         await center.pendingNotificationRequests().count
     }
 

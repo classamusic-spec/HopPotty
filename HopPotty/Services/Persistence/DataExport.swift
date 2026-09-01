@@ -124,8 +124,23 @@ struct DataExportResult: Sendable {
     /// A filename with no identity in it. Dated so a caregiver taking two
     /// exports a month apart can tell them apart.
     var suggestedFileName: String {
-        let stamp = DataExportService.fileStampFormatter.string(from: manifest.generatedAt)
-        return "HopPotty-\(stamp).json"
+        "HopPotty-\(DataExportResult.dayStamp(manifest.generatedAt)).json"
+    }
+
+    /// `yyyy-MM-dd` from calendar components rather than a `DateFormatter`.
+    ///
+    /// A formatter carries a locale, and a locale can render the year in a
+    /// non-Gregorian calendar or with non-ASCII digits — which would produce a
+    /// filename that sorts wrongly, or does not survive an email attachment, on
+    /// a device set to the wrong region. Same reasoning as
+    /// `RewardIdempotency.dayStamp`.
+    static func dayStamp(_ date: Date, calendar: Calendar = Calendar(identifier: .gregorian)) -> String {
+        let parts = calendar.dateComponents([.year, .month, .day], from: date)
+        func pad(_ value: Int, _ width: Int) -> String {
+            let digits = String(max(0, value))
+            return String(repeating: "0", count: max(0, width - digits.count)) + digits
+        }
+        return "\(pad(parts.year ?? 0, 4))-\(pad(parts.month ?? 0, 2))-\(pad(parts.day ?? 0, 2))"
     }
 }
 
@@ -299,15 +314,6 @@ final class DataExportService {
             throw PersistenceError.readFailed
         }
     }
-
-    static let fileStampFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        // Fixed locale: the filename must not become non-ASCII or reorder its
-        // components because the device is set to a different region.
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
 
     private static func appVersionString() -> String {
         let info = Bundle.main.infoDictionary

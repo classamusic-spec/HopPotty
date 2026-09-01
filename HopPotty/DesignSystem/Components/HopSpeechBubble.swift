@@ -5,7 +5,7 @@ import HopPottyDesignTokens
 public enum HopBubbleTail: String, CaseIterable, Sendable {
     case bottomLeading, bottomTrailing, topLeading, topTrailing
     /// No tail — a caption that is not attributed to Hop.
-    case none
+    case hidden
 }
 
 /// The bubble outline: a soft rounded rectangle with a rounded tail.
@@ -24,12 +24,12 @@ struct HopSpeechBubbleShape: Shape {
             bodyRect = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height - tailSize)
         case .topLeading, .topTrailing:
             bodyRect = CGRect(x: rect.minX, y: rect.minY + tailSize, width: rect.width, height: rect.height - tailSize)
-        case .none:
+        case .hidden:
             bodyRect = rect
         }
 
         var path = Path(roundedRect: bodyRect, cornerRadius: cornerRadius, style: .continuous)
-        guard tail != .none else { return path }
+        guard tail != .hidden else { return path }
 
         let inset = cornerRadius + tailSize * 0.4
         let isLeading = tail == .bottomLeading || tail == .topLeading
@@ -80,7 +80,7 @@ public struct HopSpeechBubble: View {
         switch tail {
         case .bottomLeading, .bottomTrailing: EdgeInsets(top: 0, leading: 0, bottom: tailSize, trailing: 0)
         case .topLeading, .topTrailing: EdgeInsets(top: tailSize, leading: 0, bottom: 0, trailing: 0)
-        case .none: EdgeInsets()
+        case .hidden: EdgeInsets()
         }
     }
 
@@ -116,7 +116,7 @@ public struct HopSpeechBubble: View {
         HopSpeechBubble("Let's go and try!")
         HopSpeechBubble("Sit for a little while. I'll wait right here with you.", tail: .bottomTrailing)
         HopSpeechBubble("All done — high five!", tail: .topLeading)
-        HopSpeechBubble("Nothing to see here.", tail: .none)
+        HopSpeechBubble("Nothing to see here.", tail: .hidden)
     }
     .padding()
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

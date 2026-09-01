@@ -68,10 +68,14 @@ struct HopPottyApp: App {
     /// layer.
     ///
     /// `RootView` is owned by `HopPotty/Features/`. It decides between
-    /// onboarding, the child surface and the parent area; that decision is
-    /// product behaviour and does not belong in the entry point. If the feature
-    /// layer names it something else, this is the single line to change, and the
-    /// compiler will say so by name.
+    /// onboarding, the child surface and the parent area, and it assembles the
+    /// feature graph — `ParentEnvironment` and the services that go in it — from
+    /// this object's `repositories`, `clock` and `configuration`, which it reads
+    /// with `@Environment(AppEnvironment.self)`.
+    ///
+    /// Both of those are product decisions and neither belongs in `@main`. If
+    /// the feature layer names its root something else, this is the single line
+    /// to change, and the compiler will say so by name.
     private var rootView: some View {
         RootView()
     }

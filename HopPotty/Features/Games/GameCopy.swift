@@ -64,6 +64,11 @@ enum GameCopy {
         let useLabel: HopCopyEntry
     }
 
+    /// The state of a card whose partner has been found. Announced by
+    /// VoiceOver and drawn as a check mark, so the state never rests on the
+    /// border colour alone.
+    static let matched = HopCopyEntry.child("games.bathroomMatch.matched", "Found!")
+
     static let matchPairs: [MatchPair] = [
         MatchPair(
             id: "soap",
@@ -104,6 +109,7 @@ enum GameCopy {
     static var allEntries: [HopCopyEntry] {
         WashStage.allCases.map(\.label)
             + [bubble]
+            + [matched]
             + matchPairs.flatMap { [$0.toolLabel, $0.useLabel] }
             + [pathGoal, pathHop, pathStep]
     }

@@ -68,9 +68,11 @@ final class EntitlementState {
     /// True while products or entitlements are loading, so a screen can show a
     /// placeholder instead of a price that is about to change.
     var isLoading = false
-    /// True when StoreKit could not be reached and the value shown came from
-    /// the offline cache.
-    private(set) var isOffline = false
+    /// True while the value on screen came from the offline cache and StoreKit
+    /// has not yet answered this launch. The UI can use it to hold back a
+    /// paywall for a beat rather than offering to sell something the family
+    /// already owns.
+    private(set) var isProvisional = true
 
     var hasFamilyUnlock: Bool { entitlement.hasFamilyUnlock }
 
@@ -78,9 +80,9 @@ final class EntitlementState {
         products.first { $0.id == HopProductID.familyUnlock.rawValue }
     }
 
-    func update(entitlement: HopEntitlement, offline: Bool) {
+    func update(entitlement: HopEntitlement, provisional: Bool) {
         self.entitlement = entitlement
-        self.isOffline = offline
+        self.isProvisional = provisional
     }
 
     func update(products: [HopProductDisplay]) {
@@ -147,9 +149,9 @@ final class PurchaseService: PurchaseProviding {
         self.clock = clock
 
         // Seed from the cache *before* StoreKit answers, so an owning family
-        // never sees a locked app flash on launch. Marked offline until a real
-        // answer replaces it.
-        state.update(entitlement: cache.entitlement, offline: true)
+        // never sees a locked app flash on launch. Marked provisional until the
+        // first real answer replaces it.
+        state.update(entitlement: cache.entitlement, provisional: true)
 
         startTransactionListener()
     }
@@ -189,12 +191,24 @@ final class PurchaseService: PurchaseProviding {
 
     // MARK: Entitlements
 
+    /// Re-derives the entitlement from StoreKit.
+    ///
+    /// `Transaction.currentEntitlements` is served from the device's own
+    /// StoreKit cache, so it answers offline as well as online — which is why
+    /// this treats it as authoritative rather than second-guessing an empty
+    /// result. That matters most for the case where guessing would be actively
+    /// wrong: after a **refund or a Family Sharing removal**, the entitlement is
+    /// simply absent, and a service that kept a cached "family" on the grounds
+    /// that "the store might be unreachable" would never let go of a purchase
+    /// that no longer exists.
+    ///
+    /// `EntitlementCache` is therefore only a launch-time seed to stop the UI
+    /// flashing "locked" before this runs. Once this method completes, the
+    /// cache is whatever StoreKit just said.
     func refreshEntitlements() async {
         var entitled = false
-        var storeKitAnswered = false
 
         for await result in Transaction.currentEntitlements {
-            storeKitAnswered = true
             guard let transaction = Self.verified(result) else { continue }
             // `currentEntitlements` already omits revoked transactions; the
             // explicit check costs nothing and documents the intent for anyone
@@ -203,20 +217,9 @@ final class PurchaseService: PurchaseProviding {
             if transaction.productID == HopProductID.familyUnlock.rawValue { entitled = true }
         }
 
-        // An empty sequence is ambiguous: it means "owns nothing" *and* it is
-        // what an unreachable App Store produces. `AppTransaction` would
-        // disambiguate but needs the network too, so the conservative reading
-        // is the one that never takes a paid feature away from a family that
-        // might simply be offline: keep the cached value, stay marked offline.
-        if !storeKitAnswered && cache.entitlement == .family {
-            state.update(entitlement: .family, offline: true)
-            HopLog.purchase.info("entitlement from cache; store unreachable")
-            return
-        }
-
         let entitlement: HopEntitlement = entitled ? .family : .free
         cache.store(entitlement, verifiedAt: clock.now)
-        state.update(entitlement: entitlement, offline: false)
+        state.update(entitlement: entitlement, provisional: false)
         HopLog.purchase.info(
             "entitlement verified value=\(entitlement.rawValue, privacy: .public)"
         )
@@ -349,7 +352,7 @@ final class MockPurchaseService: PurchaseProviding {
     var nextOutcome: PurchaseOutcome = .purchased
 
     init(entitlement: HopEntitlement = .free) {
-        state.update(entitlement: entitlement, offline: false)
+        state.update(entitlement: entitlement, provisional: false)
         state.update(
             products: [
                 HopProductDisplay(
@@ -368,8 +371,8 @@ final class MockPurchaseService: PurchaseProviding {
 
     func purchase(authorization: ParentAuthorization) async -> PurchaseOutcome {
         purchaseAttempts += 1
-        if case .purchased = nextOutcome {
-            state.update(entitlement: .family, offline: false)
+        if nextOutcome == .purchased {
+            state.update(entitlement: .family, provisional: false)
         }
         return nextOutcome
     }

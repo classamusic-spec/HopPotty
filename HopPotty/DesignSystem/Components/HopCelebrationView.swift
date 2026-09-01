@@ -59,6 +59,7 @@ final class HopCelebrationSequencer {
 public struct HopCelebrationView: View {
     @Environment(\.hopTheme) private var theme
     @State private var sequencer = HopCelebrationSequencer()
+    @State private var hasHandedBack = false
 
     private let stars: Int
     private let unlocked: PondItemID?
@@ -101,7 +102,7 @@ public struct HopCelebrationView: View {
 
                 Spacer(minLength: 0)
 
-                HopPrimaryButton(HopStrings.celebrationContinue, size: .childPrimary, action: onComplete)
+                HopPrimaryButton(HopStrings.celebrationContinue, size: .childPrimary, action: handBack)
                     .opacity(sequencer.beat >= .starsArrive ? 1 : 0)
                     .padding(.bottom, theme.spacing.xxxl)
             }
@@ -110,12 +111,21 @@ public struct HopCelebrationView: View {
         }
         .task {
             await sequencer.run(reduceMotion: theme.reduceMotion, hasUnlock: unlocked != nil)
-            onComplete()
+            handBack()
         }
         // One announcement for the whole screen, spoken as soon as it appears
         // rather than beat by beat.
         .accessibilityElement(children: .contain)
         .accessibilityLabel(spokenSummary)
+    }
+
+    /// The sequence and the button race each other to finish; whichever gets
+    /// there first hands control back, and the other becomes a no-op. A child
+    /// tapping through must not fire the completion twice.
+    private func handBack() {
+        guard !hasHandedBack else { return }
+        hasHandedBack = true
+        onComplete()
     }
 
     private var spokenSummary: String {

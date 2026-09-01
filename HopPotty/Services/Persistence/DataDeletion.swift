@@ -214,7 +214,7 @@ final class DataDeletionService {
         counts.screenTimeConfigurations = try await repositories.screenTime.count(for: childID)
         counts.quizCompletions = try await repositories.quizzes.count(for: childID)
         counts.gameCompletions = try await repositories.games.count(for: childID)
-        counts.profiles = try await repositories.profiles.profile(id: childID) == nil ? 0 : 1
+        counts.profiles = (try await repositories.profiles.profile(id: childID)) == nil ? 0 : 1
         return counts
     }
 

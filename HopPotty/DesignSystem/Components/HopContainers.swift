@@ -158,8 +158,13 @@ public struct HopSheet<Content: View>: View {
 
             Spacer(minLength: theme.spacing.m)
 
-            HopIconButton(systemImage: "xmark.circle.fill", accessibilityLabel: HopStrings.close, action: onDismiss)
-                .foregroundStyle(theme.color.textTertiary)
+            HopIconButton(
+                systemImage: "xmark.circle.fill",
+                accessibilityLabel: HopStrings.close,
+                tint: theme.color.textTertiary,
+                minimumTarget: theme.hitTarget.parent,
+                action: onDismiss
+            )
         }
         .hopPageMargins()
         .padding(.vertical, theme.spacing.l)

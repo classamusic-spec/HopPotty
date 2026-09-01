@@ -2,22 +2,26 @@
 <defs><radialGradient id="glowWarm" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.75"/><stop offset="0.5" stop-color="#FFD769" stop-opacity="0.28"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient><linearGradient id="handGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFDCC9"/><stop offset="1" stop-color="#F5C4A9"/></linearGradient></defs>
 <g id="step-highfive">
     <rect x="0" y="0" width="640" height="480" fill="#E3F5EA"/>
-    <circle cx="320" cy="232" r="176" fill="#FFFFFF" opacity="0.55"/>
-    <circle cx="320" cy="232" r="120" fill="url(#glowWarm)" opacity="0.65"/>
-    <g transform="translate(214 268) rotate(16)">
-      <path d="M 0 0 q -10 -62 28 -82 q 38 -20 70 4 q 30 22 22 66 q -8 44 -60 46 q -50 2 -60 -34 Z" fill="url(#handGrad)"/>
-      <rect x="-6" y="-96" width="30" height="52" rx="15" fill="url(#handGrad)"/>
-      <rect x="24" y="-110" width="30" height="66" rx="15" fill="url(#handGrad)"/>
-      <rect x="54" y="-106" width="30" height="62" rx="15" fill="url(#handGrad)"/>
-      <rect x="82" y="-82" width="28" height="46" rx="14" fill="url(#handGrad)"/></g>
-    <g transform="translate(430 268) scale(-1 1) rotate(16)">
-      <path d="M 0 0 q -10 -62 28 -82 q 38 -20 70 4 q 30 22 22 66 q -8 44 -60 46 q -50 2 -60 -34 Z" fill="#63C88A"/>
-      <rect x="-6" y="-96" width="30" height="52" rx="15" fill="#63C88A"/>
-      <rect x="24" y="-110" width="30" height="66" rx="15" fill="#63C88A"/>
-      <rect x="54" y="-106" width="30" height="62" rx="15" fill="#63C88A"/>
-      <rect x="82" y="-82" width="28" height="46" rx="14" fill="#63C88A"/>
-      <path d="M 20 -30 q 40 16 78 -6" stroke="#45A971" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.35"/></g>
+    <circle cx="320" cy="236" r="182" fill="#FFFFFF" opacity="0.6"/>
+    <circle cx="320" cy="228" r="104" fill="url(#glowWarm)"/>
+    <g transform="translate(196 386) rotate(30) scale(0.94)">
+    <path d="M 0 0 q -10 -60 26 -80 q 38 -20 68 4 q 30 24 22 66 q -8 42 -58 44 q -48 2 -58 -34 Z" fill="url(#handGrad)"/>
+    <rect x="-6" y="-94" width="25" height="52" rx="12.5" fill="url(#handGrad)"/>
+    <rect x="23" y="-110" width="25" height="68" rx="12.5" fill="url(#handGrad)"/>
+    <rect x="52" y="-106" width="25" height="64" rx="12.5" fill="url(#handGrad)"/>
+    <rect x="80" y="-84" width="23" height="46" rx="11.5" fill="url(#handGrad)"/>
+    <path d="M 16 -40 q 42 14 78 -6" stroke="#DCA084" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.35"/></g>
+    <g transform="translate(444 386) scale(-1 1) rotate(30) scale(0.94)">
+    <path d="M 0 0 q -10 -60 26 -80 q 38 -20 68 4 q 30 24 22 66 q -8 42 -58 44 q -48 2 -58 -34 Z" fill="#63C88A"/>
+    <rect x="-6" y="-94" width="25" height="52" rx="12.5" fill="#63C88A"/>
+    <rect x="23" y="-110" width="25" height="68" rx="12.5" fill="#63C88A"/>
+    <rect x="52" y="-106" width="25" height="64" rx="12.5" fill="#63C88A"/>
+    <rect x="80" y="-84" width="23" height="46" rx="11.5" fill="#63C88A"/>
+    <path d="M 16 -40 q 42 14 78 -6" stroke="#37905F" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.35"/></g>
+    <g fill="#FFFFFF" opacity="0.85">
+      <circle cx="320" cy="196" r="13"/><circle cx="286" cy="176" r="8"/><circle cx="356" cy="180" r="9"/>
+    </g>
     <g fill="#FFD769">
-      <path d="M 152 100 q 5.6 14.4 20 20 q -14.4 5.6 -20 20 q -5.6 -14.4 -20 -20 q 14.4 -5.6 20 -20 Z"/><path d="M 498 115 q 4.76 12.24 17 17 q -12.24 4.76 -17 17 q -4.76 -12.24 -17 -17 q 12.24 -4.76 17 -17 Z"/><path d="M 320 40 q 6.16 15.84 22 22 q -15.84 6.16 -22 22 q -6.16 -15.84 -22 -22 q 15.84 -6.16 22 -22 Z"/><path d="M 110 246 q 3.92 10.08 14 14 q -10.08 3.92 -14 14 q -3.92 -10.08 -14 -14 q 10.08 -3.92 14 -14 Z"/><path d="M 538 253 q 4.2 10.8 15 15 q -10.8 4.2 -15 15 q -4.2 -10.8 -15 -15 q 10.8 -4.2 15 -15 Z"/><path d="M 250 72 q 3.36 8.64 12 12 q -8.64 3.36 -12 12 q -3.36 -8.64 -12 -12 q 8.64 -3.36 12 -12 Z"/><path d="M 400 83 q 3.64 9.36 13 13 q -9.36 3.64 -13 13 q -3.64 -9.36 -13 -13 q 9.36 -3.64 13 -13 Z"/>
+      <path d="M 142 97 q 5.88 15.12 21 21 q -15.12 5.88 -21 21 q -5.88 -15.12 -21 -21 q 15.12 -5.88 21 -21 Z"/><path d="M 500 110 q 5.04 12.96 18 18 q -12.96 5.04 -18 18 q -5.04 -12.96 -18 -18 q 12.96 -5.04 18 -18 Z"/><path d="M 320 31 q 6.44 16.56 23 23 q -16.56 6.44 -23 23 q -6.44 -16.56 -23 -23 q 16.56 -6.44 23 -23 Z"/><path d="M 104 244 q 3.92 10.08 14 14 q -10.08 3.92 -14 14 q -3.92 -10.08 -14 -14 q 10.08 -3.92 14 -14 Z"/><path d="M 540 247 q 4.2 10.8 15 15 q -10.8 4.2 -15 15 q -4.2 -10.8 -15 -15 q 10.8 -4.2 15 -15 Z"/><path d="M 232 62 q 3.36 8.64 12 12 q -8.64 3.36 -12 12 q -3.36 -8.64 -12 -12 q 8.64 -3.36 12 -12 Z"/><path d="M 412 73 q 3.64 9.36 13 13 q -9.36 3.64 -13 13 q -3.64 -9.36 -13 -13 q 9.36 -3.64 13 -13 Z"/>
     </g></g>
 </svg>

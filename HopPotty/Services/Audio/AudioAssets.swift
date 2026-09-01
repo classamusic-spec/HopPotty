@@ -72,7 +72,7 @@ enum HopAmbientTrack: String, CaseIterable, Sendable {
 /// the whole point of this protocol is that the app behaves *identically well*
 /// whether or not a file is there: the caption is shown either way, and the
 /// absence is reported rather than swallowed.
-protocol AudioAssetResolving: Sendable {
+protocol AudioAssetResolving {
     /// The file for an asset name, or `nil` when it is not in the bundle.
     func url(forAsset name: String, category: HopAudioCategory) -> URL?
     /// Voice asset keys actually present. Feeds `HopVoiceResolver`, which is
@@ -82,26 +82,25 @@ protocol AudioAssetResolving: Sendable {
 
 /// Looks assets up in the app bundle.
 struct BundleAudioAssetResolver: AudioAssetResolving {
-    let bundle: Bundle
+    /// `Bundle.main` is read at each call rather than stored. `Bundle` is a
+    /// reference type Foundation does not declare `Sendable`, and holding one
+    /// would make this resolver awkward to pass around for no benefit — the app
+    /// bundle cannot change while the app runs.
     /// Extensions tried in order. M4A first: it is what a voice session
     /// delivers, and it is the smallest of the three for speech.
     static let extensions = ["m4a", "caf", "wav"]
-
-    init(bundle: Bundle = .main) {
-        self.bundle = bundle
-    }
 
     func url(forAsset name: String, category: HopAudioCategory) -> URL? {
         for ext in Self.extensions {
             // Subdirectory first, then a flat lookup, because Xcode flattens
             // folder references that were added as groups rather than folders —
             // a packaging detail that should not silently mute the app.
-            if let url = bundle.url(
+            if let url = Bundle.main.url(
                 forResource: name, withExtension: ext, subdirectory: category.bundleSubdirectory
             ) {
                 return url
             }
-            if let url = bundle.url(forResource: name, withExtension: ext) {
+            if let url = Bundle.main.url(forResource: name, withExtension: ext) {
                 return url
             }
         }

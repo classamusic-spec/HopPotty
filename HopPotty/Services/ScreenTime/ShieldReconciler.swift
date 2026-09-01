@@ -379,9 +379,20 @@ public enum ShieldReconciler {
     /// misconfiguration this layer has, and one that is otherwise invisible until
     /// a child is holding a device that will not unlock.
     public static func assertStoreNamesAgree() {
+        // `String(describing:)` rather than `.rawValue`, because whether
+        // `ManagedSettingsStore.Name` exposes `rawValue` publicly is one of the
+        // API details this environment cannot check.
+        //
+        // UNVERIFIED — confirm on device: that `String(describing:)` of a
+        // `ManagedSettingsStore.Name` contains its string. If it does not, this
+        // assertion becomes a false alarm in DEBUG and should be replaced with
+        // the manual check in `Docs/PhysicalDeviceQA.md` §2, which reads both
+        // values in the Potty Pause Lab and compares them by eye.
         assert(
-            ManagedSettingsStore.Name.pottyPause.rawValue == ScreenTimeIdentifiers.managedSettingsStoreName,
-            "ManagedSettingsStore.Name.pottyPause must equal ScreenTimeIdentifiers.managedSettingsStoreName"
+            String(describing: ManagedSettingsStore.Name.pottyPause)
+                .contains(ScreenTimeIdentifiers.managedSettingsStoreName),
+            "ManagedSettingsStore.Name.pottyPause must equal ScreenTimeIdentifiers.managedSettingsStoreName — "
+                + "a mismatch means the app and its extensions shield through two different stores"
         )
     }
     #endif

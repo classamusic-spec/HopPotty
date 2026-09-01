@@ -53,7 +53,7 @@ final class AppLaunchCoordinator {
         case foreground
     }
 
-    private let screenTime: any ScreenTimeProviding
+    private let reconciler: any ScreenTimeReconciling
     private let clock: any HopClock
 
     /// Whether the cold-start pass has run. Read by the scene so a `.active`
@@ -65,8 +65,8 @@ final class AppLaunchCoordinator {
     /// The most recent verdict, for the parent diagnostics screen and the Lab.
     private(set) var lastVerdict: ShieldReconciler.Verdict?
 
-    init(screenTime: any ScreenTimeProviding, clock: any HopClock) {
-        self.screenTime = screenTime
+    init(reconciler: any ScreenTimeReconciling, clock: any HopClock) {
+        self.reconciler = reconciler
         self.clock = clock
     }
 
@@ -87,7 +87,7 @@ final class AppLaunchCoordinator {
     }
 
     private func reconcile(_ trigger: Trigger) -> ShieldReconciler.Verdict {
-        let verdict = screenTime.reconcile(now: clock.now)
+        let verdict = reconciler.reconcile(now: clock.now)
         lastVerdict = verdict
 
         // `reason` is a fixed enum case name, never anything a family typed, so

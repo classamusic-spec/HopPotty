@@ -80,7 +80,7 @@ struct HopArmShape: Shape {
     var animatableData: AnimatablePair<AnimatablePair<Double, Double>, AnimatablePair<Double, Double>> {
         get {
             AnimatablePair(
-                AnimatablePair(origin.x, origin.y),
+                AnimatablePair(Double(origin.x), Double(origin.y)),
                 AnimatablePair(angle, length)
             )
         }
@@ -127,7 +127,7 @@ struct HopFootShape: Shape {
     enum Part { case body, highlight, outline }
 
     var animatableData: AnimatablePair<Double, Double> {
-        get { AnimatablePair(centre.x, centre.y) }
+        get { AnimatablePair(Double(centre.x), Double(centre.y)) }
         set { centre = CGPoint(x: newValue.first, y: newValue.second) }
     }
 

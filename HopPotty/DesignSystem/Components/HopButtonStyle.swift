@@ -100,7 +100,7 @@ struct HopButtonStyle: ButtonStyle {
         @Environment(\.hopTheme) private var theme
         @Environment(\.isEnabled) private var isEnabled
 
-        let configuration: Configuration
+        let configuration: ButtonStyleConfiguration
         let size: HopButtonSize
         let appearance: HopButtonAppearance
 
@@ -184,7 +184,7 @@ struct HopBareButtonStyle: ButtonStyle {
         @Environment(\.hopTheme) private var theme
         @Environment(\.isEnabled) private var isEnabled
 
-        let configuration: Configuration
+        let configuration: ButtonStyleConfiguration
         let minimumTarget: CGFloat
         let tint: Color
 

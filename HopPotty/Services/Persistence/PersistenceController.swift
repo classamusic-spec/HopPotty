@@ -90,8 +90,9 @@ final class PersistenceController {
 
         // 1. Normal open.
         if let container = makeContainer(schema: schema, url: storeURL) {
+            let version = HopCurrentSchema.versionIdentifier
             HopLog.persistence.info(
-                "store opened version=\(HopCurrentSchema.versionIdentifier.description, privacy: .public)"
+                "store opened version=\(version.major, privacy: .public).\(version.minor, privacy: .public).\(version.patch, privacy: .public)"
             )
             return PersistenceController(container: container, outcome: .opened)
         }

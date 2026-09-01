@@ -136,7 +136,7 @@ struct HopRowButtonStyle: ButtonStyle {
 
     private struct Body: View {
         @Environment(\.hopTheme) private var theme
-        let configuration: Configuration
+        let configuration: ButtonStyleConfiguration
 
         var body: some View {
             configuration.label

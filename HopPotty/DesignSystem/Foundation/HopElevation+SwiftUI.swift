@@ -58,11 +58,9 @@ public extension HopElevation {
     /// surfaces are rounder, which is most of what separates a row from a card
     /// from a sheet before you read a single word.
     var suggestedRadius: CGFloat {
-        switch radius {
-        case 0: CGFloat(HopRadius.m)
-        case ..<20: CGFloat(HopRadius.l)
-        case ..<30: CGFloat(HopRadius.xl)
-        default: CGFloat(HopRadius.xxl)
-        }
+        if radius == 0 { return CGFloat(HopRadius.m) }
+        if radius < 20 { return CGFloat(HopRadius.l) }
+        if radius < 30 { return CGFloat(HopRadius.xl) }
+        return CGFloat(HopRadius.xxl)
     }
 }

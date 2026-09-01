@@ -56,7 +56,11 @@ public struct HopThemedRoot<Content: View>: View {
             // Forcing the colour scheme when an appearance is overridden keeps
             // system-drawn chrome (selection, keyboard, native controls) in step
             // with the palette we just swapped underneath it.
-            .preferredColorScheme(appearanceOverride.map { $0.isDark ? .dark : .light })
+            .preferredColorScheme(
+                appearanceOverride.map { (appearance: HopAppearance) -> ColorScheme in
+                    appearance.isDark ? .dark : .light
+                }
+            )
             .tint(theme.color.brandAction)
     }
 }

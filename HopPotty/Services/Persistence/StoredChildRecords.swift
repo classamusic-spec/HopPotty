@@ -344,7 +344,10 @@ final class StoredPottySchedule {
             activeWindowEnd: LocalTimeOfDay(minutesSinceMidnight: activeWindowEndMinutes),
             isEnabled: isEnabled,
             suspension: HopStoredCoding.decode(
-                ScheduleSuspension.self, from: suspensionData, fallback: .none, label: "suspension"
+                ScheduleSuspension.self,
+                from: suspensionData,
+                fallback: ScheduleSuspension.none,
+                label: "suspension"
             ),
             createdAt: createdAt,
             modifiedAt: modifiedAt

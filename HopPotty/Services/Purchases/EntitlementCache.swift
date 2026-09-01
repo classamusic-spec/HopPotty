@@ -38,7 +38,7 @@ enum HopEntitlement: String, Sendable, CaseIterable {
 ///    that stops the UI flickering. Someone editing it can unlock the app on
 ///    their own device, which is a trade every offline-tolerant app makes and
 ///    which costs a family nothing.
-struct EntitlementCache: Sendable {
+struct EntitlementCache {
     private let defaults: UserDefaults
 
     private enum Key {
