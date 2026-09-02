@@ -211,6 +211,68 @@ flowchart TD
 
 ---
 
+## 4a. Quick Reminder
+
+A caregiver's one-off timer, set by hand: "remind us in twenty minutes". It is
+**not** the Potty Pause schedule, it **never** shields an app, and it fires
+**once**.
+
+```mermaid
+flowchart TD
+    A[Parent home → Reminder chip / Set reminder] --> B[QuickReminderSheet]
+    B --> C{How?}
+    C -->|One of six chips| D[after duration — measured from the tap on Set]
+    C -->|Pick a time| E[at instant — the wheel, bounded to the same limits]
+    D --> F[[QuickReminderPlanner.plan]]
+    E --> F
+    F -->|in the past| R1["Pick a time that is still ahead."]
+    F -->|under a minute| R2["Quick Reminders start a minute out."]
+    F -->|over 24 hours| R3["Quick Reminders reach up to 24 hours ahead."]
+    F -->|3 already waiting, none this child's| R4["Three reminders are already waiting."]
+    F -->|allowed, child already has one| G[plan.replaces = the old one]
+    F -->|allowed| H[plan.replaces = nil]
+    G --> I[[Cancel the old notification FIRST]]
+    I --> J[[Schedule the new notification]]
+    H --> J
+    J --> K{Row written?}
+    K -->|Yes| L[Chip: Reminder · 3:40 PM]
+    K -->|No| M[Roll the notification back, say the store failed]
+    L --> N[Notification arrives once: Hop says: potty time?]
+    N --> O[refresh → the row becomes .fired. No repeat, no snooze.]
+    L --> P[Cancel on the chip → notification and row both go]
+```
+
+The rules, all in `HopPottyCore/Reminders/QuickReminderScheduling.swift` and
+`Models/QuickReminder.swift`, and all tested on Linux:
+
+| Rule | Where | Why |
+| --- | --- | --- |
+| Future only, at least a minute out | `QuickReminderPlanner.minimumLead` | A notification arriving with the tap that asked for it reads as a bug. |
+| At most 24 hours ahead | `.maximumHorizon` | Past a day this is a calendar, and the phone already has one. |
+| One pending reminder per child; `nil` (anyone) is its own scope | `.admit(childID:existing:at:)` | A caregiver with two children in the bath sets one timer for the bathroom, not one per child. |
+| Setting a second for the same child **replaces** the first | `QuickReminderPlan.replaces` | Re-setting the timer is the commonest action there is. |
+| Three pending device-wide | `.maximumPending` | Past that it is a queue of alarms, which is the thing this is not. |
+| Finished reminders pruned after a day | `.staleAfter` | The table is not a history nobody asked HopPotty to keep. |
+
+Ordering that matters: **the replaced reminder's notification is cancelled
+before the new one is scheduled**, and **the row is written after the
+notification and rolled back if the write fails**. A notification with no row
+is the one failure a caregiver cannot undo from inside the app — it arrives for
+someone the app already told it was gone.
+
+Advisory, never blocking: when the next projected Potty Pause lands within ten
+minutes of the reminder, the sheet says so ("A Potty Pause is already coming at
+3:35 PM.") and sets it anyway. Nothing refuses a reminder because of a pause,
+and nothing moves the pause.
+
+Degradation: a Quick Reminder needs notification permission and nothing else.
+No Screen Time authorization, no app selection, no schedule — so it is fully
+available in Gentle mode. Without notification permission the sheet says so and
+records nothing, because a chip promising a nudge that cannot arrive is worse
+than no chip.
+
+---
+
 ## 5. Emergency restore
 
 The path a caregiver takes when something is wrong and they do not care why.

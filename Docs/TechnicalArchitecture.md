@@ -91,7 +91,8 @@ fake for previews, simulator runs and UI tests.
 | Protocol | Concrete | Responsibility | Explicitly not its job |
 | --- | --- | --- | --- |
 | `ScreenTimeProviding` | `ScreenTimeService` | The **only** file importing FamilyControls/ManagedSettings. Authorization, selection persistence, monitoring registration, apply/clear shield, emergency clear. | Deciding anything. The state machine decides; this performs. |
-| `NotificationProviding` | — | Local notifications only: the pre-pause warning and the optional daily summary. | Push. There is no `aps-environment` entitlement. |
+| `NotificationProviding` | `NotificationService` / `MockNotificationService` | Local notifications only: the pre-pause warning and the optional daily summary. | Push. There is no `aps-environment` entitlement. |
+| `QuickReminderProviding` | `QuickReminderService` / `MockQuickReminderService` | One-off caregiver reminders: plan, schedule, cancel, reconcile. Rules live in `QuickReminderPlanner` (Core). | Shielding anything. It touches no ManagedSettings and no schedule. |
 | `PurchaseProviding` | — | StoreKit product load, purchase, entitlement. `displayPrice` is never composed by HopPotty. | Gating anything a child earned. |
 | `DataExportProviding` | — | Writes a file into the app's own container. | Networking. Nothing leaves the device. |
 | `DataDeletionProviding` | `DataDeletionService` | Counts first, deletes second, reports a receipt. | Estimating. Counts come from rows. |

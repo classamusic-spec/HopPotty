@@ -462,10 +462,6 @@ public struct QuickReminderCopy: HopCopySection {
         placeholders: [.text(1, "time", "Wall-clock time the projected pause starts.", example: "3:35 PM")]
     )
 
-    public let emptyState = HopCopyEntry.parent(
-        "quickReminder.emptyState",
-        "Nothing waiting right now."
-    )
     public let permissionNeeded = HopCopyEntry.parent(
         "quickReminder.permissionNeeded",
         "A Quick Reminder arrives as a notification, so HopPotty needs permission to send one."

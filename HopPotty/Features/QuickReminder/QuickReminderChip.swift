@@ -169,8 +169,16 @@ struct QuickReminderBar: View {
 /// that never mention reminders should not gain a reference to one, and
 /// `nil` is a legitimate value — a host that has not wired it draws nothing
 /// rather than crashing.
+/// Written as an explicit `EnvironmentKey` rather than with SwiftUI's `@Entry`
+/// macro, which arrived in the iOS 18 SDK — HopPotty targets iOS 17
+/// (`Docs/ADR/0002-deployment-target.md`). The same choice, for the same
+/// reason, as `ScreenTimeEnvironmentKey`.
 private struct QuickReminderServiceKey: EnvironmentKey {
-    static let defaultValue: (any QuickReminderProviding)? = nil
+    /// `nonisolated(unsafe)` because the value's *type* is a main-actor
+    /// existential and the compiler cannot know the value is `nil`. Nothing is
+    /// shared: this default is a constant `nil`, and every non-nil value is
+    /// installed and read on the main actor by SwiftUI.
+    nonisolated(unsafe) static let defaultValue: (any QuickReminderProviding)? = nil
 }
 
 extension EnvironmentValues {

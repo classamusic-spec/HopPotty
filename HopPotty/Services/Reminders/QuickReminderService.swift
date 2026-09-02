@@ -12,11 +12,13 @@ import UserNotifications
 // bug that would be invisible on a happy path:
 //
 // 1. **The notification and the record move together.** Setting a reminder
-//    writes a row *and* schedules a notification; cancelling removes both;
-//    replacing does all four in one call. A row with no notification is a chip
-//    counting down to nothing. A notification with no row is worse: it arrives
-//    for a caregiver the app has already told it was gone, and there is no
-//    surface in HopPotty from which they can cancel it.
+//    schedules a notification *and* writes a row; cancelling removes both;
+//    replacing cancels the old notification before it schedules the new one. A
+//    row with no notification is a chip counting down to nothing. A
+//    notification with no row is worse: it arrives for a caregiver the app has
+//    already told it was gone, and there is no surface in HopPotty from which
+//    they can cancel it. `refresh()` closes the remaining gap by rebuilding
+//    missing rows from what the notification centre is actually holding.
 // 2. **Nothing here shields an app.** No ManagedSettings, no DeviceActivity, no
 //    Family Controls. That is what lets a Quick Reminder work in `.gentle`
 //    mode with no Screen Time permission at all.
@@ -39,9 +41,10 @@ enum QuickReminderResult: Equatable, Sendable {
     /// never delivered. Nothing is written — a chip promising a nudge that
     /// cannot arrive is worse than no chip.
     case notificationsUnavailable
-    /// The store could not be written. The notification is rolled back so the
-    /// two cannot disagree.
-    case saveFailed
+    /// The notification could not be scheduled, or the row could not be
+    /// written. Either way nothing is left half-done: a notification that was
+    /// scheduled before the write failed is taken back.
+    case failed
 
     var reminder: QuickReminder? {
         guard case .scheduled(let reminder, _) = self else { return nil }
@@ -183,6 +186,15 @@ final class QuickReminderMemoryStore: QuickReminderRepository {
     }
 }
 
+/// One pending Quick Reminder, as the notification centre knows it.
+///
+/// File scope rather than nested in the service, so it carries no actor
+/// isolation of its own and can be built from the `nonisolated` read below.
+private struct PendingQuickReminder: Sendable {
+    let id: UUID
+    let fireAt: Date
+}
+
 // MARK: - Service
 
 @MainActor
@@ -214,10 +226,16 @@ final class QuickReminderService: QuickReminderProviding {
     func refresh() async {
         let now = clock.now
         do {
-            // Order matters. Reconcile first so a reminder that arrived while
-            // the app was closed is recorded as fired before the prune decides
-            // what is stale; pruning first would leave a due-but-pending row
-            // looking like a reminder still waiting.
+            // Order matters, three times over.
+            //
+            // Rehydrate first: the notification centre is the thing that
+            // actually survives process death, so anything it is still holding
+            // has to become a row before the rules are applied to the rows.
+            try await rehydrateFromNotificationCentre(at: now)
+            // Reconcile second, so a reminder that arrived while the app was
+            // closed is recorded as fired before the prune decides what is
+            // stale — pruning first would leave a due-but-pending row looking
+            // like a reminder still waiting.
             let fired = try await repository.reconcile(at: now)
             _ = try await repository.prune(at: now)
             state.reminders = try await repository.allReminders()
@@ -228,6 +246,53 @@ final class QuickReminderService: QuickReminderProviding {
             HopLog.notification.error(
                 "quick reminder refresh failed error=\(HopLog.safeDescription(error), privacy: .public)"
             )
+        }
+    }
+
+    /// Rebuilds rows for reminders the system is still going to deliver.
+    ///
+    /// The store may be in memory, and the process may have died between the
+    /// caregiver tapping Set and today. What did *not* die is the scheduled
+    /// notification, so it is the source of truth for "what is still coming",
+    /// and a reminder it is holding must appear on the dashboard — otherwise it
+    /// arrives with no chip that could have cancelled it.
+    ///
+    /// A rebuilt row is scoped to "anyone" and dated from now. The child scope
+    /// and the original `createdAt` are not recoverable from a notification
+    /// request, and neither changes what the reminder does: the scope affects
+    /// only which reminder a later one replaces, and "anyone" is the scope that
+    /// replaces nothing by surprise.
+    private func rehydrateFromNotificationCentre(at now: Date) async throws {
+        for entry in await Self.pendingQuickReminders(center: center) {
+            guard try await repository.reminder(id: entry.id) == nil else { continue }
+            try await repository.save(
+                QuickReminder(
+                    id: entry.id,
+                    childID: nil,
+                    fireAt: entry.fireAt,
+                    createdAt: now,
+                    label: nil,
+                    state: .pending
+                )
+            )
+            HopLog.notification.info("quick reminder row rebuilt from a pending notification")
+        }
+    }
+
+    /// Reads the pending Quick Reminders without letting a
+    /// `UNNotificationRequest` cross an isolation boundary — the same reasoning
+    /// as `NotificationService.pendingCount`.
+    private nonisolated static func pendingQuickReminders(
+        center: UNUserNotificationCenter
+    ) async -> [PendingQuickReminder] {
+        let prefix = HopNotificationKind.quickReminder.identifierPrefix
+        return await center.pendingNotificationRequests().compactMap { request in
+            guard request.identifier.hasPrefix(prefix),
+                  let id = UUID(uuidString: String(request.identifier.dropFirst(prefix.count))),
+                  let trigger = request.trigger as? UNTimeIntervalNotificationTrigger,
+                  let fireAt = trigger.nextTriggerDate()
+            else { return nil }
+            return PendingQuickReminder(id: id, fireAt: fireAt)
         }
     }
 
@@ -266,7 +331,7 @@ final class QuickReminderService: QuickReminderProviding {
 
         guard await add(plan.reminder) else {
             state.lastWriteFailed = true
-            return .saveFailed
+            return .failed
         }
 
         do {
@@ -284,7 +349,7 @@ final class QuickReminderService: QuickReminderProviding {
             HopLog.notification.error(
                 "quick reminder save failed error=\(HopLog.safeDescription(error), privacy: .public)"
             )
-            return .saveFailed
+            return .failed
         }
 
         HopLog.notification.info("quick reminder scheduled")

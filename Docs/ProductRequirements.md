@@ -224,14 +224,23 @@ Rules:
 
 ## 10. Notifications
 
-Exactly two kinds, both local, no push entitlement:
+Exactly three kinds, all local, no push entitlement. The set is closed by
+`HopNotificationKind` in `HopPotty/Services/Notifications/NotificationService.swift`;
+adding a case is a reviewable diff next to the comment that explains the rule.
 
-1. **Warning before a pause** — child-facing wording, default on, offset from the
-   schedule.
-2. **Daily summary** — caregiver-facing, default **off**, time configurable.
+| Kind | Category identifier | Audience | Default | Timed by |
+| --- | --- | --- | --- | --- |
+| `pauseWarning` | `HOP_PAUSE_WARNING` | Child | On | The schedule's warning offset |
+| `dailyCaregiverSummary` | `HOP_DAILY_SUMMARY` | Caregiver | **Off** | `AppSettings.dailySummaryTime` |
+| `quickReminder` | `HOP_QUICK_REMINDER` | Caregiver | n/a — set by hand | The instant the caregiver picked |
+
+No category registers a custom action. A "Snooze" or "Remind me again" button
+would be an engagement mechanic wearing a system control, which is why the
+identifiers are enumerated in one place rather than assembled at the call site.
 
 No re-engagement notification of any kind exists or may be added
-(`CONTRACTS.md` §4.7).
+(`CONTRACTS.md` §4.7). A Quick Reminder is not an exception to that rule: it
+happens because a person asked for it, at a time that person chose, once.
 
 ---
 

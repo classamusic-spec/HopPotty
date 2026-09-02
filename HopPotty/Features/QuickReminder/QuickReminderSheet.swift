@@ -41,7 +41,7 @@ struct QuickReminderSheet: View {
     @State private var pickedTime = Date()
     @State private var refusal: QuickReminderRejection?
     @State private var notificationsUnavailable = false
-    @State private var writeFailed = false
+    @State private var didFail = false
     @State private var isSaving = false
 
     // MARK: Derived
@@ -205,10 +205,11 @@ struct QuickReminderSheet: View {
                 note(HopCopy.quickReminder.permissionNeeded.localized, tint: theme.color.warning)
             }
 
-            if writeFailed {
-                // The store has one sentence for this everywhere in HopPotty;
-                // a reminder does not get its own wording for "could not save".
-                note(HopCopy.errors.storageBody.localized, tint: theme.color.warning)
+            if didFail {
+                // The catalog's general "that did not finish" sentence. A
+                // reminder does not get its own wording for a failure that is
+                // not about reminders — see `HopCopy.errors`.
+                note(HopCopy.errors.genericBody.localized, tint: theme.color.warning)
             }
 
             if let refusal = refusal ?? liveRefusal {
@@ -273,6 +274,23 @@ struct QuickReminderSheet: View {
             .foregroundStyle(theme.color.textSecondary)
             .opacity(liveRefusal == nil ? 1 : 0)
             .accessibilityHidden(liveRefusal != nil)
+
+            // Offered only when there is something to take back. Opening this
+            // sheet from the chip is how a caregiver changes their mind, and
+            // "cancel it" and "move it" are different intentions — making the
+            // second the only way to reach the first would mean setting a
+            // reminder in order to be rid of one.
+            if let existing = wouldReplace {
+                HopSecondaryButton(HopCopy.quickReminder.cancelButton.localized) {
+                    Task {
+                        isSaving = true
+                        await service.cancel(existing.id)
+                        isSaving = false
+                        dismiss()
+                    }
+                }
+                .disabled(isSaving)
+            }
         }
         .hopPageMargins()
         .padding(.vertical, theme.spacing.m)
@@ -291,15 +309,15 @@ struct QuickReminderSheet: View {
             refusal = rejection
         case .notificationsUnavailable:
             notificationsUnavailable = true
-        case .saveFailed:
-            writeFailed = true
+        case .failed:
+            didFail = true
         }
     }
 
     private func clearRefusals() {
         refusal = nil
         notificationsUnavailable = false
-        writeFailed = false
+        didFail = false
     }
 }
 

@@ -80,7 +80,8 @@ has already removed things:
 | Randomised rewards / crates | Variable reinforcement is the engagement mechanic; the pond is a fixed, published price list instead (`PondCatalog`). |
 | Leaderboards, sibling comparison | Turns a bodily function into a competition between children. |
 | A `DeviceActivityReport` usage dashboard | Available for free (iOS 16+) and deliberately not shipped: it reads as a judgement of the child's day. `ScreenTimeArchitecture.md` §8. |
-| "Come back!" notifications | The app has no reason to want the child in it. Only two notification kinds exist: the pre-pause warning and an optional caregiver daily summary. |
+| "Come back!" notifications | The app has no reason to want the child in it. Only three notification kinds exist: the pre-pause warning, an optional caregiver daily summary, and a Quick Reminder the caregiver set by hand for a time they chose. |
+| Snoozing or repeating a Quick Reminder | A device that nudges you again because you ignored it is an engagement mechanic. One timer, once. |
 | Longer celebrations | Capped at 3.5s (`HopMotion.celebrationMaxDuration`). The whole premise is a short interruption. |
 | A high score in the mini-games | `MiniGameCompletion` has no `.failed` and no `.timeUp` case. |
 
