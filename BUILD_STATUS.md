@@ -13,10 +13,10 @@
 
 | Layer | Compiles | Tests run | How |
 | --- | --- | --- | --- |
-| `HopPottyCore` (domain, scheduling, rewards, state machine, insights, content) | ✅ Yes | ✅ Yes | Swift 6.2 on Linux — **350 tests, 28 suites, all passing** |
+| `HopPottyCore` (domain, scheduling, rewards, state machine, insights, content) | ✅ Yes | ✅ Yes | Swift 6.2 on Linux — **464 tests, 34 suites, all passing** |
 | `HopPottyDesignTokens` | ✅ Yes | ✅ Yes | Same — includes WCAG contrast assertions |
 | `HopPotty` app target (SwiftUI) | ❌ **Unverified** | ❌ No | Needs Xcode |
-| Three app extensions (Screen Time) | ❌ **Unverified** | ❌ No | Needs Xcode |
+| Four app extensions (three Screen Time, one WidgetKit/ActivityKit) | ❌ **Unverified** | ❌ No | Needs Xcode |
 | Screen Time runtime behaviour | ❌ **Unobserved** | ❌ No | Needs a physical device + entitlement |
 
 **No Screen Time behaviour has been observed on hardware. No entitlement has
@@ -26,8 +26,10 @@ been requested or approved. The Xcode project has not been generated or built.**
 
 ## Current phase
 
-Phase 4–7 in parallel: Screen Time implementation, design system, platform
-services, and feature surfaces, on top of a completed and tested core.
+Feature-complete on paper: every surface in the brief plus the additions
+(eight mini-games, Quick Reminder, home-screen widget and Live Activity,
+child mode behind the Hop tab, pond-as-background Home) is written, drawn and
+rendered. The next phase is the first Xcode compile and a device.
 
 ## Completed
 
@@ -78,7 +80,7 @@ services, and feature surfaces, on top of a completed and tested core.
 - **SwiftUI design system.** 37 files, every component in `DesignSystemAPI.md`,
   67 previews. Hop drawn as animatable paths with poses that interpolate. Exactly
   one `accessibilityReduceMotion` reader in the app.
-- **Screen Time layer.** Services, three extensions, App Group store, a pure
+- **Screen Time layer.** Services, three Screen Time extensions, App Group store, a pure
   `ShieldReconciler` that runs on every launch, foreground, monitor callback and
   shield-configuration invocation, a mock that cannot ship, and a DEBUG-only lab.
   22 assumptions marked `UNVERIFIED — confirm on device` with a test step each.
@@ -100,6 +102,22 @@ services, and feature surfaces, on top of a completed and tested core.
   games hub and all eight games, settings, paywall, error states, widgets and
   Live Activity, rendered from the exported design tokens
   (`Scripts/screens`, output in `Art/render/screens`).
+- **Mini-games.** Eight games in `MiniGameCatalog` (Bubble Wash, Potty Path,
+  Bathroom Match, Fly Snack, Mud Off, Listen to Your Body, Flush and Wave,
+  Potty Order), each with a session model, a SwiftUI board, scene art and a
+  render. Fly Snack ends with Hop needing the potty and hands off into the
+  routine. No game has a score, a countdown or a failure state.
+- **Quick Reminder.** A one-off parent-set nudge (presets or a time) as a local
+  notification: planner and repository in Core with tests, a service over
+  `UNUserNotificationCenter`, a sheet and a chip on the Home screen, withdrawn
+  on profile deletion.
+- **Widget and Live Activity.** `Extensions/HopPottyWidgets`: Hop and the next
+  Potty Pause countdown in five widget families, a Live Activity for a pause in
+  progress. The App Group snapshot carries no outcomes, counts, names (off by
+  default) or app tokens. Timeline plan and snapshot builder are tested.
+- **Child mode.** The Hop tab opens a full-screen hub (routine, pond, games,
+  questions) that only the parent gate can leave; the routine opens itself when
+  the app becomes active during a pause, reading the pause and never changing it.
 - **Web prototype.** `Scripts/web/build-prototype.js` turns the same screen
   modules, tokens and SVGs into a static, tappable walkthrough (`web/dist`:
   prototype, gallery of every screen and Hop state, product docs). It is a
@@ -173,7 +191,11 @@ None of these can be resolved from this environment.
 
 ## Next
 
-1. Integrate all agent output; run the full `HopPottyKit` test suite.
-2. Generate the Xcode project on a Mac and fix the first compile pass.
-3. Run the Screen Time proof of concept on a physical device.
-4. Work `Docs/PhysicalDeviceQA.md` and record observed behaviour.
+1. Generate the Xcode project on a Mac (`Scripts/bootstrap.sh`) and fix the
+   first compile pass across the app and four extensions; every SwiftUI file
+   was self-reviewed and parsed but never type-checked.
+2. Run the Screen Time proof of concept on a physical device.
+3. Work `Docs/PhysicalDeviceQA.md` and record observed behaviour.
+4. Replace the SF Symbol on the Hop tab with a rasterised Hop face asset
+   (SwiftUI tab items accept only `Image`), and add pond decoration assets to
+   the asset catalog so the Home backdrop can show unlocked items.
