@@ -56,7 +56,6 @@ function headShape({ tilt = 0, neck = true } = {}) {
     <ellipse cx="75" cy="54" rx="65" ry="26" fill="${C.body}"/>
     <circle cx="${EYE_L.cx}" cy="${EYE_L.cy}" r="${SOCKET_R}" fill="${C.body}"/>
     <circle cx="${EYE_R.cx}" cy="${EYE_R.cy}" r="${SOCKET_R}" fill="${C.body}"/>
-    ${neck ? `<rect x="50" y="66" width="50" height="20" fill="${C.body}"/>` : ''}
   </g>`;
 }
 
@@ -132,9 +131,15 @@ function mouth(kind = 'open') {
 }
 
 /** Torso: a soft capsule. `squash` compresses vertically for landing frames. */
+/**
+ * Torso: straight sides that run up under the jaw, rounded only at the hips.
+ * A capsule with rounded top corners narrowed just below the jaw and read as a
+ * neck; the reference has none — the body tucks straight up behind the head.
+ */
 function torso({ squash = 0, width = 60 } = {}) {
-  const h = 54 - squash * 8;
-  return `<rect x="${75 - width / 2}" y="${76 + squash * 4}" width="${width}" height="${h}" rx="27" fill="${C.body}"/>`;
+  const x0 = 75 - width / 2, x1 = 75 + width / 2;
+  const top = 58 + squash * 4, bottom = 130 - squash * 4, r = Math.min(27, width / 2);
+  return `<path d="M ${x0} ${top} H ${x1} V ${bottom - r} A ${r} ${r} 0 0 1 ${x1 - r} ${bottom} H ${x0 + r} A ${r} ${r} 0 0 1 ${x0} ${bottom - r} Z" fill="${C.body}"/>`;
 }
 
 function belly({ scale = 1 } = {}) {
