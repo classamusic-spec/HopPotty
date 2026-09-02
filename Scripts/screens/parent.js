@@ -216,6 +216,7 @@ function sceneTopBar(col, appearance, { pageX }) {
  * `backgroundPrimary` can get away with.
  */
 function timerCard(col, appearance) {
+  if (process.env.HOP_NO_CARD) return '';
   const dark = appearance.startsWith('dark');
   const modeSoft = dark ? alpha(T.palette.hopGreen, .18) : T.palette.hopGreenSoft;
   const modeInk = dark ? T.palette.hopGreenLight : T.palette.hopGreenInk;
