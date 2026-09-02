@@ -155,7 +155,8 @@ function fly(x, y, s, body, { rot = 0, trail = false } = {}) {
  */
 function hopHand(x, y, s, { rot = 0, flip = false, fill = P.hopGreen } = {}) {
   return `<g transform="translate(${x} ${y}) ${flip ? 'scale(-1 1) ' : ''}rotate(${rot}) scale(${s})"
-    style="filter:drop-shadow(0 5px 9px ${alpha(P.midnight, 0.24)})">
+    style="filter:drop-shadow(0 0 2.4px ${alpha('#FFFFFF', 0.95)}) drop-shadow(0 0 2.4px ${alpha('#FFFFFF', 0.9)})
+      drop-shadow(0 8px 12px ${alpha(P.midnight, 0.26)})">
     <path d="M 0 0 q -10 -60 26 -80 q 38 -20 68 4 q 30 24 22 66 q -8 42 -58 44 q -48 2 -58 -34 Z" fill="${fill}"/>
     <rect x="-6" y="-94" width="25" height="52" rx="12.5" fill="${fill}"/>
     <rect x="23" y="-110" width="25" height="68" rx="12.5" fill="${fill}"/>
@@ -193,9 +194,8 @@ function tapHint(x, y, r, tint, { rings = 3 } = {}) {
 function swipeHint(x, y, len, tint) {
   return `<g transform="translate(${x} ${y})">
     <path d="M ${-len / 2} 8 q ${len / 4} -22 ${len / 2} -4 q ${len / 4} 18 ${len / 2} -6" fill="none"
-      stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 12" opacity=".55"/>
-    <path d="M ${-len / 2} 8 q ${len / 4} -22 ${len / 2} -4 q ${len / 4} 18 ${len / 2} -6" fill="none"
-      stroke="${tint}" stroke-width="4.4" stroke-linecap="round" stroke-dasharray="2 12" opacity=".75"/>
+      stroke="${tint}" stroke-width="5" stroke-linecap="round" stroke-dasharray="0.1 13" opacity=".8"
+      style="filter:drop-shadow(0 0 2px ${alpha('#FFFFFF', 0.9)})"/>
     <circle cx="${len / 2}" cy="-2" r="13" fill="${alpha('#FFFFFF', 0.92)}"/>
     <circle cx="${len / 2}" cy="-2" r="13" fill="none" stroke="${tint}" stroke-width="3.6"/>
   </g>`;
@@ -296,7 +296,7 @@ function marks(total, done, { tint, soft, size = 42, glyph = null, restGlyph = n
       return `<div style="width:${size}px;height:${size}px;border-radius:${size / 2}px;display:grid;place-items:center;
         ${on ? `background:${tint};box-shadow:0 2px 7px ${alpha(tint, .32)}`
         : `background:${alpha(soft || '#FFFFFF', .92)};border:2.6px solid ${alpha(tint, .24)}`}">
-        ${on ? (glyph ? glyph('#FFFFFF') : '') : (restGlyph ? restGlyph(alpha(tint, .3)) : '')}
+        ${on ? (glyph ? glyph('#FFFFFF', i) : '') : (restGlyph ? restGlyph(alpha(tint, .3), i) : '')}
       </div>`;
     }).join('')}
   </div>`;
@@ -490,7 +490,7 @@ function routineTryTimer(appearance = 'light') {
   const col = c(appearance);
   const size = 262;
 
-  return stage(ambient('Art/scenes/routine-try.svg', appearance, { veil: 0.3, blur: 36, glow: [196, 410, 220] }), `
+  return stage(ambient('Art/scenes/routine-try.svg', appearance, { veil: 0.3, blur: 52, glow: [196, 410, 220] }), `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
       ${routineTopRow(0)}
       ${routineHead('Try', 'Sit down and give it a try.')}
@@ -728,7 +728,7 @@ function gameFlySnack(appearance = 'light') {
     line: 'Hop is on his lily pad. Tap the flies for a snack!',
     svgLayer: `
       ${fly(f.x(138), f.y(202), 34, P.pondBlue, { rot: -8, trail: true })}
-      ${tapHint(f.x(430), f.y(150), 30, P.pondBlueDeep, { rings: 2 })}
+      ${tapHint(f.x(430), f.y(150), 30, P.pondBlue, { rings: 2 })}
       ${fly(f.x(430), f.y(150), 31, P.hopGreenDeep, { rot: 10 })}
       ${sparkle(f.x(226), f.y(198), 7, P.sunshine, 0.9)}`,
     htmlLayer: `${hopAt('catch', 148, `left:${f.x(320) - 74}px;top:${f.y(412) - 142}px`)}
@@ -753,7 +753,7 @@ function gameMudOff(appearance = 'light') {
       ${hopHand(f.x(120), f.y(486), f.s * 1.7, { rot: -8 })}
       ${hopHand(f.x(520), f.y(486), f.s * 1.7, { rot: -8, flip: true })}
       ${mudPatch(f.x(193), f.y(397), f.x(32), MUD.brown, { rot: 16 })}
-      ${mudPatch(f.x(447), f.y(397), f.x(27), MUD.green, { rot: -24 })}
+      ${mudPatch(f.x(447), f.y(397), f.x(27), MUD.paint, { rot: -24 })}
       ${sparkleBurst(f.x(235), f.y(350), f.s * 1.3)}
       ${sparkleBurst(f.x(405), f.y(350), f.s * 1.05)}
       ${swipeHint(f.x(200), f.y(430), f.x(150), P.pondBlueDeep)}`,
@@ -763,7 +763,9 @@ function gameMudOff(appearance = 'light') {
       soft: '#FFFFFF',
       size: 42,
       glyph: (fc) => `<svg viewBox="-15 -15 30 30" width="25" height="25"><path d="${sparkPath(12)}" fill="${fc}"/></svg>`,
-      restGlyph: () => `<svg viewBox="-24 -24 48 48" width="25" height="25">${mudPatch(0, 0, 17, MUD.brown)}</svg>`,
+      // The marks name the patches still on Hop's hands, in their own colours.
+      restGlyph: (_, i) => `<svg viewBox="-24 -24 48 48" width="25" height="25">
+        ${mudPatch(0, 0, 17, i === 2 ? MUD.brown : MUD.paint)}</svg>`,
     })}${trayCaption('One patch gone!')}`,
     tint: P.pondBlueDeep,
   });
@@ -784,7 +786,7 @@ function gameBodySignal(appearance = 'light') {
     svgLayer: `${ball(f.x(404), f.y(398), f.x(34), P.peachPop, P.sunshine)}`,
     htmlLayer: `${hopAt('full', 130, `left:${f.x(270) - 65}px;top:${f.y(366) - 130}px`)}
       <svg width="369" height="277" viewBox="0 0 369 277" style="position:absolute;left:0;top:0;display:block">
-        ${tapHint(f.x(486), f.y(150), f.x(132), P.pondBlueDeep, { rings: 1 })}
+        ${tapHint(f.x(486), f.y(150), f.x(132), P.pondBlue, { rings: 1 })}
         ${thoughtBubble(f.x(486), f.y(150), f.x(190), P.pondBlueDeep, `<g transform="scale(0.8)">${PICT.sit(P.pondBlueDeep)}</g>`)}
       </svg>`,
     trayH: 150,
@@ -807,7 +809,7 @@ function gameFlushWave(appearance = 'light') {
     title: 'Flush and Wave',
     line: 'Tap the flusher and watch the water swirl!',
     svgLayer: `
-      ${tapHint(f.x(452), f.y(254), f.x(46), P.pondBlueDeep, { rings: 2 })}
+      ${tapHint(f.x(452), f.y(254), f.x(46), P.pondBlue, { rings: 2 })}
       ${swirl(f.x(452), f.y(332), f.x(40), '#FFFFFF', 0.95)}
       ${swirl(f.x(452), f.y(332), f.x(22), P.pondBlueSoft, 0.9)}
       ${sparkle(f.x(536), f.y(288), 8, '#FFFFFF', .9)}${sparkle(f.x(372), f.y(296), 6, '#FFFFFF', .7)}`,
