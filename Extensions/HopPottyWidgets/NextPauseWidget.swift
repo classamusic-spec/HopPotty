@@ -188,7 +188,7 @@ struct NextPauseWidgetView: View {
             AccessoryWidgetBackground()
             VStack(spacing: 1) {
                 HopWidgetFace(mood: state.mood, size: 20, isMonochrome: true)
-                compactCountdown
+                countdown
                     .font(.system(.caption2, design: .rounded, weight: .semibold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
@@ -207,7 +207,7 @@ struct NextPauseWidgetView: View {
                 Text(verbatim: state.headline)
                     .font(.system(.caption, design: .rounded, weight: .semibold))
                     .lineLimit(1)
-                compactCountdown
+                countdown
                     .font(.system(.title3, design: .rounded, weight: .bold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
@@ -252,23 +252,16 @@ struct NextPauseWidgetView: View {
     // sparse as it is. Entries exist for the things a date cannot animate: which
     // face Hop is wearing, and the moment the words have to change.
 
-    @ViewBuilder
-    private var countdown: some View {
+    /// The countdown, at whatever size the caller's font says.
+    ///
+    /// One property for all four stacked layouts: they differ in font and in
+    /// nothing else, and two copies of this would be two places for the styles
+    /// to drift apart. The inline family is the exception and has `inlineText`,
+    /// because it cannot contain a stack at all.
+    private var countdown: Text {
         switch state.kind {
-        case .counting(let target):
-            Text(target, style: .timer)
-        case .word(let word):
-            Text(verbatim: word)
-        }
-    }
-
-    @ViewBuilder
-    private var compactCountdown: some View {
-        switch state.kind {
-        case .counting(let target):
-            Text(target, style: .timer)
-        case .word(let word):
-            Text(verbatim: word)
+        case .counting(let target): Text(target, style: .timer)
+        case .word(let word): Text(verbatim: word)
         }
     }
 
@@ -319,7 +312,9 @@ struct NextPauseDisplayState {
         let reminder = snapshot.quickReminderAt.flatMap { $0 > now ? $0 : nil }
         let pause = snapshot.nextPauseAt.flatMap { $0 > now ? $0 : nil }
 
-        if let reminder, pause == nil || reminder < pause! {
+        // "The reminder is first" means either there is no pause to compare it
+        // with, or it lands before the one there is.
+        if let reminder, pause.map({ reminder < $0 }) ?? true {
             headline = HopCopy.quickReminder.title.value
             kind = .counting(reminder)
             // When both are coming and the reminder is first, the pause becomes
@@ -352,10 +347,18 @@ struct NextPauseDisplayState {
 }
 
 #if DEBUG
-#Preview("Next pause", as: .systemSmall) {
-    NextPauseWidget()
-} timeline: {
-    NextPauseEntry(date: .now, snapshot: .placeholder(at: .now))
-    NextPauseEntry(date: .now, snapshot: .empty(at: .now))
+// The plain view preview rather than `#Preview(as:widget:timeline:)`. The widget
+// form renders the real timeline, which is worth having — but it is also the one
+// preview API in this file that nothing in this repository can compile-check, and
+// a preview that does not build fails the whole target. Add it back the first
+// time someone opens this project in Xcode and can watch it succeed.
+#Preview("Next pause — home screen") {
+    VStack(spacing: 16) {
+        NextPauseWidgetView(entry: NextPauseEntry(date: .now, snapshot: .placeholder(at: .now)))
+            .frame(width: 158, height: 158)
+        NextPauseWidgetView(entry: NextPauseEntry(date: .now, snapshot: .empty(at: .now)))
+            .frame(width: 158, height: 158)
+    }
+    .padding()
 }
 #endif

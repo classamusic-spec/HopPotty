@@ -128,7 +128,9 @@ Sources: [Configuring Family Controls](https://developer.apple.com/documentation
    (sign-in required), or via the **Capability Requests** tab in Certificates,
    Identifiers & Profiles → Identifiers → *your identifier*
    ([Capability Requests](https://developer.apple.com/help/account/capabilities/capability-requests/)).
-3. **Submit once per App ID** — the app *and* each of the three extensions.
+3. **Submit once per App ID** — the app *and* each of the three Screen Time
+   extensions. The widget extension holds no Family Controls entitlement and
+   needs no request (`Docs/Widgets.md`).
 4. "Apple reviews your app, and if it's approved, adds the entitlement to your
    developer account using managed capabilities."
 5. Check status: the capability shows **Assigned** when approved. "Click the info
