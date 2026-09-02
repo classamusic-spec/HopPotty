@@ -63,7 +63,7 @@ function hopHub(appearance = 'light') {
           <div style="height:44px;padding:0 15px 0 11px;border-radius:22px;background:${alpha('#FFFFFF', .88)};
             display:flex;align-items:center;gap:6px">
             ${MARK.star(P.sunshineBright, 21)}
-            <span style="${type('buttonLarge', { color: P.sunshineDeep })};font-size:19px">13</span>
+            <span style="${type('buttonLarge', { color: INK })};font-size:19px">13</span>
           </div>
           <div style="height:${T.hitTarget.parentMinimum}px;padding:0 15px;border-radius:22px;background:${alpha('#FFFFFF', .7)};
             display:flex;align-items:center;gap:6px">

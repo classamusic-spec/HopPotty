@@ -12,7 +12,9 @@
  *
  * `ALL=1` prints the 24 worst runs on each screen rather than only the failures,
  * which is how you find the number to watch before it becomes the number that
- * broke.
+ * broke. `WHY=1` adds, for each failure, the ink, the exact pixel it lost
+ * against and where that pixel is — the difference between "darken the ink" and
+ * "the plate underneath is not painting at all".
  *
  * ## Two things it does that a token-pair calculator cannot
  *
@@ -26,9 +28,12 @@
  *    capsule "fails" against the page showing through the corner — so the rects
  *    come from a `Range` over the text nodes.
  *
- * Known non-failures it will still report: a screen that deliberately draws a
- * *dimmed presenter* behind a sheet (05, 37, 38, 41) is scored on the dimmed
- * layer, which is scenery rather than a reading surface.
+ * ## Exemptions
+ *
+ * `EXEMPT` below is the whole list, each entry carrying its reason. A run that
+ * fails and is not in it fails the script — this is a gate, not a report. A run
+ * that is in it and *stops* failing also fails the script, so the list cannot
+ * quietly outlive the thing it excused.
  *
  * Composite-then-measure: the run's ink colour is compared against the darkest
  * *and* lightest pixel of the ground actually painted underneath it, after the
@@ -38,6 +43,27 @@
  */
 const { chromium } = require('playwright');
 const path = require('path');
+
+/**
+ * Runs that are allowed to score under the floor, and why.
+ *
+ * One entry, and it is not "we could not get it to pass".
+ *
+ * The **platform's destructive red** is `Button(role: .destructive)`, which iOS
+ * paints and this render only depicts. It is 3.4:1 on white and Apple ships it
+ * in Settings; matching it is more useful to a caregiver than being right about
+ * it alone, and the word "Delete" carries the meaning without the colour. Note
+ * this covers only the rows iOS draws — every destructive control the app draws
+ * itself uses `HopDestructiveButton`, which is darker on purpose and passes at
+ * 6.5:1.
+ *
+ * The dimmed screen behind a sheet is *not* here. It is marked `data-scenery`
+ * in the render and skipped outright, because it is not one run to excuse but
+ * every run on a whole screen the person is looking past.
+ */
+const EXEMPT = {
+  '34-settings-hub': { text: 'Delete everything', why: "iOS's own destructive red, which iOS paints" },
+};
 const { baseCSS } = require('./ui');
 
 const DEVICES = { iphone: { width: 393, height: 852 }, ipad: { width: 1024, height: 768 } };
@@ -62,6 +88,9 @@ async function main() {
       const touched = [];
       for (const el of document.querySelectorAll('body *')) {
         if (el.closest('svg')) continue;
+        // Text the render has declared scenery — the dimmed screen behind a
+        // sheet. Not a reading surface, so not a reading measurement.
+        if (el.closest('[data-scenery]')) continue;
         const cs = getComputedStyle(el);
         const size = parseFloat(cs.fontSize);
         const weight = parseInt(cs.fontWeight, 10) || 400;
@@ -116,19 +145,41 @@ async function main() {
         if (w <= 0 || h <= 0) return { ...run, ratio: null };
         const d = ctx.getImageData(x, y, w, h).data;
         let worst = Infinity;
+        let at = null;
         for (let i = 0; i < d.length; i += 4) {
           const r = ratio(L, lum(d[i], d[i + 1], d[i + 2]));
-          if (r < worst) worst = r;
+          if (r < worst) { worst = r; at = { r: d[i], g: d[i + 1], b: d[i + 2], i: i / 4 }; }
         }
-        return { text: run.text, large: run.large, ratio: worst };
+        // Where the worst pixel is and what colour it is. A number alone tells
+        // you a run failed; this tells you what it failed against, which is the
+        // difference between "darken the ink" and "the plate is not painting".
+        const spot = at
+          ? { colour: `rgb(${at.r}, ${at.g}, ${at.b})`, x: x + (at.i % w), y: y + Math.floor(at.i / w) }
+          : null;
+        return { text: run.text, large: run.large, ratio: worst, ink: run.color, box: { x, y, w, h }, spot };
       });
     }, { runs, shot });
 
     const floor = (r) => (r.large ? 3.0 : 4.5);
-    const fails = scored.filter((r) => r.ratio !== null && r.ratio < floor(r));
+    const allowed = EXEMPT[name];
+    const under = scored.filter((r) => r.ratio !== null && r.ratio < floor(r));
+    const excused = under.filter((r) => allowed && r.text === allowed.text);
+    const fails = under.filter((r) => !excused.includes(r));
+    if (allowed && !excused.length) {
+      stale.push(`${name}: "${allowed.text}" is exempt (${allowed.why}) but no longer scores under the floor`);
+    }
+    failed += fails.length;
     const min = scored.reduce((m, r) => (r.ratio !== null && r.ratio < m.ratio ? r : m), { ratio: Infinity, text: '—' });
     console.log(`${fails.length ? '✗' : '✓'} ${name}  worst ${min.ratio === Infinity ? 'n/a' : min.ratio.toFixed(2)}:1  "${min.text}"`);
-    for (const f of fails) console.log(`    ${f.ratio.toFixed(2)}:1  (floor ${floor(f)})  "${f.text}"`);
+    for (const f of fails) {
+      console.log(`    ${f.ratio.toFixed(2)}:1  (floor ${floor(f)})  "${f.text}"`);
+      if (process.env.WHY) {
+        console.log(`        ink ${f.ink}  over ${f.spot ? f.spot.colour : '—'} ` +
+          `at (${f.spot ? f.spot.x : '?'}, ${f.spot ? f.spot.y : '?'})  ` +
+          `run box ${f.box.w}×${f.box.h} at (${f.box.x}, ${f.box.y})`);
+      }
+    }
+    for (const e of excused) console.log(`    ${e.ratio.toFixed(2)}:1  exempt — ${allowed.why}`);
     if (process.env.ALL) {
       for (const r of scored.filter((s) => s.ratio !== null).sort((a, b) => a.ratio - b.ratio).slice(0, 24)) {
         console.log(`      ${r.ratio.toFixed(2)}:1  ${r.large ? 'L' : ' '}  "${r.text}"`);
@@ -137,5 +188,18 @@ async function main() {
     await page.close();
   }
   await browser.close();
+
+  for (const line of stale) console.log(`\nstale exemption — ${line}`);
+  if (failed || stale.length) {
+    console.log(`\n${failed} run(s) below the floor${stale.length ? `, ${stale.length} stale exemption(s)` : ''}`);
+    process.exitCode = 1;
+  } else {
+    console.log('\nEvery text run clears its floor, or is exempt for a written reason.');
+  }
 }
+
+/** Runs below the floor with no exemption, and exemptions no longer needed. */
+let failed = 0;
+const stale = [];
+
 main().catch((e) => { console.error(e); process.exit(1); });

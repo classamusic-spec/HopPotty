@@ -584,14 +584,35 @@ function gamesHub(appearance = 'light') {
   // happens in, with its name laid on the picture. The sentence a child cannot
   // read is gone — `MiniGame.childDescription` is what Hop says out loud when
   // the game opens, which is where a pre-reader actually receives it.
+  //
+  // The name sits on a *nameplate*, not on a fade. A gradient that is still
+  // arriving where the glyphs are put white type on a pale bathroom wall at
+  // 1.6:1 — and a two-line name like "Listen to Your Body" reaches higher up the
+  // fade than a one-line one, so the failure was worst on the longest title.
+  // So: a solid plate deep enough to carry white type over the brightest picture
+  // in the set, exactly as tall as two lines of the name, with a short fade
+  // above it to join it to the scene. The plate is a caption bar on a picture —
+  // part of the composition — rather than a veil over the whole tile, so the
+  // illustration is undimmed everywhere it matters.
+  // Tight on purpose: 46px of plate is exactly two lines of the longest name
+  // plus its padding, and the 12px feather above it is only enough to stop the
+  // top edge reading as a cut. Together they cover 58 of the tile's 158 — the
+  // picture keeps its whole upper two-thirds undimmed, which is the trade a
+  // wash over the whole tile would have lost.
+  const PLATE = 48;
   const door = (g) => `
     <div style="position:relative;height:158px;border-radius:${T.radius.xxl}px;overflow:hidden;
       box-shadow:${elevation(appearance, 'resting')}">
       ${thumb(g.key, 158, g.focus)}
-      <div style="position:absolute;left:0;right:0;bottom:0;height:76px;
-        background:linear-gradient(180deg, ${alpha(P.midnight, 0)} 0%, ${alpha(P.midnight, .62)} 100%)"></div>
-      <div style="position:absolute;left:12px;right:12px;bottom:11px;
-        ${type('childInstruction', { color: P.cloud })};font-size:17px;line-height:1.15">${g.title}</div>
+      <div style="position:absolute;left:0;right:0;bottom:${PLATE}px;height:12px;
+        background:linear-gradient(180deg, ${alpha(P.midnight, 0)} 0%, ${alpha(P.midnight, .78)} 100%)"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;height:${PLATE}px;background:${alpha(P.midnight, .78)}"></div>
+      <!-- Inset past the tile's own corner radius, not just past its edge. A
+           text run's rect is the width of its line box, so a caption 11px from
+           a 32px-rounded corner has the page showing through the first pixel
+           column of its own box — which reads fine and scores 1.6:1. -->
+      <div style="position:absolute;left:18px;right:18px;bottom:11px;
+        ${type('childInstruction', { color: P.cloud })};font-size:15px;line-height:1.12">${g.title}</div>
     </div>`;
 
   return `

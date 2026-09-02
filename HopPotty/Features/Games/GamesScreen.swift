@@ -230,13 +230,20 @@ private struct GameChoiceTile: View {
             .hopAnimation(.childTap, value: isPressed)
     }
 
-    /// The name, over the bottom of the picture.
+    /// The name, on a plate at the bottom of the picture.
+    ///
+    /// A *plate*, not a fade. A gradient that is still arriving where the glyphs
+    /// are puts white type on a pale bathroom wall — and a two-line name reaches
+    /// higher up the fade than a one-line one, so the failure lands hardest on
+    /// the longest title. The plate is a flat scrim exactly as tall as the name
+    /// plus its padding, with a short feather above it to join it to the scene:
+    /// the caption is legible over every illustration in the set, and the
+    /// picture keeps its whole upper two-thirds undimmed.
     ///
     /// The scrim is `HopSemanticPalette/scrim` rather than a hand-picked black,
-    /// which is the one thing that keeps the name legible over eight different
-    /// illustrations — a bright pond, a white bathroom, a wooden hallway —
-    /// without a per-tile decision. It fades to nothing over the top half, so it
-    /// darkens the caption and not the picture.
+    /// which is what lets one number work over eight different illustrations —
+    /// a bright pond, a white bathroom, a wooden hallway — and in both
+    /// appearances, without a per-tile decision.
     private var nameplate: some View {
         Text(game.title.localized)
             .hopTextStyle(.buttonLarge)
@@ -244,18 +251,12 @@ private struct GameChoiceTile: View {
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, theme.spacing.l)
-            .padding(.bottom, theme.spacing.m)
-            .padding(.top, theme.spacing.xxl)
-            .background {
-                LinearGradient(
-                    stops: [
-                        .init(color: scrim(0), location: 0),
-                        .init(color: scrim(0.42), location: 0.55),
-                        .init(color: scrim(0.72), location: 1),
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+            .padding(.vertical, theme.spacing.m)
+            .background { scrim(0.78) }
+            .overlay(alignment: .top) {
+                LinearGradient(colors: [scrim(0), scrim(0.78)], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 14)
+                    .offset(y: -14)
             }
     }
 

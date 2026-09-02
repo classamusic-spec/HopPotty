@@ -71,6 +71,27 @@ function promiseRow(col, appearance, { glyph, tint, soft, text }) {
   </div>`;
 }
 
+/**
+ * What a destructive control is painted, on each side of the app.
+ *
+ * Two values because the app draws destructive two ways and they are not the
+ * same red. A row in a `Form` is `Button(role: .destructive)`, so iOS paints it
+ * and iOS's red is what this has to show — it is not ours to improve. A control
+ * we draw ourselves is `HopDestructiveButton`, which is deliberately darker
+ * than the system red and tonal rather than filled, so it reaches 6.5:1 where
+ * the platform's reaches 3.4.
+ *
+ * Neither is `eventPoop`. That is the tint of a bowel movement in the timeline,
+ * and it was standing in here for want of a destructive role — which put the
+ * poop colour on "Delete everything" and left it below 4:1 as well.
+ */
+const DESTRUCTIVE = {
+  // iOS `systemRed`, the two values it resolves to.
+  system: (dark) => (dark ? '#FF453A' : '#FF3B30'),
+  // `HopDestructiveButton`'s tint — HopButtons.swift, and it must stay in step.
+  own: (dark) => (dark ? '#FF6961' : '#C22121'),
+};
+
 /** A secondary, unfilled caregiver button. Same height as the primary. */
 function secondaryButton(col, label, { height = 52 } = {}) {
   return `<div style="height:${height}px;border-radius:${height / 2}px;border:1.5px solid ${col.divider};
@@ -85,8 +106,13 @@ function secondaryButton(col, label, { height = 52 } = {}) {
  */
 function sheetOver(appearance, presenter, sheetInner, { top, radius = 12 } = {}) {
   const col = c(appearance);
+  // `data-scenery` on the presenter, and it is not decoration: the screen behind
+  // a sheet is scaled back and dimmed on purpose, and its text is something the
+  // person is looking past rather than reading. `check-contrast.js` skips runs
+  // inside it for that reason — measuring them is measuring the blur behind a
+  // photograph, and every sheet in the app would carry a page of excuses.
   return `<div style="position:relative;width:${W}px;height:${H}px;overflow:hidden;background:${P.midnight}">
-    <div style="position:absolute;left:0;top:10px;width:${W}px;height:${H}px;overflow:hidden;border-radius:14px;
+    <div data-scenery="dimmed presenter" style="position:absolute;left:0;top:10px;width:${W}px;height:${H}px;overflow:hidden;border-radius:14px;
       transform:scale(0.93);transform-origin:top center;box-shadow:0 -2px 16px ${alpha(P.midnight, .4)}">
       ${presenter}
       <div style="position:absolute;inset:0;background:${alpha(P.midnight, .14)}"></div>
@@ -467,8 +493,8 @@ function settingsHub(appearance = 'light') {
             label: 'Export my data', chevron: true,
           }),
           listRow(col, {
-            icon: tile(EXTRA.trash, col.eventPoop),
-            label: `<span style="color:${col.eventPoop}">Delete everything</span>`, accessory: '', last: true,
+            icon: tile(EXTRA.trash, DESTRUCTIVE.system(dark)),
+            label: `<span style="color:${DESTRUCTIVE.system(dark)}">Delete everything</span>`, accessory: '', last: true,
           }),
         ],
       })}
@@ -640,7 +666,7 @@ function paywallFamily(appearance = 'light') {
           'Longer windows and time-of-day comparisons.')}
         ${feature(MARK.check, dark ? P.sunshine : P.sunshineDeep, P.sunshine, 'Custom routines',
           'Choose the steps and how long each one lasts.')}
-        ${feature(EXTRA.export, col.eventPoop, P.peachPop, 'Export your data',
+        ${feature(EXTRA.export, col.brandAction, P.pondBlue, 'Export your data',
           'Take a copy of the timeline with you.')}
       </div>
 
@@ -798,9 +824,9 @@ function deleteDataConfirm(appearance = 'light') {
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto;padding-bottom:4px">
-        <div style="height:52px;border-radius:26px;background:${col.eventPoop};display:grid;place-items:center;
-          box-shadow:${elevation(appearance, 'raised')};
-          ${type('parentHeadline', { color: col.textOnBrand, weight: 'semibold' })};font-size:17px">Delete</div>
+        <div style="height:52px;border-radius:26px;background:${alpha(DESTRUCTIVE.own(dark), dark ? .18 : .12)};
+          display:grid;place-items:center;
+          ${type('parentHeadline', { color: DESTRUCTIVE.own(dark), weight: 'semibold' })};font-size:17px">Delete</div>
         <div style="height:${T.spacing.s}px"></div>
         ${secondaryButton(col, 'Cancel')}
       </div>

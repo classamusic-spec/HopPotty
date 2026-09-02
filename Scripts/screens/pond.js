@@ -126,7 +126,7 @@ function hopsPond(appearance = 'light') {
           <div style="flex:1"></div>
           ${pill(`<span style="${type('childTitle', { color: INK })};font-size:22px">Maya's pond</span>`, '0 16px')}
           <div style="flex:1"></div>
-          ${pill(`${MARK.star(P.sunshineBright, 20)}<span style="${type('buttonLarge', { color: P.sunshineDeep })};font-size:18px">13</span>`, '0 14px 0 11px')}
+          ${pill(`${MARK.star(P.sunshineBright, 20)}<span style="${type('buttonLarge', { color: INK })};font-size:18px">13</span>`, '0 14px 0 11px')}
         </div>
 
         <div style="flex:1"></div>

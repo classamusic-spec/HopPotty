@@ -152,8 +152,10 @@ function chooseApps(appearance = 'light') {
   return `
   <div style="position:relative;width:100%;height:100%;overflow:hidden;background:${T.palette.midnight}">
 
-    <!-- HopPotty's own screen, scaled back the way iOS scales a sheet's presenter -->
-    <div style="position:absolute;left:0;right:0;top:10px;height:${sheetTop + 40}px;overflow:hidden;
+    <!-- HopPotty's own screen, scaled back the way iOS scales a sheet's presenter.
+         Marked scenery for the same reason sheetOver marks its presenter: the
+         person is looking at Apple's picker, and this is what they look past. -->
+    <div data-scenery="dimmed presenter" style="position:absolute;left:0;right:0;top:10px;height:${sheetTop + 40}px;overflow:hidden;
       border-radius:14px;background:${col.surfaceSunken}">
       <div style="display:flex;flex-direction:column;height:100%">
         ${statusBar(col.textPrimary)}
