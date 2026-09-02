@@ -92,6 +92,14 @@ jobs:
   app:
     name: App and extensions (Xcode)
     runs-on: macos-15
+    # A bound, because the default is six hours and this job found out the hard
+    # way that it needed one. Every build up to run 60 finished in about two
+    # minutes -- by failing type-checking, which is where a build stops. Run 61
+    # was the first to type-check clean, so it was also the first to reach code
+    # generation and linking for the whole app, and it was still going at
+    # forty-six minutes with no way to tell a slow build from a stuck one.
+    # A timeout turns the second case into a result instead of an afternoon.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -122,6 +130,22 @@ jobs:
       # no provisioning profile, and a Simulator build needs neither. This is
       # also why the job cannot catch entitlement or provisioning mistakes —
       # those surface on a device, and Docs/RunningLocally.md covers them.
+      # Two overrides beyond CODE_SIGNING_ALLOWED, both about not doing work
+      # that proves nothing:
+      #
+      #   ARCHS=arm64 — a generic Simulator destination builds arm64 AND x86_64
+      #   by default, which is two full code-generation passes over ~190 SwiftUI
+      #   files to answer one question. Type checking, actor isolation and every
+      #   Swift diagnostic this job exists to catch are architecture-independent,
+      #   so the second pass finds nothing the first did not. Anyone who needs an
+      #   Intel simulator slice is building locally, where the default still
+      #   applies.
+      #
+      #   CLANG_ENABLE_CODE_COVERAGE=NO — the scheme gathers coverage for its
+      #   *test* action, and this job never runs tests. Without this the compiler
+      #   is handed -profile-generate and -profile-coverage-mapping and
+      #   instruments every function in the app, for a profile nothing will ever
+      #   read.
       - name: Build
         run: |
           set -euo pipefail
@@ -131,6 +155,8 @@ jobs:
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath .derived \
             CODE_SIGNING_ALLOWED=NO \
+            ARCHS=arm64 \
+            CLANG_ENABLE_CODE_COVERAGE=NO \
             2>&1 | tee /tmp/xcodebuild.log
 
       # The full log, because the summary below is deliberately truncated and the
@@ -176,5 +202,16 @@ jobs:
             fi
             if [ -n "$others" ]; then
               echo "### Other errors (linking, resources, signing)"; echo '```'; printf '%s\n' "$others" | head -100; echo '```'
+            fi
+            # A job killed by the timeout has no errors to report and no
+            # "BUILD FAILED" line either, so without this it looks like a job
+            # that did nothing. The last few compile tasks name what it was
+            # still working on when the clock ran out.
+            if [ -z "$errors" ] && [ -z "$others" ] && ! grep -q '\*\* BUILD SUCCEEDED \*\*' "$log"; then
+              echo "### No diagnostics, and no successful build"
+              echo "The build did not finish. It was last working on:"
+              echo '```'
+              grep -E '^(SwiftCompile|SwiftDriverJobDiscovery|Ld|CompileAssetCatalog) ' "$log" | tail -10 | strip
+              echo '```'
             fi
           } | tee -a "$GITHUB_STEP_SUMMARY"

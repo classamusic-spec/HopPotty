@@ -337,6 +337,40 @@ most of these, but not the ones that only bite an existing checkout:
 
 ---
 
+## Layer 6 — the build that finally type-checked, and then would not finish
+
+*Run 61. Zero diagnostics, and no result for forty-six minutes.*
+
+Every build up to run 60 finished in about **two minutes**. That was not speed,
+it was failure: a build stops at type-checking, so nothing after it ever ran.
+Run 61 was the first to type-check the whole app clean, which made it the first
+to reach SIL generation, code generation and linking for ~190 SwiftUI files —
+and it was still going at forty-six minutes, with no way to tell a slow build
+from a stuck one.
+
+Three changes, all of them about not doing work that proves nothing:
+
+* **`timeout-minutes: 45`** on the job. The GitHub default is six hours. A
+  runaway type-check — the classic "unable to type-check this expression in
+  reasonable time" — would have burned all of it and reported nothing useful. A
+  bound turns that into a result.
+* **`ARCHS=arm64`.** A generic Simulator destination builds `arm64` *and*
+  `x86_64` by default: two complete code-generation passes over the whole app to
+  answer one question. Type checking, actor isolation and every Swift diagnostic
+  this job exists to catch are architecture-independent, so the second pass
+  finds nothing the first did not.
+* **`CLANG_ENABLE_CODE_COVERAGE=NO`.** The scheme gathers coverage for its
+  *test* action, and this job never runs tests — but the setting still reached
+  the compiler as `-profile-generate -profile-coverage-mapping`, instrumenting
+  every function in the app for a profile nothing would ever read.
+
+The summary step also learned to say something when there is nothing to say: a
+job with no diagnostics *and* no `** BUILD SUCCEEDED **` now prints the last ten
+compile tasks, so a timeout names the file it died on instead of looking like a
+job that did nothing.
+
+---
+
 ## Reading a failed build
 
 `.github/workflows/ci.yml` ends with a **Summarise diagnostics** step,
