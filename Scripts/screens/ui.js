@@ -48,13 +48,22 @@ function svgInline(relPath, { width, height } = {}) {
     .replace(/<\?xml[^>]*\?>/g, '')
     .replace(/<!DOCTYPE[^>]*>/gi, '')
     .trim();
-  // Force the box the caller asked for; the drawing keeps its own viewBox, so
-  // it letterboxes exactly the way `object-fit:contain` did on the `<img>`.
-  return src.replace(/^<svg\b([^>]*)>/i, (_m, attrs) => {
-    const kept = attrs.replace(/\s(?:width|height|style)="[^"]*"/gi, '');
-    return `<svg${kept}${width ? ` width="${width}"` : ''}${height ? ` height="${height}"` : ''}` +
-      ` style="display:block">`;
-  });
+  const root = /^<svg\b([^>]*)>/i.exec(src);
+  if (!root) return src;
+  const vb = /viewBox="([^"]+)"/i.exec(root[1]);
+  const size = vb ? vb[1].trim().split(/[\s,]+/).slice(2)
+    : [(/\swidth="([\d.]+)"/i.exec(root[1]) || [, 100])[1],
+       (/\sheight="([\d.]+)"/i.exec(root[1]) || [, 100])[1]];
+
+  // The drawing is nested inside the box the caller asked for rather than
+  // resized in place, and that nesting is the point: an inner <svg> is its own
+  // viewport, so anything the artist drew outside the viewBox is clipped away
+  // exactly as it was when this art arrived through an `<img>`. Resizing the
+  // root instead lets the overspill escape, which is a real drawing (the pond
+  // basin) landing in the middle of a screen.
+  const box = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size[0]} ${size[1]}"` +
+    `${width ? ` width="${width}"` : ''}${height ? ` height="${height}"` : ''} style="display:block">`;
+  return `${box}${src}</svg>`;
 }
 
 /** `artOr`, inlined. Falls back to the same drawn-here HTML when nothing exists. */

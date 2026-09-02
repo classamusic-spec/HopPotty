@@ -899,12 +899,12 @@ const ITEMS = {
       <rect x="${R(x + lean - 12 * s)}" y="${R(top - 4)}" width="${R(9 * s)}" height="${R(52 * s)}" rx="${R(4.5 * s)}" fill="#FFFFFF" opacity="0.2"/>`).join('')}`,
 
   stoneSmall: () => `
-    <ellipse cx="100" cy="132" rx="62" ry="14" fill="${P.midnight}" opacity="0.10"/>
+    <ellipse cx="100" cy="132" rx="71" ry="17" fill="url(#softShadow)"/><ellipse cx="102" cy="132" rx="37" ry="7" fill="${P.midnight}" opacity="0.13"/>
     ${pebble(96, 108, 56, 34)}
     ${pebble(142, 122, 26, 17, { fill: 'url(#stoneGradCool)' })}`,
 
   stoneStack: () => `
-    <ellipse cx="100" cy="168" rx="66" ry="15" fill="${P.midnight}" opacity="0.10"/>
+    <ellipse cx="100" cy="168" rx="75" ry="18" fill="url(#softShadow)"/><ellipse cx="102" cy="168" rx="40" ry="8" fill="${P.midnight}" opacity="0.13"/>
     ${pebble(100, 148, 62, 26)}
     ${pebble(96, 108, 46, 24, { fill: 'url(#stoneGradCool)' })}
     ${pebble(102, 74, 32, 19)}
@@ -970,7 +970,7 @@ const ITEMS = {
     <circle cx="7" cy="-33" r="3.4" fill="#FFFFFF" opacity="0.5"/>`),
 
   snail: () => `
-    <ellipse cx="104" cy="150" rx="68" ry="12" fill="${P.midnight}" opacity="0.1"/>
+    <ellipse cx="104" cy="150" rx="78" ry="14" fill="url(#softShadow)"/><ellipse cx="106" cy="150" rx="41" ry="6" fill="${P.midnight}" opacity="0.13"/>
     <path d="M 40 142 q -20 -6 -18 -26 q 2 -18 20 -18 q 16 0 18 14 l 6 30 Z" fill="url(#greenBall)"/>
     <path d="M 30 100 q -6 -24 4 -34" stroke="${P.hopGreen}" stroke-width="8" stroke-linecap="round" fill="none"/>
     <path d="M 46 100 q 0 -18 8 -26" stroke="${P.hopGreen}" stroke-width="7" stroke-linecap="round" fill="none"/>
@@ -984,7 +984,7 @@ const ITEMS = {
   // The head is a small cap peeking over the shell. Pass 1 drew it as a wide
   // black band across the top, which read as a bandit mask.
   ladybug: () => `
-    <ellipse cx="100" cy="150" rx="54" ry="10" fill="${P.midnight}" opacity="0.1"/>
+    <ellipse cx="100" cy="150" rx="62" ry="12" fill="url(#softShadow)"/><ellipse cx="102" cy="150" rx="32" ry="5" fill="${P.midnight}" opacity="0.13"/>
     <circle cx="100" cy="62" r="26" fill="${P.night700}"/>
     <circle cx="90" cy="52" r="6" fill="#FFFFFF"/><circle cx="110" cy="52" r="6" fill="#FFFFFF"/>
     <circle cx="90" cy="53" r="3" fill="${P.night900}"/><circle cx="110" cy="53" r="3" fill="${P.night900}"/>
@@ -1040,7 +1040,7 @@ const ITEMS = {
   // y=0.33, right where the pond ellipse is tallest, so a base-heavy drawing
   // gets sliced off by the waterline drawn over it.
   clubhouse: () => g('translate(100 24) scale(0.74) translate(-100 -24)', `
-    <ellipse cx="100" cy="178" rx="80" ry="12" fill="${P.midnight}" opacity="0.12"/>
+    <ellipse cx="100" cy="178" rx="91" ry="14" fill="url(#softShadow)"/><ellipse cx="102" cy="178" rx="48" ry="6" fill="${P.midnight}" opacity="0.13"/>
     <path d="M 30 118 q 0 -12 12 -12 h 116 q 12 0 12 12 v 44 q 0 12 -12 12 h -116 q -12 0 -12 -12 Z" fill="url(#woodGrad)"/>
     <path d="M 100 44 L 182 104 q 10 8 -4 8 H 22 q -14 0 -4 -8 Z" fill="url(#greenBall)"/>
     <path d="M 100 58 L 158 100 H 42 Z" fill="#FFFFFF" opacity="0.14"/>
@@ -1070,7 +1070,7 @@ const ITEMS = {
     <path d="M 92 136 h 16 l -4 12 h -8 Z" fill="${P.woodDeep}"/>`,
 
   signpost: () => `
-    <ellipse cx="100" cy="182" rx="50" ry="10" fill="${P.midnight}" opacity="0.12"/>
+    <ellipse cx="100" cy="182" rx="57" ry="12" fill="url(#softShadow)"/><ellipse cx="102" cy="182" rx="30" ry="5" fill="${P.midnight}" opacity="0.13"/>
     <rect x="92" y="60" width="16" height="120" rx="8" fill="url(#woodGradV)"/>
     <path d="M 24 66 h 106 l 28 26 l -28 26 H 24 q -8 0 -8 -8 V 74 q 0 -8 8 -8 Z" fill="url(#woodGrad)"/>
     <path d="M 24 66 h 106 l 11 10 H 20 q 0 -10 4 -10 Z" fill="#FFFFFF" opacity="0.2"/>
@@ -1095,7 +1095,7 @@ const ITEMS = {
       <circle cx="-16" cy="-18" r="8" fill="${P.cloud}" opacity="0.9"/>
       <circle cx="10" cy="-28" r="6.4" fill="${P.cloud}" opacity="0.9"/>
       <circle cx="26" cy="-12" r="5.4" fill="${P.cloud}" opacity="0.85"/>`);
-    return `<ellipse cx="100" cy="162" rx="72" ry="12" fill="${P.midnight}" opacity="0.1"/>
+    return `<ellipse cx="100" cy="162" rx="82" ry="14" fill="url(#softShadow)"/><ellipse cx="102" cy="162" rx="43" ry="6" fill="${P.midnight}" opacity="0.13"/>
       ${shroom(56, 156, 0.66)}${shroom(146, 160, 0.56)}${shroom(102, 152, 0.98)}`;
   },
 
@@ -1108,7 +1108,7 @@ const ITEMS = {
     ${g('translate(108 188)', frond(106, 32, 20))}`,
 
   duckling: () => `
-    <ellipse cx="100" cy="152" rx="70" ry="13" fill="${P.pondBlueInk}" opacity="0.12"/>
+    <ellipse cx="100" cy="152" rx="80" ry="16" fill="url(#softShadow)"/><ellipse cx="102" cy="152" rx="42" ry="7" fill="${P.pondBlueInk}" opacity="0.11"/>
     <ellipse cx="88" cy="118" rx="60" ry="42" fill="url(#yellowBall)"/>
     <path d="M 122 90 q 10 -14 20 -18" stroke="${P.sunshineBright}" stroke-width="18" stroke-linecap="round" fill="none"/>
     <circle cx="140" cy="70" r="34" fill="url(#yellowBall)"/>
@@ -1121,7 +1121,7 @@ const ITEMS = {
     <path d="M 34 146 q 66 20 132 -4" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.55"/>`,
 
   turtleRock: () => `
-    <ellipse cx="100" cy="160" rx="82" ry="16" fill="${P.pondBlueInk}" opacity="0.12"/>
+    <ellipse cx="100" cy="160" rx="93" ry="19" fill="url(#softShadow)"/><ellipse cx="102" cy="160" rx="49" ry="8" fill="${P.pondBlueInk}" opacity="0.11"/>
     ${pebble(100, 142, 80, 28, { fill: 'url(#stoneGrad)', light: 0.35 })}
     <ellipse cx="100" cy="152" rx="64" ry="12" fill="${P.sand300}" opacity="0.45"/>
     <ellipse cx="46" cy="122" rx="18" ry="9" fill="${P.hopGreenLight}"/>
@@ -1193,7 +1193,7 @@ const ITEMS = {
     ${pebble(126, 62, 15, 6.6, { fill: 'url(#stoneGradCool)' })}`,
 
   driftwood: () => `
-    <ellipse cx="100" cy="148" rx="80" ry="12" fill="${P.midnight}" opacity="0.1"/>
+    <ellipse cx="100" cy="148" rx="91" ry="14" fill="url(#softShadow)"/><ellipse cx="102" cy="148" rx="48" ry="6" fill="${P.midnight}" opacity="0.13"/>
     <path d="M 18 118 q -4 -20 18 -26 q 18 -5 34 -3 q 34 -14 60 -2 q 30 -2 50 6 q 22 9 18 22 q -4 13 -26 15 q -34 3 -70 0 q -38 -3 -66 -8 q -16 -3 -18 -4 Z" fill="url(#woodGrad)"/>
     <path d="M 38 100 q 56 -10 122 6" stroke="${P.woodLight}" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.6"/>
     <path d="M 44 122 q 60 8 110 2" stroke="${P.woodDeep}" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.35"/>
@@ -1207,7 +1207,7 @@ const ITEMS = {
   // One tapered trunk with real branches reaching into the canopy. Pass 1's
   // two-legged fork read as a slingshot.
   blossomTree: () => `
-    <ellipse cx="100" cy="186" rx="60" ry="11" fill="${P.midnight}" opacity="0.1"/>
+    <ellipse cx="100" cy="186" rx="68" ry="13" fill="url(#softShadow)"/><ellipse cx="102" cy="186" rx="36" ry="6" fill="${P.midnight}" opacity="0.13"/>
     <path d="M 88 186 q -4 -56 4 -84 q 3 -12 8 -12 q 5 0 8 12 q 8 28 4 84 Z" fill="url(#woodGradV)"/>
     <g stroke="url(#woodGradV)" stroke-linecap="round" fill="none">
       <path d="M 98 116 q -16 -14 -30 -20" stroke-width="9"/>
@@ -1269,7 +1269,7 @@ const ITEMS = {
     <path d="M 140 22 v 104" stroke="${P.sand300}" stroke-width="6" stroke-linecap="round"/>
     <rect x="44" y="124" width="114" height="24" rx="12" fill="url(#woodGrad)"/>
     <rect x="44" y="124" width="114" height="9" rx="4.5" fill="${P.woodLight}" opacity="0.65"/>
-    <ellipse cx="101" cy="164" rx="46" ry="7" fill="${P.midnight}" opacity="0.08"/>`,
+    <ellipse cx="101" cy="164" rx="52" ry="8" fill="url(#softShadow)"/><ellipse cx="103" cy="164" rx="28" ry="4" fill="${P.midnight}" opacity="0.13"/>`,
 };
 
 // ---------------------------------------------------------------------------
@@ -1719,8 +1719,14 @@ function basinAndTap(cx, rimY, s = 1, { stream = true } = {}) {
 const scenes = {
   'routine-try': () => `
     ${bathroom()}
-    <rect x="428" y="150" width="150" height="126" rx="24" fill="#FFFFFF" opacity="0.75"/>
-    <path d="M 503 150 v 126 M 428 213 h 150" stroke="${P.pondBlueSoft}" stroke-width="9"/>
+    ${wallShadow(470, 112, 128, 118, 0.5)}
+    <rect x="420" y="28" width="166" height="130" rx="20" fill="${P.sand200}"/>
+    <rect x="426" y="34" width="154" height="118" rx="16" fill="#FFFFFF" opacity="0.85"/>
+    <rect x="426" y="34" width="154" height="118" rx="16" fill="url(#glassGrad)" opacity="0.5"/>
+    <path d="M 503 34 v 118 M 426 93 h 154" stroke="${P.sand200}" stroke-width="9"/>
+    <path d="M 470 38 L 432 98 h 22 L 492 38 Z" fill="#FFFFFF" opacity="0.55"/>
+    <rect x="414" y="154" width="178" height="13" rx="6.5" fill="${P.sand200}"/>
+    <rect x="414" y="154" width="178" height="5" rx="2.5" fill="#FFFFFF" opacity="0.8"/>
     ${contactShadow(330, 440, 196, 26)}
     <ellipse cx="330" cy="432" rx="202" ry="31" fill="${P.lavender}" opacity="0.45"/>
     <ellipse cx="330" cy="426" rx="198" ry="29" fill="${P.lavenderSoft}"/>
@@ -1876,8 +1882,14 @@ const scenes = {
     <circle cx="84" cy="68" r="34" fill="url(#sunDisc)"/>
     ${cloud(272, 62, 112, { opacity: 0.7 })}
     ${cloud(524, 40, 86, { opacity: 0.5 })}
+    <path d="M -20 196 Q 120 138 292 180 Q 452 218 660 172 L 660 500 L -20 500 Z" fill="url(#hillHaze)"/>
+    ${treeline(-30, 210, 178, 4, '#BADFD0', { h: 46, w: 92, opacity: 0.8 })}
+    ${treeline(452, 680, 172, 4, '#BADFD0', { h: 48, w: 96, opacity: 0.8 })}
     <path d="M -20 218 Q 130 162 300 202 Q 460 240 660 196 L 660 500 L -20 500 Z" fill="url(#hillFar)"/>
+    ${treeline(-30, 168, 232, 3, '#A2D8BB', { h: 60, w: 112 })}
+    ${canopy(624, 254, 132, 82, '#8CD1A9')}
     <path d="M -20 270 Q 170 218 360 264 Q 520 302 660 256 L 660 500 L -20 500 Z" fill="url(#hillMid)"/>
+    <rect x="0" y="266" width="${SW}" height="180" fill="url(#meadowLight)"/>
     <path d="M -20 316 Q 200 286 420 320 Q 550 340 660 316 L 660 500 L -20 500 Z" fill="url(#ground)"/>
     ${friendlyDoor(496, 322, 0.46)}
     <path d="M 20 496 Q 92 424 210 382 Q 338 338 452 322 L 500 316 L 500 346 Q 372 366 260 406 Q 154 448 126 496 Z" fill="${P.sand300}" opacity="0.55"/>
