@@ -337,37 +337,106 @@ most of these, but not the ones that only bite an existing checkout:
 
 ---
 
-## Layer 6 — the build that finally type-checked, and then would not finish
+## Layer 6 — a wrong diagnosis, and what it was worth anyway
 
-*Run 61. Zero diagnostics, and no result for forty-six minutes.*
+*Run 61. 17 diagnostics — and a detour worth writing down, because it is the
+kind of mistake that looks like evidence.*
 
-Every build up to run 60 finished in about **two minutes**. That was not speed,
-it was failure: a build stops at type-checking, so nothing after it ever ran.
-Run 61 was the first to type-check the whole app clean, which made it the first
-to reach SIL generation, code generation and linking for ~190 SwiftUI files —
-and it was still going at forty-six minutes, with no way to tell a slow build
-from a stuck one.
+For forty-six minutes the GitHub Actions API reported run 61's Build step as
+still running. Every earlier build had finished in about two minutes, so the
+obvious reading was that this one had finally type-checked clean and was now
+doing the code generation and linking that failing builds never reach — or that
+it had hit the classic SwiftUI runaway type-check.
 
-Three changes, all of them about not doing work that proves nothing:
+**Both readings were wrong.** The job had actually finished at minute two. The
+API's job status was stale by more than forty minutes; the job *log*, fetched
+directly, had the answer the whole time. The tell was visible and got explained
+away: the two Linux test jobs, which take about forty seconds, were also being
+reported as forty minutes into a build step.
 
-* **`timeout-minutes: 45`** on the job. The GitHub default is six hours. A
-  runaway type-check — the classic "unable to type-check this expression in
-  reasonable time" — would have burned all of it and reported nothing useful. A
-  bound turns that into a result.
+The lesson is small and general: **the run log is evidence, the run status is a
+cache.** When they disagree, believe the log.
+
+The changes made on the strength of the wrong diagnosis were kept, because each
+stands on its own without it:
+
+* **`timeout-minutes: 45`.** The GitHub default is six hours. A runaway
+  type-check is a real SwiftUI failure mode and would have burned all six while
+  reporting nothing. Ordinary hygiene, arrived at by an unnecessary route.
 * **`ARCHS=arm64`.** A generic Simulator destination builds `arm64` *and*
-  `x86_64` by default: two complete code-generation passes over the whole app to
-  answer one question. Type checking, actor isolation and every Swift diagnostic
-  this job exists to catch are architecture-independent, so the second pass
-  finds nothing the first did not.
+  `x86_64` by default: two complete passes over the whole app to answer one
+  question. Type checking, actor isolation and every Swift diagnostic this job
+  exists to catch are architecture-independent.
 * **`CLANG_ENABLE_CODE_COVERAGE=NO`.** The scheme gathers coverage for its
-  *test* action, and this job never runs tests — but the setting still reached
+  *test* action and this job never runs tests — but the setting still reached
   the compiler as `-profile-generate -profile-coverage-mapping`, instrumenting
-  every function in the app for a profile nothing would ever read.
+  every function for a profile nothing would read. (This one was not a guess:
+  the flags are in the run 59 log.)
 
 The summary step also learned to say something when there is nothing to say: a
 job with no diagnostics *and* no `** BUILD SUCCEEDED **` now prints the last ten
-compile tasks, so a timeout names the file it died on instead of looking like a
-job that did nothing.
+compile tasks, so a real timeout names the file it died on instead of looking
+like a job that did nothing.
+
+---
+
+## Layer 7 — what the previous layer's fixes uncovered
+
+*Run 61's actual result: 17 diagnostics, two causes.*
+
+Both are diagnostics that could not appear until the errors in front of them
+were gone — which is the normal rhythm of this work, and the reason "48 down to
+3" was never going to mean "3 left".
+
+### 7.1 Five Screen Time failures had no caregiver-facing words — 2 errors
+
+```
+HopScreenTimeFailure+Copy.swift:11:9: error: switch must be exhaustive
+HopScreenTimeFailure+Copy.swift:24:9: error: switch must be exhaustive
+```
+
+`ScreenTimeFailure` has thirteen cases. `title` and `recoveryMessage` handled
+eight. The five missing ones — `authorizationConflict`, `invalidAccountType`,
+`networkError`, `authenticationMethodUnavailable`, `monitoringLimitReached` —
+are exactly the five added to the enum *after* this file was written.
+
+This is worth more than its two error lines. `authorizationConflict` is
+documented on the enum itself as *"in practice the most likely real-world
+failure"* — another parental-controls app already holds Family Controls
+authorization — and until now a caregiver who hit it would have got **no
+sentence at all**. Each of the five now names what HopPotty could not do and
+what the caregiver can change, in the voice the other eight use.
+
+### 7.2 Main-actor isolation, in the two places SE-0434 does not reach — 15 errors
+
+`ViewModifier` is a `@MainActor` protocol, so every small value type conforming
+to it is main-actor isolated. SE-0434 makes that mostly invisible for value
+types: *instance* storage of `Sendable` type stays reachable from nonisolated
+code. Two things fall outside that exemption, and both showed up at once:
+
+**A `static let`** (14 errors). Global storage stays isolated, so the
+`AnyTransition` factories could construct `HopPageShift(travel:…)` — instance
+storage, exempt — and then not name `HopPageShift.identity` two lines later:
+
+```
+error: main actor-isolated static property 'identity' can not be referenced
+       from a nonisolated context
+```
+
+**An explicit initializer** (1 error). The implicit memberwise initializer is
+exempt; a hand-written one inherits the type's isolation. `HopTheme.elevation(_:)`
+is an ordinary nonisolated method and it calls one:
+
+```
+error: call to main actor-isolated initializer 'init(level:shadow:)'
+       in a synchronous nonisolated context
+```
+
+Both are `nonisolated`, and in both cases that is a description rather than a
+suppression: `identity` is one immutable all-`Double` value that is read and
+copied and never mutated, and `HopElevationModifier.init` takes two immutable
+`Sendable` tokens and only stores them. There is nothing for two domains to
+share in either.
 
 ---
 

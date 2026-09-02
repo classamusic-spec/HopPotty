@@ -34,7 +34,21 @@ struct HopPageShift: ViewModifier, Animatable {
     /// How far the page is faded out. 0 is fully opaque.
     var dim: Double
 
-    static let identity = HopPageShift(travel: 0, rise: 0, depth: 1, dim: 0)
+    // `nonisolated` for the same reason `animatableData` below is, and it is a
+    // different reason from the one that lets the memberwise initializer alone.
+    // A global-actor-isolated value type's *instance* storage of `Sendable` type
+    // is reachable from nonisolated code (SE-0434), which is why
+    // `HopPageShift(travel:…)` compiles inside the `AnyTransition` factories
+    // further down. A `static let` is global storage and stays isolated, so the
+    // same factories could build the active modifier and not name the identity
+    // one:
+    //
+    //     error: main actor-isolated static property 'identity' can not be
+    //            referenced from a nonisolated context
+    //
+    // Safe for the same reason: this is one immutable value of an
+    // all-`Double` value type, read and copied, never mutated.
+    nonisolated static let identity = HopPageShift(travel: 0, rise: 0, depth: 1, dim: 0)
 
     // `nonisolated`, and it has to be. `ViewModifier` is a `@MainActor`
     // protocol, so conforming to it makes this struct main-actor isolated;
@@ -85,7 +99,21 @@ struct HopSurfaceArrival: ViewModifier, Animatable {
     /// How far the surface is faded out. 0 is fully opaque.
     var dim: Double
 
-    static let identity = HopSurfaceArrival(lift: 0, depth: 1, dim: 0)
+    // `nonisolated` for the same reason `animatableData` below is, and it is a
+    // different reason from the one that lets the memberwise initializer alone.
+    // A global-actor-isolated value type's *instance* storage of `Sendable` type
+    // is reachable from nonisolated code (SE-0434), which is why
+    // `HopPageShift(travel:…)` compiles inside the `AnyTransition` factories
+    // further down. A `static let` is global storage and stays isolated, so the
+    // same factories could build the active modifier and not name the identity
+    // one:
+    //
+    //     error: main actor-isolated static property 'identity' can not be
+    //            referenced from a nonisolated context
+    //
+    // Safe for the same reason: this is one immutable value of an
+    // all-`Double` value type, read and copied, never mutated.
+    nonisolated static let identity = HopSurfaceArrival(lift: 0, depth: 1, dim: 0)
 
     // `nonisolated`, and it has to be. `ViewModifier` is a `@MainActor`
     // protocol, so conforming to it makes this struct main-actor isolated;

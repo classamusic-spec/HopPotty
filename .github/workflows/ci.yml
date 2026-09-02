@@ -92,13 +92,12 @@ jobs:
   app:
     name: App and extensions (Xcode)
     runs-on: macos-15
-    # A bound, because the default is six hours and this job found out the hard
-    # way that it needed one. Every build up to run 60 finished in about two
-    # minutes -- by failing type-checking, which is where a build stops. Run 61
-    # was the first to type-check clean, so it was also the first to reach code
-    # generation and linking for the whole app, and it was still going at
-    # forty-six minutes with no way to tell a slow build from a stuck one.
-    # A timeout turns the second case into a result instead of an afternoon.
+    # A bound, because the default is six hours. A runaway type-check -- "unable
+    # to type-check this expression in reasonable time" is a real and common
+    # SwiftUI failure -- would otherwise burn all six and report nothing. This
+    # was added after run 61 appeared to hang for forty-six minutes; it had not,
+    # the API's job status was simply stale (Docs/FirstBuild.md, layer 6), but a
+    # build job with no clock is worth fixing on its own account.
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4

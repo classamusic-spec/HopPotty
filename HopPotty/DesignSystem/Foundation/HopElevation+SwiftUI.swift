@@ -11,7 +11,19 @@ public struct HopElevationModifier: ViewModifier {
     private let level: HopElevation
     private let shadow: HopColorValue
 
-    public init(level: HopElevation, shadow: HopColorValue) {
+    // `nonisolated` because `ViewModifier` is a `@MainActor` protocol, so this
+    // struct is main-actor isolated, and an *explicit* initializer inherits that
+    // — unlike the implicit memberwise one, which SE-0434 exempts for `Sendable`
+    // storage in a value type. `HopTheme.elevation(_:)` is an ordinary
+    // nonisolated method that calls this, and said so on the first compile:
+    //
+    //     error: call to main actor-isolated initializer 'init(level:shadow:)'
+    //            in a synchronous nonisolated context
+    //
+    // Both parameters are immutable `Sendable` value types from
+    // HopPottyDesignTokens, and this initializer only stores them, so there is
+    // nothing here for the two domains to share.
+    nonisolated public init(level: HopElevation, shadow: HopColorValue) {
         self.level = level
         self.shadow = shadow
     }
