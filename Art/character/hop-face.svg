@@ -1,28 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 290" width="512" height="290">
 <g transform="translate(16 8) scale(3.2)">
   <g transform="rotate(0 75 50)">
-    <ellipse cx="75" cy="42" rx="46" ry="31" fill="#63C88A"/>
-    <ellipse cx="75" cy="54" rx="65" ry="26" fill="#63C88A"/>
-    <circle cx="42.4" cy="25.7" r="19.5" fill="#63C88A"/>
-    <circle cx="108.4" cy="25.7" r="19.5" fill="#63C88A"/>
+    <ellipse cx="75" cy="40" rx="44" ry="33" fill="#63C88A"/>
+    <ellipse cx="75" cy="56" rx="61" ry="27" fill="#63C88A"/>
+    <circle cx="42.4" cy="25.7" r="20.5" fill="#63C88A"/>
+    <circle cx="108.4" cy="25.7" r="20.5" fill="#63C88A"/>
   </g>
   
     <ellipse cx="75.3" cy="19.4" rx="4.4" ry="2.6" fill="#45A971"/>
     <ellipse cx="72.8" cy="26.2" rx="2.6" ry="1.9" fill="#45A971"/>
     <ellipse cx="80.6" cy="24.6" rx="3.0" ry="1.6" fill="#45A971"/>
   <g>
-      <clipPath id="eyeClip42"><circle cx="42.4" cy="25.7" r="15.5"/></clipPath>
-      <circle cx="42.4" cy="25.7" r="15.5" fill="#FFFFFF"/>
+      <clipPath id="eyeClip42"><circle cx="42.4" cy="25.7" r="16.5"/></clipPath>
+      <circle cx="42.4" cy="25.7" r="16.5" fill="#FFFFFF"/>
       <g clip-path="url(#eyeClip42)">
-        <circle cx="42.4" cy="26.7" r="11.5" fill="#243047"/>
+        <circle cx="42.4" cy="26.7" r="12.3" fill="#243047"/>
         <circle cx="45.6" cy="21.7" r="3.4" fill="#FFFFFF"/>
         
       </g>
     </g><g>
-      <clipPath id="eyeClip108"><circle cx="108.4" cy="25.7" r="15.5"/></clipPath>
-      <circle cx="108.4" cy="25.7" r="15.5" fill="#FFFFFF"/>
+      <clipPath id="eyeClip108"><circle cx="108.4" cy="25.7" r="16.5"/></clipPath>
+      <circle cx="108.4" cy="25.7" r="16.5" fill="#FFFFFF"/>
       <g clip-path="url(#eyeClip108)">
-        <circle cx="108.4" cy="26.7" r="11.5" fill="#243047"/>
+        <circle cx="108.4" cy="26.7" r="12.3" fill="#243047"/>
         <circle cx="111.60000000000001" cy="21.7" r="3.4" fill="#FFFFFF"/>
         
       </g>

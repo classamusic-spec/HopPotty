@@ -45,15 +45,15 @@ const C = {
 
 const EYE_L = { cx: 42.4, cy: 25.7 };
 const EYE_R = { cx: 108.4, cy: 25.7 };
-const SOCKET_R = 19.5;
-const WHITE_R = 15.5;
-const PUPIL_R = 11.5;
+const SOCKET_R = 20.5;
+const WHITE_R = 16.5;
+const PUPIL_R = 12.3;
 
 /** The head silhouette: crown, jaw and the two eye sockets, one fill, no seams. */
 function headShape({ tilt = 0, neck = true } = {}) {
   return `<g transform="rotate(${tilt} 75 50)">
-    <ellipse cx="75" cy="42" rx="46" ry="31" fill="${C.body}"/>
-    <ellipse cx="75" cy="54" rx="65" ry="26" fill="${C.body}"/>
+    <ellipse cx="75" cy="40" rx="44" ry="33" fill="${C.body}"/>
+    <ellipse cx="75" cy="56" rx="61" ry="27" fill="${C.body}"/>
     <circle cx="${EYE_L.cx}" cy="${EYE_L.cy}" r="${SOCKET_R}" fill="${C.body}"/>
     <circle cx="${EYE_R.cx}" cy="${EYE_R.cy}" r="${SOCKET_R}" fill="${C.body}"/>
   </g>`;
@@ -138,7 +138,7 @@ function mouth(kind = 'open') {
  */
 function torso({ squash = 0, width = 60 } = {}) {
   const x0 = 75 - width / 2, x1 = 75 + width / 2;
-  const top = 58 + squash * 4, bottom = 130 - squash * 4, r = Math.min(27, width / 2);
+  const top = 58 + squash * 4, bottom = 127 - squash * 4, r = Math.min(26, width / 2);
   return `<path d="M ${x0} ${top} H ${x1} V ${bottom - r} A ${r} ${r} 0 0 1 ${x1 - r} ${bottom} H ${x0 + r} A ${r} ${r} 0 0 1 ${x0} ${bottom - r} Z" fill="${C.body}"/>`;
 }
 
@@ -171,18 +171,18 @@ function wiggle() {
  * An arm from a shoulder to a hand point, with three fingers fanned along the
  * arm's direction. Fingers are what make the reference's hands read as hands.
  */
-function arm(shoulder, hand, { width = 13 } = {}) {
+function arm(shoulder, hand, { width = 15 } = {}) {
   const [sx, sy] = shoulder; const [hx, hy] = hand;
   const dx = hx - sx, dy = hy - sy; const len = Math.hypot(dx, dy) || 1;
   const ux = dx / len, uy = dy / len;
   const finger = (deg) => {
     const a = Math.atan2(uy, ux) + (deg * Math.PI) / 180;
-    const tx = hx + Math.cos(a) * 11, ty = hy + Math.sin(a) * 11;
-    return `<line x1="${hx}" y1="${hy}" x2="${tx.toFixed(1)}" y2="${ty.toFixed(1)}" stroke="${C.body}" stroke-width="9" stroke-linecap="round"/>`;
+    const tx = hx + Math.cos(a) * 12, ty = hy + Math.sin(a) * 12;
+    return `<line x1="${hx}" y1="${hy}" x2="${tx.toFixed(1)}" y2="${ty.toFixed(1)}" stroke="${C.body}" stroke-width="10.5" stroke-linecap="round"/>`;
   };
   return `<g>
     <line x1="${sx}" y1="${sy}" x2="${hx}" y2="${hy}" stroke="${C.body}" stroke-width="${width}" stroke-linecap="round"/>
-    <circle cx="${hx}" cy="${hy}" r="8.4" fill="${C.body}"/>
+    <circle cx="${hx}" cy="${hy}" r="9.5" fill="${C.body}"/>
     ${finger(-50)}${finger(0)}${finger(50)}
   </g>`;
 }
@@ -196,7 +196,7 @@ function leg(hip, ankle, side, { toeSpread = 1 } = {}) {
   const fx = ax - side * 2, fy = ay + 3;
   const toe = (deg, r = 5) => {
     const a = (deg * Math.PI) / 180;
-    const tx = fx + Math.cos(a) * 12 * toeSpread, ty = fy + Math.sin(a) * 10;
+    const tx = fx + Math.cos(a) * 15 * toeSpread, ty = fy + Math.sin(a) * 11;
     return `<line x1="${fx}" y1="${fy}" x2="${tx.toFixed(1)}" y2="${ty.toFixed(1)}" stroke="${C.body}" stroke-width="${r * 2}" stroke-linecap="round"/>`;
   };
   const base = side < 0 ? 180 : 0;
@@ -208,9 +208,9 @@ function leg(hip, ankle, side, { toeSpread = 1 } = {}) {
     return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${C.bodyDeep}" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/>`;
   };
   return `<g>
-    <line x1="${hx}" y1="${hy}" x2="${ax}" y2="${ay}" stroke="${C.body}" stroke-width="16" stroke-linecap="round"/>
-    <ellipse cx="${fx}" cy="${fy}" rx="9.5" ry="7" fill="${C.body}"/>
-    ${toe(t(-8), 5.4)}${toe(t(-46), 5.4)}${toe(t(-84), 5)}
+    <line x1="${hx}" y1="${hy}" x2="${ax}" y2="${ay}" stroke="${C.body}" stroke-width="26" stroke-linecap="round"/>
+    <ellipse cx="${fx}" cy="${fy}" rx="14" ry="8.5" fill="${C.body}"/>
+    ${toe(t(-6), 6)}${toe(t(-44), 6)}${toe(t(-82), 5.6)}
     ${crease(t(-30))}${crease(t(-70))}
   </g>`;
 }
@@ -245,15 +245,15 @@ function shadow(lift = 0) {
 function figure(p = {}) {
   const {
     lift = 0, squash = 0, tilt = 0, lean = 0,
-    armL = [10, 97], armR = [140, 97],
-    legL = { hip: [55, 122], ankle: [54, 148], spread: 1 },
-    legR = { hip: [95, 122], ankle: [96, 148], spread: 1 },
+    armL = [8, 90], armR = [142, 90],
+    legL = { hip: [56, 124], ankle: [52, 146], spread: 1 },
+    legR = { hip: [94, 124], ankle: [98, 146], spread: 1 },
     eyes: eyeOpts = {}, mouth: mouthKind = 'open',
     withPack = false, sleeping = false, showShadow = true,
     bellyScale = 1, tongueTo = null, wiggling = false,
-    torsoWidth = 60,
+    torsoWidth = 58,
   } = p;
-  const shoulderL = [50, 90], shoulderR = [100, 90];
+  const shoulderL = [48, 86], shoulderR = [102, 86];
   return `
   ${showShadow ? shadow(lift) : ''}
   <g transform="translate(0 ${-lift}) translate(75 100) rotate(${lean}) translate(-75 -100)">

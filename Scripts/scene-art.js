@@ -384,6 +384,174 @@ function placeFrog(cx, cy, size, inner) {
   return g(`translate(${R(cx)} ${R(cy)}) scale(${R(s)}) translate(-256 -300)`, inner);
 }
 
+// ---------------------------------------------------------------------------
+// Hop's CURRENT anatomy, mirrored from hop-art.js.
+//
+// The block above is the first Hop — a gradient egg with dome eyes — and is
+// still what the routine scenes and the shield hero draw. This block is the
+// redrawn one: flat, from the approved reference (`hop_mascot.svg`), articulated
+// as head / torso / two arms / two legs. Numbers are in the reference's 150x160
+// space so they can be checked against `Scripts/hop-art.js` line for line, and
+// `placeFlat` puts that box wherever a caller needs it.
+//
+// Flat means flat: no gradients, no outlines, no sheen. Depth is value steps in
+// the skin ramp alone.
+// ---------------------------------------------------------------------------
+
+/** Shared, species-level colours — the parts of a frog that are not its skin. */
+const FLAT = {
+  belly: P.sunshineSoft, cheek: P.peach, eyeWhite: P.white, pupil: P.midnight,
+  highlight: P.white, mouthInterior: P.peachInk,
+  tongue: '#FF6F7D',            // character-only, as in hop-art.js
+  bagBody: P.wood, bagStrap: P.woodDeep,
+};
+/** Hop himself: the brand ramp. */
+const FLAT_HOP = { body: P.hopGreen, bodyDeep: '#45A971', ink: P.hopGreenInk };
+/** Two siblings. Same anatomy — they are his species — different skin, so a
+ *  child never mistakes a pond decoration for Hop. */
+const FLAT_MINT = { body: '#93DDB2', bodyDeep: '#6BC496', ink: '#3C8F63' };
+const FLAT_BLUE = { body: P.pondBlue, bodyDeep: '#4FAACE', ink: P.pondBlueInk };
+
+const FLAT_EYE_L = { cx: 42.4, cy: 25.7 };
+const FLAT_EYE_R = { cx: 108.4, cy: 25.7 };
+const FLAT_WHITE_R = 15.5;
+
+// Clip ids have to be unique per *file*, and pond-preview.svg carries both
+// friends at once, so every clip gets a serial number rather than a fixed name.
+let flatClip = 0;
+
+/** Crown, jaw and the two eye sockets: one fill, no seams. */
+const flatHead = (skin) => `
+  <ellipse cx="75" cy="42" rx="46" ry="31" fill="${skin.body}"/>
+  <ellipse cx="75" cy="54" rx="65" ry="26" fill="${skin.body}"/>
+  <circle cx="${FLAT_EYE_L.cx}" cy="${FLAT_EYE_L.cy}" r="19.5" fill="${skin.body}"/>
+  <circle cx="${FLAT_EYE_R.cx}" cy="${FLAT_EYE_R.cy}" r="19.5" fill="${skin.body}"/>`;
+
+const flatSpots = (skin) => `
+  <ellipse cx="75.3" cy="19.4" rx="4.4" ry="2.6" fill="${skin.bodyDeep}"/>
+  <ellipse cx="72.8" cy="26.2" rx="2.6" ry="1.9" fill="${skin.bodyDeep}"/>
+  <ellipse cx="80.6" cy="24.6" rx="3" ry="1.6" fill="${skin.bodyDeep}"/>`;
+
+const flatNostrils = (skin) => `
+  <circle cx="67.4" cy="41" r="2.1" fill="${skin.ink}"/>
+  <circle cx="82.6" cy="41" r="2.1" fill="${skin.ink}"/>`;
+
+const flatCheeks = () => `
+  <circle cx="32" cy="51" r="7.6" fill="${FLAT.cheek}"/>
+  <circle cx="118" cy="51" r="7.6" fill="${FLAT.cheek}"/>`;
+
+function flatEyes({ gaze = [0, 0], blink = 0, mood = 'happy', skin = FLAT_HOP } = {}) {
+  const [gx, gy] = gaze;
+  const one = ({ cx, cy }) => {
+    if (blink >= 1) {
+      const dir = mood === 'rest' ? 1 : -1;
+      return `<path d="M ${cx - 10} ${cy + 3} Q ${cx} ${cy + 3 + dir * 9} ${cx + 10} ${cy + 3}" fill="none" stroke="${skin.ink}" stroke-width="3.2" stroke-linecap="round"/>`;
+    }
+    return `<circle cx="${cx}" cy="${cy}" r="${FLAT_WHITE_R}" fill="${FLAT.eyeWhite}"/>
+      <circle cx="${R(cx + gx)}" cy="${R(cy + 1 + gy)}" r="11.5" fill="${FLAT.pupil}"/>
+      <circle cx="${R(cx + gx + 3.2)}" cy="${R(cy - 4 + gy)}" r="3.4" fill="${FLAT.highlight}"/>`;
+  };
+  return one(FLAT_EYE_L) + one(FLAT_EYE_R);
+}
+
+/** `open` is the reference's wide smile with tongue; `talk` the same at 72%. */
+function flatMouth(kind = 'open', skin = FLAT_HOP) {
+  if (kind === 'closed' || kind === 'small') {
+    const d = kind === 'closed' ? 12 : 8;
+    return `<path d="M 58 50 Q 75 ${50 + d} 92 50" fill="none" stroke="${skin.ink}" stroke-width="3.4" stroke-linecap="round"/>`;
+  }
+  const s = kind === 'talk' ? 0.72 : 1;
+  const uid = `flatMouth${++flatClip}`;
+  const shape = 'M 53 47.5 Q 75 52 97 47.5 C 96 60 88 69.5 75 69.5 C 62 69.5 54 60 53 47.5 Z';
+  return `<g transform="translate(75 50) scale(${s}) translate(-75 -50)">
+    <clipPath id="${uid}"><path d="${shape}"/></clipPath>
+    <path d="${shape}" fill="${FLAT.mouthInterior}"/>
+    <ellipse cx="75" cy="66" rx="15" ry="7.5" fill="${FLAT.tongue}" clip-path="url(#${uid})"/>
+  </g>`;
+}
+
+/** Straight sides that run up under the jaw, rounded only at the hips. */
+function flatTorso({ squash = 0, width = 60 } = {}, skin = FLAT_HOP) {
+  const x0 = 75 - width / 2, x1 = 75 + width / 2;
+  const top = 58 + squash * 4, bottom = 130 - squash * 4, r = Math.min(27, width / 2);
+  return `<path d="M ${x0} ${top} H ${x1} V ${bottom - r} A ${r} ${r} 0 0 1 ${x1 - r} ${bottom} H ${x0 + r} A ${r} ${r} 0 0 1 ${x0} ${bottom - r} Z" fill="${skin.body}"/>`;
+}
+
+const flatBelly = ({ scale = 1 } = {}) =>
+  `<ellipse cx="75" cy="${R(104 + (scale - 1) * 4)}" rx="${R(24 * scale)}" ry="${R(23 * scale)}" fill="${FLAT.belly}"/>`;
+
+/** An arm from a shoulder to a hand, with the three fingers that make a hand
+ *  read as a hand. */
+function flatArm(shoulder, hand, skin = FLAT_HOP) {
+  const [sx, sy] = shoulder, [hx, hy] = hand;
+  const base = Math.atan2(hy - sy, hx - sx);
+  const finger = (deg) => {
+    const a = base + (deg * Math.PI) / 180;
+    return `<line x1="${hx}" y1="${hy}" x2="${R(hx + Math.cos(a) * 11)}" y2="${R(hy + Math.sin(a) * 11)}" stroke="${skin.body}" stroke-width="9" stroke-linecap="round"/>`;
+  };
+  return `<g>
+    <line x1="${sx}" y1="${sy}" x2="${hx}" y2="${hy}" stroke="${skin.body}" stroke-width="13" stroke-linecap="round"/>
+    <circle cx="${hx}" cy="${hy}" r="8.4" fill="${skin.body}"/>
+    ${finger(-50)}${finger(0)}${finger(50)}</g>`;
+}
+
+/** A leg with a three-toed foot. `side` -1 is Hop's right, the viewer's left. */
+function flatLeg(hip, ankle, side, { toeSpread = 1 } = {}, skin = FLAT_HOP) {
+  const [hx, hy] = hip, [ax, ay] = ankle;
+  const fx = ax - side * 2, fy = ay + 3;
+  const t = (d) => (side < 0 ? 180 + d : -d);
+  const toe = (deg, r) => {
+    const a = (deg * Math.PI) / 180;
+    return `<line x1="${fx}" y1="${fy}" x2="${R(fx + Math.cos(a) * 12 * toeSpread)}" y2="${R(fy + Math.sin(a) * 10)}" stroke="${skin.body}" stroke-width="${r * 2}" stroke-linecap="round"/>`;
+  };
+  const crease = (deg) => {
+    const a = (deg * Math.PI) / 180;
+    return `<line x1="${R(fx + Math.cos(a) * 5)}" y1="${R(fy + Math.sin(a) * 5)}" x2="${R(fx + Math.cos(a) * 14 * toeSpread)}" y2="${R(fy + Math.sin(a) * 12)}" stroke="${skin.bodyDeep}" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/>`;
+  };
+  return `<g>
+    <line x1="${hx}" y1="${hy}" x2="${ax}" y2="${ay}" stroke="${skin.body}" stroke-width="16" stroke-linecap="round"/>
+    <ellipse cx="${fx}" cy="${fy}" rx="9.5" ry="7" fill="${skin.body}"/>
+    ${toe(t(-8), 5.4)}${toe(t(-46), 5.4)}${toe(t(-84), 5)}
+    ${crease(t(-30))}${crease(t(-70))}</g>`;
+}
+
+const flatShadow = (lift = 0) =>
+  `<ellipse cx="75" cy="${R(159 - lift * 0.1)}" rx="${R(40 - lift * 0.4)}" ry="4" fill="${P.midnight}" opacity="${R(0.12 - lift * 0.002)}"/>`;
+
+/** The face alone, for the app icon — `hop-face.svg`, in other words. */
+function flatFace({ skin = FLAT_HOP, gaze = [0, 0], mouth = 'open' } = {}) {
+  return `${flatHead(skin)}${flatSpots(skin)}${flatEyes({ gaze, skin })}${flatCheeks()}${flatNostrils(skin)}${flatMouth(mouth, skin)}`;
+}
+
+/** One whole frog. Draw order is `figure()`'s: shadow, legs, torso, belly,
+ *  arms, head, face — so limbs read as attached rather than stacked. */
+function flatFigure({
+  skin = FLAT_HOP, lift = 0, squash = 0, tilt = 0, torsoWidth = 60, bellyScale = 1,
+  armL = [10, 97], armR = [140, 97],
+  legL = { hip: [55, 122], ankle: [54, 148], spread: 1 },
+  legR = { hip: [95, 122], ankle: [96, 148], spread: 1 },
+  eyes = {}, mouth = 'open', showShadow = true,
+} = {}) {
+  return `${showShadow ? flatShadow(lift) : ''}
+  <g transform="translate(0 ${-lift})">
+    ${flatLeg(legL.hip, legL.ankle, -1, { toeSpread: legL.spread }, skin)}
+    ${flatLeg(legR.hip, legR.ankle, 1, { toeSpread: legR.spread }, skin)}
+    ${flatTorso({ squash, width: torsoWidth }, skin)}
+    ${flatBelly({ scale: bellyScale })}
+    ${flatArm([50, 90], armL, skin)}
+    ${flatArm([100, 90], armR, skin)}
+    <g transform="rotate(${tilt} 75 50)">
+      ${flatHead(skin)}${flatSpots(skin)}
+      ${flatEyes({ ...eyes, skin })}${flatCheeks()}${flatNostrils(skin)}${flatMouth(mouth, skin)}
+    </g>
+  </g>`;
+}
+
+/** Places the 150x160 reference box, centred on (cx, cy) at `scale`. */
+function placeFlat(cx, cy, scale, inner, anchor = [75, 84]) {
+  return g(`translate(${R(cx)} ${R(cy)}) scale(${R(scale)}) translate(${-anchor[0]} ${-anchor[1]})`, inner);
+}
+
 // ===========================================================================
 // 1. THE POND
 // ===========================================================================
@@ -613,19 +781,23 @@ const ITEMS = {
   cloudPuff: () => `${cloud(100, 100, 160)}
     <ellipse cx="86" cy="86" rx="34" ry="16" fill="#FFFFFF" opacity="0.75"/>`,
 
-  frogFriendGreen: () => `
-    <ellipse cx="100" cy="176" rx="54" ry="10" fill="${P.midnight}" opacity="0.12"/>
-    ${placeFrog(100, 98, 186, frog({
-      skin: HOP_MINT, grad: 'hopBodyMint', dome: 'hopEyeDomeMint', squash: 0.22,
-      gaze: [9, 11], smile: 0.85, arms: [[124, 350, 150], [388, 350, 30]],
-    }))}`,
+  // Hop's species, drawn from Hop's current anatomy. Their own skins and their
+  // own poses — a friend that stood like Hop and smiled like Hop would just be
+  // a second Hop. The figure carries its own ground shadow, so neither item
+  // draws one of its own any more.
+  frogFriendGreen: () => placeFlat(100, 100, 1.16, flatFigure({
+    skin: FLAT_MINT, lift: -6, squash: 0.3,
+    armL: [40, 126], armR: [110, 126],
+    legL: { hip: [55, 120], ankle: [36, 140], spread: 1.15 },
+    legR: { hip: [95, 120], ankle: [114, 140], spread: 1.15 },
+    eyes: { gaze: [2, 2] }, mouth: 'closed',
+  })),
 
-  frogFriendBlue: () => `
-    <ellipse cx="100" cy="176" rx="56" ry="11" fill="${P.midnight}" opacity="0.12"/>
-    ${placeFrog(100, 96, 190, frog({
-      skin: HOP_BLUE, grad: 'hopBodyBlue', dome: 'hopEyeDomeBlue', squash: 0.16,
-      gaze: [-8, 10], open: 0.5, arms: [[126, 320, -120, 46], [388, 340, 24]],
-    }))}`,
+  frogFriendBlue: () => placeFlat(100, 100, 1.16, flatFigure({
+    skin: FLAT_BLUE, tilt: -3,
+    armL: [16, 104], armR: [140, 44],
+    eyes: { gaze: [-2, 0] }, mouth: 'talk',
+  })),
 
   // Composed high in its box: `clubhouse` is a backdrop item anchored at
   // y=0.33, right where the pond ellipse is tallest, so a base-heavy drawing
@@ -1871,12 +2043,7 @@ function appIcon() {
       ${g('translate(760 846) scale(1.25)', `<path d="${pad(0, 0, 62, { notch: 208 })}" fill="${P.hopGreenDeep}" opacity="0.35"/>`)}
     </g>
     <ellipse cx="512" cy="726" rx="228" ry="32" fill="${P.hopGreenInk}" opacity="0.07"/>
-    ${g('translate(512 462) scale(1.62) translate(-256 -283)', `
-      ${hopBody({})}
-      ${hopSheen}
-      ${hopEyes({})}
-      ${hopCheeks()}
-      ${hopMouth({ smile: 1 })}`)}
+    ${g('translate(512 432) scale(4.9) translate(-75 -43)', flatFace({}))}
     <rect width="${S}" height="${S}" fill="url(#iconVignette)"/>`;
   return svg({ viewBox: `0 0 ${S} ${S}`, width: S, height: S, body });
 }

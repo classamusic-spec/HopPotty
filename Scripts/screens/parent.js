@@ -10,7 +10,7 @@
  * `artOr`, with ids from `PondCatalog`), so Home and the reward screen are
  * literally the same place seen from two crops — not two drawings of a pond.
  */
-const { T, c, type, statusBar, homeIndicator, svg, alpha, elevation, artOr } = require('./ui');
+const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation, artOr } = require('./ui');
 const { tints, statusBarPad } = require('./kit');
 const scenes = require('./scenes');
 const pondScreen = require('./pond');
@@ -91,15 +91,16 @@ function tabBar(col, active) {
 // ---------------------------------------------------------------------------
 
 /**
- * Decorations Home shows, in `PondCatalog` order.
+ * Decorations Home shows, by `PondCatalog` id.
  *
- * Home is a crop of the pond, not the whole pond: the timer card covers the near
- * shore, so anything anchored down there would be bought and never seen. These
- * are the catalogue ids whose anchors land in the band the card leaves open —
- * the far reeds, the pads Hop needs, a lily flower, a fish and a butterfly.
+ * Home is a crop of the pond, not the whole pond, and the timer card sits on the
+ * near shore — so an id anchored below Hop's pad would be bought and never seen.
+ * These are the ones whose anchors land in the band the card leaves open: the
+ * clouds, the far reeds, the pads Hop needs, a lily flower, a fish, a butterfly,
+ * and the two reed clumps that rise behind the card's top corners.
  */
-const HOME_DECOR = ['sunbeam', 'cloudPuff', 'fernPatch', 'lilyPadLarge', 'lilyPadSmall',
-  'lilyFlower', 'fishOrange', 'tadpoleFriend', 'butterflyBlue'];
+const HOME_DECOR = ['cloudPuff', 'fernPatch', 'lilyPadLarge', 'lilyPadSmall', 'lilyFlower',
+  'fishOrange', 'reedsLeft', 'reedsRight', 'butterflyBlue'];
 
 /** Fraction of `hop-sit.svg`'s box that is above the pad he is squatting on. */
 const SIT_FEET = 0.965;
@@ -120,12 +121,18 @@ function pondBackdrop(appearance, { w, boxH, top, height }) {
   const dark = appearance.startsWith('dark');
   const scene = artOr(['Art/pond/pond-scene.svg', 'Art/scenes/pond.svg'],
     { width: w, height: boxH }, scenes.pond(w, boxH, HOME_DECOR));
-  return `<div style="position:absolute;left:0;top:0;width:${w}px;height:${height}px;overflow:hidden">
+  // The crop can start above the drawing and end below it; these are the two
+  // colours its own gradients start and end on, so the seams are invisible.
+  const skyTop = mix(T.palette.pondBlueSoft, T.palette.pondBlueLight, 0.34);
+  const bankBottom = mix(T.palette.hopGreenLight, T.palette.hopGreen, 0.75);
+  return `<div style="position:absolute;left:0;top:0;width:${w}px;height:${height}px;overflow:hidden;
+    background:${skyTop}">
+    <div style="position:absolute;left:0;right:0;top:${top + boxH}px;bottom:0;background:${bankBottom}"></div>
     <div style="position:absolute;left:0;top:${top}px;width:${w}px;height:${boxH}px">${scene}</div>
     ${dark ? `<div style="position:absolute;inset:0;background:linear-gradient(180deg,
-        ${alpha(col.scrim, .62)} 0%, ${alpha(col.scrim, .5)} 40%, ${alpha(col.scrim, .66)} 100%)"></div>
-      <div style="position:absolute;inset:0;background:radial-gradient(120% 70% at 20% 8%,
-        ${alpha(T.palette.lavender, .22)} 0%, ${alpha(T.palette.lavender, 0)} 60%)"></div>` : ''}
+        ${alpha(col.scrim, .62)} 0%, ${alpha(col.scrim, .5)} 40%, ${alpha(col.scrim, .68)} 100%)"></div>
+      <div style="position:absolute;inset:0;background:radial-gradient(130% 62% at 22% 6%,
+        ${alpha(T.palette.lavender, .26)} 0%, ${alpha(T.palette.lavender, 0)} 62%)"></div>` : ''}
   </div>`;
 }
 
@@ -193,15 +200,13 @@ function timerCard(col, appearance) {
   const modeSoft = dark ? alpha(T.palette.hopGreen, .18) : T.palette.hopGreenSoft;
   const modeInk = dark ? T.palette.hopGreenLight : T.palette.hopGreenInk;
   return `<div style="background:${alpha(col.surface, dark ? .94 : .95)};border-radius:${T.radius.xl}px;
-    border:1px solid ${alpha(col.divider, dark ? .8 : .9)};padding:16px 17px;
+    border:1px solid ${alpha(col.divider, dark ? .8 : .9)};padding:16px 17px 15px;
     box-shadow:${elevation(appearance, 'raised')};backdrop-filter:blur(22px)">
     <div style="${type('parentCaption', { color: col.textSecondary, weight: 'semibold' })};text-transform:uppercase;letter-spacing:.6px;font-size:11.5px">Next Potty Pause</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-top:1px">
-      <div style="${type('timerHero', { color: col.textPrimary })};font-size:44px;font-variant-numeric:tabular-nums">28:14</div>
-      <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:20px;background:${modeSoft}">
-        <div style="width:7px;height:7px;border-radius:4px;background:${dark ? T.palette.hopGreenLight : T.palette.hopGreenDeep}"></div>
-        <span style="${type('parentFootnote', { color: modeInk, weight: 'semibold' })};font-size:12px">Routine Mode</span>
-      </div>
+    <div style="${type('timerHero', { color: col.textPrimary })};font-size:44px;margin-top:1px;font-variant-numeric:tabular-nums">28:14</div>
+    <div style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:4px 11px;border-radius:20px;background:${modeSoft}">
+      <div style="width:7px;height:7px;border-radius:4px;background:${dark ? T.palette.hopGreenLight : T.palette.hopGreenDeep}"></div>
+      <span style="${type('parentFootnote', { color: modeInk, weight: 'semibold' })};font-size:12px">Routine Mode</span>
     </div>
     <div style="display:flex;gap:10px;margin-top:12px">
       ${pillButton(col, 'Skip', { fill: 'transparent', textColor: col.textSecondary })}
@@ -270,9 +275,12 @@ function grabber(col) {
 const W = 393, H = 852;
 const PAGE = T.spacing.pageCompact;      // 20
 const TAB_H = 50, HOME_IND = 26;
-const SHEET_Y = 469;                     // 55% — the water line the sheet rises to
-const CARD_BOTTOM = SHEET_Y - 20;
-const POND = { boxH: 500, top: -20, height: SHEET_Y + 48 };
+const SHEET_Y = 497;                     // the water line the sheet rises to
+const CARD_BOTTOM = SHEET_Y - 14;
+// The pond is drawn short and wide and hung 36px down: that crop puts the sky
+// behind the pills, the far bank behind Hop's head, and the fish, the small pad
+// and the lily flower in the strip of water the timer card leaves open.
+const POND = { boxH: 400, top: 36, height: SHEET_Y + 48 };
 const HOP_W = Math.round(W * 0.34);      // 134
 
 function parentHome(appearance = 'light') {
