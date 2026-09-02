@@ -344,7 +344,7 @@ final class NotificationService: NotificationProviding {
     // MARK: Permission
 
     func refreshPermission() async {
-        let permission = await Self.currentPermission(center: center)
+        let permission = await currentPermission()
         state.permission = permission
         HopLog.notification.info("permission=\(permission.rawValue, privacy: .public)")
     }
@@ -366,14 +366,26 @@ final class NotificationService: NotificationProviding {
         return state.permission
     }
 
-    /// Reads the system status from a non-isolated context.
+    /// Reads the system status and maps it to HopPotty's own `Sendable` enum, so
+    /// that no `UserNotifications` object ever crosses an isolation boundary.
     ///
-    /// `UNNotificationSettings` is mapped to HopPotty's own `Sendable` enum
-    /// before anything crosses back to the main actor, so no `UserNotifications`
-    /// object is ever passed between isolation domains.
-    private nonisolated static func currentPermission(
-        center: UNUserNotificationCenter
-    ) async -> NotificationPermission {
+    /// Main-actor isolated, and it has to be. This used to be a
+    /// `nonisolated static func` taking the center as a parameter, on the
+    /// reasoning that the read should happen off the main actor. That reasoning
+    /// had the boundary in the wrong place: `UNUserNotificationCenter` is not
+    /// `Sendable`, so handing it to a nonisolated function *is* the crossing —
+    ///
+    ///     error: sending 'self.center' risks causing data races
+    ///
+    /// — and it was the center going across, not the settings.
+    ///
+    /// Nothing is lost by staying here. `notificationSettings()` is an async
+    /// system call: awaiting it releases the main actor for the duration exactly
+    /// as a hop to another executor would, so the "don't block the main actor"
+    /// goal is met by the `await` itself. The non-`Sendable`
+    /// `UNNotificationSettings` never leaves this function; only the mapped enum
+    /// does.
+    private func currentPermission() async -> NotificationPermission {
         let settings = await center.notificationSettings()
         switch settings.authorizationStatus {
         case .notDetermined: return .notDetermined
@@ -427,13 +439,11 @@ final class NotificationService: NotificationProviding {
         HopLog.notification.info("all pending notifications cancelled")
     }
 
+    /// Counts pending requests without letting a `UNNotificationRequest` cross an
+    /// isolation boundary — and, since the same fix as `currentPermission`, without
+    /// letting the center cross one either. The array is materialised here and
+    /// only its count leaves.
     func pendingCount() async -> Int {
-        await Self.pendingCount(center: center)
-    }
-
-    /// Counts pending requests without letting a `UNNotificationRequest` cross
-    /// an isolation boundary — the same reasoning as `currentPermission`.
-    private nonisolated static func pendingCount(center: UNUserNotificationCenter) async -> Int {
         await center.pendingNotificationRequests().count
     }
 

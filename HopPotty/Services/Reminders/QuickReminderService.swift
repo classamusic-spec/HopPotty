@@ -190,7 +190,9 @@ final class QuickReminderMemoryStore: QuickReminderRepository {
 /// One pending Quick Reminder, as the notification centre knows it.
 ///
 /// File scope rather than nested in the service, so it carries no actor
-/// isolation of its own and can be built from the `nonisolated` read below.
+/// isolation of its own. `Sendable`, and deliberately so: it is the boundary
+/// type — the `UNNotificationRequest`s it is derived from never leave the read
+/// that produces them.
 private struct PendingQuickReminder: Sendable {
     let id: UUID
     let fireAt: Date
@@ -264,7 +266,7 @@ final class QuickReminderService: QuickReminderProviding {
     /// only which reminder a later one replaces, and "anyone" is the scope that
     /// replaces nothing by surprise.
     private func rehydrateFromNotificationCentre(at now: Date) async throws {
-        for entry in await Self.pendingQuickReminders(center: center) {
+        for entry in await pendingQuickReminders() {
             guard try await repository.reminder(id: entry.id) == nil else { continue }
             try await repository.save(
                 QuickReminder(
@@ -282,10 +284,21 @@ final class QuickReminderService: QuickReminderProviding {
 
     /// Reads the pending Quick Reminders without letting a
     /// `UNNotificationRequest` cross an isolation boundary — the same reasoning
-    /// as `NotificationService.pendingCount`.
-    private nonisolated static func pendingQuickReminders(
-        center: UNUserNotificationCenter
-    ) async -> [PendingQuickReminder] {
+    /// as `NotificationService.pendingCount`, and now with the same correction.
+    ///
+    /// This was a `nonisolated static func` taking the center as a parameter.
+    /// That put the boundary in the wrong place: `UNUserNotificationCenter` is
+    /// not `Sendable`, so passing it out of this `@MainActor` type is itself the
+    /// crossing the design was trying to avoid — `sending 'self.center' risks
+    /// causing data races`. The compiler reported the identical pair in
+    /// `NotificationService` and not this one, which says nothing about this one
+    /// being safe; it is the same mistake in the same shape.
+    ///
+    /// Staying on the main actor costs nothing: `pendingNotificationRequests()`
+    /// is an async system call, so awaiting it releases the actor for the
+    /// duration. The `UNNotificationRequest`s are consumed here and only the
+    /// `Sendable` `PendingQuickReminder` values leave.
+    private func pendingQuickReminders() async -> [PendingQuickReminder] {
         let prefix = HopNotificationKind.quickReminder.identifierPrefix
         return await center.pendingNotificationRequests().compactMap { request in
             guard request.identifier.hasPrefix(prefix),

@@ -502,6 +502,47 @@ invented initializer would have skipped that reasoning entirely.
 
 ---
 
+## Layer 10 — a boundary drawn in the wrong place
+
+*Run 65. 2 diagnostics — and one more found by looking rather than by building.*
+
+```
+NotificationService.swift:347:37: error: sending 'self.center' risks causing data races
+NotificationService.swift:431:20: error: sending 'self.center' risks causing data races
+```
+
+This one is interesting because the design was *trying* to do the right thing
+and put the boundary one step off. `NotificationService` is `@MainActor`, and
+its reads of the system were written as `nonisolated static func`s taking the
+center as a parameter, with a comment explaining that `UNNotificationSettings`
+is mapped to a `Sendable` enum "so no `UserNotifications` object is ever passed
+between isolation domains".
+
+The object being passed between domains was **the center**.
+`UNUserNotificationCenter` is not `Sendable`, so handing it to a nonisolated
+function is itself the crossing the comment was guarding against.
+
+The fix removes the hop rather than annotating around it, and nothing is lost by
+that: `notificationSettings()` and `pendingNotificationRequests()` are async
+system calls, so awaiting them from the main actor releases it for the duration
+exactly as a hop to another executor would. The "don't block the main actor"
+goal is met by the `await` itself. The non-`Sendable` objects are consumed
+inside the function and only the mapped `Sendable` values leave.
+
+**`QuickReminderService.pendingQuickReminders` had the identical bug and was not
+reported.** Same `@MainActor` class, same non-`Sendable` center, same
+`nonisolated static func` taking it as a parameter, same comment citing the same
+reasoning — the compiler simply stopped after the first file. It is fixed the
+same way. This is the whole argument for auditing an error class by reading
+rather than treating the diagnostic list as the census: *a compiler reports the
+first thing it trips over, not the size of the hole.*
+
+The third `nonisolated static func` in the project, `PurchaseService.verified`,
+was checked and is fine: `VerificationResult` and `Transaction` are both
+`Sendable`, so nothing crosses.
+
+---
+
 ## Reading a failed build
 
 `.github/workflows/ci.yml` ends with a **Summarise diagnostics** step,
