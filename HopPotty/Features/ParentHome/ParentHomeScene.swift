@@ -273,7 +273,7 @@ struct HomeSheetPanel<Content: View>: View {
         // draw a line across it.
         .overlay {
             if theme.isHighContrast {
-                shape.strokeBorder(theme.color.divider, lineWidth: 1.5)
+                shape.stroke(theme.color.divider, lineWidth: 1.5)
             }
         }
     }

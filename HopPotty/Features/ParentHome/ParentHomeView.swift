@@ -138,6 +138,14 @@ struct ParentHomeView: View {
                             .frame(maxWidth: metrics.cardMaxWidth, alignment: .leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .hopPageMargins()
+                            .padding(.bottom, theme.spacing.s)
+
+                        // A one-off nudge the caregiver set, or the affordance
+                        // to set one. Draws nothing when the service is absent.
+                        QuickReminderBar(childID: snapshot.child.id)
+                            .frame(maxWidth: metrics.cardMaxWidth, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .hopPageMargins()
                             .padding(.bottom, theme.spacing.l)
 
                         HomeSheetPanel(minimumHeight: metrics.sheetMinHeight) {
