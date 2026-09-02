@@ -3,6 +3,7 @@ import Combine
 import HopPottyCore
 import FamilyControls
 import ManagedSettings
+import Observation
 
 /// HopPotty's one adapter onto FamilyControls and ManagedSettings.
 ///

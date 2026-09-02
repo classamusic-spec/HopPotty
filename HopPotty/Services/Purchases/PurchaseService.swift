@@ -1,5 +1,6 @@
 import Foundation
 import StoreKit
+import Observation
 
 // MARK: - Purchase domain types
 //

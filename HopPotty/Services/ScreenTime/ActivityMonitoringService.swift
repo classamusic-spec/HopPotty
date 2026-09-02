@@ -1,6 +1,7 @@
 import Foundation
 import HopPottyCore
 import DeviceActivity
+import Observation
 
 /// HopPotty's one adapter onto `DeviceActivity`.
 ///

@@ -1,6 +1,7 @@
 import Foundation
 import HopPottyCore
 import UserNotifications
+import Observation
 
 // MARK: - The permitted kinds
 //

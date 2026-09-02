@@ -1,4 +1,5 @@
 import SwiftUI
+import HopPottyCore
 import HopPottyDesignTokens
 
 /// Plays one of Hop's lines.
@@ -6,7 +7,7 @@ import HopPottyDesignTokens
 /// Audio playback is a Services concern, so the design system takes a closure
 /// from the environment rather than owning an engine. The default does nothing,
 /// which means a preview and a unit-test host are silent instead of broken.
-public struct HopVoicePlayback: Sendable {
+public struct HopVoicePlayer: Sendable {
     /// Deliberately un-isolated: the design system only needs to say "play
     /// this", and the audio service decides which actor that happens on.
     public let play: @Sendable (HopVoiceLine) -> Void
@@ -15,11 +16,11 @@ public struct HopVoicePlayback: Sendable {
         self.play = play
     }
 
-    public static let disabled = HopVoicePlayback { _ in }
+    public static let disabled = HopVoicePlayer { _ in }
 }
 
-private struct HopVoicePlaybackKey: EnvironmentKey {
-    static let defaultValue = HopVoicePlayback.disabled
+private struct HopVoicePlayerKey: EnvironmentKey {
+    static let defaultValue = HopVoicePlayer.disabled
 }
 
 private struct HopSpokenCaptionsKey: EnvironmentKey {
@@ -30,9 +31,9 @@ private struct HopSpokenCaptionsKey: EnvironmentKey {
 }
 
 public extension EnvironmentValues {
-    var hopVoicePlayback: HopVoicePlayback {
-        get { self[HopVoicePlaybackKey.self] }
-        set { self[HopVoicePlaybackKey.self] = newValue }
+    var hopVoicePlayback: HopVoicePlayer {
+        get { self[HopVoicePlayerKey.self] }
+        set { self[HopVoicePlayerKey.self] = newValue }
     }
 
     /// Whether Hop's spoken lines are also shown in writing.
@@ -149,8 +150,8 @@ public struct HopStepIndicator: View {
 #Preview("Audio button and steps") {
     VStack(alignment: .leading, spacing: 40) {
         HopStepIndicator(total: 4, current: 2)
-        HopAudioButton(line: HopVoiceLine(id: "routine.sit", caption: "Sit down and give it a try."))
-        HopAudioButton(line: HopVoiceLine(id: "routine.wash", caption: "Now let's wash our hands with lots of bubbles."))
+        HopAudioButton(line: HopVoiceLine(id: "routine.sit", text: "Sit down and give it a try."))
+        HopAudioButton(line: HopVoiceLine(id: "routine.wash", text: "Now let's wash our hands with lots of bubbles."))
     }
     .padding()
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -161,7 +162,7 @@ public struct HopStepIndicator: View {
 #Preview("Audio button · captions off, AX3") {
     VStack(alignment: .leading, spacing: 40) {
         HopStepIndicator(total: 5, current: 5)
-        HopAudioButton(line: HopVoiceLine(id: "routine.sit", caption: "Sit down and give it a try."))
+        HopAudioButton(line: HopVoiceLine(id: "routine.sit", text: "Sit down and give it a try."))
     }
     .padding()
     .environment(\.hopShowsSpokenCaptions, false)
@@ -174,7 +175,7 @@ public struct HopStepIndicator: View {
 #Preview("Audio button · dark") {
     VStack(alignment: .leading, spacing: 40) {
         HopStepIndicator(total: 4, current: 3)
-        HopAudioButton(line: HopVoiceLine(id: "routine.sit", caption: "Sit down and give it a try."))
+        HopAudioButton(line: HopVoiceLine(id: "routine.sit", text: "Sit down and give it a try."))
     }
     .padding()
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -186,7 +187,7 @@ public struct HopStepIndicator: View {
 #Preview("Audio button · Reduce Motion") {
     VStack(alignment: .leading, spacing: 40) {
         HopStepIndicator(total: 4, current: 2)
-        HopAudioButton(line: HopVoiceLine(id: "routine.sit", caption: "Sit down and give it a try."))
+        HopAudioButton(line: HopVoiceLine(id: "routine.sit", text: "Sit down and give it a try."))
     }
     .padding()
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

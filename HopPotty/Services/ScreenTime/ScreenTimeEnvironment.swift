@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import HopPottyCore
+import Observation
 
 /// How the app gets hold of the Screen Time layer.
 ///

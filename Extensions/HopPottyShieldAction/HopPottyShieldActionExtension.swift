@@ -207,12 +207,21 @@ final class HopPottyShieldActionExtension: ShieldActionDelegate {
         //
         // UNVERIFIED — confirm on device: that `.openParentalControlsApp` exists
         // under this spelling and does open the containing app rather than a
-        // system settings pane. If the availability check or the case name is
-        // wrong, delete this block — `.close` below is the shipping behaviour and
-        // the one every other part of the design assumes.
+        // system settings pane. If the case name is wrong, delete this block —
+        // `.close` below is the shipping behaviour and the one every other part
+        // of the design assumes.
+        //
+        // The `#if compiler` gate is not belt and braces, it is required.
+        // `#available` is a RUNTIME check: the case still has to exist in the
+        // SDK being compiled against, and `.openParentalControlsApp` is not in
+        // the iOS 18 SDK that Xcode 16 ships. Without the gate this file does
+        // not compile there at all. Swift 6.2 is the compiler that arrives with
+        // the iOS 26 SDK, which is the first one that could have the case.
+        #if compiler(>=6.2)
         if #available(iOS 26.5, *) {
             return .openParentalControlsApp
         }
+        #endif
         return .close
     }
 }

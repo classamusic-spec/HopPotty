@@ -2,6 +2,7 @@
 import Foundation
 import HopPottyCore
 import FamilyControls
+import Observation
 
 /// A `ScreenTimeProviding` that touches nothing.
 ///

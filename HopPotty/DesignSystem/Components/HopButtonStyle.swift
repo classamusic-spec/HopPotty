@@ -294,7 +294,7 @@ public enum HopButtonFeedback: String, CaseIterable, Sendable {
 
 /// Plays a control's feedback. Installed by the app root; no-op by default.
 public struct HopButtonFeedbackHandler: Sendable {
-    /// Un-isolated for the same reason ``HopVoicePlayback`` is: the design
+    /// Un-isolated for the same reason ``HopVoicePlayer`` is: the design
     /// system only needs to say "this happened", and the service decides which
     /// actor answers.
     public let play: @Sendable (HopButtonFeedback) -> Void

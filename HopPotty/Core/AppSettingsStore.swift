@@ -1,5 +1,6 @@
 import Foundation
 import HopPottyCore
+import Observation
 
 /// The app's live copy of `AppSettings`.
 ///

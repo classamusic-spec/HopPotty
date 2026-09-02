@@ -1,21 +1,14 @@
 import SwiftUI
 import HopPottyCore
+import HopPottyDesignTokens
 
-// Bridging between the two `HopVoiceLine` types in play.
-//
-// `HopPottyCore.HopVoiceLine` is the authored content: the recording script,
-// its caption and the asset's state. The design system declares its own
-// view-shaped `HopVoiceLine` (id, caption, duration) because
-// `HopAudioButton(line:)` takes that one. Unqualified `HopVoiceLine` in app
-// code resolves to the app-module type, so every reference to the *content*
-// type below is written out in full. That is deliberate, not verbosity.
-
-extension HopVoiceLine {
-    /// The view-layer line for an authored one.
-    init(content line: HopPottyCore.HopVoiceLine) {
-        self.init(id: line.id.rawValue, caption: line.localizedCaption, duration: nil)
-    }
-}
+// `HopVoiceLine` is one type, and it lives in HopPottyCore: the recording
+// script, its caption and the asset's state. The design system has no
+// view-shaped twin — `HopAudioButton(line:)` takes the content type directly —
+// so the references below could be written bare. They are written out in full
+// deliberately: this file is the seam between authored content and what a child
+// sees, and being explicit about which module owns the line is worth the extra
+// twelve characters.
 
 extension HopPottyCore.HopVoiceLine {
     /// The written form, through the string catalog.
