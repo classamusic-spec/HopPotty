@@ -110,7 +110,12 @@ const DEFS = {
   softShadow: rad('softShadow', [[0, P.midnight, 0.14], [1, P.midnight, 0]]),
 
   // -- Sky / weather --
-  skyPond: lin('skyPond', [[0, '#CFEDF9'], [0.55, P.pondBlueSoft], [1, P.sunshineSoft]]),
+  // Deeper at the zenith, warm and pale at the horizon. The value drop is what
+  // makes the sky read as air with depth in it rather than as a blue rectangle.
+  skyPond: lin('skyPond', [[0, '#9CD9F2'], [0.3, '#BCE7F8'], [0.6, P.pondBlueSoft], [0.86, '#F4FAFB'], [1, '#FFF3DE']]),
+  // The key light for the whole pond: an off-frame sun, upper left. No disc —
+  // `sunbeam` is an unlockable decoration and would collide with one.
+  skyGlow: rad('skyGlow', [[0, '#FFF6DE', 0.85], [0.42, P.sunshineSoft, 0.34], [1, P.sunshineSoft, 0]]),
   skyWarm: lin('skyWarm', [[0, '#CFE9F6'], [0.42, '#E6F5FB'], [0.75, P.sunshineSoft], [1, '#FFF0E2']]),
   skyHaze: lin('skyHaze', [[0, P.cloud, 0], [0.55, P.cloud, 0.12], [1, P.cloud, 0.8]]),
   sunGlow: rad('sunGlow', [[0, P.sunshine, 0.95], [0.45, P.sunshine, 0.45], [1, P.sunshine, 0]]),
@@ -120,13 +125,21 @@ const DEFS = {
   moonGlow: rad('moonGlow', [[0, P.sunshineSoft, 0.9], [1, P.sunshineSoft, 0]]),
 
   // -- Land / water --
+  // Four ground bands, each one step warmer, greener and darker than the one
+  // behind it. That single ramp is the whole depth cue for the pond backdrop.
+  hillHaze: lin('hillHaze', [[0, '#D9EEE8'], [1, '#C6E6DA']]),
   hillFar: lin('hillFar', [[0, '#C7E9D6'], [1, '#AEDFC4']]),
   hillMid: lin('hillMid', [[0, '#A9DEC0'], [1, '#8CD1A9']]),
-  ground: lin('ground', [[0, '#A8DFC0'], [0.5, P.hopGreenLight], [1, '#7ECBA0']]),
-  groundNear: lin('groundNear', [[0, '#7CC79E'], [1, '#5FB287']]),
-  water: lin('water', [[0, P.pondBlueLight], [0.55, P.pondBlue], [1, '#57B6DC']]),
+  ground: lin('ground', [[0, '#9CDBB8'], [0.42, P.hopGreenLight], [1, '#74C398']]),
+  groundNear: lin('groundNear', [[0, '#6FBF95'], [1, '#4EA278']]),
+  meadowLight: lin('meadowLight', [[0, '#FFFFFF', 0], [0.45, '#FFF6DE', 0.32], [1, '#FFF6DE', 0]], { x1: 0.1, y1: 0, x2: 0.9, y2: 0.4 }),
+  // Water, from the far rim to the near one: the far bank's own reflection,
+  // then the broad band of sky, then depth and the near bank's shadow.
+  water: lin('water', [[0, '#4AA3C8'], [0.13, '#74C9E9'], [0.42, '#94DAF1'], [0.7, P.pondBlue], [1, '#3E97C0']]),
+  waterShallow: lin('waterShallow', [[0, '#CDEBEE'], [1, '#9FDCEE']]),
   waterDeep: lin('waterDeep', [[0, '#7FCFEC'], [1, P.pondBlueDeep]]),
-  shoreSand: lin('shoreSand', [[0, P.sand100], [1, P.sand200]]),
+  waterSkyPatch: rad('waterSkyPatch', [[0, '#FFFFFF', 0.5], [0.55, '#FFFFFF', 0.16], [1, '#FFFFFF', 0]], { cx: 0.4, cy: 0.4, r: 0.62 }),
+  shoreSand: lin('shoreSand', [[0, P.sand100], [0.55, P.sand200], [1, '#DFD5C7']]),
 
   // -- Plants --
   padGreen: lin('padGreen', [[0, P.hopGreenLight], [1, P.hopGreenDeep]], { x1: 0.2, x2: 0.9 }),
@@ -143,9 +156,27 @@ const DEFS = {
   woodGradV: lin('woodGradV', [[0, P.woodLight], [1, P.wood]]),
   stoneGrad: lin('stoneGrad', [[0, '#EFEAE3'], [1, '#C9C2B8']], { x1: 0.25, x2: 0.85 }),
   stoneGradCool: lin('stoneGradCool', [[0, '#E6E4EE'], [1, '#BDB8CC']], { x1: 0.25, x2: 0.85 }),
-  porcelainGrad: lin('porcelainGrad', [[0, '#FFFFFF'], [0.6, P.porcelainMid], [1, P.porcelainShade]], { x1: 0.2, x2: 0.9 }),
-  porcelainSide: lin('porcelainSide', [[0, P.porcelainMid], [1, '#DAD4CB']], { x1: 0, x2: 1, y2: 0 }),
+  // Porcelain is deliberately *warm* white while the tile behind it is cool.
+  // That hue split, not a value split, is what separates a white object from a
+  // white wall without outlining either of them.
+  porcelainGrad: lin('porcelainGrad', [[0, '#FFFFFF'], [0.34, '#FDFAF6'], [0.68, P.porcelainMid], [1, '#DED7CC']], { x1: 0.16, x2: 0.94 }),
+  porcelainSide: lin('porcelainSide', [[0, '#FBF8F3'], [0.5, P.porcelainShade], [1, '#CFC7BB']], { x1: 0, x2: 1, y2: 0 }),
+  porcelainTop: lin('porcelainTop', [[0, '#FFFFFF'], [1, '#E9E3DA']], { x1: 0.25, x2: 0.85 }),
+  ceramicAO: rad('ceramicAO', [[0, P.sand600, 0.34], [0.62, P.sand600, 0.1], [1, P.sand600, 0]]),
   tileWall: lin('tileWall', [[0, '#FFFDFA'], [1, '#F1EDE6']]),
+  // Chrome is a hard dark-to-light flip, not a soft ramp: the abrupt jump at
+  // the middle is the only thing that separates metal from plastic.
+  chromeGrad: lin('chromeGrad', [[0, '#F7F4EF'], [0.2, '#D6D0C7'], [0.4, '#8C857A'], [0.5, '#6B6459'],
+    [0.58, '#C3BCB1'], [0.78, '#FDFBF7'], [1, '#B6AFA4']], { x1: 0, y1: 0, x2: 1, y2: 0 }),
+  chromeGradV: lin('chromeGradV', [[0, '#FBF9F5'], [0.24, '#DCD6CD'], [0.46, '#8C857A'], [0.54, '#6B6459'],
+    [0.66, '#CAC3B8'], [0.86, '#F7F4EF'], [1, '#AEA79C']]),
+  // Tile: a cool sheen raked from the window side, and a grout well.
+  tileSheen: lin('tileSheen', [[0, '#FFFFFF', 0.55], [0.42, '#FFFFFF', 0.14], [1, '#FFFFFF', 0]], { x1: 0.05, y1: 0, x2: 0.8, y2: 1 }),
+  wallLight: rad('wallLight', [[0, '#FFFFFF', 0.72], [0.5, '#FFFFFF', 0.26], [1, '#FFFFFF', 0]], { cx: 0.16, cy: 0.1, r: 0.72 }),
+  wallFall: lin('wallFall', [[0, P.night700, 0.09], [0.45, P.night700, 0.02], [1, P.night700, 0.06]]),
+  floorGlow: rad('floorGlow', [[0, '#FFFDF6', 0.85], [0.55, '#FFFDF6', 0.3], [1, '#FFFDF6', 0]], { cx: 0.42, cy: 0.55, r: 0.6 }),
+  floorFall: lin('floorFall', [[0, P.sand500, 0.24], [0.28, P.sand500, 0.05], [1, P.sand500, 0]]),
+  matWeave: lin('matWeave', [[0, P.peachSoft], [0.5, '#FFDCD3'], [1, '#FFCBBF']], { x1: 0.2, x2: 0.9 }),
 
   // -- Accents --
   glowWarm: rad('glowWarm', [[0, P.sunshine, 0.75], [0.5, P.sunshine, 0.28], [1, P.sunshine, 0]]),
@@ -284,6 +315,47 @@ function butterflyHalf(fillTop, fillLow, spot) {
     <path d="M 4 2 C 34 4 56 20 48 42 C 40 62 12 54 4 22 Z" fill="${fillLow}"/>
     <circle cx="46" cy="-40" r="9" fill="${spot}" opacity="0.55"/>
     <circle cx="28" cy="26" r="6" fill="${spot}" opacity="0.45"/>`;
+}
+
+/** Deterministic 0..1 noise, so scattered scenery is stable between builds and
+ *  a re-run never produces a diff nobody asked for. */
+const nz = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+/** A foliage mound: four lobes over a flat base, one path.
+ *  A distant tree only ever needs its silhouette, and a silhouette costs one
+ *  path — which is how a whole horizon of them stays affordable. */
+function canopy(cx, baseY, w, h, fill, opacity = 1) {
+  const rx = w / 2;
+  return `<path d="M ${R(cx - rx)} ${R(baseY)}
+    q ${R(-rx * 0.06)} ${R(-h * 0.52)} ${R(rx * 0.42)} ${R(-h * 0.72)}
+    q ${R(rx * 0.2)} ${R(-h * 0.34)} ${R(rx * 0.6)} ${R(-h * 0.22)}
+    q ${R(rx * 0.62)} ${R(-h * 0.16)} ${R(rx * 0.74)} ${R(h * 0.3)}
+    q ${R(rx * 0.4)} ${R(h * 0.3)} ${R(rx * 0.24)} ${R(h * 0.64)} Z"
+    fill="${fill}"${opacity === 1 ? '' : ` opacity="${opacity}"`}/>`;
+}
+
+/** A row of canopies with jittered size, spacing and baseline, so a horizon
+ *  reads as woodland rather than as a repeating stamp. */
+function treeline(x0, x1, y, n, fill, { h = 46, w = 84, opacity = 1, jitter = 0.8 } = {}) {
+  let s = '';
+  for (let i = 0; i < n; i++) {
+    const step = (x1 - x0) / (n - 1);
+    const x = x0 + step * i + (nz(i * 3.1) - 0.5) * step * jitter;
+    const k = 0.66 + nz(i * 7.7) * 0.72;
+    s += canopy(x, y + (nz(i * 5.3) - 0.5) * 9, w * k, h * k, fill, opacity);
+  }
+  return s;
+}
+
+/** A tuft of grass: a fan of blades from one root, near ones taller and
+ *  darker. Used to break every hard edge where land meets water. */
+function tuft(x, baseY, h, fill, { n = 5, spread = 1, opacity = 1 } = {}) {
+  const blades = Array.from({ length: n }, (_, i) => {
+    const t = (i / (n - 1)) * 2 - 1;
+    const hh = h * (0.55 + 0.45 * (1 - Math.abs(t)) + nz(x + i) * 0.18);
+    return `<path d="${blade(x + t * h * 0.3 * spread, baseY, hh, t * h * 0.42 + (nz(i * 2.3) - 0.5) * 8, h * 0.11)}"/>`;
+  }).join('');
+  return `<g fill="${fill}"${opacity === 1 ? '' : ` opacity="${opacity}"`}>${blades}</g>`;
 }
 
 /** A fern frond drawn as one lobed, arching leaf silhouette.
