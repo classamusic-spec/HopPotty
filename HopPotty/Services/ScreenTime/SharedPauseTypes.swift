@@ -740,7 +740,14 @@ public extension AppGroupStore {
 /// this file is deleted at the same moment the selection is
 /// (`ScreenTimeService.clearSelection`).
 #if canImport(ManagedSettings)
-public struct ShieldTokens: Codable, Equatable, Sendable {
+/// `@unchecked Sendable` rather than `Sendable`, because `ApplicationToken` and
+/// its siblings are `Token<T>`, which Apple has not annotated (CI run 54 named
+/// all three stored properties). A token is an opaque, immutable, `Codable`
+/// value with no reference semantics and no mutable state — sending one is
+/// safe; the compiler just cannot see that through an unannotated framework.
+/// `@preconcurrency import` would only downgrade the diagnostic to a warning,
+/// and `SWIFT_TREAT_WARNINGS_AS_ERRORS` turns it back into an error.
+public struct ShieldTokens: Codable, Equatable, @unchecked Sendable {
     public static let currentSchemaVersion = 1
 
     public let schemaVersion: Int

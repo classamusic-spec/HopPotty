@@ -219,15 +219,21 @@ public enum ScreenTimeIdentifiers {
 public extension ManagedSettingsStore.Name {
     /// The single store HopPotty shields through.
     ///
-    /// Built from a string literal rather than from
-    /// `ScreenTimeIdentifiers.managedSettingsStoreName` because `Name`'s
-    /// `ExpressibleByStringLiteral` conformance is the spelling Apple's own
-    /// samples use, and the unlabelled `init(_:)` is the part of that API surface
-    /// I am least certain of.
+    /// VERIFIED by the compiler (CI run 54, Xcode 26.3): `Name` does **not**
+    /// conform to `ExpressibleByStringLiteral`. This was written as a string
+    /// literal on the assumption that it did, which did not compile; the
+    /// unlabelled `init(_:)` is the spelling that does.
     ///
-    /// The compiler cannot check a literal against a constant, so
+    /// `nonisolated(unsafe)` because `Name` is a `RawRepresentable` wrapper
+    /// around a `String` that Apple has not annotated `Sendable`. It is a `let`,
+    /// its storage is a `let`, and nothing can mutate it — the compiler simply
+    /// cannot prove that through an unannotated framework type. The alternative,
+    /// `@preconcurrency import`, would only downgrade this to a warning, and
+    /// `SWIFT_TREAT_WARNINGS_AS_ERRORS` turns it straight back into an error.
+    ///
+    /// The compiler cannot check this against the constant it must equal, so
     /// `ShieldReconciler.assertStoreNamesAgree()` does, in DEBUG, at first use.
-    static let pottyPause: ManagedSettingsStore.Name = "hoppotty.pottypause"
+    nonisolated(unsafe) static let pottyPause = ManagedSettingsStore.Name("hoppotty.pottypause")
 }
 #endif
 
