@@ -92,12 +92,16 @@ struct ProgressTotalsRow: View {
             columns: [GridItem(.adaptive(minimum: 140), spacing: 12)],
             spacing: 12
         ) {
-            ForEach(PottyEventKind.parentDisplayOrder) { kind in
+            ForEach(Array(PottyEventKind.parentDisplayOrder.enumerated()), id: \.element.id) { index, kind in
+                // The tiles lift into place in the display order, once per
+                // load. Every kind is on the same beat: the stagger follows the
+                // order they are drawn in and says nothing about the counts.
                 HopMetricCard(
                     value: ParentFormat.count(aggregate.count(of: kind)),
                     label: kind.parentLabel,
                     glyph: kind.glyph,
-                    tint: kind.tint(theme)
+                    tint: kind.tint(theme),
+                    arrivalIndex: index
                 )
             }
         }
@@ -121,7 +125,11 @@ struct ProgressTimelineSection: View {
                         .foregroundStyle(theme.color.textSecondary)
                     VStack(spacing: 0) {
                         ForEach(Array(day.events.enumerated()), id: \.element.id) { index, event in
-                            HopTimelineRow(event: event, isLast: index == day.events.count - 1)
+                            HopTimelineRow(
+                                event: event,
+                                isLast: index == day.events.count - 1,
+                                arrivalIndex: index
+                            )
                         }
                     }
                     .background(

@@ -16,6 +16,12 @@ struct ProgressDashboardView: View {
     @State private var model: ProgressModel?
 
     var body: some View {
+        // Changing the range reloads, so this swap runs whenever a caregiver
+        // taps the picker, not only on first open. The three card-shaped states
+        // arrive as cards; the loaded state is a *stack* of cards and arrives by
+        // staggering them (`arrivalIndex:` below and in `ProgressChartSection`)
+        // rather than lifting the whole page — doing both would animate every
+        // card twice.
         Group {
             switch model?.state {
             case .loaded(let snapshot):
@@ -27,13 +33,17 @@ struct ProgressDashboardView: View {
                     message: HopFeatureStrings.homeNoChildMessage,
                     action: nil
                 )
+                .hopScreenTransition(.cardArrival)
             case .failed(let failure):
                 failureState(failure)
+                    .hopScreenTransition(.cardArrival)
             case .firstLoad, .loading:
                 HopLoadingState(message: nil)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .hopScreenTransition(.cardArrival)
             }
         }
+        .hopScreenChange(.cardArrival, value: model?.state)
         .navigationTitle(Text(verbatim: HopFeatureStrings.progressTitle))
         .hopBackground(.primary)
         .task(id: parent.activeChildID) { await ensureLoaded() }
@@ -131,14 +141,20 @@ struct ProgressDashboardView: View {
                     .font(theme.font(.parentFootnote))
                     .foregroundStyle(theme.color.textSecondary)
 
-                ForEach(snapshot.insights) { insight in
-                    HopInsightCard(insight: insight, onAction: nil)
+                ForEach(Array(snapshot.insights.enumerated()), id: \.element.id) { index, insight in
+                    HopInsightCard(insight: insight, onAction: nil, arrivalIndex: index)
                 }
                 if let question = snapshot.intervalQuestion {
-                    HopInsightCard(insight: question) { action in
-                        guard action.kind == .adjustSchedule else { return }
-                        Task { await model?.applyIntervalSuggestion(childID: snapshot.child.id) }
-                    }
+                    HopInsightCard(
+                        insight: question,
+                        onAction: { action in
+                            guard action.kind == .adjustSchedule else { return }
+                            Task { await model?.applyIntervalSuggestion(childID: snapshot.child.id) }
+                        },
+                        // Last in the section, so it settles after the
+                        // observations it sits under.
+                        arrivalIndex: snapshot.insights.count
+                    )
                 }
                 // Every insight surface carries the label, without exception.
                 InsightDisclaimerLabel()

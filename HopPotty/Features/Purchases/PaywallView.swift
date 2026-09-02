@@ -56,8 +56,13 @@ struct PaywallView: View {
     }
 
     private var features: some View {
-        VStack(alignment: .leading, spacing: theme.spacing.m) {
-            ForEach(model?.features ?? PaywallFeature.allCases) { feature in
+        let items = model?.features ?? PaywallFeature.allCases
+        // The list lifts into place once, top to bottom. It is the only part of
+        // this screen that is a list of things, and it is the part a caregiver
+        // is actually reading — nothing else here arrives, so the stagger says
+        // "here is what you get" rather than decorating the whole page.
+        return VStack(alignment: .leading, spacing: theme.spacing.m) {
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, feature in
                 HStack(alignment: .top, spacing: theme.spacing.m) {
                     HopGlyphView(feature.glyph, size: 24)
                         .foregroundStyle(theme.color.brandPrimary)
@@ -73,12 +78,28 @@ struct PaywallView: View {
                     }
                 }
                 .accessibilityElement(children: .combine)
+                .hopArrival(index: index)
             }
         }
     }
 
+    /// The price, the buttons, and whatever StoreKit is doing instead.
+    ///
+    /// This is the loading-to-content swap on the paywall: the features above
+    /// are described from the moment the screen opens, and only this block waits
+    /// on the store. It arrives in place, because it never came from anywhere —
+    /// the block is already in the layout and the spinner is standing where the
+    /// price will be.
     @ViewBuilder
     private var priceBlock: some View {
+        Group {
+            priceContent
+        }
+        .hopScreenChange(.cardArrival, value: model?.phase)
+    }
+
+    @ViewBuilder
+    private var priceContent: some View {
         switch model?.phase {
         case .purchased:
             VStack(alignment: .leading, spacing: theme.spacing.xs) {
@@ -88,6 +109,7 @@ struct PaywallView: View {
                     .font(theme.font(.parentCallout))
                     .foregroundStyle(theme.color.textSecondary)
             }
+            .hopScreenTransition(.cardArrival)
         case .pending:
             VStack(alignment: .leading, spacing: theme.spacing.xs) {
                 Text(hop: HopCopy.purchase.pendingTitle)
@@ -96,8 +118,10 @@ struct PaywallView: View {
                     .font(theme.font(.parentCallout))
                     .foregroundStyle(theme.color.textSecondary)
             }
+            .hopScreenTransition(.cardArrival)
         case .purchasing, .restoring, .loading, .none:
             HopLoadingState(message: nil)
+                .hopScreenTransition(.cardArrival)
         case .unavailable:
             // Offline, or StoreKit did not answer. The features stay described
             // and the button stays disabled; no price is guessed.
@@ -110,6 +134,7 @@ struct PaywallView: View {
                 }
                 restoreButton
             }
+            .hopScreenTransition(.cardArrival)
         case .failed(let failure):
             VStack(alignment: .leading, spacing: theme.spacing.s) {
                 Text(verbatim: failure.presentation.title)
@@ -120,6 +145,7 @@ struct PaywallView: View {
                 buyButton
                 restoreButton
             }
+            .hopScreenTransition(.cardArrival)
         case .ready:
             VStack(alignment: .leading, spacing: theme.spacing.s) {
                 if let price = model?.displayPrice {
@@ -130,6 +156,7 @@ struct PaywallView: View {
                 buyButton
                 restoreButton
             }
+            .hopScreenTransition(.cardArrival)
         }
     }
 
