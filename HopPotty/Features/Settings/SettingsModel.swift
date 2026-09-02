@@ -121,7 +121,7 @@ final class SettingsModel {
     func restoreScreenAccess() async {
         isWorking = true
         defer { isWorking = false }
-        if let screenTimeFailure = await environment.screenTime.restoreScreenAccess() {
+        if let screenTimeFailure = environment.screenTime.restoreScreenAccess() {
             failure = .screenTime(screenTimeFailure)
             didRestoreAccess = false
         } else {

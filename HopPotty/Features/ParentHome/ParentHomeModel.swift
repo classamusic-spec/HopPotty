@@ -61,7 +61,7 @@ final class ParentHomeModel {
                 matching: PottyEventQuery(childID: child.id, window: today)
             )
             let ledger = try await environment.repositories.rewards.ledger(for: child.id)
-            let snapshotScreenTime = await environment.screenTime.snapshot(for: child.id)
+            let snapshotScreenTime = environment.screenTime.snapshot(for: child.id)
 
             let scheduleState = ScheduleState(schedule: schedule, now: now)
             let decision = environment.scheduleService.canStartPause(at: scheduleState)
@@ -161,14 +161,14 @@ final class ParentHomeModel {
 
     func startPauseNow() async {
         guard let snapshot = state.value else { return }
-        if let failure = await environment.screenTime.startPauseNow(for: snapshot.schedule) {
+        if let failure = environment.screenTime.startPauseNow(for: snapshot.schedule) {
             actionFailure = .screenTime(failure)
         }
         await load(childID: snapshot.child.id)
     }
 
     func restoreScreenAccess() async {
-        if let failure = await environment.screenTime.restoreScreenAccess() {
+        if let failure = environment.screenTime.restoreScreenAccess() {
             actionFailure = .screenTime(failure)
         }
         await load(childID: state.value?.child.id)

@@ -105,6 +105,27 @@ targets:
         product: HopPottyCore
       - package: HopPottyKit
         product: HopPottyDesignTokens
+      # The sample family — Maya, Sam, the unnamed child, the reference date.
+      # Five files in HopPotty/Features import it, all of them for #Preview
+      # bodies and for `ParentEnvironment.preview()`, and every one of those
+      # imports is inside `#if DEBUG`.
+      #
+      # It is listed unconditionally because XcodeGen has no per-configuration
+      # dependency filter — `dependencies:` is a flat list and there is no
+      # `configs:` key on an entry. The alternative would be to inline the
+      # fixtures into the app target, which puts a second, drifting copy of the
+      # sample family in the one place it was factored out of.
+      #
+      # What that costs a Release build is nothing at runtime and close to
+      # nothing in size: no `#if DEBUG` code exists to reference the module, so
+      # every symbol in it is unreferenced and the static linker drops it. And
+      # the module is invented data by construction — it cannot reach a real
+      # family's store, which is why it lives outside the app in the first
+      # place. Scripts/verify-config.sh checks both halves of that argument:
+      # that the dependency is declared, and that every import of it in the app
+      # is debug-guarded.
+      - package: HopPottyKit
+        product: HopPottyFixtures
       # Embedding is what puts the four .appex bundles in HopPotty.app/PlugIns.
       # An extension that is built but not embedded is an extension the system
       # never sees: no error, no shield, no callback, no widget in the gallery.

@@ -120,7 +120,7 @@ final class OnboardingModel {
         isWorking = true
         defer { isWorking = false }
         let schedule = state.draft.schedule(for: childID)
-        let screenTimeFailure = await environment.screenTime.startPauseNow(for: schedule)
+        let screenTimeFailure = environment.screenTime.startPauseNow(for: schedule)
         state.draft.didTestPauseSucceed = screenTimeFailure == nil
         failure = screenTimeFailure.map { ParentFailure.screenTime($0) }
         persist()
@@ -156,7 +156,7 @@ final class OnboardingModel {
                 settings.hasCompletedOnboarding = true
                 settings.warningNotificationsEnabled = state.draft.notificationPermission == .authorized
             }
-            _ = await environment.screenTime.applySchedule(state.draft.schedule(for: profile.id))
+            _ = environment.screenTime.applySchedule(state.draft.schedule(for: profile.id))
             await environment.reload()
             store.clear()
             isFinished = true

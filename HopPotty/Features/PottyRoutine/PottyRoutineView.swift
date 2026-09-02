@@ -22,6 +22,15 @@ struct PottyRoutineView: View {
     let onOpenPond: () -> Void
     /// Called when the child asks for a grown-up. Never a dead end.
     let onAskForHelp: () -> Void
+    /// Reports where in the routine the child is, whenever that changes.
+    ///
+    /// Two numbers, and deliberately only two: a **zero-based** index — the
+    /// basis `PottyPauseAttributes.ContentState.stepIndex` uses — and how many
+    /// steps there are. Never the step's title. The one consumer is the Live
+    /// Activity on the lock screen, which is the most public surface HopPotty
+    /// has, and `Docs/Widgets.md` §2 is why "2 of 5" is allowed there and "Wash
+    /// your hands" is not.
+    let onStepChange: (_ stepIndex: Int, _ stepCount: Int) -> Void
 
     @State private var model: PottyRoutineModel
 
@@ -29,11 +38,13 @@ struct PottyRoutineView: View {
         settings: AppSettings = AppSettings(),
         onFinish: @escaping (PottyRoutineResult) -> Void,
         onOpenPond: @escaping () -> Void = {},
-        onAskForHelp: @escaping () -> Void = {}
+        onAskForHelp: @escaping () -> Void = {},
+        onStepChange: @escaping (Int, Int) -> Void = { _, _ in }
     ) {
         self.onFinish = onFinish
         self.onOpenPond = onOpenPond
         self.onAskForHelp = onAskForHelp
+        self.onStepChange = onStepChange
         _model = State(initialValue: PottyRoutineModel(settings: settings))
     }
 
@@ -44,9 +55,27 @@ struct PottyRoutineView: View {
         }
         .hopBackground(.secondary)
         .routineTicker(isRunning: model.showsTimerRing) { model.tick($0) }
+        // The opening step, reported once. A routine that is opened and never
+        // advanced still has a position, and a lock screen that says "1 of 5"
+        // because nothing told it otherwise is only right by luck.
+        .onAppear { reportStep() }
         .onChange(of: model.stage) { _, stage in
             if stage == .finished { onFinish(model.result) }
+            reportStep()
         }
+    }
+
+    /// `currentStepNumber` is 1-based, for the indicator and its VoiceOver
+    /// label; the activity's index is 0-based. Converted in exactly one place.
+    ///
+    /// Through the celebration and after it the model clamps to the last step
+    /// rather than running past the end, so this never reports a sixth step of
+    /// five on the way out. A routine with no steps at all — not representable
+    /// in content, but a caller can hand one in — reports nothing rather than
+    /// "step −1 of 0".
+    private func reportStep() {
+        guard model.stepCount > 0 else { return }
+        onStepChange(model.currentStepNumber - 1, model.stepCount)
     }
 
     // MARK: - Chrome

@@ -325,10 +325,39 @@ Other details:
   — indistinguishable from a family who switched the feature off, which is why
   `Scripts/verify-config.sh` checks for it.
 
-**Not yet wired:** `LiveActivityController.update(stepIndex:…)` is called by
-nothing. The routine model owns which step is on screen, and connecting the two
-is a change to `HopPotty/Features/PottyRoutine`. Until then a Live Activity shows
-`1 / 5` for the whole routine.
+### The routine step, and how it gets here
+
+`LiveActivityController.update(stepIndex:…)` **is wired.** The path is four
+hops, and every one of them carries two integers and nothing else:
+
+```
+PottyRoutineView        model.stage changes (and once on appear)
+     │                  onStepChange(currentStepNumber - 1, stepCount)
+     ▼
+HubRoutineFlow          passes the closure straight through
+     ▼
+HopHubView              guard liveActivities.isRunning
+     │                  liveActivities.update(stepIndex:stepCount:
+     ▼                                        expectedEndAt: nil, mood: .cheer)
+LiveActivityController  guard let activity  → Activity.update(content)
+```
+
+- **Zero-based at the boundary.** `PottyRoutineModel.currentStepNumber` is
+  1-based, because it feeds the step indicator and its VoiceOver label;
+  `ContentState.stepIndex` is 0-based. The conversion happens in exactly one
+  place, in `PottyRoutineView.reportStep()`.
+- **Two guards, not one.** `HopHubView` checks `isRunning` before calling, and
+  the controller checks its own `activity` again. The routine is a door on Hop's
+  screen that a child can open at any time, so most runs of it have no pause and
+  no activity behind them at all — that has to cost nothing rather than throw.
+- **Still no titles.** Only the index and the count cross into the activity.
+  §2 of this document is the reason, and it has not changed: a Live Activity is
+  drawn on a locked screen. The widget process has `PottyRoutineContent`
+  compiled in and could render the words itself if that ever became the right
+  call; the app does not send them.
+- **`.cheer`, the mood the activity started with.** `update` writes
+  `hopPoseName` on every call, so passing anything else here would make Hop
+  change face on every step for no reason a caregiver could explain.
 
 ---
 

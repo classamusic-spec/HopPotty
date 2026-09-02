@@ -61,7 +61,7 @@ struct AppSelectionSection: View {
             // Saved on every change rather than on dismiss: the picker can be
             // dismissed by a swipe, and a selection the caregiver made but that
             // never reached disk is the worst kind of silent failure.
-            Task { await persistSelection() }
+            persistSelection()
         }
         #else
         // Family Controls is unavailable in this build. The section still
@@ -95,7 +95,7 @@ struct AppSelectionSection: View {
     }
 
     private func load() async {
-        let snapshot = await parent.screenTime.snapshot(for: childID)
+        let snapshot = parent.screenTime.snapshot(for: childID)
         configuration = snapshot.configuration
         #if canImport(FamilyControls)
         if let data = snapshot.selectionData,
@@ -105,15 +105,19 @@ struct AppSelectionSection: View {
         #endif
     }
 
-    private func persistSelection() async {
+    private func persistSelection() {
         #if canImport(FamilyControls)
         let data = try? JSONEncoder().encode(selection)
-        do {
-            let updated = try await parent.screenTime.saveSelection(data, for: childID)
+        switch parent.screenTime.saveSelection(data, for: childID) {
+        case .success(let updated):
             configuration = updated
             saveFailure = nil
             onChange?(updated)
-        } catch {
+        case .failure:
+            // Deliberately one sentence for every reason. A caregiver who has
+            // just picked six apps needs to know the choice did not stick; which
+            // of the encoder, the store or the token cap refused it is a log
+            // line, not a thing to put on a settings screen.
             saveFailure = .saveFailed
         }
         #endif

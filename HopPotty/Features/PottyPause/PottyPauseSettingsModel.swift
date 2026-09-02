@@ -47,7 +47,7 @@ final class PottyPauseSettingsModel {
 
     func load() async {
         schedule = await environment.schedule(for: childID)
-        screenTime = await environment.screenTime.snapshot(for: childID).configuration
+        screenTime = environment.screenTime.snapshot(for: childID).configuration
         recomputeSummary()
     }
 
@@ -127,7 +127,7 @@ final class PottyPauseSettingsModel {
     func runTestPause() async {
         isWorking = true
         defer { isWorking = false }
-        let result = await environment.screenTime.startPauseNow(for: schedule)
+        let result = environment.screenTime.startPauseNow(for: schedule)
         testPauseSucceeded = result == nil
         failure = result.map { ParentFailure.screenTime($0) }
     }
@@ -141,7 +141,7 @@ final class PottyPauseSettingsModel {
     func restoreScreenAccess() async {
         isWorking = true
         defer { isWorking = false }
-        if let screenTimeFailure = await environment.screenTime.restoreScreenAccess() {
+        if let screenTimeFailure = environment.screenTime.restoreScreenAccess() {
             failure = .screenTime(screenTimeFailure)
             didRestoreAccess = false
         } else {
@@ -152,7 +152,7 @@ final class PottyPauseSettingsModel {
     }
 
     func refreshScreenTime() async {
-        screenTime = await environment.screenTime.snapshot(for: childID).configuration
+        screenTime = environment.screenTime.snapshot(for: childID).configuration
         recomputeSummary()
     }
 

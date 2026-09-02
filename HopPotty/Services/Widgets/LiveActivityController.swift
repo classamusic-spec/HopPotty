@@ -227,6 +227,9 @@ final class NoOpLiveActivityController: LiveActivityControlling {
     }
 
     func update(stepIndex: Int?, stepCount: Int?, expectedEndAt: Date?, mood: HopWidgetMood) {
+        // Same guard as the live controller's `guard let activity`, so a test
+        // that counts updates counts the ones that would really have happened.
+        guard isRunning else { return }
         updateCount += 1
         if let expectedEndAt { lastExpectedEnd = expectedEndAt }
     }

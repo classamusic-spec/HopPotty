@@ -7,32 +7,12 @@ import StoreKit
 // service is what produces them. They were originally declared in
 // `Features/Shared/FeatureDependencies.swift` as placeholders while the two
 // layers were built in parallel; that copy is deleted.
-
-/// A product as the paywall needs to show it.
-///
-/// The price is carried as StoreKit's already-formatted `displayPrice` string.
-/// No price is ever written down in this codebase: currency, formatting and
-/// storefront are Apple's to decide, and a hard-coded "$19.99" is wrong the
-/// moment the app is opened outside the US.
-struct HopProduct: Identifiable, Equatable, Sendable {
-    let id: String
-    let displayName: String
-    let displayPrice: String
-    let description: String
-}
-
-/// What the family has unlocked. One non-consumable, no tiers, no expiry.
-enum ParentEntitlement: Equatable, Sendable {
-    case free
-    case family
-
-    var isUnlocked: Bool { self == .family }
-
-    /// Children a free family can keep. The second child is the paid feature;
-    /// the first child's whole experience is not.
-    static let freeChildLimit = 1
-}
-
+//
+// So were two placeholders that used to sit here: a `HopProduct` struct and a
+// `ParentEntitlement` enum. Both are now the parent features' spelling of the
+// real types — `HopProductDisplay` below, and `HopEntitlement` in
+// EntitlementCache.swift — and the typealiases that say so are the only
+// declarations of those two names left in the app.
 
 // MARK: - Product identity
 
@@ -403,8 +383,13 @@ final class MockPurchaseService: PurchaseProviding {
     /// What the next purchase should do, so a test can drive every branch.
     var nextOutcome: PurchaseOutcome = .purchased
 
-    init(entitlement: HopEntitlement = .free) {
+    /// - Parameter hasProducts: `false` stages the offline case — StoreKit never
+    ///   answered, so there is no price. The paywall must then describe the
+    ///   unlock and show no price at all rather than invent one, and that branch
+    ///   needs a way to be previewed.
+    init(entitlement: HopEntitlement = .free, hasProducts: Bool = true) {
         state.update(entitlement: entitlement, provisional: false)
+        guard hasProducts else { return }
         state.update(
             products: [
                 HopProductDisplay(

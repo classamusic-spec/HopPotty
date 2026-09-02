@@ -55,18 +55,32 @@ struct RootView: View {
     ///
     /// `isStoreAvailable` is threaded through rather than assumed: when the
     /// store failed to open, every screen still works and Settings says so.
+    ///
+    /// Screen Time comes from `ScreenTimeEnvironment.resolved`, which is the one
+    /// place in the app that decides whether the Screen Time layer is real — the
+    /// only other caller is `AppEnvironment.makeReconciler`, which needs just the
+    /// one-method reconciliation port at launch. Both branch on the same
+    /// compile-time configuration, so they cannot disagree at runtime, and in a
+    /// Release build the branch that could answer "fake" does not exist: the
+    /// mock is inside `#if DEBUG` and is not in the binary.
     @MainActor
     private static func makeParentEnvironment(
         _ app: AppEnvironment,
         services: ServiceContainer
     ) -> ParentEnvironment {
-        ParentEnvironment(
+        let screenTime = ScreenTimeEnvironment.resolved(configuration: app.configuration)
+        return ParentEnvironment(
             repositories: app.repositories,
-            screenTime: makeScreenTime(app.configuration),
+            screenTime: ParentScreenTimeAdapter(
+                service: screenTime.screenTime,
+                monitoring: screenTime.monitoring,
+                clock: app.clock
+            ),
             purchases: services.purchases,
             notifications: services.notifications,
             deletion: services.deletion,
             export: services.export,
+            liveActivities: services.liveActivities,
             clock: app.clock,
             settings: services.settingsStore.settings,
             isStoreAvailable: app.isStoreAvailable
@@ -82,23 +96,6 @@ struct RootView: View {
         return .live(repositories: app.repositories, clock: app.clock)
         #else
         return .live(repositories: app.repositories, clock: app.clock)
-        #endif
-    }
-
-    /// The second of the two places the app decides whether Screen Time is real
-    /// — the other being `AppEnvironment.makeReconciler`, which needs only the
-    /// one-method reconciliation port at launch. Both branch on the same
-    /// compile-time configuration, so they cannot disagree at runtime, and in a
-    /// Release build neither condition exists: the fake is not in the binary.
-    @MainActor
-    private static func makeScreenTime(_ configuration: AppBuildConfiguration) -> any ScreenTimeProviding {
-        #if HOPPOTTY_DEBUG_TOOLS
-        if configuration == .mock {
-            return MockScreenTimeService()
-        }
-        return ScreenTimeService()
-        #else
-        return ScreenTimeService()
         #endif
     }
 }

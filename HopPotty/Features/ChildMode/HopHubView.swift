@@ -40,6 +40,15 @@ struct HopHubView: View {
     /// Leaves Child Space. Called **only** after the grown-up gate has passed.
     private let onLeaveToGrownUps: () -> Void
 
+    /// The lock screen's copy of a running pause.
+    ///
+    /// Held here rather than on `HopHubModel` on purpose: the model's whole
+    /// documented job is that it is the one object a child's tap can reach that
+    /// has a repository in it, and a Live Activity is not a write — it is the
+    /// same picture, drawn somewhere else. Nothing below shortens, extends,
+    /// cancels or inspects the pause itself.
+    private let liveActivities: any LiveActivityControlling
+
     @State private var model: HopHubModel
     @State private var destination: ChildDestination?
     /// Where to go once the cover currently on screen has finished dismissing.
@@ -64,6 +73,7 @@ struct HopHubView: View {
     ) {
         self.startsInRoutine = startsInRoutine
         self.onLeaveToGrownUps = onLeaveToGrownUps
+        self.liveActivities = environment.liveActivities
         _model = State(initialValue: HopHubModel(environment: environment))
     }
 
@@ -285,7 +295,10 @@ struct HopHubView: View {
                     Task { await model.finishRoutine(result, session: session) }
                     close()
                 },
-                onAskForHelp: { askForAGrownUp() }
+                onAskForHelp: { askForAGrownUp() },
+                onStepChange: { index, count in
+                    reportRoutineStep(index: index, count: count)
+                }
             )
 
         case .pond:
@@ -321,6 +334,29 @@ struct HopHubView: View {
     private func open(_ next: ChildDestination) {
         if next == .routine { routineSession = UUID() }
         destination = next
+    }
+
+    /// Moves the lock screen on when the routine changes step.
+    ///
+    /// Only while an activity is actually running: `isRunning` is checked here
+    /// and `LiveActivityControlling.update` no-ops again for itself, because the
+    /// routine is reachable from Hop's screen at any time and most runs of it
+    /// have no pause behind them at all.
+    ///
+    /// Two numbers cross this line and nothing else. **No step title**, ever —
+    /// `Docs/Widgets.md` §2 and `PottyPauseAttributes` both say why: a Live
+    /// Activity is drawn on a locked screen, and the widget process already has
+    /// `PottyRoutineContent` compiled in if it ever wants the words. The mood is
+    /// `.cheer`, which is what `HopWidgetMood` documents as "a pause or routine
+    /// is running right now" and what the activity was started with.
+    private func reportRoutineStep(index: Int, count: Int) {
+        guard liveActivities.isRunning else { return }
+        liveActivities.update(
+            stepIndex: index,
+            stepCount: count,
+            expectedEndAt: nil,
+            mood: .cheer
+        )
     }
 
     private func close() {
@@ -378,6 +414,10 @@ private struct HubRoutineFlow: View {
     let settings: AppSettings
     let onFinish: (PottyRoutineResult) -> Void
     let onAskForHelp: () -> Void
+    /// Passed straight through to `PottyRoutineView`, which is the only thing
+    /// that knows where in the routine the child is. Zero-based index, then the
+    /// number of steps.
+    let onStepChange: (Int, Int) -> Void
 
     @State private var isShowingPond = false
 
@@ -386,7 +426,8 @@ private struct HubRoutineFlow: View {
             settings: settings,
             onFinish: onFinish,
             onOpenPond: { isShowingPond = true },
-            onAskForHelp: onAskForHelp
+            onAskForHelp: onAskForHelp,
+            onStepChange: onStepChange
         )
         .fullScreenCover(isPresented: $isShowingPond) {
             PondScreen(onLeave: { isShowingPond = false })

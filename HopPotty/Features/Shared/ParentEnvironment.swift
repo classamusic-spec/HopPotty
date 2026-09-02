@@ -18,11 +18,30 @@ import HopPottyCore
 final class ParentEnvironment {
 
     let repositories: RepositorySet
-    let screenTime: any ScreenTimeProviding
+
+    /// Screen Time, in the shape the parent screens need it.
+    ///
+    /// The adapter rather than `any ScreenTimeProviding`, because the service is
+    /// device-shaped — one selection, one shield, one authorization — and every
+    /// screen here is child-shaped. `ParentScreenTimeAdapter` is the single
+    /// place that knows the difference, and holding it here is what stops each
+    /// feature growing its own translation of the same two facts.
+    let screenTime: ParentScreenTimeAdapter
+
     let purchases: any PurchaseProviding
     let notifications: any NotificationProviding
     let deletion: any DataDeletionProviding
     let export: any DataExportProviding
+
+    /// The lock screen / Dynamic Island presentation of a pause in progress.
+    ///
+    /// Here rather than only on `ServiceContainer` because the guided routine is
+    /// what moves it on, and the routine is presented from Child Space, which
+    /// takes a `ParentEnvironment` and nothing else. Every method on it is
+    /// allowed to do nothing (`Docs/Widgets.md` §8): a routine run outside a
+    /// pause updates an activity that is not there, which costs a `nil` check.
+    let liveActivities: any LiveActivityControlling
+
     let clock: any HopClock
 
     /// Pure scheduling logic. Built from the clock's calendar so a preview
@@ -54,11 +73,12 @@ final class ParentEnvironment {
 
     init(
         repositories: RepositorySet,
-        screenTime: any ScreenTimeProviding,
+        screenTime: ParentScreenTimeAdapter,
         purchases: any PurchaseProviding,
         notifications: any NotificationProviding,
         deletion: any DataDeletionProviding,
         export: any DataExportProviding,
+        liveActivities: any LiveActivityControlling,
         clock: any HopClock = SystemClock(),
         settings: AppSettings = AppSettings(),
         isStoreAvailable: Bool = true
@@ -69,6 +89,7 @@ final class ParentEnvironment {
         self.notifications = notifications
         self.deletion = deletion
         self.export = export
+        self.liveActivities = liveActivities
         self.clock = clock
         self.settings = settings
         self.isStoreAvailable = isStoreAvailable
@@ -142,7 +163,9 @@ final class ParentEnvironment {
             var updated = schedule
             updated.modifiedAt = clock.now
             try await repositories.schedules.save(updated)
-            if let failure = await screenTime.applySchedule(updated) {
+            // Synchronous: registering monitoring is a call into
+            // `DeviceActivityCenter`, which answers immediately.
+            if let failure = screenTime.applySchedule(updated) {
                 return .screenTime(failure)
             }
             return nil

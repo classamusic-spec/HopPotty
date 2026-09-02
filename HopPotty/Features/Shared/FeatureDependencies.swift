@@ -1,5 +1,8 @@
 import Foundation
 import HopPottyCore
+#if canImport(FamilyControls)
+import FamilyControls
+#endif
 
 // The feature layer's view of Screen Time.
 //
@@ -28,10 +31,24 @@ struct ScreenTimeSnapshot: Equatable, Sendable {
     /// this is a record of what was asked for, not an observation of the device
     /// (`Docs/ScreenTimeArchitecture.md` §11 item 12).
     var mayHaveShieldUp: Bool
+    /// The encoded `FamilyActivitySelection`, for the one view that has to hand
+    /// it back to `FamilyActivityPicker`.
+    ///
+    /// An opaque blob and nothing more: HopPotty encodes it, stores it and
+    /// decodes it, and is not entitled to look inside — Apple issues the tokens
+    /// precisely so an app cannot learn what a family uses. Carried as `Data`
+    /// rather than as a `FamilyActivitySelection` so this type stays free of
+    /// FamilyControls and keeps compiling wherever the framework is absent.
+    var selectionData: Data?
 
-    init(configuration: ScreenTimeConfiguration, mayHaveShieldUp: Bool = false) {
+    init(
+        configuration: ScreenTimeConfiguration,
+        mayHaveShieldUp: Bool = false,
+        selectionData: Data? = nil
+    ) {
         self.configuration = configuration
         self.mayHaveShieldUp = mayHaveShieldUp
+        self.selectionData = selectionData
     }
 }
 
@@ -65,6 +82,13 @@ enum ScreenTimeAuthorizationOutcome: Equatable, Sendable {
 /// underneath, which the services layer already provides in real and mock forms.
 /// Adding a second protocol on top would be a seam with nothing on the other
 /// side of it.
+///
+/// This is the type `ParentEnvironment.screenTime` holds, and therefore the one
+/// that has to declare **every** member the parent features call. Some of those
+/// are pure passthroughs (`authorizationStatus`, `appGroupSnapshot(now:)`); the
+/// rest are the per-child, schedule-shaped operations the device-shaped service
+/// deliberately does not offer. A feature that needs the raw service asks for
+/// ``underlying`` and says why.
 @MainActor
 final class ParentScreenTimeAdapter {
 
@@ -82,9 +106,17 @@ final class ParentScreenTimeAdapter {
         self.clock = clock
     }
 
-    /// The underlying service, for the one view that genuinely needs it: the app
-    /// picker, which must bind to `selection` because `FamilyActivityPicker`
-    /// takes a binding.
+    /// The underlying service, for a caller that genuinely needs the
+    /// device-shaped surface — the streams, the reconciler, the extension
+    /// outbox.
+    ///
+    /// Nothing in `Features/` uses it today: the app picker, which was the
+    /// obvious candidate because `FamilyActivityPicker` takes a binding, keeps
+    /// its own `FamilyActivitySelection` and round-trips it through
+    /// ``saveSelection(_:for:)`` instead, so the decode and the commit stay in
+    /// one place. It stays declared rather than deleted so the next screen that
+    /// needs the real thing reaches for a named door instead of widening this
+    /// type by another method.
     var underlying: any ScreenTimeProviding { service }
 
     var authorizationStatus: ScreenTimeAuthorizationStatus { service.authorizationStatus }
@@ -123,8 +155,18 @@ final class ParentScreenTimeAdapter {
                 lastMonitoringRegistration: monitoring?.lastRegistration,
                 lastRegistrationFailure: monitoring?.lastFailure
             ),
-            mayHaveShieldUp: service.believesShieldIsUp
+            mayHaveShieldUp: service.believesShieldIsUp,
+            selectionData: encodedSelection
         )
+    }
+
+    /// What the extensions and the Potty Pause Lab can see of the App Group.
+    ///
+    /// A passthrough, because the shape is already right: a pause record is a
+    /// property of the device, not of a child. `ParentRootView` reads it once
+    /// per foreground to decide whether to open child mode on the routine.
+    func appGroupSnapshot(now: Date) -> AppGroupSnapshot {
+        service.appGroupSnapshot(now: now)
     }
 
     /// Persists whatever the picker left in `selection`.
@@ -136,6 +178,43 @@ final class ParentScreenTimeAdapter {
                 authorizationStatus: service.authorizationStatus
             )
         }
+    }
+
+    /// Takes the blob `FamilyActivityPicker` produced and commits it.
+    ///
+    /// The encoded `FamilyActivitySelection` round-trips through this method
+    /// rather than the view reaching into `service.selection` directly, so the
+    /// one place that decodes a selection is also the one place that persists
+    /// it.
+    ///
+    /// **A blob this cannot read is a failure, never a clear.** `nil` here means
+    /// the encoder refused, and an empty selection encodes perfectly well — so
+    /// "no data" is HopPotty failing, not a caregiver deselecting everything,
+    /// and answering it by wiping the selection would destroy a working setup
+    /// over a transient error. The caregiver is told it did not save instead.
+    @discardableResult
+    func saveSelection(
+        _ data: Data?,
+        for childID: UUID
+    ) -> Result<ScreenTimeConfiguration, ScreenTimeFailure> {
+        #if canImport(FamilyControls)
+        guard let data,
+              let decoded = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data)
+        else {
+            return .failure(.scheduleInvalid)
+        }
+        service.selection = decoded
+        #endif
+        return commitSelection(for: childID)
+    }
+
+    /// The picker's blob, for handing straight back to the picker.
+    private var encodedSelection: Data? {
+        #if canImport(FamilyControls)
+        return try? JSONEncoder().encode(service.selection)
+        #else
+        return nil
+        #endif
     }
 
     /// Registers monitoring for a schedule.
@@ -173,8 +252,19 @@ final class ParentScreenTimeAdapter {
 
     /// The emergency exit. Unconditional, idempotent, and never gated on
     /// anything the child did.
-    func restoreScreenAccess() {
+    ///
+    /// The service itself returns nothing — "a caregiver pressing Restore Screen
+    /// Access gets their child's apps back, and HopPotty's opinion about whether
+    /// that went well is not part of the transaction". The parent screens do
+    /// need an opinion, because the one state they must be able to draw is the
+    /// shield that would not come down. So the clear is issued unconditionally
+    /// first, and only then is the store read back: a `believesShieldIsUp` that
+    /// survives the write is the honest report of `.shieldClearFailed`, and
+    /// nothing about the attempt was withheld to produce it.
+    @discardableResult
+    func restoreScreenAccess() -> ScreenTimeFailure? {
         service.restoreScreenAccess()
         monitoring?.cancelBackstop()
+        return service.believesShieldIsUp ? .shieldClearFailed : nil
     }
 }

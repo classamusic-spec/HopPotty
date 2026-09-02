@@ -2,111 +2,28 @@
 import Foundation
 import SwiftUI
 import HopPottyCore
-#if DEBUG
 // Sample children live in their own module so they can never reach a real
 // family's data. Previews are the only callers.
 import HopPottyFixtures
-#endif
 
-// Fake services and the assembled `ParentEnvironment` every preview uses.
-
-@MainActor
-final class PreviewScreenTimeService: ScreenTimeProviding {
-    var authorizationStatus: ScreenTimeAuthorizationStatus
-    var selectionCount: Int
-    var applyFailure: ScreenTimeFailure?
-    var shieldUp: Bool
-
-    init(
-        authorizationStatus: ScreenTimeAuthorizationStatus = .approved,
-        selectionCount: Int = 6,
-        applyFailure: ScreenTimeFailure? = nil,
-        shieldUp: Bool = false
-    ) {
-        self.authorizationStatus = authorizationStatus
-        self.selectionCount = selectionCount
-        self.applyFailure = applyFailure
-        self.shieldUp = shieldUp
-    }
-
-    func requestAuthorization() async -> ScreenTimeAuthorizationOutcome {
-        switch authorizationStatus {
-        case .approved: .approved
-        case .denied: .denied
-        case .restricted: .restricted
-        case .notDetermined: .approved
-        }
-    }
-
-    func snapshot(for childID: UUID) async -> ScreenTimeSnapshot {
-        ScreenTimeSnapshot(
-            configuration: ScreenTimeConfiguration(
-                childID: childID,
-                selectedApplicationCount: selectionCount,
-                authorizationStatus: authorizationStatus,
-                lastRegistrationFailure: applyFailure
-            ),
-            mayHaveShieldUp: shieldUp
-        )
-    }
-
-    @discardableResult
-    func saveSelection(_ data: Data?, for childID: UUID) async throws -> ScreenTimeConfiguration {
-        ScreenTimeConfiguration(
-            childID: childID,
-            selectedApplicationCount: selectionCount,
-            authorizationStatus: authorizationStatus
-        )
-    }
-
-    func applySchedule(_ schedule: PottySchedule) async -> ScreenTimeFailure? { applyFailure }
-    func startPauseNow(for schedule: PottySchedule) async -> ScreenTimeFailure? { applyFailure }
-    func restoreScreenAccess() async -> ScreenTimeFailure? {
-        shieldUp = false
-        return nil
-    }
-}
-
-@MainActor
-final class PreviewNotificationService: NotificationProviding {
-    var permission: NotificationPermission
-    init(permission: NotificationPermission = .authorized) { self.permission = permission }
-    func requestPermission() async -> NotificationPermission { permission }
-    func refreshPermission() async {}
-}
-
-@MainActor
-final class PreviewPurchaseService: PurchaseProviding {
-    var entitlement: ParentEntitlement
-    var product: HopProduct?
-
-    init(entitlement: ParentEntitlement = .free, product: HopProduct? = .previewFamily) {
-        self.entitlement = entitlement
-        self.product = product
-    }
-
-    func loadProduct() async {}
-    func purchase() async -> PurchaseOutcome {
-        entitlement = .family
-        return .purchased
-    }
-    func restore() async -> PurchaseOutcome {
-        entitlement = .family
-        return .purchased
-    }
-}
-
-extension HopProduct {
-    /// A plausible price for a preview only. Nothing in the shipping paywall
-    /// composes a price — it comes from `Product.displayPrice` or the row is
-    /// not drawn.
-    static let previewFamily = HopProduct(
-        id: "com.hoppotty.family",
-        displayName: "HopPotty Family",
-        displayPrice: "$14.99",
-        description: "One purchase. Every feature, for good."
-    )
-}
+// The assembled `ParentEnvironment` every preview uses.
+//
+// ## Why there are almost no fakes here
+//
+// There used to be five `Preview*Service` types in this file, one per port. They
+// are gone, and their absence is the point: `Services/` already ships a fake for
+// every service it defines — `MockScreenTimeService`, `MockNotificationService`,
+// `MockPurchaseService`, `MockActivityMonitoringService`,
+// `NoOpLiveActivityController` — and `ServiceContainer.mock` assembles exactly
+// those. A second set here was a second answer to "what does this service do
+// when it is not real", and the two drifted: the copies in this file were still
+// conforming to protocol shapes that had been replaced, which is a compile
+// error at best and a preview that exercises a code path the app does not have
+// at worst.
+//
+// What remains are the two ports `Services/` has no fake for — deletion and
+// export — where the preview needs a *receipt with plausible numbers on it*
+// rather than the real service's answer over an empty in-memory store.
 
 @MainActor
 final class PreviewDeletionService: DataDeletionProviding {
@@ -169,11 +86,12 @@ extension ParentEnvironment {
 
         let environment = ParentEnvironment(
             repositories: repositories,
-            screenTime: PreviewScreenTimeService(authorizationStatus: authorization),
-            purchases: PreviewPurchaseService(entitlement: entitlement),
-            notifications: PreviewNotificationService(permission: notificationPermission),
+            screenTime: previewScreenTime(.init(authorizationStatus: authorization), clock: clock),
+            purchases: MockPurchaseService(entitlement: entitlement),
+            notifications: MockNotificationService(permission: notificationPermission),
             deletion: PreviewDeletionService(),
             export: PreviewExportService(),
+            liveActivities: NoOpLiveActivityController(),
             clock: clock,
             settings: AppSettings(activeChildID: child.id, hasCompletedOnboarding: true),
             isStoreAvailable: isStoreAvailable
@@ -209,11 +127,12 @@ extension ParentEnvironment {
         )
         return ParentEnvironment(
             repositories: repositories,
-            screenTime: PreviewScreenTimeService(authorizationStatus: .notDetermined, selectionCount: 0),
-            purchases: PreviewPurchaseService(),
-            notifications: PreviewNotificationService(permission: .notDetermined),
+            screenTime: previewScreenTime(.notDetermined, clock: clock),
+            purchases: MockPurchaseService(),
+            notifications: MockNotificationService(permission: .notDetermined),
             deletion: PreviewDeletionService(receipt: DeletionReceipt()),
             export: PreviewExportService(),
+            liveActivities: NoOpLiveActivityController(),
             clock: clock,
             settings: AppSettings(hasCompletedOnboarding: false)
         )
@@ -226,12 +145,31 @@ extension ParentEnvironment {
         return ParentEnvironment(
             repositories: environment.repositories,
             screenTime: environment.screenTime,
-            purchases: PreviewPurchaseService(entitlement: .free, product: nil),
+            purchases: MockPurchaseService(entitlement: .free, hasProducts: false),
             notifications: environment.notifications,
             deletion: environment.deletion,
             export: environment.export,
+            liveActivities: environment.liveActivities,
             clock: environment.clock,
             settings: environment.settings
+        )
+    }
+
+    /// The parent screens' Screen Time port, backed by the services layer's own
+    /// fake.
+    ///
+    /// `MockActivityMonitoringService` is what makes "we could not arm your
+    /// schedule" reachable in a preview: `applySchedule` returns `nil` without a
+    /// monitoring service, so a preview built without one would quietly never
+    /// exercise the failure it exists to show.
+    static func previewScreenTime(
+        _ scenario: MockScreenTimeService.Scenario = .authorized,
+        clock: any HopClock
+    ) -> ParentScreenTimeAdapter {
+        ParentScreenTimeAdapter(
+            service: MockScreenTimeService(scenario: scenario),
+            monitoring: MockActivityMonitoringService(),
+            clock: clock
         )
     }
 

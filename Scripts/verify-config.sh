@@ -330,6 +330,61 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+section "Preview fixtures are declared, and cannot reach a Release build"
+# ---------------------------------------------------------------------------
+#
+# The app target links HopPottyFixtures — the sample family every #Preview and
+# `ParentEnvironment.preview()` is built from. XcodeGen has no per-configuration
+# dependency filter, so it is linked in Release too, and the only thing keeping
+# it out of a shipping binary is that no Release code references it: every
+# `import HopPottyFixtures` in the app sits inside `#if DEBUG`, so the module's
+# symbols are unreferenced and the static linker drops them.
+#
+# Two checks, because the argument has two halves and each fails silently on its
+# own. A missing dependency is a compile error nobody sees until they open Xcode;
+# an unguarded import is a Release build that carries invented children around
+# and gives the compiler a reason to keep them.
+
+APP_TARGET_BLOCK="$(awk '/^  HopPotty:$/ {inblock = 1; next} inblock && /^  [A-Za-z]/ {exit} inblock {print}' project.yml)"
+
+if printf '%s\n' "$APP_TARGET_BLOCK" | grep -qE '^[[:space:]]*product:[[:space:]]*HopPottyFixtures[[:space:]]*$'; then
+    pass "app target depends on HopPottyFixtures"
+elif grep -rlq '^[[:space:]]*import[[:space:]]\+HopPottyFixtures' HopPotty 2>/dev/null; then
+    fail "HopPotty imports HopPottyFixtures but project.yml does not list it as an app-target dependency"
+else
+    pass "app target does not depend on HopPottyFixtures, and does not import it"
+fi
+
+# Every import inside a `#if DEBUG` region. `#else` at the guarded level ends
+# that region, so an import moved into a release branch is caught too.
+fixtures_import_is_debug_guarded () {
+    awk '
+        /^[[:space:]]*#if[[:space:]]+DEBUG([[:space:]]|$)/ { debug = 1; depth = 0; next }
+        /^[[:space:]]*#(if|elseif)/  { if (debug) depth++; next }
+        /^[[:space:]]*#else/         { if (debug && depth == 0) debug = 0; next }
+        /^[[:space:]]*#endif/        { if (debug) { if (depth > 0) depth--; else debug = 0 }; next }
+        /^[[:space:]]*import[[:space:]]+HopPottyFixtures/ { if (!debug) bad = 1 }
+        END { exit bad }
+    ' "$1"
+}
+
+FIXTURE_IMPORTERS="$(grep -rl '^[[:space:]]*import[[:space:]]\+HopPottyFixtures' HopPotty 2>/dev/null || true)"
+if [ -z "$FIXTURE_IMPORTERS" ]; then
+    pass "no app source imports HopPottyFixtures"
+else
+    while IFS= read -r src; do
+        [ -n "$src" ] || continue
+        if fixtures_import_is_debug_guarded "$src"; then
+            pass "$(basename "$src") imports HopPottyFixtures inside #if DEBUG"
+        else
+            fail "$(basename "$src") imports HopPottyFixtures outside #if DEBUG — the sample family would link into Release"
+        fi
+    done <<EOF
+$FIXTURE_IMPORTERS
+EOF
+fi
+
+# ---------------------------------------------------------------------------
 section "Entitlements"
 # ---------------------------------------------------------------------------
 
