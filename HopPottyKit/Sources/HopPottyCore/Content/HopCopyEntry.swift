@@ -31,6 +31,11 @@ public enum HopCopySurface: String, CaseIterable, Sendable {
     case onboarding
     case parentHome
     case timerSettings
+    /// One-off reminders a caregiver sets by hand. Separate from
+    /// `timerSettings` because a Quick Reminder is not the Potty Pause
+    /// schedule: it is a single timer, it shields nothing, and every string on
+    /// it is written for the adult who set it.
+    case quickReminder
     /// The Screen Time shield: the only HopPotty surface rendered by an app
     /// extension, so its copy has to stand alone with no app context.
     case shield

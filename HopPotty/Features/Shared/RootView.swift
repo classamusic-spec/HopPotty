@@ -21,19 +21,32 @@ struct RootView: View {
     /// the app to a half-populated dashboard would read it as data loss.
     @State private var parent: ParentEnvironment?
 
+    /// The Quick Reminder service, handed down through
+    /// `EnvironmentValues.quickReminders`.
+    ///
+    /// Held apart from `ParentEnvironment` on purpose: a Quick Reminder touches
+    /// no repository, no schedule and no child record, so the screens that
+    /// never mention one should not gain a reference to it. See the environment
+    /// key in `Features/QuickReminder/QuickReminderChip.swift`.
+    @State private var quickReminders: (any QuickReminderProviding)?
+
     var body: some View {
         HopThemedRoot {
             if let parent {
                 ParentAppRootView()
                     .environment(parent)
+                    .environment(\.quickReminders, quickReminders)
             } else {
                 HopLoadingState(message: nil)
             }
         }
         .task {
             guard parent == nil else { return }
-            let environment = Self.makeParentEnvironment(app)
+            let services = Self.makeServices(app)
+            let environment = Self.makeParentEnvironment(app, services: services)
             await environment.reload()
+            await services.quickReminders.refresh()
+            quickReminders = services.quickReminders
             parent = environment
         }
     }
@@ -43,9 +56,11 @@ struct RootView: View {
     /// `isStoreAvailable` is threaded through rather than assumed: when the
     /// store failed to open, every screen still works and Settings says so.
     @MainActor
-    private static func makeParentEnvironment(_ app: AppEnvironment) -> ParentEnvironment {
-        let services = makeServices(app)
-        return ParentEnvironment(
+    private static func makeParentEnvironment(
+        _ app: AppEnvironment,
+        services: ServiceContainer
+    ) -> ParentEnvironment {
+        ParentEnvironment(
             repositories: app.repositories,
             screenTime: makeScreenTime(app.configuration),
             purchases: services.purchases,

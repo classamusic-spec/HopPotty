@@ -32,6 +32,11 @@ final class ServiceContainer {
 
     let settingsStore: AppSettingsStore
     let notifications: any NotificationProviding
+    /// One-off reminders a caregiver sets by hand. A service of its own rather
+    /// than four more methods on `NotificationProviding`: it owns a store, it
+    /// owns a rule about how many may be waiting, and none of that belongs to
+    /// the type whose job is the pre-pause warning.
+    let quickReminders: any QuickReminderProviding
     let audio: any AudioProviding
     let haptics: any HapticProviding
     let purchases: any PurchaseProviding
@@ -46,6 +51,7 @@ final class ServiceContainer {
         clock: any HopClock,
         repositories: RepositorySet,
         notifications: any NotificationProviding,
+        quickReminders: any QuickReminderProviding,
         audio: any AudioProviding,
         haptics: any HapticProviding,
         purchases: any PurchaseProviding
@@ -54,6 +60,7 @@ final class ServiceContainer {
         self.clock = clock
         self.repositories = repositories
         self.notifications = notifications
+        self.quickReminders = quickReminders
         self.audio = audio
         self.haptics = haptics
         self.purchases = purchases
@@ -103,11 +110,16 @@ final class ServiceContainer {
         clock: any HopClock = SystemClock()
     ) -> ServiceContainer {
         let settings = AppSettings()
+        let notifications = NotificationService(clock: clock)
         return ServiceContainer(
             configuration: .live,
             clock: clock,
             repositories: repositories,
-            notifications: NotificationService(clock: clock),
+            notifications: notifications,
+            // The store defaults to `QuickReminderMemoryStore`; see that type
+            // for why in-memory is the right answer for a timer that lives at
+            // most a day, and where to change it if that stops being true.
+            quickReminders: QuickReminderService(notifications: notifications, clock: clock),
             audio: AudioService(settings: settings),
             haptics: HapticService(settings: settings),
             purchases: PurchaseService(clock: clock)
@@ -131,6 +143,10 @@ final class ServiceContainer {
             clock: clock,
             repositories: repositories,
             notifications: MockNotificationService(permission: notificationPermission),
+            quickReminders: MockQuickReminderService(
+                canDeliver: notificationPermission.canDeliver,
+                clock: clock
+            ),
             audio: MockAudioService(),
             haptics: MockHapticService(),
             purchases: MockPurchaseService(entitlement: entitlement)
@@ -147,6 +163,7 @@ final class ServiceContainer {
     /// round trip can finish while a child is already tapping.
     func start() async {
         await settingsStore.load()
+        await quickReminders.refresh()
 
         // The services were constructed with defaults; fan the loaded values out
         // once, before anything is played or scheduled.
@@ -171,6 +188,11 @@ final class ServiceContainer {
     /// scheduled yesterday may now be in the past.
     func refresh() async {
         await notifications.refreshPermission()
+        // A Quick Reminder set an hour ago may have arrived while the app was
+        // away. Nothing re-sends it; this is the record catching up, and it is
+        // what stops the dashboard drawing a chip counting down to a
+        // notification that has already been delivered.
+        await quickReminders.refresh()
         await purchases.refreshEntitlements()
         do {
             try await scheduling.refreshAllWarnings()

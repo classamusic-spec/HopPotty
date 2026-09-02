@@ -4,7 +4,7 @@ import UserNotifications
 
 // MARK: - The permitted kinds
 //
-// ## Why this enum is closed, and why it has two cases
+// ## Why this enum is closed, and why it has three cases
 //
 // HopPotty is used by two- to five-year-olds and installed by a caregiver who is
 // already worried about screens. The single fastest way to make this product
@@ -15,8 +15,16 @@ import UserNotifications
 //
 // So the rule is absolute and structural rather than cultural:
 //
-// **HopPotty sends exactly two notifications. A heads-up a couple of minutes
-// before a scheduled pause, and an opt-in daily summary for the caregiver.**
+// **HopPotty sends exactly three notifications. A heads-up a couple of minutes
+// before a scheduled pause, an opt-in daily summary for the caregiver, and a
+// one-off Quick Reminder at an instant the caregiver picked by hand.**
+//
+// The third one was added deliberately and it is the same shape as the other
+// two: it exists because a person asked for it, at a time that person chose,
+// and it happens exactly once. Nothing re-arms it, nothing escalates it, and
+// nothing sends it because the app was not opened. If a fourth case is ever
+// proposed, the question to answer first is the one this comment exists for:
+// who asked for it, and what did they ask for?
 //
 // Specifically forbidden, and not expressible with the types in this file:
 //
@@ -29,13 +37,14 @@ import UserNotifications
 //
 // The structure that enforces it:
 //
-// 1. `HopNotificationKind` has two cases and is the only thing the service can
-//    schedule. Adding a third case is a visible, reviewable diff in this file,
+// 1. `HopNotificationKind` has three cases and is the only thing the service
+//    can schedule. Adding a fourth is a visible, reviewable diff in this file,
 //    next to this comment.
 // 2. `HopNotificationRequest` has a `private init`. The only ways to make one
-//    are the two factories below, and each is tied to a caregiver setting.
-// 3. Every factory takes the *trigger instant from the schedule*. There is no
-//    factory that takes "an interval since the user was last seen", because
+//    are the three factories below, and each is tied to something a caregiver
+//    switched on or tapped.
+// 3. Every factory takes the *instant a person or a schedule chose*. There is
+//    no factory that takes "an interval since the user was last seen", because
 //    that is the shape of the notification we will not send.
 // 4. `NotificationService.schedule` rejects any request whose identifier does
 //    not carry a permitted prefix, and logs a fault if one ever arrives.
@@ -52,20 +61,43 @@ enum HopNotificationKind: String, CaseIterable, Sendable {
     /// `AppSettings.dailySummaryTime`, and deliberately contains no numbers —
     /// a nightly scorecard for a toddler's toilet use is not a kindness.
     case dailyCaregiverSummary
+    /// A one-off Quick Reminder the caregiver set by hand: "remind us in twenty
+    /// minutes". Timed by nothing but the instant they picked, fires once, and
+    /// shields nothing — see `QuickReminder` in HopPottyCore.
+    case quickReminder
 
     var identifierPrefix: String {
         switch self {
         case .pauseWarning: "hop.notification.warning."
         case .dailyCaregiverSummary: "hop.notification.summary"
+        // Trailing dot: the reminder's own id is appended, so one reminder can
+        // be cancelled without touching another's.
+        case .quickReminder: "hop.notification.quickReminder."
+        }
+    }
+
+    /// The `UNNotificationCategory` this kind is delivered under.
+    ///
+    /// HopPotty registers no custom actions on any of them. The identifiers
+    /// exist so that a delivered notification can be told apart from the others
+    /// when one is tapped, and so the set is enumerable — a category that
+    /// carried a "Snooze" or a "Remind me again" button would be an engagement
+    /// mechanic wearing a system control, and the way to keep one from
+    /// appearing is for every category in the app to be listed in one place.
+    var categoryIdentifier: String {
+        switch self {
+        case .pauseWarning: "HOP_PAUSE_WARNING"
+        case .dailyCaregiverSummary: "HOP_DAILY_SUMMARY"
+        case .quickReminder: "HOP_QUICK_REMINDER"
         }
     }
 
     /// Who the words are for. The warning is read aloud to a child; the summary
-    /// is for the adult.
+    /// and the Quick Reminder are for the adult who asked for them.
     var audience: HopCopyAudience {
         switch self {
         case .pauseWarning: .child
-        case .dailyCaregiverSummary: .parent
+        case .dailyCaregiverSummary, .quickReminder: .parent
         }
     }
 }
@@ -74,7 +106,7 @@ enum HopNotificationKind: String, CaseIterable, Sendable {
 
 /// A notification HopPotty is permitted to schedule.
 ///
-/// `private init` plus two factories. This type is the gate.
+/// `private init` plus three factories. This type is the gate.
 struct HopNotificationRequest: Sendable {
     let kind: HopNotificationKind
     let identifier: String
@@ -119,6 +151,27 @@ struct HopNotificationRequest: Sendable {
         )
     }
 
+    /// A Quick Reminder.
+    ///
+    /// `fireAt` comes from `QuickReminderPlanner`, which has already refused
+    /// anything in the past, anything closer than a minute and anything more
+    /// than a day out. Nothing here invents a time either.
+    ///
+    /// The reminder's own id is in the identifier so one can be cancelled
+    /// without touching another — including the one it replaces, which is the
+    /// case that matters: a replaced reminder whose notification nobody
+    /// cancelled arrives for a caregiver who was told it had moved.
+    static func quickReminder(id: UUID, fireAt: Date) -> HopNotificationRequest {
+        HopNotificationRequest(
+            kind: .quickReminder,
+            identifier: HopNotificationKind.quickReminder.identifierPrefix + id.uuidString,
+            title: HopNotificationCopy.quickReminderTitle(),
+            body: HopNotificationCopy.quickReminderBody(),
+            fireAt: fireAt,
+            dailyTime: nil
+        )
+    }
+
     /// The opt-in daily caregiver summary.
     static func dailySummary(at time: LocalTimeOfDay) -> HopNotificationRequest {
         HopNotificationRequest(
@@ -130,6 +183,57 @@ struct HopNotificationRequest: Sendable {
             dailyTime: time
         )
     }
+
+    // MARK: What a HopPotty notification looks like
+
+    /// The content, decided in one place.
+    ///
+    /// Every service that schedules anything builds it from here rather than
+    /// from its own `UNMutableNotificationContent`, so "no badge" and "does not
+    /// break through a Focus" are properties of *HopPotty*, not of whichever
+    /// file happened to be written first.
+    func makeContent() -> UNMutableNotificationContent {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        // No badge, no thread grouping that could accumulate, no
+        // `interruptionLevel` escalation. A potty reminder is not time-sensitive
+        // in the system's sense: it must not break through a Focus a caregiver
+        // set deliberately.
+        content.interruptionLevel = .active
+        // No actions are registered against it; see `categoryIdentifier`.
+        content.categoryIdentifier = kind.categoryIdentifier
+        return content
+    }
+
+    /// The trigger, or `nil` for a request carrying neither an instant nor a
+    /// daily time — which the factories cannot produce, and which is therefore
+    /// a programming error rather than a state to recover from.
+    func makeTrigger(now: Date, minimumLead: TimeInterval) -> UNNotificationTrigger? {
+        if let fireAt {
+            // A time-interval trigger for the one-shot. The horizon is minutes
+            // or hours, so there is no daylight-saving edge to get wrong, and it
+            // needs no calendar to be correct.
+            return UNTimeIntervalNotificationTrigger(
+                timeInterval: max(minimumLead, fireAt.timeIntervalSince(now)),
+                repeats: false
+            )
+        }
+        if let dailyTime {
+            // A calendar trigger for the repeat, because "20:00" means 20:00 on
+            // the wall clock every day — including the day the clocks change.
+            var components = DateComponents()
+            components.hour = dailyTime.hour
+            components.minute = dailyTime.minute
+            return UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+        }
+        return nil
+    }
+
+    /// Whether this request's identifier could have come from one of the
+    /// factories above. The runtime half of the structural rule.
+    var hasPermittedIdentifier: Bool { identifier.hasPrefix(kind.identifierPrefix) }
 }
 
 // MARK: - Permission
@@ -329,44 +433,19 @@ final class NotificationService: NotificationProviding {
 
     // MARK: The single scheduling path
 
-    /// The only method that talks to `UNUserNotificationCenter.add`.
+    /// The only method in this service that talks to
+    /// `UNUserNotificationCenter.add`.
     ///
     /// The identifier check is the runtime half of the structural rule: a
     /// request whose identifier does not carry a permitted prefix cannot have
-    /// come from one of the two factories, so it is refused and logged loudly.
+    /// come from one of the three factories, so it is refused and logged loudly.
     private func schedule(_ request: HopNotificationRequest) async {
-        guard request.identifier.hasPrefix(request.kind.identifierPrefix) else {
+        guard request.hasPermittedIdentifier else {
             HopLog.notification.fault("refused notification with unrecognised identifier")
             return
         }
 
-        let content = UNMutableNotificationContent()
-        content.title = request.title
-        content.body = request.body
-        content.sound = .default
-        // No badge, no thread grouping that could accumulate, no
-        // `interruptionLevel` escalation. A potty reminder is not time-sensitive
-        // in the system's sense: it must not break through a Focus a caregiver
-        // set deliberately.
-        content.interruptionLevel = .active
-
-        let trigger: UNNotificationTrigger
-        if let fireAt = request.fireAt {
-            // A time-interval trigger for the one-shot. The horizon is minutes,
-            // so there is no daylight-saving edge to get wrong, and it needs no
-            // calendar to be correct.
-            trigger = UNTimeIntervalNotificationTrigger(
-                timeInterval: max(Self.minimumLeadTime, fireAt.timeIntervalSince(clock.now)),
-                repeats: false
-            )
-        } else if let daily = request.dailyTime {
-            // A calendar trigger for the repeat, because "20:00" means 20:00 on
-            // the wall clock every day — including the day the clocks change.
-            var components = DateComponents()
-            components.hour = daily.hour
-            components.minute = daily.minute
-            trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
-        } else {
+        guard let trigger = request.makeTrigger(now: clock.now, minimumLead: Self.minimumLeadTime) else {
             HopLog.notification.fault("notification request had no trigger")
             return
         }
@@ -375,7 +454,7 @@ final class NotificationService: NotificationProviding {
         // warning on every foreground cannot pile up twenty copies.
         let systemRequest = UNNotificationRequest(
             identifier: request.identifier,
-            content: content,
+            content: request.makeContent(),
             trigger: trigger
         )
 

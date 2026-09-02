@@ -41,6 +41,22 @@ enum HopNotificationCopy {
         return HopCopyFormat.filling(format, with: [1: name])
     }
 
+    /// "Hop says: potty time?"
+    ///
+    /// No frog glyph and no nickname. This one lands on the *caregiver's* lock
+    /// screen, next to their work mail, because they asked to be nudged — the
+    /// decoration that suits a child's screen would be noise there, and a
+    /// child's name on a caregiver's lock screen is a detail nobody asked
+    /// HopPotty to broadcast.
+    static func quickReminderTitle() -> String { localized(HopCopy.notification.quickReminderTitle) }
+
+    /// "A gentle nudge you set earlier."
+    ///
+    /// Deliberately says where it came from. A reminder that does not explain
+    /// itself reads as the app asking for attention, which is the one thing
+    /// HopPotty's notifications may never do.
+    static func quickReminderBody() -> String { localized(HopCopy.notification.quickReminderBody) }
+
     static func summaryTitle() -> String { localized(HopCopy.notification.summaryTitle) }
 
     /// Deliberately number-free. A push that says "3 accidents today" is a

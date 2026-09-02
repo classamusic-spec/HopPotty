@@ -348,6 +348,130 @@ public struct TimerSettingsCopy: HopCopySection {
 
 /// The Screen Time shield. Rendered by an app extension with no access to the
 /// app's state, so every string here has to make sense cold, on its own.
+// MARK: - Quick Reminder
+
+/// A one-off reminder a caregiver sets by hand.
+///
+/// Every string here is `.parent`. The child never sees a Quick Reminder, never
+/// hears about one, and is never the subject of one: the sentence a caregiver
+/// reads is about the caregiver's own timer. That is why nothing below names a
+/// child, carries a nickname variant, or describes what a child did or did not
+/// do — there is no outcome for it to describe.
+///
+/// The wording also stays clear of urgency. "Set" and "waiting" rather than
+/// "due" or "overdue": a reminder that has come and gone is simply finished,
+/// and a caregiver who missed one has missed nothing that HopPotty is entitled
+/// to have an opinion about.
+public struct QuickReminderCopy: HopCopySection {
+    public static let surface: HopCopySurface = .quickReminder
+
+    public let title = HopCopyEntry.parent("quickReminder.title", "Quick Reminder")
+    public let subtitle = HopCopyEntry.parent(
+        "quickReminder.subtitle",
+        "A one-off nudge for you. Apps keep working.",
+        comment: "Sits under the sheet title. The second sentence is the promise that this is not a Potty Pause; keep it."
+    )
+
+    /// The chips, worded as whole sentences rather than assembled from a number
+    /// and a unit. "In 1 hour" is not "In" + "1" + "hour" in most languages.
+    public let presetMinutes10 = HopCopyEntry.parent("quickReminder.preset.minutes10", "In 10 minutes")
+    public let presetMinutes15 = HopCopyEntry.parent("quickReminder.preset.minutes15", "In 15 minutes")
+    public let presetMinutes20 = HopCopyEntry.parent("quickReminder.preset.minutes20", "In 20 minutes")
+    public let presetMinutes30 = HopCopyEntry.parent("quickReminder.preset.minutes30", "In 30 minutes")
+    public let presetMinutes45 = HopCopyEntry.parent("quickReminder.preset.minutes45", "In 45 minutes")
+    public let presetMinutes60 = HopCopyEntry.parent("quickReminder.preset.minutes60", "In 1 hour")
+    /// Any duration that is not one of the six chips, e.g. a restored custom
+    /// value. The caller formats the duration.
+    public let presetCustom = HopCopyEntry.parent(
+        "quickReminder.preset.custom",
+        "In %1$@",
+        comment: "Fallback chip for a duration with no preset of its own. The value is a formatted duration produced by the caller.",
+        placeholders: [.text(1, "duration", "Formatted duration until the reminder arrives.", example: "25 minutes")]
+    )
+    public let pickATime = HopCopyEntry.parent("quickReminder.pickATime", "Pick a time")
+    public let timeLabel = HopCopyEntry.parent("quickReminder.timeLabel", "Remind me at")
+
+    public let setButton = HopCopyEntry.parent("quickReminder.setButton", "Set reminder")
+    public let cancelButton = HopCopyEntry.parent("quickReminder.cancelButton", "Cancel reminder")
+
+    /// The confirmation the sheet shows on its way out, and the sentence
+    /// VoiceOver reads when the chip appears.
+    public let confirmation = HopCopyEntry.parent(
+        "quickReminder.confirmation",
+        "Reminder set for %1$@",
+        placeholders: [.text(1, "time", "Wall-clock time the reminder arrives.", example: "3:40 PM")]
+    )
+
+    /// The chip on the dashboard. The middle dot is a separator, not a word.
+    public let chip = HopCopyEntry.parent(
+        "quickReminder.chip",
+        "Reminder · %1$@",
+        comment: "Compact pill on the parent dashboard. Keep it to two or three words; the separator may be replaced with whatever a locale uses.",
+        placeholders: [.text(1, "time", "Wall-clock time the reminder arrives.", example: "3:40 PM")]
+    )
+    public let chipCancelLabel = HopCopyEntry.parent(
+        "quickReminder.chipCancelLabel",
+        "Cancel the reminder set for %1$@",
+        comment: "VoiceOver label for the chip's cancel affordance. Says what will be cancelled, because the X alone does not.",
+        placeholders: [.text(1, "time", "Wall-clock time the reminder arrives.", example: "3:40 PM")]
+    )
+
+    /// Time remaining, for the chip's accessibility value.
+    public let remaining = HopCopyEntry.parent(
+        "quickReminder.remaining",
+        "%1$@ from now",
+        placeholders: [.text(1, "duration", "Formatted time until the reminder arrives.", example: "12 minutes")]
+    )
+
+    // MARK: Refusals
+    //
+    // Three, and each one names the limit rather than the person. A caregiver
+    // who picked a time in the past made a typo, not a mistake worth a lecture.
+
+    public let rejectedInThePast = HopCopyEntry.parent(
+        "quickReminder.rejected.inThePast",
+        "Pick a time that is still ahead."
+    )
+    public let rejectedTooSoon = HopCopyEntry.parent(
+        "quickReminder.rejected.tooSoon",
+        "Quick Reminders start a minute out. Try a little further ahead."
+    )
+    public let rejectedBeyondHorizon = HopCopyEntry.parent(
+        "quickReminder.rejected.beyondHorizon",
+        "Quick Reminders reach up to 24 hours ahead."
+    )
+    public let rejectedTooManyPending = HopCopyEntry.parent(
+        "quickReminder.rejected.tooManyPending",
+        "Three reminders are already waiting. Cancel one to set another."
+    )
+
+    /// Shown when setting this reminder will take the place of one already
+    /// waiting. Replacement is the ordinary case, so it reads as information.
+    public let replacesExisting = HopCopyEntry.parent(
+        "quickReminder.replacesExisting",
+        "This takes the place of your reminder at %1$@.",
+        placeholders: [.text(1, "time", "Wall-clock time of the reminder being replaced.", example: "2:15 PM")]
+    )
+
+    /// Advisory only. A projected Potty Pause landing near the reminder, so the
+    /// caregiver is not surprised by two interruptions in a row.
+    public let pauseNearby = HopCopyEntry.parent(
+        "quickReminder.pauseNearby",
+        "A Potty Pause is already coming at %1$@.",
+        comment: "Advisory note in the sheet. It informs; it does not block, and it does not ask the caregiver to change anything.",
+        placeholders: [.text(1, "time", "Wall-clock time the projected pause starts.", example: "3:35 PM")]
+    )
+
+    public let emptyState = HopCopyEntry.parent(
+        "quickReminder.emptyState",
+        "Nothing waiting right now."
+    )
+    public let permissionNeeded = HopCopyEntry.parent(
+        "quickReminder.permissionNeeded",
+        "A Quick Reminder arrives as a notification, so HopPotty needs permission to send one."
+    )
+}
+
 public struct ShieldCopy: HopCopySection {
     public static let surface: HopCopySurface = .shield
 
@@ -418,6 +542,22 @@ public struct NotificationCopy: HopCopySection {
     )
     public let pauseTitle = HopCopyEntry.child("notification.pause.title", "Potty time!")
     public let pauseBody = HopCopyEntry.child("notification.pause.body", "Hop is waiting by the pond.")
+
+    /// The Quick Reminder, delivered to the caregiver who set it.
+    ///
+    /// `.parent` because the words are the caregiver's own: they asked to be
+    /// nudged, and this is the nudge. It reaches the phone in the adult's
+    /// pocket, not the child's screen, and it shields nothing.
+    public let quickReminderTitle = HopCopyEntry.parent(
+        "notification.quickReminder.title",
+        "Hop says: potty time?",
+        comment: "Title of the one-off reminder a caregiver set by hand. A question, not an instruction."
+    )
+    public let quickReminderBody = HopCopyEntry.parent(
+        "notification.quickReminder.body",
+        "A gentle nudge you set earlier.",
+        comment: "Body of the one-off reminder. Says where it came from — the caregiver themselves — so it is never mistaken for the app asking for attention."
+    )
 
     public let summaryTitle = HopCopyEntry.parent("notification.summary.title", "Today with HopPotty")
     public let summaryBody = HopCopyEntry.parent(
@@ -993,6 +1133,7 @@ public enum HopCopy {
     public static let onboarding = OnboardingCopy()
     public static let parentHome = ParentHomeCopy()
     public static let timerSettings = TimerSettingsCopy()
+    public static let quickReminder = QuickReminderCopy()
     public static let shield = ShieldCopy()
     public static let notification = NotificationCopy()
     public static let routine = RoutineChromeCopy()
@@ -1010,7 +1151,7 @@ public enum HopCopy {
     /// contribute separately because their strings are generated from structured
     /// content rather than declared one by one.
     public static let sections: [any HopCopySection] = [
-        brand, common, onboarding, parentHome, timerSettings, shield, notification,
+        brand, common, onboarding, parentHome, timerSettings, quickReminder, shield, notification,
         routine, celebration, pond, games, quizzes, settings, errors, parentGate,
         purchase, a11y,
     ]

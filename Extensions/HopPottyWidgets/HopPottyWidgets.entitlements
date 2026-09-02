@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Widget extension entitlements.
+
+  ONE capability, and the absence of the other one is the point.
+
+  * com.apple.security.application-groups — expanded from HOPPOTTY_APP_GROUP in
+    Config/Base.xcconfig. Must be byte-identical to the app's, to the three
+    Screen Time extensions', to ScreenTimeIdentifiers.appGroupID and to
+    WidgetSnapshotStore.widgetAppGroupID. Scripts/verify-config.sh compares all
+    of them, because the failure mode is silent: the container URL comes back
+    nil, the widget finds no snapshot, and it draws the empty state forever while
+    every target still builds, signs and runs.
+
+  * com.apple.developer.family-controls — DELIBERATELY ABSENT.
+
+    The other three extensions need it because they touch ManagedSettings,
+    ManagedSettingsUI or DeviceActivity. This one draws a countdown from a JSON
+    file. Adding the entitlement would mean: a fifth App ID in the Family
+    Controls distribution request (Docs/Entitlements.md §2), a widget process
+    linking frameworks it never calls, and a capability granted to the one
+    HopPotty target that is rendered on a locked screen. All cost, no function.
+
+    If a future widget ever needs to know something only ManagedSettings can
+    tell it, the answer is for the app to resolve that into the snapshot — the
+    same discipline the shield-configuration extension already follows.
+
+  NEVER add: aps-environment (no push, so no ActivityKit push tokens either —
+  HopPotty's Live Activities are updated in-process by the app), iCloud
+  containers, keychain sharing, or
+  com.apple.developer.family-controls.app-and-website-usage.
+-->
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>$(HOPPOTTY_APP_GROUP)</string>
+	</array>
+</dict>
+</plist>

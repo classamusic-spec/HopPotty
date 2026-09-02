@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Widget extension — Info.plist.
+
+  READ THIS BEFORE ADDING AN NSExtensionPrincipalClass.
+
+  There deliberately is not one. A WidgetKit extension is entered through @main
+  on a WidgetBundle (see HopPottyWidgetsBundle.swift); it declares the extension
+  point and nothing else. That is the opposite of the other three extensions in
+  this repository, each of which names a principal class, and it is why
+  Scripts/verify-config.sh checks this target for the ABSENCE of one.
+
+  UNVERIFIED — confirm against an Xcode-generated target, exactly as for the
+  other three (Docs/ScreenTimeArchitecture.md §8 advises against hand-writing
+  NSExtension dictionaries; XcodeGen leaves no alternative). In Xcode: File > New
+  > Target > Widget Extension, tick "Include Live Activity", and compare the
+  generated Info.plist with this one. If they differ, Xcode is right.
+
+  Note what is NOT here:
+
+    NSExtensionPrincipalClass   see above.
+    NSSupportsLiveActivities    that key belongs to the APP's Info.plist, not
+                                the widget extension's. The app is what starts a
+                                Live Activity; the extension only draws it. It is
+                                set in HopPotty/App/Info.plist and checked by
+                                Scripts/verify-config.sh.
+-->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>HopPotty</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.widgetkit-extension</string>
+	</dict>
+</dict>
+</plist>

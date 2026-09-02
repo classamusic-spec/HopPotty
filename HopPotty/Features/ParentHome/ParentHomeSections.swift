@@ -1,5 +1,6 @@
 import SwiftUI
 import HopPottyCore
+import HopPottyDesignTokens
 
 /// Today's numbers.
 ///
@@ -116,18 +117,23 @@ struct HomeInsightSection: View {
 ///
 /// A `Menu` rather than a segmented control: families can have several children,
 /// nicknames can be long, and a control that truncates a child's name is the
-/// wrong control. With one child it collapses to a plain title, because a
-/// picker with one option is a puzzle.
-struct ChildSwitcher: View {
-    @Environment(\.hopTheme) private var theme
-
+/// wrong control. With one child it collapses to its label with no menu behind
+/// it, because a picker with one option is a puzzle.
+///
+/// The caller supplies the label, and the whole label is the target. That is
+/// the point: over the pond the child's name sits under a greeting in a 17pt
+/// line, and a 17pt line is not a hit target — the 44pt capsule around it is.
+struct ChildSwitcher<Label: View>: View {
     let children: [ChildProfile]
     let selected: ChildProfile
     let onSelect: (UUID) -> Void
+    /// Given the resolved display name, because the label almost always draws it
+    /// and the fallback for a child with no nickname belongs here, once.
+    @ViewBuilder var label: (String) -> Label
 
     var body: some View {
         if children.count <= 1 {
-            title
+            label(displayName(selected))
         } else {
             Menu {
                 ForEach(children) { child in
@@ -135,30 +141,18 @@ struct ChildSwitcher: View {
                         onSelect(child.id)
                     } label: {
                         if child.id == selected.id {
-                            Label(displayName(child), systemImage: "checkmark")
+                            SwiftUI.Label(displayName(child), systemImage: "checkmark")
                         } else {
                             Text(verbatim: displayName(child))
                         }
                     }
                 }
             } label: {
-                HStack(spacing: theme.spacing.xxs) {
-                    title
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.footnote)
-                        .foregroundStyle(theme.color.textSecondary)
-                }
+                label(displayName(selected))
             }
-            .hopAccessibilityLabel(HopCopy.parentHome.childSwitcher)
+            .accessibilityLabel(Text(hop: HopCopy.parentHome.childSwitcher))
+            .accessibilityValue(Text(verbatim: displayName(selected)))
         }
-    }
-
-    private var title: some View {
-        Text(verbatim: displayName(selected))
-            .font(theme.font(.parentTitle))
-            .foregroundStyle(theme.color.textPrimary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
     }
 
     /// Falls back to the neutral phrasing rather than an empty gap — the whole
