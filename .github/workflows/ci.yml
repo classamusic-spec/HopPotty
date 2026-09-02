@@ -133,43 +133,8 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee /tmp/xcodebuild.log
 
-      # Runs even when the build fails, because when the build fails is exactly
-      # when someone needs to read this. xcodebuild's raw output buries a dozen
-      # real errors under thousands of lines of compiler invocations.
-      - name: Summarise diagnostics
-        if: always()
-        run: |
-          set -uo pipefail
-          log=/tmp/xcodebuild.log
-          [ -f "$log" ] || { echo "No build log — the job failed before xcodebuild ran." >> "$GITHUB_STEP_SUMMARY"; exit 0; }
-          strip() { sed "s#$GITHUB_WORKSPACE/##g"; }
-          errors=$(grep -E '^[^ ]+\.swift:[0-9]+:[0-9]+: error:' "$log" | strip | sort -u || true)
-          # `ld:` and `fatal error:` are included because a linker failure — a
-          # framework the mock scheme should not be pulling in, say — carries no
-          # "error:" at all and would otherwise vanish from this summary.
-          others=$(grep -E '(^|[^.])error:|^ld: |^fatal error:' "$log" | grep -vE '\.swift:[0-9]+:[0-9]+: error:' | strip | sort -u || true)
-          warns=$(grep -E '^[^ ]+\.swift:[0-9]+:[0-9]+: warning:' "$log" | strip | sort -u || true)
-          {
-            echo "## Xcode build"
-            echo
-            printf '%s Swift errors, %s other errors, %s warnings\n\n' \
-              "$(printf '%s' "$errors" | grep -c . || true)" \
-              "$(printf '%s' "$others" | grep -c . || true)" \
-              "$(printf '%s' "$warns" | grep -c . || true)"
-            if [ -n "$errors" ]; then
-              echo "### Swift errors"; echo '```'; printf '%s\n' "$errors" | head -300; echo '```'
-            fi
-            if [ -n "$others" ]; then
-              echo "### Other errors (linking, resources, signing)"; echo '```'; printf '%s\n' "$others" | head -100; echo '```'
-            fi
-            if [ -n "$warns" ]; then
-              echo "<details><summary>Warnings</summary>"; echo; echo '```'
-              printf '%s\n' "$warns" | head -200; echo '```'; echo "</details>"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      # The full log, because the summary is deliberately truncated and the first
-      # error is often explained by something a hundred lines above it.
+      # The full log, because the summary below is deliberately truncated and the
+      # first error is often explained by something a hundred lines above it.
       - name: Upload the build log
         if: always()
         uses: actions/upload-artifact@v4
@@ -178,3 +143,38 @@ jobs:
           path: /tmp/xcodebuild.log
           if-no-files-found: warn
           retention-days: 14
+
+      # Deliberately the LAST step, and deliberately printed to stdout as well as
+      # to the job summary.
+      #
+      # xcodebuild's raw output is tens of thousands of lines, most of them a
+      # single compiler invocation wrapped onto one line, and the dozen lines that
+      # matter are scattered through it. Anyone — or anything — reading this job
+      # by tailing its log gets the whole error list and nothing else, because
+      # this runs after everything that would otherwise come after it.
+      - name: Summarise diagnostics
+        if: always()
+        run: |
+          set -uo pipefail
+          log=/tmp/xcodebuild.log
+          [ -f "$log" ] || { echo "No build log — the job failed before xcodebuild ran." | tee -a "$GITHUB_STEP_SUMMARY"; exit 0; }
+          strip() { sed "s#$GITHUB_WORKSPACE/##g"; }
+          errors=$(grep -E '^[^ ]+\.swift:[0-9]+:[0-9]+: (error|warning):' "$log" | strip | sort -u || true)
+          # `ld:` and `fatal error:` are included because a linker failure — a
+          # framework the mock scheme should not be pulling in, say — carries no
+          # "error:" at all and would otherwise vanish from this summary.
+          others=$(grep -E '(^|[^.])error:|^ld: |^fatal error:' "$log" | grep -vE '\.swift:[0-9]+:[0-9]+: error:' | strip | sort -u || true)
+          count() { printf '%s' "$1" | grep -c . || true; }
+          {
+            echo "## Xcode build"
+            echo
+            printf '%s Swift diagnostics, %s other errors\n\n' "$(count "$errors")" "$(count "$others")"
+            if [ -n "$errors" ]; then
+              echo "### Swift errors and warnings"
+              echo "SWIFT_TREAT_WARNINGS_AS_ERRORS is on, so a warning here also fails the build."
+              echo '```'; printf '%s\n' "$errors" | head -300; echo '```'
+            fi
+            if [ -n "$others" ]; then
+              echo "### Other errors (linking, resources, signing)"; echo '```'; printf '%s\n' "$others" | head -100; echo '```'
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"

@@ -336,7 +336,7 @@ struct NextPauseDisplayState {
             // hour — and the snapshot deliberately does not carry which, because
             // that is a fact about a family's day and this is a lock screen.
             let word = snapshot.isScheduleEnabled
-                ? HopCopy.quickReminder.emptyState.value
+                ? HopCopy.parentHome.heroNothingScheduled.value
                 : HopCopy.parentHome.heroDisabled.value
             headline = HopCopy.parentHome.heroTitle.value
             kind = .word(word)

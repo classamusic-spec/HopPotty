@@ -159,6 +159,21 @@ public struct ParentHomeCopy: HopCopySection {
     public let heroDisabled = HopCopyEntry.parent("parentHome.hero.disabled", "Potty Pause is off")
     public let heroOutsideActiveHours = HopCopyEntry.parent("parentHome.hero.outsideActiveHours", "Outside today's active hours")
 
+    /// The schedule is on and nothing is projected — and this sentence
+    /// deliberately does not say which of the several reasons applies.
+    ///
+    /// The card in the app has `blockReason` and can be specific. The widget
+    /// does not: `WidgetSnapshot` carries `isScheduleEnabled` and a projection
+    /// and nothing else, because the reason a family's afternoon is quiet — a
+    /// nap, a quiet hour, a skipped pause — is a fact about that family and a
+    /// lock screen is read by whoever is standing nearby. So the widget says the
+    /// one thing that is true in every one of those cases.
+    public let heroNothingScheduled = HopCopyEntry.parent(
+        "parentHome.hero.nothingScheduled",
+        "Nothing waiting right now.",
+        comment: "Shown where the schedule is on but no pause is projected, in surfaces that cannot say why. Keep it neutral — it must be true whether the cause is a quiet hour, a skipped pause or a closed active window."
+    )
+
     public let summaryTitle = HopCopyEntry.parent("parentHome.summary.title", "Today so far")
     public let summaryVisits = HopPluralVariants(
         zero: .parent("parentHome.summary.visits.zero", "No potty visits logged yet"),
