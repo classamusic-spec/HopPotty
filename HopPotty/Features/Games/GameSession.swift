@@ -110,6 +110,7 @@ struct MiniGameRoundResult: Equatable, Sendable {
         self.handOffStep = reachedHandOff ? game.completion.handOffStep : nil
     }
 
+    @MainActor
     init(session: some MiniGameSession) {
         self.init(game: session.game, reachedHandOff: session.reachedHandOff)
     }
