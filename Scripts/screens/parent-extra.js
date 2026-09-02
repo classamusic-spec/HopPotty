@@ -986,10 +986,10 @@ function quickReminderSheet(appearance = 'light') {
           letter-spacing:.5px;text-transform:uppercase">Why, if you like</div>
         <div style="display:flex;gap:8px;margin-top:9px">
           ${['After a drink', 'Before leaving', 'Before a nap'].map((label, i) => `
-            <div style="flex:1;height:38px;border-radius:19px;display:grid;place-items:center;
+            <div style="flex:1;height:${T.hitTarget.parentMinimum}px;border-radius:22px;display:grid;place-items:center;
               background:${i === 0 ? (dark ? alpha(P.pondBlue, .22) : P.pondBlueSoft) : col.surface};
               border:1.5px solid ${i === 0 ? (dark ? alpha(P.pondBlue, .5) : P.pondBlue) : col.divider};
-              ${type('parentCaption', { color: i === 0 ? (dark ? P.pondBlueLight : P.pondBlueDeep) : col.textSecondary, weight: i === 0 ? 'semibold' : 'medium' })};">${label}</div>`).join('')}
+              ${type('parentCaption', { color: i === 0 ? (dark ? P.pondBlueLight : col.textPrimary) : col.textSecondary, weight: i === 0 ? 'semibold' : 'medium' })};">${label}</div>`).join('')}
         </div>
       </div>
 
@@ -1276,7 +1276,7 @@ function liveActivity(appearance = 'light') {
           font-family:'HopRounded','HopStandard',sans-serif;font-size:17px">Potty time!</div>
         <div style="${type('parentCaption', { color: P.sand600 })};font-family:'HopRounded','HopStandard',sans-serif;
           font-size:13px;margin-top:2px">Your game comes back soon.</div>
-        <div style="${type('parentCaption', { color: P.sand500, weight: 'medium' })};
+        <div style="${type('parentCaption', { color: P.sand600, weight: 'medium' })};
           font-family:'HopRounded','HopStandard',sans-serif;font-size:12px;margin-top:2px;
           font-variant-numeric:tabular-nums">2 / 5</div>
       </div>
@@ -1420,7 +1420,7 @@ function insightsPad(appearance = 'light') {
                 across 5 days with entries, compared with 12 in the period before.</div>
               <div style="margin:8px -4px 0">
                 ${sparkline([2, 4, 1, 3, 4, 2, 2], {
-                  w: colW - 32, h: 138, stroke: TINT.check.tint, fill: TINT.check.tint,
+                  w: colW - 32, h: 128, stroke: TINT.check.tint, fill: TINT.check.tint,
                 })}
               </div>
               <div style="display:flex;justify-content:space-between;margin-top:4px">

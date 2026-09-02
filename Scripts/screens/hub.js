@@ -10,6 +10,7 @@ const { T, c, type, statusBar, homeIndicator, svg, alpha, elevation, artOr } = r
 const { MARK } = require('./kit');
 const scenes = require('./scenes');
 const { UNLOCKED } = require('./pond');
+const { FEET } = require('./child');
 const fs = require('fs');
 const path = require('path');
 const { ROOT } = require('./ui');
@@ -43,7 +44,7 @@ function hopHub(appearance = 'light') {
   <div style="position:relative;width:100%;height:100%;overflow:hidden">
     <div style="position:absolute;inset:0">${scene}</div>
     <div style="position:absolute;inset:0;background:linear-gradient(180deg, ${alpha('#FFFFFF', 0)} 42%, ${alpha(P.cloud, .55)} 70%, ${alpha(P.cloud, .9)} 100%)"></div>
-    <div data-hop style="position:absolute;left:50%;top:${852 * 0.5 - 214 * (452 / 512)}px;transform:translateX(-50%)">
+    <div data-hop style="position:absolute;left:50%;top:${852 * 0.5 - 214 * FEET}px;transform:translateX(-50%)">
       ${svg('Art/character/hop-wave.svg', { width: 214 })}
     </div>
 

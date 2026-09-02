@@ -9,6 +9,7 @@
 const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation, artOrInline } = require('./ui');
 const { MARK } = require('./kit');
 const scenes = require('./scenes');
+const { FEET } = require('./child');
 const P = T.palette;
 const INK = P.midnight;
 
@@ -60,7 +61,7 @@ function hopsPond(appearance = 'light') {
   return `
   <div style="position:relative;width:100%;height:100%;overflow:hidden">
     <div style="position:absolute;inset:0">${scene}</div>
-    <div data-hop style="position:absolute;left:${393 * 0.56}px;top:${852 * 0.508 - 6 - 166 * (452 / 512)}px;
+    <div data-hop style="position:absolute;left:${393 * 0.56}px;top:${852 * 0.508 - 6 - 166 * FEET}px;
       transform:translateX(-50%)">
       ${svg('Art/character/hop-idle.svg', { width: 166 })}
     </div>

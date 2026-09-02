@@ -11,7 +11,16 @@ const { chromium } = require('playwright');
 const { baseCSS } = require('./ui');
 
 const DEVICES = { iphone: { width: 393, height: 852 }, ipad: { width: 1024, height: 768 } };
-const FEET = 452 / 512;
+/**
+ * Fraction of Hop's box above the ground his feet stand on.
+ *
+ * Derived, not measured by eye: `hop-art.js` puts the ground line at reference
+ * y 163.6 and places the reference space at `scale 2.9, offset (38.5, 22.55)`,
+ * so the feet land at `(163.6 × 2.9 + 22.55) / 512`. Every grounded pose shares
+ * it, because the generator sets `ankle = 146 + lift` for all of them.
+ * `HopCanvas.feetFraction` computes the same value in Swift.
+ */
+const FEET = 0.9707;
 
 async function main() {
   const registry = require('./registry');

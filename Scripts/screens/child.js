@@ -19,8 +19,16 @@ const scenes = require('./scenes');
 const P = T.palette;
 
 const INK = P.midnight;
-/** Where a 512-box character's ground shadow sits, as a fraction of its height. */
-const FEET = 452 / 512;
+/**
+ * Fraction of Hop's box above the ground his feet stand on.
+ *
+ * Derived, not measured by eye: `hop-art.js` puts the ground line at reference
+ * y 163.6 and places the reference space at `scale 2.9, offset (38.5, 22.55)`,
+ * so the feet land at `(163.6 × 2.9 + 22.55) / 512`. Every grounded pose shares
+ * it, because the generator sets `ankle = 146 + lift` for all of them.
+ * `HopCanvas.feetFraction` computes the same value in Swift.
+ */
+const FEET = 0.9707;
 
 /** A character standing in the flow, tagged so `measure.js` can find its feet. */
 function hop(pose, width) {
@@ -460,10 +468,10 @@ function quiz(appearance = 'light') {
         </div>
 
         <div style="flex:0 0 auto;display:flex;justify-content:center;margin-top:18px">
-          <div style="height:54px;padding:0 22px 0 16px;border-radius:27px;background:${col.surface};
-            display:flex;align-items:center;gap:10px;box-shadow:${elevation(appearance, 'resting')}">
-            ${MARK.speaker(P.pondBlueDeep, 23)}
-            <span style="${type('parentHeadline', { color: P.pondBlueDeep, weight: 'semibold' })};font-size:17px">Hear it again</span>
+          <div style="height:${T.hitTarget.childMinimum}px;padding:0 26px 0 20px;border-radius:36px;background:${col.surface};
+            display:flex;align-items:center;gap:12px;box-shadow:${elevation(appearance, 'resting')}">
+            ${MARK.speaker(P.pondBlueDeep, 26)}
+            <span style="${type('parentTitle', { color: P.sand600, weight: 'semibold' })};font-size:19px">Hear it again</span>
           </div>
         </div>
 
