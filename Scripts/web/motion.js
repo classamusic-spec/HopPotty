@@ -293,6 +293,11 @@ function waveFrames(name, rest = 0) {
  * generator writes for exactly this.
  */
 const SPLASH = {
+  /// How long the pond and shine take to rise out of the launch colour.
+  /// Shorter than the first hop, so the stage is set before anything lands.
+  /// Mirrors `HopSplashView.pondFade`.
+  stageFade: 0.32,
+
   /** One frame before the first movement, so the opening state is rendered. */
   leadIn: 0.02,
   /** How long the finished lockup is held before it goes. */
@@ -418,6 +423,18 @@ ${on('.hp-sl-hop')}{animation:hp-splash-hop ${plan.hop.length.toFixed(3)}s linea
 ${on('.hp-sl-potty')}{animation:hp-splash-potty ${plan.potty.length.toFixed(3)}s linear ${plan.potty.start.toFixed(3)}s both}
 ${on('.hp-sl-mascot')}{animation:hp-splash-mascot ${plan.mascot.length.toFixed(3)}s linear ${plan.mascot.start.toFixed(3)}s both}
 ${on('.hp-sl-tagline')}{animation:hp-splash-tagline ${plan.tagline.length.toFixed(3)}s ${ease(M.childArrive[1])} ${plan.tagline.start.toFixed(3)}s both}
+
+/* The stage: the pond and the shine behind the lockup.
+
+   Not present at frame one. iOS paints a flat LaunchBackground before any app
+   code runs, so a splash that opened on a landscape would flash at the
+   handover; the pond rises out of that colour instead, in less time than the
+   first hop takes, so it is already there to be landed on. The shine shares the
+   value because staging that arrived in two goes would read as two events.
+
+   Neither ever pulses (Docs/ChildSafety.md): they arrive once, hold, and go. */
+@keyframes hp-splash-stage{ from{opacity:0} to{opacity:1} }
+${on('.hp-splash-stage')}{animation:hp-splash-stage ${SPLASH.stageFade.toFixed(3)}s ease-out both}
 `;
 }
 

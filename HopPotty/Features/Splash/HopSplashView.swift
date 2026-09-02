@@ -16,6 +16,12 @@ import HopPottyDesignTokens
 /// and this view's first frame are the same image, so the seam between them has
 /// nothing to show.
 ///
+/// The pond behind the lockup is why that ground still matters. It is not the
+/// first frame — it cannot be, or the handover would flash from a flat colour
+/// to a landscape. It rises out of that colour over ``pondFade`` seconds while
+/// the first word is still travelling, so the system's fill is what the pond
+/// grows from rather than something it replaces.
+///
 /// ## Why it cannot make the app slower
 ///
 /// It is an overlay on a view tree that is already there and already loading.
@@ -34,6 +40,13 @@ struct HopSplashView: View {
 
     @State private var layout = HopLogoLayout.assembled
     @State private var opacity: Double = 0
+    /// The pond and the shine share one value: both are the stage, and staging
+    /// that arrived in two goes would read as two events.
+    @State private var stage: Double = 0
+
+    /// How long the pond takes to rise out of the launch colour. Shorter than
+    /// the first hop, so it is already there to be landed on.
+    private static let pondFade: Double = 0.32
 
     var body: some View {
         GeometryReader { proxy in
@@ -43,6 +56,23 @@ struct HopSplashView: View {
                 // pattern: the system just painted this exact fill and any
                 // difference would read as a flash.
                 theme.color.backgroundPrimary
+
+                // Hop's own pond, the place the whole app is set. Faded up from
+                // the launch colour rather than present at frame one, and
+                // `accessibilityHidden` because it is scenery under a lockup
+                // that already carries the one label there is.
+                PondBackdropView(sceneHeight: proxy.size.height)
+                    .opacity(stage)
+                    .accessibilityHidden(true)
+
+                // The shine. It is decoration and it is also the reason the
+                // wordmark stays legible over water: a white sticker outline on
+                // a pale sky is a weak edge, and this puts a warm ground under
+                // the logo without a grey scrim over the pond.
+                HopSplashShine(diameter: plan.logoWidth * 1.46)
+                    .opacity(stage)
+                    .accessibilityHidden(true)
+
                 HopLogoView(width: plan.logoWidth, layout: layout)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
@@ -64,6 +94,9 @@ struct HopSplashView: View {
     private func run(_ plan: HopSplashChoreography) async {
         layout = plan.opening
         opacity = 1
+        withAnimation(.easeOut(duration: plan.travels ? Self.pondFade : HopMotion.reducedMotionFade)) {
+            stage = 1
+        }
 
         // The plan's times are absolute, so each wait is the difference from
         // wherever the last one left us. A beat that runs long shortens the next
@@ -81,6 +114,9 @@ struct HopSplashView: View {
         elapsed = plan.fadeOutAt
         withAnimation(.easeInOut(duration: HopMotion.reducedMotionFade)) {
             opacity = 0
+            // The stage leaves with the logo. Left up, it would still be
+            // painting a pond nobody can see behind a transparent overlay.
+            stage = 0
         }
         guard await pause(plan.total - elapsed) else { return }
         onFinished()

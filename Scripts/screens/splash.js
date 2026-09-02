@@ -36,7 +36,9 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { c, svgInline, statusBar, ROOT } = require('./ui');
+const { c, svgInline, statusBar, ROOT, alpha } = require('./ui');
+const scenes = require('./scenes');
+const pondScreen = require('./pond');
 
 const METRICS = JSON.parse(fs.readFileSync(path.join(ROOT, 'Scripts', 'web', 'logo-metrics.json'), 'utf8'));
 
@@ -68,6 +70,56 @@ function layerPart(layer, part, width, height) {
     `transform-origin:${groundAnchor(layer)}">${svgInline(file, { width, height })}</div>`;
 }
 
+/**
+ * The light behind the lockup.
+ *
+ * Decoration, and also the reason the wordmark survives being moved off a flat
+ * cream ground onto water: the artwork's white sticker outline is a strong edge
+ * against `backgroundPrimary` and a weak one against pale sky. A grey scrim over
+ * the pond would fix that by making the pond worse; a warm bloom under the logo
+ * fixes it by making the logo better.
+ *
+ * It never pulses. A throbbing shine is the oldest attention mechanic there is
+ * and `Docs/ChildSafety.md` rules those out, so the rays and the bloom both hold
+ * still: the whole thing arrives with the stage and leaves with it.
+ */
+function shine(width) {
+  const size = Math.round(width * 1.46);
+  const warm = '#FFF3D4';
+  // Odd count, so no ray has a twin opposite it and the fan never reads as a
+  // grid; alternating lengths, so it never reads as a wheel.
+  const rays = 13;
+  const slivers = Array.from({ length: rays }, (_, i) => {
+    const step = 360 / rays;
+    const reach = i % 2 === 0 ? 48 : 39;
+    return `<polygon points="50,50 ${50 + reach},${50 - step * 0.15} ${50 + reach},${50 + step * 0.15}"
+      fill="${warm}" transform="rotate(${(i * step).toFixed(2)} 50 50)"/>`;
+  }).join('');
+
+  return `<div class="hp-splash-shine" style="position:absolute;left:50%;top:50%;width:${size}px;height:${size}px;
+    margin:-${size / 2}px 0 0 -${size / 2}px;pointer-events:none">
+    <svg viewBox="0 0 100 100" width="${size}" height="${size}" style="display:block">
+      <defs>
+        <radialGradient id="hpShineBloom" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="${warm}" stop-opacity="0.6"/>
+          <stop offset="42%" stop-color="${warm}" stop-opacity="0.2"/>
+          <stop offset="100%" stop-color="${warm}" stop-opacity="0"/>
+        </radialGradient>
+        <!-- The rays fade out along their own length. Flat slivers read as
+             paper cut-outs laid over the scene; light has to end in nothing. -->
+        <radialGradient id="hpShineFade" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
+          <stop offset="52%" stop-color="#FFFFFF" stop-opacity="0.30"/>
+          <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+        </radialGradient>
+        <mask id="hpShineMask"><rect width="100" height="100" fill="url(#hpShineFade)"/></mask>
+      </defs>
+      <g mask="url(#hpShineMask)" opacity="0.78" style="filter:blur(0.85px)">${slivers}</g>
+      <circle cx="50" cy="50" r="50" fill="url(#hpShineBloom)"/>
+    </svg>
+  </div>`;
+}
+
 function splash(appearance = 'light') {
   const col = c(appearance);
   const width = logoWidth();
@@ -76,12 +128,24 @@ function splash(appearance = 'light') {
   const backs = METRICS.paintOrder.map((l) => layerPart(l, 'back', width, height)).join('');
   const faces = METRICS.paintOrder.map((l) => layerPart(l, 'face', width, height)).join('');
 
+  // Hop's own pond, the place the app is set. `slice` because this is a crop of
+  // a taller drawing, exactly as Home is. It is not the first frame — the CSS
+  // fades `.hp-splash-stage` up out of the launch colour — because a handover
+  // that went straight from a flat fill to a landscape would read as a flash.
+  const pond = `<div class="hp-splash-stage" style="position:absolute;inset:0;overflow:hidden">
+    ${svgInline('Art/pond/pond-scene.svg', { width: DEVICE_WIDTH, height: 852, fit: 'slice' })}
+  </div>`;
+
   return `
   <div class="hp-splash" style="position:relative;width:100%;height:100%;background:${col.backgroundPrimary};overflow:hidden">
+    ${pond}
     ${statusBar(col.textPrimary)}
     <div style="position:absolute;inset:0;display:grid;place-items:center">
       <div class="hp-splash-logo" style="position:relative;width:${width}px;height:${height}px"
-        role="img" aria-label="HopPotty">${backs}${faces}</div>
+        role="img" aria-label="HopPotty">
+        <div class="hp-splash-stage">${shine(width)}</div>
+        ${backs}${faces}
+      </div>
     </div>
   </div>`;
 }
