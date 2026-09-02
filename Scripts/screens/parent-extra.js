@@ -13,12 +13,12 @@
  * yet — widgets and the Live Activity — nothing is invented beyond what the
  * schedule and the routine already hold.
  */
-const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation, artOr } = require('./ui');
+const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation } = require('./ui');
 const {
-  listRow, listGroup, navBar, iosSwitch, iconTile, segmented, pageDots, stepDots,
+  listRow, listGroup, navBar, iosSwitch, iconTile, segmented, pageDots,
   MARK, sparkline, patternLabel, tints, statusBarPad,
 } = require('./kit');
-const { card, metricChip, tabBar, parentHome } = require('./parent');
+const { metricChip, tabBar, parentHome } = require('./parent');
 const { ctaButton } = require('./onboarding');
 
 const P = T.palette;
@@ -1080,13 +1080,15 @@ function widgetFace(size, { mono = false } = {}) {
   const white = mono ? '#FFFFFF' : '#FFFFFF';
   const s = size;
   return `<svg width="${s}" height="${s}" viewBox="0 0 100 100" style="display:block;flex:0 0 auto">
-    <circle cx="50" cy="50" r="47" fill="${body}" stroke="${line}" stroke-width="${mono ? 5 : 4.5}"/>
+    <circle cx="50" cy="57" r="42" fill="${body}" stroke="${line}" stroke-width="${mono ? 5 : 4.5}"/>
     <g>
-      <circle cx="32" cy="30" r="17" fill="${white}" stroke="${line}" stroke-width="${mono ? 4 : 3.5}"/>
-      <circle cx="68" cy="30" r="17" fill="${white}" stroke="${line}" stroke-width="${mono ? 4 : 3.5}"/>
-      ${mono ? '' : `<circle cx="34" cy="32" r="7.5" fill="${P.midnight}"/><circle cx="70" cy="32" r="7.5" fill="${P.midnight}"/>`}
+      <circle cx="30" cy="26" r="20" fill="${white}" stroke="${line}" stroke-width="${mono ? 4.5 : 4}"/>
+      <circle cx="70" cy="26" r="20" fill="${white}" stroke="${line}" stroke-width="${mono ? 4.5 : 4}"/>
+      ${mono
+        ? `<circle cx="32" cy="28" r="8" fill="${line}"/><circle cx="72" cy="28" r="8" fill="${line}"/>`
+        : `<circle cx="32" cy="28" r="9" fill="${P.midnight}"/><circle cx="72" cy="28" r="9" fill="${P.midnight}"/>`}
     </g>
-    <path d="M 32 60 Q 50 76 68 60" fill="none" stroke="${line}" stroke-width="${mono ? 5 : 4.5}" stroke-linecap="round"/>
+    <path d="M 32 66 Q 50 84 68 66" fill="none" stroke="${line}" stroke-width="${mono ? 5 : 4.5}" stroke-linecap="round"/>
   </svg>`;
 }
 
@@ -1291,7 +1293,8 @@ function liveActivity(appearance = 'light') {
       <div style="position:relative;display:flex;flex-direction:column;height:100%;align-items:center">
         <div style="height:46px;flex:0 0 auto"></div>
         ${island}
-        <div style="${type('parentCaption', { color: alpha('#FFFFFF', .5) })};font-size:11.5px;margin-top:14px">
+        <div style="${type('parentCaption', { color: alpha('#FFFFFF', .5) })};font-size:11.5px;margin-top:14px;
+          text-align:center;padding:0 26px;line-height:1.4">
           No buttons. Every action with consequences stays behind the grown-up gate.</div>
         <div style="flex:1"></div>
       </div>
