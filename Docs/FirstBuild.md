@@ -355,7 +355,13 @@ away: the two Linux test jobs, which take about forty seconds, were also being
 reported as forty minutes into a build step.
 
 The lesson is small and general: **the run log is evidence, the run status is a
-cache.** When they disagree, believe the log.
+cache.** When they disagree, believe the log — and read the timestamps *inside*
+the log, which are the only clock in the picture that is not lagging.
+
+One further trap, learned the same way: log *availability* lags too. Asking for
+a job's log and getting a 404 does not mean the job is still running; it means
+the log is not published yet. Runs 62 and 63 each took **about ninety seconds**
+while returning 404s and `in_progress` for the better part of an hour.
 
 The changes made on the strength of the wrong diagnosis were kept, because each
 stands on its own without it:
@@ -437,6 +443,27 @@ suppression: `identity` is one immutable all-`Double` value that is read and
 copied and never mutated, and `HopElevationModifier.init` takes two immutable
 `Sendable` tokens and only stores them. There is nothing for two domains to
 share in either.
+
+---
+
+## Layer 8 — one warning, which is one build failure
+
+*Run 64. 1 diagnostic.*
+
+```
+ChildProfileEditor.swift:57:20: error: immutable value 'childID' was never used;
+                                consider replacing with '_' or removing it
+```
+
+Note the word `error`. That is a **warning** — and this project sets
+`SWIFT_TREAT_WARNINGS_AS_ERRORS`, so it stops the build like anything else. It
+is the reason the CI summary lists warnings and errors in one block rather than
+tucking warnings into a collapsed `<details>`.
+
+`if let childID, parent.children.count > 1` bound a value the block never used.
+The condition is about *whether* this editor is editing an existing child, not
+about which one, and the file already has a name for that: `isNew`. Every other
+`if let childID` in the file does use the value; this was the one that did not.
 
 ---
 

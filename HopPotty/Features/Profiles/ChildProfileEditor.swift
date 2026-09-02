@@ -54,7 +54,14 @@ struct ChildProfileEditor: View {
                 Text(hop: HopCopy.settings.childAvatar)
             }
 
-            if let childID, parent.children.count > 1 {
+            // `!isNew` rather than `if let childID`: the condition is about
+            // whether this editor is editing an existing child, and the id
+            // itself is never needed inside the block. Binding it was a warning
+            // -- "immutable value 'childID' was never used" -- and this project
+            // builds with SWIFT_TREAT_WARNINGS_AS_ERRORS, so it was a build
+            // failure. Every other `if let childID` in this file does use the
+            // value; this was the one that did not.
+            if !isNew, parent.children.count > 1 {
                 Section {
                     Button(HopCopy.settings.childRemove.localized, role: .destructive) {
                         isDeleteGatePresented = true
