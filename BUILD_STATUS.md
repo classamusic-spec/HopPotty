@@ -92,18 +92,29 @@ services, and feature surfaces, on top of a completed and tested core.
 - **Xcode project definition.** `project.yml`, xcconfigs, plists, entitlements,
   StoreKit config, bootstrap script, a config verifier (52 checks passing), CI.
 - **Documentation.** 20+ documents including a complete privacy data inventory.
-- **Vector art.** 90+ SVGs: eight Hop poses, a layered pond with all 41 items,
-  routine scenes, shield hero, quiz icons, event glyphs, app icon.
-- **Screen renders.** 14 screens from the exported design tokens.
+- **Vector art.** 150+ SVGs: Hop in 15 states generated from one parameterised
+  drawing (`Scripts/hop-art.js`) that matches the supplied reference mascot in
+  the brand green, a layered pond with all 41 items, five routine scenes, eight
+  mini-game scenes, shield hero, the full quiz icon set, event glyphs, app icon.
+- **Screen renders.** Every parent and child screen, the routine steps, the
+  games hub and all eight games, settings, paywall, error states, widgets and
+  Live Activity, rendered from the exported design tokens
+  (`Scripts/screens`, output in `Art/render/screens`).
+- **Web prototype.** `Scripts/web/build-prototype.js` turns the same screen
+  modules, tokens and SVGs into a static, tappable walkthrough (`web/dist`:
+  prototype, gallery of every screen and Hop state, product docs). It is a
+  design prototype, not a port: nothing on the web can pause an app. It is
+  deployed at https://hoppotty.vercel.app for review.
 
 ## Known gaps (tracked, not hidden)
 
-- **Art coverage.** `Scripts/check-art.sh` reports 12 of 44 illustration keys
-  resolved. 29 quiz answer icons and 3 game scenes referenced by content have no
-  drawing yet; the app shows a labelled placeholder for each.
-- **Two renders over-promised the platform** — a named-app list (tokens are
-  opaque; HopPotty cannot know app names) and a custom shield layout (the shield
-  is a fixed Apple layout). Both are being redrawn to what iOS actually allows.
+- **Art coverage.** `Scripts/check-art.sh` reports every illustration key
+  referenced by content resolved (65 of 65); the placeholder path in the app
+  remains for any key added later without a drawing.
+- **Renders are not screenshots.** Nothing here has run on a simulator or a
+  device; every picture is a design render from the token export. Two earlier
+  renders that over-promised the platform (a named-app list and a custom shield
+  layout) were redrawn to what iOS actually allows.
 - **Copy conflicts resolved in favour of the brief**: shield buttons are
   "Let's Go!" / "Need a grown-up?" and the unlock is "HopPotty Family".
 - **Kids Category**: `AppReviewStrategy.md` recommends 4+ Health & Fitness;
