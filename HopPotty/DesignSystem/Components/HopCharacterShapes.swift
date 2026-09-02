@@ -211,9 +211,12 @@ extension Path {
             addHopCircle(centre: start, radius: radius)
             return
         }
+        // The caps sit *beyond* the two points, as a round line cap does — a
+        // capsule that stopped at them would leave every hand and every toe one
+        // radius short.
         var local = Path()
         local.addHopRoundedRect(
-            CGRect(x: 0, y: -radius, width: length, height: radius * 2),
+            CGRect(x: -radius, y: -radius, width: length + radius * 2, height: radius * 2),
             radius: radius
         )
         let placed = local.applying(

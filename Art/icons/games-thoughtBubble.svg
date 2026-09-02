@@ -5,15 +5,13 @@
     <circle cx="30" cy="102" r="7" fill="none" stroke="#9BDCF1" stroke-width="2.5"/>
     <circle cx="44" cy="88" r="11" fill="#FFFFFF" opacity="0.95"/>
     <circle cx="44" cy="88" r="11" fill="none" stroke="#9BDCF1" stroke-width="2.5"/>
-    <g opacity="1"><path d="
-    M 14.16 58.56
+    <g opacity="1"><path d="M 14.16 58.56
     a 20.8 20.8 0 0 1 6.24 -39.52
     a 27.04 27.04 0 0 1 43.68 -14.56
     a 22.88 22.88 0 0 1 41.6 16.64
     a 18.72 18.72 0 0 1 -4.16 37.44
     Z" fill="#FFFFFF"/></g>
-    <g opacity="0.9"><g opacity="1"><path d="
-    M 14.16 58.56
+    <g opacity="0.9"><g opacity="1"><path d="M 14.16 58.56
     a 20.8 20.8 0 0 1 6.24 -39.52
     a 27.04 27.04 0 0 1 43.68 -14.56
     a 22.88 22.88 0 0 1 41.6 16.64

@@ -3,19 +3,20 @@
 <g id="games-flushWave">
     
     <rect x="0" y="0" width="640" height="480" fill="#E0F4FC"/>
-    <circle cx="118" cy="104" r="80" fill="#FFFFFF" opacity="0.45"/>
-    <circle cx="556" cy="82" r="54" fill="#FFF3D4" opacity="0.75"/>
+    
     <rect x="0" y="372" width="640" height="108" fill="#F7F1E9"/>
     <rect x="0" y="362" width="640" height="14" rx="7" fill="#EBE3D8"/>
-    <rect x="0" y="286" width="640" height="90" fill="#FFFFFF" opacity="0.4"/>
-    <rect x="0" y="278" width="640" height="14" rx="7" fill="#D8CEC1"/>
-    <g stroke="#2A87AC" stroke-width="3" opacity="0.16" stroke-linecap="round">
-      <path d="M 0 332 h 640"/>
-      <path d="M 72 292 v 40 M 216 292 v 40 M 360 292 v 40 M 504 292 v 40"/>
-      <path d="M 144 334 v 38 M 288 334 v 38 M 432 334 v 38 M 576 334 v 38"/>
+    <circle cx="330" cy="112" r="86" fill="#FFFFFF" opacity="0.4"/>
+    <circle cx="80" cy="60" r="52" fill="#FFF3D4" opacity="0.7"/>
+    <rect x="0" y="252" width="640" height="120" fill="#BEE4F3"/>
+    <g stroke="#FFFFFF" stroke-width="4" opacity="0.5" stroke-linecap="round">
+      <path d="M 0 308 h 640"/>
+      <path d="M 72 256 v 52 M 216 256 v 52 M 360 256 v 52 M 504 256 v 52"/>
+      <path d="M 144 310 v 58 M 288 310 v 58 M 432 310 v 58 M 576 310 v 58"/>
     </g>
-    <circle cx="322" cy="118" r="66" fill="#FFFFFF" opacity="0.4"/>
-    <g transform="translate(452 428) scale(0.78)">
+    <rect x="0" y="240" width="640" height="16" rx="8" fill="#EBE3D8"/>
+    <ellipse cx="452" cy="330" rx="150" ry="120" fill="url(#softShadow)" opacity="0.55"/>
+    <g transform="translate(452 430) scale(0.76)">
     <ellipse cx="0" cy="6" rx="150" ry="26" fill="url(#softShadow)"/>
     <!-- cistern -->
     <path d="M -96 -196 q 0 -20 20 -20 h 152 q 20 0 20 20 v 96 q 0 20 -20 20 h -152 q -20 0 -20 -20 Z" fill="#D8CEC1"/>
@@ -40,7 +41,7 @@
     <ellipse cx="0" cy="-128" rx="62" ry="19" fill="#2A87AC" opacity="0.45"/>
     <ellipse cx="0" cy="-132" rx="62" ry="19" fill="#9BDCF1"/>
     <ellipse cx="-24" cy="-136" rx="24" ry="6" fill="#FFFFFF" opacity="0.55"/></g>
-    <g transform="translate(120 424) scale(0.6)">
+    <g transform="translate(122 428) scale(0.74)">
     <ellipse cx="0" cy="4" rx="92" ry="18" fill="url(#softShadow)"/>
     <path d="M -34 0 q -14 0 -10 -18 l 16 -104 h 56 l 16 104 q 4 18 -10 18 Z" fill="url(#porcelainSide)"/>
     <path d="M -34 0 q -14 0 -10 -18 l 16 -104 h 20 l -14 122 Z" fill="#FFFFFF" opacity="0.45"/>
@@ -52,17 +53,17 @@
     <ellipse cx="0" cy="-126" rx="66" ry="18" fill="#E4DFD8"/>
     <ellipse cx="0" cy="-129" rx="64" ry="17" fill="#9BDCF1"/>
     <ellipse cx="-22" cy="-133" rx="24" ry="6" fill="#FFFFFF" opacity="0.6"/></g>
-    <g transform="translate(238 168) scale(0.72)">
+    <g transform="translate(268 128) scale(0.8)">
     <rect x="-52" y="0" width="104" height="12" rx="6" fill="#D8CEC1"/>
     <path d="M -38 5 h 76 q 8 0 8 10 v 56 q 0 8 -9 8 q -10 -10 -18 0 q -10 10 -20 0 q -10 -10 -18 0 q -9 7 -15 0 v -64 q 0 -10 8 -10 Z" fill="url(#towelGrad)"/>
     <path d="M -38 5 h 26 v 74 q -10 5 -19 -2 q -13 2 -13 -9 v -53 q 0 -10 8 -10 Z" fill="#FFFFFF" opacity="0.32"/>
     <rect x="-42" y="34" width="84" height="11" rx="5.5" fill="#FFFFFF" opacity="0.8"/></g>
-    <g opacity="0.9">
-      <circle cx="332" cy="212" r="18" fill="url(#bubbleFill)"/>
-      <circle cx="286" cy="252" r="12" fill="url(#bubbleFill)"/>
-      <circle cx="372" cy="256" r="9" fill="url(#bubbleFill)"/>
+    <g>
+      <circle cx="176" cy="196" r="17" fill="url(#bubbleFill)"/>
+      <circle cx="140" cy="234" r="11" fill="url(#bubbleFill)"/>
+      <circle cx="206" cy="240" r="8" fill="url(#bubbleFill)"/>
     </g>
-    <g transform="translate(596 372) scale(0.6)">
+    <g transform="translate(600 372) scale(0.58)">
     <ellipse cx="0" cy="4" rx="52" ry="10" fill="url(#softShadow)"/>
     <g transform="translate(-14 -50) scale(0.46)"><path d="M -11.25 0 Q -22.55 -11.63 -19.38 -23.27 Q -32.34 -34.59 -26.89 -45.92 Q -40.2 -56.94 -33.58 -67.96 Q -46.07 -78.67 -39.57 -89.39 Q -50.31 -99.8 -45.23 -110.2 Q -53.68 -120.31 -51.17 -130.41 Q -57.2 -140.2 -58.11 -150 Q -42 -140.2 -35.23 -130.41 Q -21.52 -120.31 -18.77 -110.2 Q -4.09 -99.8 -5.23 -89.39 Q 9.27 -78.67 4.78 -67.96 Q 17.8 -56.94 10.89 -45.92 Q 21.14 -34.59 12.98 -23.27 Q 19.35 -11.63 11.25 0 Z" fill="url(#fernGreen)"/>
     <path d="M 0 0 Q -8.4 -82.5 -56 -150" fill="none" stroke="#E3F5EA" stroke-width="2.6" stroke-linecap="round" opacity="0.4"/></g>
@@ -73,9 +74,5 @@
     <path d="M -36 -44 h 72 l -9 44 q -2 6 -10 6 h -34 q -8 0 -10 -6 Z" fill="url(#peachBall)"/>
     <path d="M -36 -44 h 22 l -5 50 h -7 q -8 0 -10 -6 Z" fill="#FFFFFF" opacity="0.26"/>
     <rect x="-42" y="-54" width="84" height="15" rx="7.5" fill="#FF9F8F"/>
-    <rect x="-42" y="-54" width="30" height="15" rx="7.5" fill="#FFFFFF" opacity="0.3"/></g>
-    <g transform="translate(452 246)">
-      <path d="M 0 0 m -46 0 a 46 20 0 1 1 66 17" fill="none" stroke="#2A87AC" stroke-width="11" stroke-linecap="round" opacity="0.32"/>
-      <path d="M 0 10 m -28 0 a 28 12 0 1 1 42 11" fill="none" stroke="#6FC7E8" stroke-width="9" stroke-linecap="round" opacity="0.3"/>
-    </g></g>
+    <rect x="-42" y="-54" width="30" height="15" rx="7.5" fill="#FFFFFF" opacity="0.3"/></g></g>
 </svg>

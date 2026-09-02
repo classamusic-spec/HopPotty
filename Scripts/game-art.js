@@ -211,15 +211,36 @@ function pebble(cx, cy, rx, ry, { fill = 'url(#stoneGrad)', light = 0.5 } = {}) 
 }
 
 /** A soft cloud built from three lobes on a rounded base. */
-function cloud(cx, cy, w, { fill = 'url(#cloudFill)', opacity = 1 } = {}) {
+function cloudPath(cx, cy, w) {
   const u = w / 100;
-  return `<g opacity="${opacity}"><path d="
-    M ${R(cx - 46 * u)} ${R(cy + 14 * u)}
+  return `M ${R(cx - 46 * u)} ${R(cy + 14 * u)}
     a ${R(20 * u)} ${R(20 * u)} 0 0 1 ${R(6 * u)} ${R(-38 * u)}
     a ${R(26 * u)} ${R(26 * u)} 0 0 1 ${R(42 * u)} ${R(-14 * u)}
     a ${R(22 * u)} ${R(22 * u)} 0 0 1 ${R(40 * u)} ${R(16 * u)}
     a ${R(18 * u)} ${R(18 * u)} 0 0 1 ${R(-4 * u)} ${R(36 * u)}
-    Z" fill="${fill}"/></g>`;
+    Z`;
+}
+function cloud(cx, cy, w, { fill = 'url(#cloudFill)', opacity = 1 } = {}) {
+  return `<g opacity="${opacity}"><path d="${cloudPath(cx, cy, w)}" fill="${fill}"/></g>`;
+}
+
+/** A splat: a closed blob whose lobes come from alternating radii, smoothed
+ *  through their midpoints. Rounded everywhere on purpose — mud in this app is
+ *  a mess to wash off, never something unpleasant. */
+function splat(cx, cy, r, radii, squash = 0.88) {
+  const n = radii.length;
+  const pts = radii.map((k, i) => {
+    const a = (2 * Math.PI * i) / n - Math.PI / 2;
+    return [cx + r * k * Math.cos(a), cy + r * k * squash * Math.sin(a)];
+  });
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const start = mid(pts[n - 1], pts[0]);
+  let d = `M ${R(start[0])} ${R(start[1])}`;
+  for (let i = 0; i < n; i++) {
+    const nxt = mid(pts[i], pts[(i + 1) % n]);
+    d += ` Q ${R(pts[i][0])} ${R(pts[i][1])} ${R(nxt[0])} ${R(nxt[1])}`;
+  }
+  return `${d} Z`;
 }
 
 /** A fern frond drawn as one lobed, arching leaf silhouette. */
@@ -304,11 +325,11 @@ const SW = 640, SH = 480;
 
 /** The shared interior set: tinted wall, skirting, floor. Never white on white
  *  — porcelain and paper need a tinted ground to read against. */
-function room({ floorY = 356, wall = P.pondBlueSoft, floor = P.sand100, skirting = P.sand200 } = {}) {
+function room({ floorY = 356, wall = P.pondBlueSoft, floor = P.sand100, skirting = P.sand200, orbs = true } = {}) {
   return `
     <rect x="0" y="0" width="${SW}" height="${SH}" fill="${wall}"/>
-    <circle cx="118" cy="104" r="80" fill="#FFFFFF" opacity="0.45"/>
-    <circle cx="556" cy="82" r="54" fill="${P.sunshineSoft}" opacity="0.75"/>
+    ${orbs ? `<circle cx="118" cy="104" r="80" fill="#FFFFFF" opacity="0.45"/>
+    <circle cx="556" cy="82" r="54" fill="${P.sunshineSoft}" opacity="0.75"/>` : ''}
     <rect x="0" y="${floorY}" width="${SW}" height="${SH - floorY}" fill="${floor}"/>
     <rect x="0" y="${floorY - 10}" width="${SW}" height="14" rx="7" fill="${skirting}"/>`;
 }
@@ -527,7 +548,7 @@ const scenes = {
     <path d="M -20 318 Q 140 288 300 310 Q 470 334 660 300 L 660 360 L -20 360 Z" fill="url(#hillMid)"/>
     <rect x="0" y="330" width="${SW}" height="${SH - 330}" fill="url(#waterDusk)"/>
     <path d="M -20 326 Q 120 316 260 330 Q 400 344 660 326 L 660 348 L -20 348 Z" fill="url(#shoreSand)" opacity="0.85"/>
-    <path d="M 452 336 L 552 336 L 604 480 L 400 480 Z" fill="url(#goldPath)" opacity="0.55"/>
+    <path d="M 462 334 Q 502 330 542 334 L 596 480 L 408 480 Z" fill="url(#goldPath)" opacity="0.38"/>
     <g stroke="#FFFFFF" stroke-linecap="round" fill="none" opacity="0.4">
       <path d="M 60 372 h 54" stroke-width="5"/>
       <path d="M 150 396 h 42" stroke-width="5"/>
@@ -540,10 +561,10 @@ const scenes = {
     ${lilyPad(556, 356, 52, { notch: 300 })}
     ${lilyPad(228, 344, 40, { notch: 70 })}
     ${ripple(320, 432, 196, 0.32)}
-    ${lilyPad(320, 412, 162, { squash: 0.34, spread: 14 })}
+    ${lilyPad(320, 412, 162, { squash: 0.34, spread: 10 })}
     <g>
-      ${flower(214, 384, 22, { fill: 'url(#petalWhite)', core: P.sunshine, petals: 7, stem: false })}
-      <ellipse cx="214" cy="392" rx="30" ry="8" fill="${P.hopGreenDeep}" opacity="0.25"/>
+      <ellipse cx="150" cy="410" rx="26" ry="7" fill="${P.hopGreenDeep}" opacity="0.22"/>
+      ${flower(150, 400, 20, { fill: 'url(#petalWhite)', core: P.sunshine, petals: 7, stem: false })}
     </g>
     <g>
       ${cattail(34, 448, 178, { tilt: -5 })}
@@ -574,37 +595,41 @@ const scenes = {
         .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}
       <rect x="-20" y="244" width="${SW + 40}" height="96" />
     </g>
-    <g opacity="0.35" fill="#FFFFFF">
-      ${[[54, 214, 20], [176, 206, 16], [288, 198, 18], [402, 208, 15], [520, 200, 17], [612, 216, 14]]
+    <g opacity="0.4" fill="#CFEEDD">
+      ${[[40, 224, 34], [128, 210, 28], [246, 220, 30], [352, 208, 26], [470, 220, 30], [576, 212, 28]]
         .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}
     </g>
     <rect x="0" y="316" width="${SW}" height="${SH - 316}" fill="url(#ground)"/>
     <path d="M -20 380 Q 180 356 340 382 Q 500 408 660 384 L 660 500 L -20 500 Z" fill="url(#groundNear)" opacity="0.55"/>
-    <g fill="${P.hopGreenInk}" opacity="0.16">
+    <g opacity="0.55">
+      <path d="${splat(474, 424, 54, [1, 0.72, 0.96, 0.7, 1.04, 0.74, 0.92, 0.68], 0.34)}" fill="#B07747" opacity="0.4"/>
+      <path d="${splat(474, 421, 48, [1, 0.72, 0.96, 0.7, 1.04, 0.74, 0.92, 0.68], 0.34)}" fill="#C08A5E" opacity="0.5"/>
+      <path d="${splat(232, 452, 42, [0.96, 0.7, 1.04, 0.72, 0.94, 0.76, 1, 0.68], 0.34)}" fill="#B07747" opacity="0.35"/>
+      <path d="${splat(232, 449, 37, [0.96, 0.7, 1.04, 0.72, 0.94, 0.76, 1, 0.68], 0.34)}" fill="#C08A5E" opacity="0.45"/>
+    </g>
+    <g fill="${P.hopGreenInk}" opacity="0.26">
       ${[[268, 358, 30, 8, 7], [388, 350, 24, -8, 6], [466, 372, 32, 10, 7], [196, 372, 26, -8, 6],
          [520, 404, 34, 12, 8], [300, 412, 28, -10, 7], [420, 440, 32, 10, 8], [246, 452, 26, -8, 7],
          [592, 434, 30, -10, 7], [356, 470, 24, 8, 6]]
         .map(([x, y, h, c, w]) => `<path d="${blade(x, y, h, c, w)}"/>`).join('')}
     </g>
-    <g opacity="0.5">
-      <ellipse cx="470" cy="416" rx="52" ry="15" fill="${P.wood}" opacity="0.35"/>
-      <ellipse cx="238" cy="446" rx="40" ry="12" fill="${P.wood}" opacity="0.3"/>
+    <g id="fence">
+      ${[[470, 256], [516, 250], [562, 254], [608, 248]].map(([x, y]) =>
+        `<path d="M ${x} ${y} h 38 q 9 0 9 9 v 108 q 0 9 -9 9 h -38 q -9 0 -9 -9 v -108 q 0 -9 9 -9 Z" fill="url(#woodGradV)"/>
+         <path d="M ${x} ${y} h 13 v 126 h -13 q -9 0 -9 -9 v -108 q 0 -9 9 -9 Z" fill="#FFFFFF" opacity="0.22"/>`).join('')}
+      <rect x="452" y="278" width="208" height="17" rx="8.5" fill="${P.wood}"/>
+      <rect x="452" y="274" width="208" height="17" rx="8.5" fill="url(#woodGrad)"/>
+      <rect x="452" y="336" width="208" height="17" rx="8.5" fill="${P.wood}"/>
+      <rect x="452" y="332" width="208" height="17" rx="8.5" fill="url(#woodGrad)"/>
     </g>
-    ${g('translate(0 0)', `
-      <rect x="500" y="238" width="160" height="20" rx="10" fill="${P.wood}"/>
-      ${[[512, 214], [560, 220], [608, 214]].map(([x, y]) =>
-        `<path d="M ${x} ${y} h 40 q 8 0 8 8 v 120 q 0 8 -8 8 h -40 q -8 0 -8 -8 v -120 q 0 -8 8 -8 Z" fill="url(#woodGradV)"/>
-         <path d="M ${x} ${y} h 14 v 136 h -14 q -8 0 -8 -8 v -120 q 0 -8 8 -8 Z" fill="#FFFFFF" opacity="0.22"/>`).join('')}
-      <rect x="500" y="300" width="160" height="16" rx="8" fill="${P.woodDeep}" opacity="0.7"/>
-    `)}
-    ${towelOnRail(566, 190, 0.86)}
+    ${towelOnRail(560, 248, 0.8)}
     ${gardenTap(126, 430, 0.9)}
     <g>
-      <circle cx="252" cy="286" r="24" fill="url(#bubbleFill)"/>
-      <circle cx="196" cy="238" r="15" fill="url(#bubbleFill)"/>
-      <circle cx="308" cy="242" r="18" fill="url(#bubbleFill)"/>
-      <circle cx="352" cy="300" r="12" fill="url(#bubbleFill)"/>
-      <circle cx="150" cy="180" r="11" fill="url(#bubbleFill)"/>
+      <circle cx="238" cy="330" r="22" fill="url(#bubbleFill)"/>
+      <circle cx="200" cy="284" r="15" fill="url(#bubbleFill)"/>
+      <circle cx="272" cy="286" r="12" fill="url(#bubbleFill)"/>
+      <circle cx="232" cy="242" r="10" fill="url(#bubbleFill)"/>
+      <circle cx="296" cy="344" r="9" fill="url(#bubbleFill)"/>
     </g>
     ${pottedPlant(60, 470, 0.72)}
     ${flower(608, 424, 20, { fill: 'url(#peachBall)', core: P.peachSoft, petals: 6, stemH: 34 })}
@@ -619,8 +644,8 @@ const scenes = {
   'games-bodySignal': () => `
     ${room({ floorY: 366, wall: P.sunshineSoft, floor: P.sand100, skirting: P.sand200 })}
     <rect x="0" y="0" width="${SW}" height="366" fill="url(#wallWarm)" opacity="0.45"/>
-    <g stroke="${P.peach}" stroke-width="7" opacity="0.16" stroke-linecap="round">
-      <path d="M 44 40 v 320 M 148 40 v 320 M 252 40 v 320 M 356 40 v 320"/>
+    <g fill="${P.peach}" opacity="0.09">
+      ${[18, 122, 226, 330, 434].map((x) => `<rect x="${x}" y="0" width="30" height="366" rx="15"/>`).join('')}
     </g>
     ${window(150, 150, 176, 140)}
     <g opacity="0.9">
@@ -638,17 +663,17 @@ const scenes = {
     <ellipse cx="268" cy="418" rx="196" ry="52" fill="url(#rugGrad)"/>
     <ellipse cx="268" cy="418" rx="150" ry="38" fill="none" stroke="#FFFFFF" stroke-width="8" opacity="0.65"/>
     <ellipse cx="268" cy="418" rx="98" ry="24" fill="none" stroke="#FFFFFF" stroke-width="6" opacity="0.45"/>
-    ${toyBox(96, 396, 0.62)}
+    ${toyBox(88, 392, 0.6)}
     <g>
-      ${contactShadow(400, 408, 34, 8)}
-      <circle cx="400" cy="384" r="26" fill="url(#yellowBall)"/>
-      <path d="M 378 374 q 22 -12 44 0" stroke="#FFFFFF" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.6"/>
-      <path d="M 378 394 q 22 12 44 0" stroke="${P.peach}" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.6"/>
+      ${contactShadow(196, 424, 32, 8)}
+      <circle cx="196" cy="400" r="26" fill="url(#yellowBall)"/>
+      <path d="M 174 390 q 22 -12 44 0" stroke="#FFFFFF" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.6"/>
+      <path d="M 174 410 q 22 12 44 0" stroke="${P.peach}" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.6"/>
     </g>
     <g>
-      ${contactShadow(150, 450, 30, 7)}
-      <rect x="124" y="418" width="52" height="34" rx="10" fill="url(#lavenderBall)"/>
-      <rect x="132" y="410" width="36" height="12" rx="6" fill="${P.lavenderSoft}"/>
+      ${contactShadow(310, 466, 30, 7)}
+      <rect x="284" y="434" width="52" height="34" rx="10" fill="url(#lavenderBall)"/>
+      <rect x="292" y="426" width="36" height="12" rx="6" fill="${P.lavenderSoft}"/>
     </g>
     ${pottedPlant(468, 366, 0.5)}`,
 
@@ -658,28 +683,26 @@ const scenes = {
    *  right of centre so the button sits at his eye line; the sink is pushed to
    *  the left wall. */
   'games-flushWave': () => `
-    ${room({ floorY: 372, wall: P.pondBlueSoft, floor: P.sand100 })}
-    <rect x="0" y="286" width="${SW}" height="90" fill="#FFFFFF" opacity="0.4"/>
-    <rect x="0" y="278" width="${SW}" height="14" rx="7" fill="${P.sand300}"/>
-    <g stroke="${P.pondBlueDeep}" stroke-width="3" opacity="0.16" stroke-linecap="round">
-      <path d="M 0 332 h ${SW}"/>
-      <path d="M 72 292 v 40 M 216 292 v 40 M 360 292 v 40 M 504 292 v 40"/>
-      <path d="M 144 334 v 38 M 288 334 v 38 M 432 334 v 38 M 576 334 v 38"/>
+    ${room({ floorY: 372, wall: P.pondBlueSoft, floor: P.sand100, orbs: false })}
+    <circle cx="330" cy="112" r="86" fill="#FFFFFF" opacity="0.4"/>
+    <circle cx="80" cy="60" r="52" fill="${P.sunshineSoft}" opacity="0.7"/>
+    <rect x="0" y="252" width="${SW}" height="120" fill="#BEE4F3"/>
+    <g stroke="#FFFFFF" stroke-width="4" opacity="0.5" stroke-linecap="round">
+      <path d="M 0 308 h ${SW}"/>
+      <path d="M 72 256 v 52 M 216 256 v 52 M 360 256 v 52 M 504 256 v 52"/>
+      <path d="M 144 310 v 58 M 288 310 v 58 M 432 310 v 58 M 576 310 v 58"/>
     </g>
-    <circle cx="322" cy="118" r="66" fill="#FFFFFF" opacity="0.4"/>
-    ${kindToilet(452, 428, 0.78)}
-    ${pedestalSink(120, 424, 0.6)}
-    ${towelOnRail(238, 168, 0.72)}
-    <g opacity="0.9">
-      <circle cx="332" cy="212" r="18" fill="url(#bubbleFill)"/>
-      <circle cx="286" cy="252" r="12" fill="url(#bubbleFill)"/>
-      <circle cx="372" cy="256" r="9" fill="url(#bubbleFill)"/>
+    <rect x="0" y="240" width="${SW}" height="16" rx="8" fill="${P.sand200}"/>
+    <ellipse cx="452" cy="330" rx="150" ry="120" fill="url(#softShadow)" opacity="0.55"/>
+    ${kindToilet(452, 430, 0.76)}
+    ${pedestalSink(122, 428, 0.74)}
+    ${towelOnRail(268, 128, 0.8)}
+    <g>
+      <circle cx="176" cy="196" r="17" fill="url(#bubbleFill)"/>
+      <circle cx="140" cy="234" r="11" fill="url(#bubbleFill)"/>
+      <circle cx="206" cy="240" r="8" fill="url(#bubbleFill)"/>
     </g>
-    ${pottedPlant(596, 372, 0.6)}
-    ${g('translate(452 246)', `
-      <path d="M 0 0 m -46 0 a 46 20 0 1 1 66 17" fill="none" stroke="${P.pondBlueDeep}" stroke-width="11" stroke-linecap="round" opacity="0.32"/>
-      <path d="M 0 10 m -28 0 a 28 12 0 1 1 42 11" fill="none" stroke="${P.pondBlue}" stroke-width="9" stroke-linecap="round" opacity="0.3"/>
-    `)}`,
+    ${pottedPlant(600, 372, 0.58)}`,
 
   /** Potty Order.
    *  STAGE: none — no character stands in this one. The four slots are the
@@ -688,34 +711,39 @@ const scenes = {
    *  cards there. */
   'games-pottyOrder': () => `
     <rect x="0" y="0" width="${SW}" height="${SH}" fill="url(#skyWarm)"/>
-    <circle cx="76" cy="58" r="72" fill="url(#sunGlow)" opacity="0.65"/>
-    <circle cx="76" cy="58" r="30" fill="url(#sunDisc)"/>
-    ${cloud(268, 46, 100, { opacity: 0.55 })}
-    ${cloud(506, 66, 78, { opacity: 0.4 })}
-    <path d="M -20 152 Q 150 108 340 140 Q 510 168 660 132 L 660 360 L -20 360 Z" fill="url(#hillFar)"/>
-    <path d="M -20 196 Q 190 158 400 192 Q 540 214 660 190 L 660 400 L -20 400 Z" fill="url(#hillMid)"/>
-    <path d="M -20 322 Q 200 296 420 324 Q 550 340 660 320 L 660 500 L -20 500 Z" fill="url(#ground)"/>
-    <path d="M -20 300 Q 160 268 320 292 Q 480 316 660 286 L 660 336 Q 480 366 320 342 Q 160 318 -20 350 Z" fill="url(#shoreSand)"/>
-    <path d="M -20 306 Q 160 274 320 298 Q 480 322 660 292" fill="none" stroke="#FFFFFF" stroke-width="5" opacity="0.55"/>
-    ${[0, 1, 2, 3].map((i) => {
-      const x = 34 + i * 146, y = 148, w = 118, h = 140;
-      const cx = x + w / 2;
-      return `<g id="slot${i + 1}">
-        <ellipse cx="${cx}" cy="${y + h + 14}" rx="${R(w * 0.46)}" ry="12" fill="url(#softShadow)"/>
-        <rect x="${x + 4}" y="${y + 6}" width="${w}" height="${h}" rx="26" fill="${P.midnight}" opacity="0.07"/>
-        <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="26" fill="url(#slotWell)"/>
-        <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="26" fill="none" stroke="${P.hopGreenDeep}" stroke-width="5" stroke-dasharray="16 13" stroke-linecap="round" opacity="0.55"/>
-        <circle cx="${cx}" cy="${R(y + h / 2)}" r="19" fill="${P.hopGreenSoft}" opacity="0.9"/>
-        <text x="${cx}" y="${R(y + h / 2 + 10)}" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" font-size="26" font-weight="700" fill="${P.hopGreenDeep}" opacity="0.55">${i + 1}</text>
-      </g>`;
-    }).join('')}
-    <g fill="${P.hopGreenDeep}" opacity="0.4">
+    <circle cx="76" cy="54" r="72" fill="url(#sunGlow)" opacity="0.65"/>
+    <circle cx="76" cy="54" r="30" fill="url(#sunDisc)"/>
+    ${cloud(280, 42, 100, { opacity: 0.55 })}
+    ${cloud(516, 62, 78, { opacity: 0.4 })}
+    <path d="M -20 132 Q 150 92 340 122 Q 510 148 660 114 L 660 340 L -20 340 Z" fill="url(#hillFar)"/>
+    <path d="M -20 168 Q 190 134 400 166 Q 540 186 660 162 L 660 380 L -20 380 Z" fill="url(#hillMid)"/>
+    <path d="M -20 300 Q 200 274 420 302 Q 550 318 660 298 L 660 500 L -20 500 Z" fill="url(#ground)"/>
+    <path d="M -20 116 Q 180 96 320 112 Q 480 130 660 104 L 660 322 Q 480 348 320 330 Q 180 314 -20 336 Z" fill="url(#shoreSand)"/>
+    <path d="M -20 122 Q 180 102 320 118 Q 480 136 660 110" fill="none" stroke="#FFFFFF" stroke-width="5" opacity="0.6"/>
+    <path d="M -20 330 Q 180 308 320 324 Q 480 342 660 316" fill="none" stroke="${P.sand300}" stroke-width="5" opacity="0.7"/>
+    <g fill="${P.sand300}" opacity="0.5">
+      ${[[96, 296, 20, 7], [252, 306, 17, 6], [408, 314, 19, 6.5], [556, 300, 16, 5.5]]
+        .map(([x, y, rx, ry]) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"/>`).join('')}
+    </g>
+    <g fill="${P.hopGreenDeep}" opacity="0.45">
       ${[0, 1, 2].map((i) => {
-        const x = 152 + i * 146, y = 218;
-        return `<path d="M ${x} ${y - 11} L ${x + 15} ${y} L ${x} ${y + 11} Z"/>`;
+        const x = 154 + i * 146, y = 220;
+        return `<path d="M ${x} ${y - 12} L ${x + 16} ${y} L ${x} ${y + 12} Z"/>`;
       }).join('')}
     </g>
-    <g fill="${P.hopGreenInk}" opacity="0.18">
+    ${[0, 1, 2, 3].map((i) => {
+      const x = 34 + i * 146, y = 150, w = 118, h = 140;
+      const cx = x + w / 2;
+      return `<g id="slot${i + 1}">
+        <ellipse cx="${cx}" cy="${y + h + 12}" rx="${R(w * 0.44)}" ry="11" fill="url(#softShadow)"/>
+        <rect x="${x + 3}" y="${y + 5}" width="${w}" height="${h}" rx="26" fill="${P.sand400}" opacity="0.28"/>
+        <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="26" fill="url(#slotWell)"/>
+        <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="26" fill="none" stroke="${P.hopGreenDeep}" stroke-width="5" stroke-dasharray="17 13" stroke-linecap="round" opacity="0.6"/>
+        <circle cx="${cx}" cy="${R(y + h / 2)}" r="15" fill="none" stroke="${P.hopGreenDeep}" stroke-width="4" opacity="0.2"/>
+        <circle cx="${cx}" cy="${R(y + h / 2)}" r="5" fill="${P.hopGreenDeep}" opacity="0.2"/>
+      </g>`;
+    }).join('')}
+    <g fill="${P.hopGreenInk}" opacity="0.2">
       ${[[26, 356, 54, 14, 9], [72, 366, 38, -10, 7], [598, 370, 58, -16, 10], [560, 380, 40, 12, 8],
          [214, 392, 44, 12, 8], [400, 400, 38, -10, 7], [312, 428, 46, 14, 9], [500, 438, 36, -10, 7],
          [122, 446, 42, 12, 8], [612, 452, 34, 10, 7]]
@@ -723,8 +751,8 @@ const scenes = {
     </g>
     ${flower(58, 424, 18, { fill: 'url(#yellowBall)', core: P.sunshineSoft, stemH: 30 })}
     ${flower(576, 416, 17, { fill: 'url(#peachBall)', core: P.peachSoft, petals: 6, stemH: 28 })}
-    ${pebble(258, 356, 18, 7)}
-    ${pebble(452, 348, 15, 6)}`,
+    ${pebble(268, 372, 18, 7)}
+    ${pebble(452, 364, 15, 6)}`,
 };
 
 // ===========================================================================
@@ -734,11 +762,15 @@ const scenes = {
 /** One fly. Round, big eyed, translucent wings — a snack a child wants to
  *  catch, not a housefly. All three colours are the same drawing so the set
  *  reads as one species; only the coat changes. */
-function fly(bodyGrad, deep, { wingTint = '#FFFFFF' } = {}) {
+function fly(bodyGrad, deep, { wingTint = P.pondBlueLight } = {}) {
   return `
-    <g opacity="0.85">
-      <ellipse cx="26" cy="38" rx="26" ry="13" transform="rotate(-32 26 38)" fill="url(#wingGlass)" stroke="${wingTint}" stroke-width="2.5" opacity="0.9"/>
-      <ellipse cx="94" cy="38" rx="26" ry="13" transform="rotate(32 94 38)" fill="url(#wingGlass)" stroke="${wingTint}" stroke-width="2.5" opacity="0.9"/>
+    <g>
+      <ellipse cx="22" cy="36" rx="30" ry="15" transform="rotate(-34 22 36)" fill="url(#wingGlass)"/>
+      <ellipse cx="98" cy="36" rx="30" ry="15" transform="rotate(34 98 36)" fill="url(#wingGlass)"/>
+      <ellipse cx="22" cy="36" rx="30" ry="15" transform="rotate(-34 22 36)" fill="none" stroke="${wingTint}" stroke-width="3" opacity="0.9"/>
+      <ellipse cx="98" cy="36" rx="30" ry="15" transform="rotate(34 98 36)" fill="none" stroke="${wingTint}" stroke-width="3" opacity="0.9"/>
+      <path d="M 8 24 Q 24 34 36 44" stroke="${wingTint}" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.7"/>
+      <path d="M 112 24 Q 96 34 84 44" stroke="${wingTint}" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.7"/>
     </g>
     <path d="M 52 40 q -6 -14 -14 -20" stroke="${deep}" stroke-width="4.5" fill="none" stroke-linecap="round"/>
     <path d="M 68 40 q 6 -14 14 -20" stroke="${deep}" stroke-width="4.5" fill="none" stroke-linecap="round"/>
@@ -793,7 +825,7 @@ DEFS.cardClip = '<clipPath id="cardClip"><rect x="16" y="14" width="88" height="
 const sprites = {
   'fly-blue': () => fly('url(#flyBlue)', P.pondBlueInk),
   'fly-green': () => fly('url(#flyGreen)', P.hopGreenInk),
-  'fly-gold': () => fly('url(#flyGold)', P.sunshineInk),
+  'fly-gold': () => fly('url(#flyGold)', '#96690A'),
 
   /** Tummy Meter: a leaf standing on its stem, cut into six bands from the
    *  bottom up. Empty here on purpose — the app fills `seg1`..`seg6`, so this
@@ -839,24 +871,24 @@ const sprites = {
     ${star(102, 24, 9, P.sunshineSoft)}`,
 
   ball: () => `
-    ${iconShadow(60, 106, 34)}
+    ${iconShadow(60, 108, 34)}
     <circle cx="60" cy="62" r="44" fill="url(#peachBall)"/>
-    <path d="M 22 84 q 38 -22 76 0 q -6 12 -16 20 q -22 8 -44 0 q -10 -8 -16 -20 Z" fill="${P.cloud}" opacity="0.9"/>
-    <path d="M 16 62 q 44 -26 88 0" stroke="${P.cloud}" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.85"/>
-    <circle cx="60" cy="62" r="44" fill="none" stroke="${P.peachDeep}" stroke-width="3" opacity="0.28"/>
-    <ellipse cx="44" cy="40" rx="16" ry="11" transform="rotate(-24 44 40)" fill="#FFFFFF" opacity="0.5"/>`,
+    <path d="M 16.5 56 q 43.5 -20 87 0 q -43.5 22 -87 0 Z" fill="${P.cloud}"/>
+    <path d="M 20 62 q 40 -13 80 0 q -40 14 -80 0 Z" fill="${P.hopGreenLight}"/>
+    <circle cx="60" cy="62" r="44" fill="none" stroke="${P.peachDeep}" stroke-width="3" opacity="0.25"/>
+    <ellipse cx="44" cy="38" rx="16" ry="11" transform="rotate(-24 44 38)" fill="#FFFFFF" opacity="0.5"/>`,
 
-  thoughtBubble: () => `
-    <circle cx="30" cy="102" r="7" fill="#FFFFFF" opacity="0.95"/>
-    <circle cx="30" cy="102" r="7" fill="none" stroke="${P.pondBlueLight}" stroke-width="2.5"/>
-    <circle cx="44" cy="88" r="11" fill="#FFFFFF" opacity="0.95"/>
-    <circle cx="44" cy="88" r="11" fill="none" stroke="${P.pondBlueLight}" stroke-width="2.5"/>
-    ${cloud(62, 44, 104, { fill: '#FFFFFF' })}
-    <g opacity="0.9">${cloud(62, 44, 104, { fill: 'none' })}</g>
-    <path d="M 14 58 a 21 21 0 0 1 6 -40 a 27 27 0 0 1 44 -15 a 23 23 0 0 1 42 17 a 19 19 0 0 1 -4 38 Z"
-      fill="none" stroke="${P.pondBlueLight}" stroke-width="3" stroke-linejoin="round"/>
-    <path d="${drop(60, 38, 40, 15)}" fill="url(#blueBall)"/>
-    <path d="M 52 44 q 1 -10 6 -16" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>`,
+  thoughtBubble: () => {
+    const puff = cloudPath(60, 46, 108);
+    return `
+    ${[[28, 104, 6.5], [44, 88, 11]].map(([x, y, r]) => `
+      <circle cx="${x}" cy="${y}" r="${r}" fill="#FFFFFF"/>
+      <circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${P.pondBlueLight}" stroke-width="3"/>`).join('')}
+    <path d="${puff}" fill="#FFFFFF"/>
+    <path d="${puff}" fill="none" stroke="${P.pondBlueLight}" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="${drop(60, 38, 42, 16)}" fill="url(#blueBall)"/>
+    <path d="M 51 44 q 1 -11 7 -18" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.65"/>`;
+  },
 
   flusher: () => `
     ${iconShadow(60, 108, 36)}
@@ -870,13 +902,13 @@ const sprites = {
     <path d="M 60 50 m -11 0 a 11 5 0 1 1 16 4" fill="none" stroke="${P.pondBlueDeep}" stroke-width="4" stroke-linecap="round" opacity="0.55"/>`,
 
   swirl: () => `
-    <ellipse cx="60" cy="70" rx="48" ry="26" fill="${P.pondBlueSoft}" opacity="0.6"/>
-    <path d="M 60 66 m -42 0 a 42 20 0 1 1 60 17" fill="none" stroke="${P.pondBlueDeep}" stroke-width="13" stroke-linecap="round"/>
-    <path d="M 60 74 m -26 0 a 26 12 0 1 1 38 10" fill="none" stroke="${P.pondBlue}" stroke-width="12" stroke-linecap="round"/>
-    <path d="M 60 80 m -12 0 a 12 6 0 1 1 18 5" fill="none" stroke="${P.pondBlueLight}" stroke-width="9" stroke-linecap="round"/>
-    <circle cx="24" cy="30" r="9" fill="${P.pondBlueLight}" opacity="0.85"/>
-    <circle cx="98" cy="38" r="7" fill="${P.pondBlue}" opacity="0.7"/>
-    <circle cx="64" cy="18" r="5.5" fill="${P.pondBlueLight}" opacity="0.8"/>`,
+    <ellipse cx="60" cy="64" rx="50" ry="38" fill="${P.pondBlueSoft}" opacity="0.7"/>
+    <path d="M 60 64 m -42 0 a 42 32 0 1 1 58 26" fill="none" stroke="${P.pondBlueDeep}" stroke-width="13" stroke-linecap="round"/>
+    <path d="M 60 70 m -25 0 a 25 19 0 1 1 36 16" fill="none" stroke="${P.pondBlue}" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 60 74 m -11 0 a 11 9 0 1 1 16 7" fill="none" stroke="${P.pondBlueLight}" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="20" cy="24" r="9" fill="${P.pondBlueLight}"/>
+    <circle cx="100" cy="30" r="7" fill="${P.pondBlue}" opacity="0.8"/>
+    <circle cx="60" cy="12" r="5.5" fill="${P.pondBlueLight}"/>`,
 
   /** Step 1: trousers puddled at the ankles beside the potty. No body, no
    *  anatomy — the trousers on the floor are the whole idea. */
