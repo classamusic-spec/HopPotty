@@ -20,4 +20,11 @@ module.exports = {
   '12-quiz': { render: child.quiz, appearance: 'light' },
   '13-insights': { render: insights.insights, appearance: 'light' },
   '14-parent-home-dark': { render: parent.parentHome, appearance: 'dark' },
+  '15-parent-home-ipad': { render: parent.parentHomePad, appearance: 'light', device: 'ipad' },
 };
+
+// Extra screen sets live in their own registries so parallel authors never edit
+// one file at once. Missing files are simply absent from the render.
+for (const extra of ['./registry.child', './registry.parent-extra']) {
+  try { Object.assign(module.exports, require(extra)); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
+}
