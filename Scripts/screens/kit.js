@@ -61,8 +61,9 @@ function listRow(col, { icon, label, value, sub, accessory, chevron = false, las
   const acc = accessory !== undefined ? accessory
     : `${value !== undefined ? `<span style="${type('parentCallout', { color: col.textSecondary })};font-size:15px;text-align:right">${value}</span>` : ''}
        ${chevron ? `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="${col.textTertiary}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><path d="M9 5l7 7-7 7"/></svg>` : ''}`;
+  const inset = icon ? 52 : 16;
   return `<div style="display:flex;align-items:${align};gap:11px;min-height:${minHeight}px;padding:8px 14px 8px ${icon ? '13' : '16'}px;
-    ${last ? '' : `box-shadow:inset 0 -1px 0 ${col.divider};`}">
+    ${last ? '' : `background:linear-gradient(${col.divider},${col.divider}) no-repeat left ${inset}px bottom / calc(100% - ${inset}px) 0.5px;`}">
     ${icon || ''}
     <div style="flex:1;min-width:0">
       <div style="${type('parentBody', { color: labelColor || col.textPrimary })};font-size:16px">${label}</div>
@@ -205,6 +206,29 @@ function sparkline(values, { w = 300, h = 60, stroke, fill, dot = true, pad = 6 
   </svg>`;
 }
 
+/**
+ * A column chart of daily counts.
+ *
+ * Replaces the smoothed sparkline the Progress screen used to draw. Seven daily
+ * counts are seven discrete facts; a smoothed curve through them invents values
+ * between the days and implies a trend the data does not carry. Health draws
+ * counts as columns, and so does this.
+ */
+function columnChart(col, values, labels, { h = 92, tint, dim }) {
+  const max = Math.max(...values, 1);
+  return `<div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;height:${h}px;gap:10px">
+      ${values.map((v) => `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%">
+        <div style="width:100%;max-width:22px;height:${Math.max(6, Math.round((v / max) * h))}px;border-radius:5px;
+          background:${v === 0 ? dim : tint}"></div>
+      </div>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:10px;margin-top:6px">
+      ${labels.map((d) => `<span style="flex:1;text-align:center;${type('parentFootnote', { color: col.textSecondary })}">${d}</span>`).join('')}
+    </div>
+  </div>`;
+}
+
 /** The hedge that sits on every observation HopPotty makes. */
 function patternLabel(col) {
   return `<div style="display:inline-block;padding:4px 9px;border-radius:8px;background:${col.surfaceSunken};
@@ -238,5 +262,5 @@ function tints(appearance = 'light') {
 
 module.exports = {
   statusBarPad, segmented, iosSwitch, iconTile, listRow, listGroup, navBar,
-  childButton, pageDots, stepDots, MARK, sparkline, patternLabel, tints,
+  childButton, pageDots, stepDots, MARK, sparkline, columnChart, patternLabel, tints,
 };

@@ -23,14 +23,36 @@ const MARKS = {
   dot: (f) => `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="${f}" stroke-width="2.6"><circle cx="12" cy="12" r="7.4"/></svg>`,
 };
 
-/** 04 — Potty Pause timing. */
+/**
+ * 04 — Potty Pause.
+ *
+ * §8: "Make it feel like Apple Settings: grouped sections, not every row wrapped
+ * in a giant rounded card", in the order the brief gives — Potty Pause · Schedule
+ * · Apps · Test · Safety.
+ *
+ * Three things changed against what was here before.
+ *
+ * 1. **The green summary card is gone.** It was a tinted panel whose whole job
+ *    was to hold one sentence describing the settings directly beneath it. §35
+ *    rules out a card that exists to decorate a label, and iOS already has a
+ *    place for a sentence that explains a group: the group's footer. The
+ *    sentence survives, in the footer of the group it describes.
+ * 2. **Mode joined the group it belongs to.** It had a card of its own holding a
+ *    single row, which is the same thing in miniature.
+ * 3. **Apps and Safety are their own sections.** "Restore Screen Access" was
+ *    sharing a group with "Test Potty Pause" — a diagnostic and an escape hatch
+ *    filed together. The brief names Safety separately, and it is the one row on
+ *    this screen a caregiver might reach for in a hurry.
+ *
+ * The Swift for this screen (`Features/PottyPause/PottyPauseSettingsView.swift`)
+ * is a plain grouped `Form` with these sections already; this render had drifted
+ * away from it, and the drift was in the render.
+ */
 function timerSettings(appearance = 'light') {
   const col = c(appearance);
-  const dark = appearance.startsWith('dark');
-  const accentInk = dark ? P.hopGreenLight : P.hopGreenInk;
 
   const action = (label, last) => listRow(col, {
-    label: `<span style="text-align:center;display:block;color:${col.brandAction}">${label}</span>`,
+    label: `<span style="color:${col.brandAction}">${label}</span>`,
     accessory: '', last, minHeight: T.hitTarget.parentMinimum,
   });
 
@@ -38,51 +60,42 @@ function timerSettings(appearance = 'light') {
   <div style="display:flex;flex-direction:column;height:100%;background:${col.surfaceSunken}">
     ${statusBar(col.textPrimary)}
     ${navBar(col, 'Potty Pause', { large: true })}
-    <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:${T.spacing.s}px;padding:2px 20px 6px;overflow:hidden">
-
-      <!-- The schedule, said once, in words. Every control below only edits this sentence. -->
-      <div style="flex:0 0 auto;background:${dark ? alpha(P.hopGreen, .13) : P.hopGreenSoft};border-radius:${T.radius.l}px;
-        padding:13px 15px;display:flex;gap:12px;align-items:flex-start">
-        <div style="width:30px;height:30px;border-radius:15px;flex:0 0 auto;display:grid;place-items:center;
-          background:${dark ? alpha(P.hopGreenLight, .2) : '#FFFFFF'}">${MARK.clock(accentInk, 17)}</div>
-        <div style="flex:1">
-          <div style="${type('parentFootnote', { color: accentInk, weight: 'semibold' })};
-            letter-spacing:.6px;text-transform:uppercase">Your schedule</div>
-          <div style="${type('parentCallout', { color: dark ? col.textPrimary : accentInk })};font-size:14px;
-            line-height:1.42;margin-top:3px">
-            Hop invites Maya about every 45 minutes, with a 2-minute heads-up. Pauses last 3 minutes and stay quiet at nap and bedtime.</div>
-        </div>
-      </div>
+    <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:${T.spacing.m}px;padding:4px 20px 6px;overflow:hidden">
 
       ${listGroup(col, appearance, {
-        rows: [listRow(col, { label: 'Mode', value: 'Guided routine', chevron: true, last: true })],
-      })}
-
-      ${listGroup(col, appearance, {
-        header: 'Timing',
+        header: 'Potty Pause',
         rows: [
+          listRow(col, { label: 'Mode', value: 'Guided routine', chevron: true }),
           listRow(col, { label: 'Every', value: '45 minutes', chevron: true }),
           listRow(col, { label: 'Warning before a pause', value: '2 minutes', chevron: true }),
           listRow(col, { label: 'Pause length', value: '3 minutes', chevron: true, last: true }),
         ],
-        footer: 'A pause always ends when this time is up, whatever happened in the bathroom.',
+        footer: 'Hop invites Maya about every 45 minutes, with a 2-minute heads-up. A pause always ends when its time is up, whatever happened in the bathroom.',
       })}
 
       ${listGroup(col, appearance, {
-        header: 'Quiet times',
+        header: 'Schedule',
         rows: [
-          listRow(col, { label: 'Nap', value: '12:30 – 2:30 PM', chevron: true }),
-          listRow(col, { label: 'Bedtime', value: 'After 7:30 PM', chevron: true }),
-          listRow(col, {
-            label: `<span style="color:${col.brandAction}">Add a quiet time</span>`, accessory: '', last: true,
-          }),
+          listRow(col, { label: 'Quiet hours', value: '12:30 – 2:30 PM', chevron: true }),
+          listRow(col, { label: 'Bedtime', value: 'After 7:30 PM', chevron: true, last: true }),
         ],
         footer: 'HopPotty stays silent during these.',
       })}
 
       ${listGroup(col, appearance, {
-        rows: [action('Test Potty Pause'), action('Restore Screen Access', true)],
-        footer: 'Restoring lifts any pause that is up right now.',
+        header: 'Apps',
+        rows: [listRow(col, { label: 'Apps that pause', value: '4 apps, 1 category', chevron: true, last: true })],
+      })}
+
+      ${listGroup(col, appearance, {
+        header: 'Test',
+        rows: [action('Test Potty Pause', true)],
+      })}
+
+      ${listGroup(col, appearance, {
+        header: 'Safety',
+        rows: [action('Restore Screen Access', true)],
+        footer: 'Restoring lifts any pause that is running right now.',
       })}
 
       <div style="flex:1"></div>
@@ -165,9 +178,9 @@ function chooseApps(appearance = 'light') {
             <div style="width:30px;height:30px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;
               background:${dark ? alpha(P.pondBlueLight, .2) : P.pondBlueSoft}">${MARK.lock(col.eventPee, 16)}</div>
             <div style="flex:1">
-              <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:14.5px">HopPotty never learns which apps</div>
+              <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15px">HopPotty never learns which apps</div>
               <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:3px;line-height:1.42">
-                Apple hands over a sealed token for each choice. HopPotty can count them and pause them — it cannot read a name or an icon, and never sees what happens inside.</div>
+                It can pause the ones you pick, and nothing else. It cannot read their names or see inside them.</div>
             </div>
           </div>
 

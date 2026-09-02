@@ -25,8 +25,8 @@
 const fs = require('fs');
 const path = require('path');
 const { T, c, type, svg, statusBar, homeIndicator, alpha, mix, elevation, artOr, ROOT } = require('./ui');
-const { childButton, stepDots, MARK } = require('./kit');
-const { stepStrip, grownUpChip, stage, skipRow } = require('./child');
+const { childButton, MARK } = require('./kit');
+const { stage, room, skipRow, grownUpRow, words, veil, bubbleWashStage } = require('./child');
 const scenes = require('./scenes');
 
 const P = T.palette;
@@ -350,61 +350,60 @@ function calmRing(size, progress, { track, fill, sw = 18 }) {
 // 16–19, 20 — the routine
 // ---------------------------------------------------------------------------
 
-const STEP_DOTS = { now: P.hopGreenDeep, done: P.hopGreenDeep, todo: alpha(P.sand500, 0.32) };
-
-/** The row every routine screen opens with: where you are, and the way out. */
-function routineTopRow(index) {
-  return `<div style="flex:0 0 auto;display:flex;align-items:center;gap:10px;height:${T.hitTarget.parentMinimum}px">
-    <div style="flex:1"></div>
-    ${stepDots(5, index, STEP_DOTS)}
-    <div style="flex:1;display:flex;justify-content:flex-end">${grownUpChip('Grown-up')}</div>
-  </div>`;
-}
-
-/** Title and instruction, in the one arrangement every routine screen uses. */
-function routineHead(title, instruction) {
-  return `<div style="flex:0 0 auto;text-align:center;margin-top:8px">
-    <div style="${type('childTitle', { color: P.midnight })}">${title}</div>
-    <div style="${type('childInstruction', { color: P.midnight })};font-size:19px;margin-top:7px;opacity:.72">${instruction}</div>
-  </div>`;
-}
-
 /**
  * One step of the guided routine.
  *
- * Same chrome as the first step: dots, a grown-up chip, one large title, one
- * instruction, one primary target at `hitTarget.childPrimary`, and the labelled
- * strip along the bottom so a child can see the whole trip at once. The step's
- * own illustration sits in the middle with Hop standing in front of it.
+ * A full-screen place, and one thing to do in it. What used to be here and is
+ * not any more: the five-dot indicator at the top, the five-cell named strip
+ * along the bottom, and the rounded card the illustration sat inside. Between
+ * them they told a child, twice, how much of a queue was still ahead of them —
+ * and framed the room as a picture on a page rather than the room they are
+ * standing in.
+ *
+ * What is left is the step's own scene, bled edge to edge; Hop, large, doing the
+ * step alongside the child; one short sentence; one big button; and — only where
+ * the content marks the step skippable — the word "Skip this" underneath.
  */
 function routineStep(appearance, {
-  index, art, pose, hopWidth = 175, title, instruction, primary, skip, extra = '',
+  art, pose, hopWidth = 250, title, instruction, primary, skip, bandTop = 190, extra = '',
 }) {
   const col = c(appearance);
-  const cardW = 349;
-  const cardH = Math.round((cardW * 3) / 4);
-  const overhang = 20;
+  const BAND_H = 295; // 393 wide at the scenes' own 4:3
 
-  return stage(ambient(art, appearance, { veil: 0.3, glow: [196, 440, 210] }), `
+  // The scene is bled full width and dissolved into the room at both edges. A
+  // band is not a card: it has no corner radius, no border, no shadow and no
+  // background of its own, and the wall above it and the floor below it are the
+  // same wall and floor.
+  const url = bgImage(art);
+  const ground = `<div style="position:absolute;inset:0;overflow:hidden">
+    ${room(appearance, { floorY: bandTop + BAND_H - 26 })}
+    ${url ? `<div style="position:absolute;left:0;top:${bandTop}px;width:393px;height:${BAND_H}px;
+      background-image:${url};background-size:cover;background-position:center;background-repeat:no-repeat"></div>
+      <div style="position:absolute;left:0;top:${bandTop}px;width:393px;height:64px;
+        background:linear-gradient(180deg, ${alpha(P.pondBlueSoft, .95)}, ${alpha(P.pondBlueSoft, 0)})"></div>
+      <div style="position:absolute;left:0;top:${bandTop + BAND_H - 78}px;width:393px;height:78px;
+        background:linear-gradient(180deg, ${alpha(P.cloud, 0)}, ${alpha(P.cloud, .96)})"></div>` : ''}
+  </div>`;
+
+  return stage(`${ground}${veil(appearance, { from: 468, height: 384, strength: 0.74 })}`, `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
-      ${routineTopRow(index)}
-      ${routineHead(title, instruction)}
+      ${grownUpRow()}
 
       <div style="flex:1"></div>
 
-      <div style="flex:0 0 auto;position:relative;width:${cardW}px;height:${cardH + overhang}px;margin:0 auto">
-        ${boardCard(appearance, { art, w: cardW })}
-        ${hopAt(pose, hopWidth, 'left:-6px;bottom:0')}
+      <div style="flex:0 0 auto;display:flex;justify-content:center">
+        <div data-hop style="width:${hopWidth}px">${svg(`Art/character/hop-${pose}.svg`, { width: hopWidth })}</div>
       </div>
+
+      <div style="height:${T.spacing.s}px"></div>
+      ${words(title, instruction)}
       ${extra}
 
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto">
-        ${childButton(col, appearance, primary, { kind: 'primary', height: 100, radius: T.radius.hero })}
-        <div style="height:${T.spacing.m}px"></div>
+        ${childButton(col, appearance, primary, { kind: 'primary', height: 104, radius: T.radius.hero })}
         ${skipRow(skip)}
-        ${stepStrip(index)}
       </div>
     </div>`);
 }
@@ -412,12 +411,11 @@ function routineStep(appearance, {
 /** 16 — Wipe. */
 function routineWipe(appearance = 'light') {
   return routineStep(appearance, {
-    index: 1,
     art: 'Art/scenes/routine-wipe.svg',
     pose: 'sit',
-    hopWidth: 170,
+    hopWidth: 236,
     title: 'Wipe',
-    instruction: 'Wipe from front to back.',
+    instruction: 'Front to back.',
     primary: 'Next',
     skip: 'Skip this',
   });
@@ -426,93 +424,116 @@ function routineWipe(appearance = 'light') {
 /** 17 — Flush. */
 function routineFlush(appearance = 'light') {
   return routineStep(appearance, {
-    index: 2,
     art: 'Art/scenes/routine-flush.svg',
     pose: 'wave',
-    hopWidth: 175,
+    hopWidth: 250,
     title: 'Flush',
-    instruction: 'Flush it away.',
+    instruction: 'Bye-bye!',
     primary: 'Next',
+    // Skippable on purpose: the noise frightens a real share of two- and
+    // three-year-olds, and a routine that traps a scared child at the flush is
+    // a routine they refuse tomorrow.
     skip: 'Skip this',
   });
 }
 
-/** 18 — Wash. The twenty seconds are bubbles filling, never a countdown. */
+/**
+ * 18 — Wash.
+ *
+ * The wash step *is* Bubble Wash. There is no illustration of hands under a tap
+ * with a "Next" under it any more: the child arrives in the close-up and rubs
+ * Hop's hands, which is the same thing the standalone game does, drawn by the
+ * same function so the two cannot drift.
+ */
 function routineWash(appearance = 'light') {
-  return routineStep(appearance, {
-    index: 3,
-    art: 'Art/scenes/routine-wash.svg',
-    pose: 'scrub',
-    hopWidth: 170,
-    title: 'Wash',
-    instruction: 'Soap, scrub, rinse.',
-    primary: 'Next',
-    skip: null,
-    extra: `<div style="flex:0 0 auto;margin-top:16px;display:flex;justify-content:center">
-      ${marks(5, 3, {
-        tint: P.pondBlueDeep,
-        soft: '#FFFFFF',
-        size: 36,
-        glyph: (f) => MARK.droplets(f, 19),
-        restGlyph: (f) => MARK.droplets(f, 19),
-      })}</div>`,
-  });
-}
-
-/** 19 — High five. The last step, so its button leaves the routine. */
-function routineHighFive(appearance = 'light') {
-  return routineStep(appearance, {
-    index: 4,
-    art: 'Art/scenes/routine-highFive.svg',
-    pose: 'cheer',
-    hopWidth: 180,
-    title: 'High five',
-    instruction: 'High five with Hop!',
-    primary: 'All done!',
-    skip: null,
-  });
+  return bubbleWashStage(appearance, { line: 'Wash those hands!', beat: 'soap' });
 }
 
 /**
- * 20 — the sit timer.
+ * 19 — High five.
  *
- * The ring fills. There is no number inside it, nothing ticks, and nothing
- * happens when it comes round: `routine.sitTimer.caption` sits under it and the
- * child leaves whenever they like, by Next or by Skip this.
+ * The last step before the celebration, and the only one whose target is a
+ * drawing rather than a button: Hop's hand is up, and the thing to touch is the
+ * hand. It is short by design — a second beat of praise before the celebration
+ * would leave the celebration nowhere to go.
+ */
+function routineHighFive(appearance = 'light') {
+  const col = c(appearance);
+  const scene = `<div style="position:absolute;inset:0;overflow:hidden">
+    ${room(appearance, { floorY: 560 })}
+    <div style="position:absolute;left:0;top:0;width:393px;height:852px;
+      background:radial-gradient(circle at 50% 40%, ${alpha(P.sunshineSoft, .95)} 0%, ${alpha(P.sunshineSoft, 0)} 60%)"></div>
+  </div>`;
+
+  return stage(`${scene}${veil(appearance, { from: 520, height: 332, strength: 0.7 })}`, `
+    <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
+      ${grownUpRow()}
+
+      <div style="flex:1"></div>
+
+      <div style="flex:0 0 auto;position:relative;height:330px">
+        <div data-hop style="position:absolute;left:50%;top:0;transform:translateX(-50%);width:300px">
+          ${svg('Art/character/hop-cheer.svg', { width: 300 })}
+        </div>
+        <svg width="349" height="330" viewBox="0 0 349 330" style="position:absolute;left:0;top:0;display:block">
+          ${[0, 1, 2].map((i) => `<circle cx="266" cy="96" r="${44 + i * 26}" fill="none"
+            stroke="${P.sunshineBright}" stroke-width="${4 - i}" opacity="${0.6 - i * 0.18}"/>`).join('')}
+        </svg>
+      </div>
+
+      ${words('High five!', 'Give Hop a big one.')}
+
+      <div style="flex:1"></div>
+
+      <div style="flex:0 0 auto">
+        ${childButton(col, appearance, 'All Done', { kind: 'primary', height: 104, radius: T.radius.hero })}
+      </div>
+    </div>`);
+}
+
+/**
+ * 20 — sitting, and giving it a try.
+ *
+ * The calm ring is drawn here because this render is the *caregiver switched it
+ * on* state. It is off by default (`AppSettings.routineSitTimerEnabled`), and
+ * when it is off this screen is Hop, the sentence and the button, with nothing
+ * in the middle. Either way the ring fills rather than empties, nothing is
+ * gated on it, and reaching the end changes nothing except that the ring is
+ * full.
  */
 function routineTryTimer(appearance = 'light') {
   const col = c(appearance);
-  const size = 262;
+  const size = 300;
 
-  return stage(ambient('Art/scenes/routine-try.svg', appearance, { veil: 0.3, blur: 52, glow: [196, 410, 220] }), `
+  const scene = `<div style="position:absolute;inset:0;overflow:hidden">
+    ${room(appearance, { floorY: 566 })}
+    <div style="position:absolute;left:0;top:0;width:393px;height:852px;
+      background:radial-gradient(circle at 50% 44%, ${alpha(P.cloud, .85)} 0%, ${alpha(P.cloud, 0)} 56%)"></div>
+  </div>`;
+
+  return stage(`${scene}${veil(appearance, { from: 520, height: 332, strength: 0.74 })}`, `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
-      ${routineTopRow(0)}
-      ${routineHead('Try', 'Sit down and give it a try.')}
+      ${grownUpRow()}
 
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto;display:flex;justify-content:center">
         <div style="position:relative;width:${size}px;height:${size}px">
-          <div style="position:absolute;inset:18px;border-radius:50%;background:${alpha('#FFFFFF', .9)};
-            box-shadow:0 6px 22px ${alpha(P.midnight, .07)}"></div>
-          ${calmRing(size, 0.36, { track: P.hopGreenSoft, fill: P.hopGreen })}
-          <div data-hop style="position:absolute;left:50%;bottom:44px;transform:translateX(-50%);width:200px;height:200px">
-            ${svg('Art/character/hop-sit.svg', { width: 200 })}
+          ${calmRing(size, 0.36, { track: alpha(P.hopGreenSoft, .95), fill: P.hopGreen })}
+          <div data-hop style="position:absolute;left:50%;bottom:34px;transform:translateX(-50%);width:232px">
+            ${svg('Art/character/hop-sit.svg', { width: 232 })}
           </div>
         </div>
       </div>
 
-      <div style="flex:0 0 auto;text-align:center;margin-top:20px">
-        <div style="${type('childInstruction', { color: P.sand600 })};font-size:19px">Take all the time you need.</div>
-      </div>
+      <div style="height:${T.spacing.s}px"></div>
+      ${words('Give it a try.', null, { small: 'Take all the time you need.' })}
 
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto">
-        ${childButton(col, appearance, 'Next', { kind: 'primary', height: 100, radius: T.radius.hero })}
-        <div style="height:${T.spacing.m}px"></div>
+        ${childButton(col, appearance, 'Next', { kind: 'primary', height: 104, radius: T.radius.hero })}
         ${skipRow('Skip this')}
-        ${stepStrip(0)}
       </div>
     </div>`);
 }

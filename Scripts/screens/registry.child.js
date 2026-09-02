@@ -6,6 +6,7 @@
  * finds here.
  */
 const childExtra = require('./child-extra');
+const child = require('./child');
 const hub = require('./hub');
 
 module.exports = {
@@ -25,4 +26,8 @@ module.exports = {
   '29-game-fly-snack-handoff': { render: childExtra.gameFlySnackHandoff, appearance: 'light' },
   '30-games-hub-dark': { render: childExtra.gamesHub, appearance: 'dark' },
   '45-hop-hub': { render: hub.hopHub, appearance: 'light' },
+  // Bubble Wash is one experience seen at three moments: soaping inside the
+  // routine (18), rubbing as the standalone game (11), and the ending that
+  // leaves by itself (46). One function draws all three.
+  '46-bubble-wash-clean': { render: child.bubbleWashClean, appearance: 'light' },
 };

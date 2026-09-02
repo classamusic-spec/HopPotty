@@ -14,7 +14,7 @@
  *   Art/pond/pond-base-<layer>.svg  each base layer alone, so the app can draw
  *                                   the character between `decoration` and
  *                                   `foreground` exactly as PondLayer orders it
- *   Art/pond/item-<PondItemID>.svg  one file per decoration, transparent, all on
+ *   Art/pond/<PondItemID>.svg       one file per decoration, transparent, all on
  *                                   the same 200x200 unit box
  *   Art/pond/pond-preview.svg       every item composited at its PondCatalog
  *                                   anchor — a proof the set works as a scene
@@ -2645,8 +2645,17 @@ for (const l of layerOrder) {
 }
 
 // --- one file per decoration ---
+//
+// The basename is the PondItemID and nothing else, because that is what the app
+// asks for: `HopIllustrationKey.pondItem(.lilyPadSmall)` is `pond.lilyPadSmall`,
+// and `assetName` drops the family segment, so the file the loader looks for is
+// `Art/pond/lilyPadSmall.svg`. An earlier `item-` prefix here meant every one of
+// the forty-one decorations resolved to a placeholder in the app while sitting
+// correctly on disk — a whole reward system invisible for the sake of five
+// characters. The `item-<id>` group id inside each file is unchanged; that is a
+// handle for the motion layer, not a file name.
 for (const [id, build] of Object.entries(ITEMS)) {
-  write(`Art/pond/item-${id}.svg`, svg({ viewBox: '0 0 200 200', width: 200, height: 200, body: `<g id="item-${id}">${build()}</g>` }));
+  write(`Art/pond/${id}.svg`, svg({ viewBox: '0 0 200 200', width: 200, height: 200, body: `<g id="item-${id}">${build()}</g>` }));
 }
 
 // --- the portrait backdrop the phone screens ask for ---

@@ -3,6 +3,20 @@ import HopPottyCore
 
 /// Hop's Pond: the place the stars go.
 ///
+/// ## A place, not a page about a place
+///
+/// The pond is the screen. It fills it edge to edge, behind the status bar and
+/// under the home indicator, and everything else — the child's name for it, the
+/// star count, what is coming next, the collection — floats over the water as
+/// small pieces of chrome. An earlier version framed the scene as a 4:3 card
+/// halfway down a scrolling page, with the decorations reduced to a row of tiles
+/// underneath; that is a *reward menu with a picture at the top*, and it is
+/// precisely the thing this screen must not be. What a child has earned is in
+/// the world, at the size the world draws it, and the list below is a way of
+/// finding things — most of all with VoiceOver — rather than the point.
+///
+/// ## Nothing here can take anything away
+///
 /// Three things are always answerable at a glance — what I have, what is next,
 /// and how far away it is — and none of them is ever phrased as a loss. There is
 /// no expiry, no decay, no streak and no "come back or you'll lose it", because
@@ -26,103 +40,112 @@ struct PondScreen: View {
     private var progress: PondUnlockProgress { PondCatalog.progressTowardNext(stars: stars) }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: theme.spacing.xxl) {
-                header
-                sceneAndProgress
-                PondCollectionStrip(unlocked: unlocked, stars: stars) { selectedItem = $0 }
-            }
-            .frame(maxWidth: ChildStage.contentWidth)
-            .frame(maxWidth: .infinity)
-            .hopPageMargins()
-            .padding(.vertical, theme.spacing.xl)
+        ZStack(alignment: .top) {
+            scene
+            chrome
         }
-        .scrollIndicators(.hidden)
         .hopBackground(.secondary)
         .task(id: arrivingItem) { await greetArrival() }
         .overlay(alignment: .bottom) { selectionCallout }
     }
 
-    // MARK: - Header
+    // MARK: - The pond itself
 
-    private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: theme.spacing.m) {
-            VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                Text(HopCopy.pond.title.localized(forNickname: context.nickname))
-                    .hopTextStyle(.childTitle)
-                    .foregroundStyle(theme.color.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityAddTraits(.isHeader)
-
-                Text(HopCopy.pond.starCount.localized(for: stars))
-                    .hopTextStyle(.parentBody)
-                    .foregroundStyle(theme.color.textSecondary)
-            }
-
-            Spacer(minLength: theme.spacing.s)
-
-            HopStarBadge(count: stars, animatesArrival: arrivingItem != nil)
-                .accessibilityHidden(true)
-
-            HopIconButton(
-                systemImage: "xmark",
-                accessibilityLabel: HopCopy.celebration.resumeButton.localized,
-                action: onLeave
-            )
-        }
-    }
-
-    // MARK: - Scene
-
-    @ViewBuilder
-    private var sceneAndProgress: some View {
-        if horizontalSizeClass == .regular {
-            // iPad: the pond gets the width and the progress reads beside it,
-            // rather than the phone layout being scaled up until Hop is a metre
-            // tall.
-            HStack(alignment: .top, spacing: theme.spacing.xxl) {
-                scene.frame(maxWidth: .infinity)
-                progressColumn.frame(width: 260)
-            }
-        } else {
-            VStack(alignment: .leading, spacing: theme.spacing.l) {
-                scene
-                progressColumn
-            }
-        }
-    }
-
+    /// Full bleed, and the only thing on the screen that is not chrome.
     private var scene: some View {
         PondSceneView(
             unlocked: unlocked,
             nextUp: progress.next,
+            isFullBleed: true,
             onTapItem: { selectedItem = $0 }
         )
-        .modifier(theme.elevation(.resting))
+        .ignoresSafeArea()
     }
 
-    @ViewBuilder
-    private var progressColumn: some View {
-        if unlocked.isEmpty {
-            emptyState
-        } else if let next = progress.next {
-            PondNextUpCard(progress: progress, next: next)
-        } else {
-            // The pond is finished. Still a warm sentence, still no ranking, and
-            // nothing to keep grinding for.
-            Text(HopCopy.pond.emptyBody.localized)
-                .hopTextStyle(.childInstruction)
-                .foregroundStyle(theme.color.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
+    // MARK: - What floats over it
+
+    private var chrome: some View {
+        VStack(spacing: 0) {
+            header
+            Spacer(minLength: theme.spacing.l)
+            tray
         }
     }
 
-    private var emptyState: some View {
-        VStack(alignment: .leading, spacing: theme.spacing.s) {
-            Text(HopCopy.pond.emptyTitle.localized)
+    /// The child's name for the pond, their star count, and the way out.
+    ///
+    /// Every piece sits on its own opaque capsule. A translucent pill over open
+    /// water is legible on the water and illegible the moment a lily pad drifts
+    /// under it, and the star count is the one number on this screen a child
+    /// looks for.
+    private var header: some View {
+        HStack(alignment: .center, spacing: theme.spacing.m) {
+            HopIconButton(
+                systemImage: "chevron.left",
+                accessibilityLabel: HopCopy.celebration.resumeButton.localized,
+                tint: theme.color.brandAction,
+                minimumTarget: theme.hitTarget.child,
+                action: onLeave
+            )
+            .background { Circle().fill(theme.color.surface.opacity(0.94)) }
+
+            Spacer(minLength: theme.spacing.xs)
+
+            Text(HopCopy.pond.title.localized(forNickname: context.nickname))
                 .hopTextStyle(.childTitle)
                 .foregroundStyle(theme.color.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .padding(.horizontal, theme.spacing.l)
+                .padding(.vertical, theme.spacing.xs)
+                .background { Capsule().fill(theme.color.surface.opacity(0.94)) }
+                .accessibilityAddTraits(.isHeader)
+
+            Spacer(minLength: theme.spacing.xs)
+
+            HopStarBadge(count: stars, animatesArrival: arrivingItem != nil)
+                .background { Capsule().fill(theme.color.surface.opacity(0.94)) }
+                .accessibilityLabel(HopCopy.pond.starCount.localized(for: stars))
+        }
+        .hopPageMargins()
+        .padding(.top, theme.spacing.s)
+    }
+
+    /// The tray: what is coming next, then the collection.
+    ///
+    /// Anchored to the bottom and deliberately shallow — it is the *edge* of the
+    /// screen, not the content of it. Its own scroll view means an accessibility
+    /// type size grows the tray rather than pushing the pond off the top.
+    private var tray: some View {
+        VStack(alignment: .leading, spacing: theme.spacing.l) {
+            progressLine
+            PondCollectionStrip(unlocked: unlocked, stars: stars) { selectedItem = $0 }
+        }
+        .padding(.horizontal, theme.spacing.xl)
+        .padding(.top, theme.spacing.l)
+        .padding(.bottom, theme.spacing.m)
+        .frame(maxWidth: ChildStage.contentWidth)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            UnevenRoundedRectangle(
+                topLeadingRadius: theme.radius.hero,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: theme.radius.hero,
+                style: .continuous
+            )
+            .fill(theme.color.surface.opacity(0.96))
+            .ignoresSafeArea(edges: .bottom)
+        }
+    }
+
+    /// One sentence about what is on its way, or one about a pond that is
+    /// finished. Never a bar with a number on it.
+    @ViewBuilder
+    private var progressLine: some View {
+        if let next = progress.next {
+            PondNextUpRow(progress: progress, next: next)
+        } else {
             Text(HopCopy.pond.emptyBody.localized)
                 .hopTextStyle(.childInstruction)
                 .foregroundStyle(theme.color.textSecondary)
@@ -133,6 +156,9 @@ struct PondScreen: View {
     // MARK: - Tapping a friend
 
     /// The one thing tapping a decoration does: it says its name.
+    ///
+    /// The decoration itself has already answered in the scene — the flower
+    /// opened, the fish darted — and this is the word for what just moved.
     @ViewBuilder
     private var selectionCallout: some View {
         if let selectedItem {
@@ -142,7 +168,7 @@ struct PondScreen: View {
                 .padding(.horizontal, theme.spacing.xl)
                 .padding(.vertical, theme.spacing.m)
                 .background(Capsule().fill(theme.color.brandAction))
-                .padding(.bottom, theme.spacing.xxl)
+                .padding(.bottom, theme.spacing.huge)
                 .hopTransition(.childArrive)
                 .task(id: selectedItem) {
                     try? await Task.sleep(for: .seconds(2))
@@ -165,10 +191,10 @@ struct PondScreen: View {
 
 /// What is coming next, and how close it is.
 ///
-/// Written entirely forwards. `PondUnlockProgress.fraction` fills from the last
-/// thing unlocked rather than from zero, so the bar shows real movement instead
-/// of looking almost full for a hundred stars.
-private struct PondNextUpCard: View {
+/// One row, written entirely forwards. `PondUnlockProgress.fraction` fills from
+/// the last thing unlocked rather than from zero, so the ring shows real
+/// movement instead of looking almost full for a hundred stars.
+private struct PondNextUpRow: View {
     @Environment(\.hopTheme) private var theme
 
     let progress: PondUnlockProgress
@@ -183,26 +209,21 @@ private struct PondNextUpCard: View {
 
     var body: some View {
         HStack(spacing: theme.spacing.l) {
+            // A sketch of the thing on its way, at the size it will be in the
+            // pond. Not a locked slot: nothing here was ever theirs and taken.
             HopArtwork(.pondItem(next.id))
-                .frame(width: 64, height: 64)
-                .opacity(0.45)
+                .frame(width: 52, height: 52)
+                .opacity(0.42)
 
-            VStack(alignment: .leading, spacing: theme.spacing.s) {
-                Text(sentence)
-                    .hopTextStyle(.childInstruction)
-                    .foregroundStyle(theme.color.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
+            Text(sentence)
+                .hopTextStyle(.childInstruction)
+                .foregroundStyle(theme.color.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                HopProgressRing(progress: progress.fraction, lineWidth: 8, tint: theme.color.brandAction)
-                    .frame(width: 44, height: 44)
-                    .accessibilityHidden(true)
-            }
-        }
-        .padding(theme.spacing.xl)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: theme.radius.xl, style: .continuous)
-                .fill(theme.color.surface)
+            HopProgressRing(progress: progress.fraction, lineWidth: 7, tint: theme.color.brandAction)
+                .frame(width: 38, height: 38)
+                .accessibilityHidden(true)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(sentence)

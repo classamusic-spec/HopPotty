@@ -9,7 +9,7 @@
  * Where finished vector art exists in `Art/`, `artOr` in `ui.js` lets a screen
  * prefer it; these are the drawings the screens use until it does.
  */
-const { T, mix, alpha } = require('./ui');
+const { T, mix, alpha, svg, hasArt } = require('./ui');
 
 const P = T.palette;
 const INK_ = P.midnight;
@@ -60,6 +60,80 @@ function tuft(x, y, s, tone) {
     <path d="M 0 0 C 0 -10, 1 -16, 3 -22" stroke="${tone}" stroke-width="4" fill="none" stroke-linecap="round"/>
     <path d="M 9 0 C 9 -7, 8 -12, 6 -16" stroke="${tone}" stroke-width="4" fill="none" stroke-linecap="round"/>
   </g>`;
+}
+
+/**
+ * Where every pond decoration sits, in unit coordinates.
+ *
+ * A mirror of `PondCatalog.placement` — x and y from 0 (top-left of the scene)
+ * to 1, plus the item's own scale. It is duplicated here rather than derived
+ * because the render harness has no Swift; `PondCatalogTests` is what keeps the
+ * original honest, and this table is checked against it by eye whenever an
+ * anchor moves. Ordered by unlock rank, so `POND_ORDER` is just its keys.
+ */
+const POND_ANCHORS = {
+  lilyPadSmall: [0.46, 0.640, 1.00], reedsLeft: [0.13, 0.600, 1.00], fishOrange: [0.66, 0.710, 0.90],
+  cloudPuff: [0.74, 0.110, 1.00], flowerYellow: [0.26, 0.830, 0.85], lilyPadLarge: [0.59, 0.570, 1.10],
+  reedsRight: [0.87, 0.580, 1.00], stoneSmall: [0.19, 0.760, 0.80], tadpoleFriend: [0.40, 0.740, 0.75],
+  flowerPink: [0.78, 0.830, 0.85], butterflyBlue: [0.30, 0.550, 0.80], lilyFlower: [0.49, 0.585, 0.70],
+  cattails: [0.08, 0.700, 1.00], fishBlue: [0.72, 0.660, 0.85], sunbeam: [0.22, 0.090, 1.00],
+  mushroomCluster: [0.33, 0.880, 0.80], snail: [0.65, 0.870, 0.60], frogFriendGreen: [0.44, 0.620, 1.00],
+  butterflyYellow: [0.70, 0.520, 0.80], flowerPurple: [0.90, 0.740, 0.85], rainbow: [0.50, 0.160, 1.00],
+  stoneStack: [0.11, 0.840, 0.90], dragonfly: [0.52, 0.500, 0.70], waterLilyCluster: [0.28, 0.680, 1.00],
+  duckling: [0.62, 0.790, 0.80], fernPatch: [0.16, 0.380, 1.00], ladybug: [0.24, 0.900, 0.50],
+  signpost: [0.80, 0.900, 0.90], lantern: [0.86, 0.460, 0.80], turtleRock: [0.38, 0.550, 0.90],
+  birdhouse: [0.82, 0.320, 0.90], pebblePath: [0.48, 0.900, 1.20], frogFriendBlue: [0.60, 0.545, 1.00],
+  driftwood: [0.06, 0.500, 0.90], blossomTree: [0.10, 0.280, 1.30], windChime: [0.16, 0.400, 0.70],
+  clubhouse: [0.50, 0.330, 1.20], pondSwing: [0.28, 0.520, 1.10], starLantern: [0.68, 0.400, 0.80],
+  fireflies: [0.86, 0.660, 0.90], moonReflection: [0.52, 0.800, 1.00],
+};
+
+/** The unlock order, which is the order `PondCatalog` prices them in. */
+const POND_ORDER = Object.keys(POND_ANCHORS);
+
+/** Draw order by `PondLayer`, so a duckling overlaps the reeds behind it. */
+const POND_LAYERS = {
+  sky: ['cloudPuff', 'sunbeam', 'rainbow'],
+  backdrop: ['fernPatch', 'birdhouse', 'blossomTree', 'clubhouse'],
+  water: ['lilyPadSmall', 'fishOrange', 'lilyPadLarge', 'tadpoleFriend', 'lilyFlower', 'fishBlue',
+    'waterLilyCluster', 'duckling', 'turtleRock', 'moonReflection'],
+  shore: ['reedsLeft', 'flowerYellow', 'reedsRight', 'stoneSmall', 'flowerPink', 'cattails',
+    'mushroomCluster', 'snail', 'flowerPurple', 'stoneStack', 'signpost', 'pebblePath', 'driftwood'],
+  decoration: ['lantern', 'windChime', 'pondSwing', 'starLantern'],
+  character: ['frogFriendGreen', 'frogFriendBlue'],
+  foreground: ['butterflyBlue', 'butterflyYellow', 'dragonfly', 'ladybug', 'fireflies'],
+};
+
+/**
+ * The child's own decorations, composited into the scene at their anchors.
+ *
+ * This is the whole difference between a pond and a trophy cabinet. The app
+ * draws each unlocked item at `sceneWidth * 0.155 * scale`, centred on its
+ * anchor; the same two numbers are used here, so what a reviewer sees in a PNG
+ * is what a child sees in the app rather than an approximation of it.
+ *
+ * `character` is drawn by the caller, between `decoration` and `foreground`,
+ * which is exactly where `PondLayer` puts him.
+ */
+function pondDecorations(w, h, unlocked = [], { before = [], after = [] } = {}) {
+  const has = (k) => unlocked.includes(k);
+  const one = (id) => {
+    const [x, y, s] = POND_ANCHORS[id];
+    const side = w * 0.155 * s;
+    const rel = `Art/pond/${id}.svg`;
+    if (!hasArt(rel)) return '';
+    return `<div style="position:absolute;left:${(x * w - side / 2).toFixed(1)}px;
+      top:${(y * h - side / 2).toFixed(1)}px;width:${side.toFixed(1)}px;height:${side.toFixed(1)}px">
+      ${svg(rel, { width: Math.round(side), height: Math.round(side) })}</div>`;
+  };
+  const layer = (name) => POND_LAYERS[name].filter(has).map(one).join('');
+  return [
+    layer('sky'), layer('backdrop'), layer('water'), layer('shore'), layer('decoration'),
+    ...before,
+    layer('character'),
+    ...after,
+    layer('foreground'),
+  ].join('');
 }
 
 /**
@@ -382,4 +456,7 @@ function dome(w, height, fill) {
   </svg>`;
 }
 
-module.exports = { meadow, pond, washroom, soap, dome, cloud, reeds, flower, lilyPad, tuft };
+module.exports = {
+  meadow, pond, washroom, soap, dome, cloud, reeds, flower, lilyPad, tuft,
+  pondDecorations, POND_ANCHORS, POND_ORDER, POND_LAYERS,
+};

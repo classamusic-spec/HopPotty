@@ -16,9 +16,10 @@
 const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation } = require('./ui');
 const {
   listRow, listGroup, navBar, iosSwitch, iconTile, segmented, pageDots,
-  MARK, sparkline, patternLabel, tints, statusBarPad,
+  MARK, sparkline, columnChart, patternLabel, tints, statusBarPad,
 } = require('./kit');
-const { metricChip, tabBar, parentHome } = require('./parent');
+const { metricChip, tabBar, parentHome, pageGround, sectionHeader, sidebar, PAD } = require('./parent');
+const { childChip, observationRows, weekTotals } = require('./insights');
 const { ctaButton } = require('./onboarding');
 
 const P = T.palette;
@@ -135,55 +136,73 @@ const EXTRA = {
  * The order is the whole design: a system alert that arrives with no context is
  * the one a caregiver declines, and a declined Family Controls request is not
  * retryable in the way a caregiver expects (`Docs/ScreenTimeArchitecture.md` §3).
- * So the three promises are made here, in HopPotty's own words, and the screen
- * says plainly that the next screen is Apple's and what happens if they say no.
+ *
+ * ## What changed, and why
+ *
+ * This screen used to make its case in four cards and about 120 words, and the
+ * second card opened with "Apple hands over a sealed token for each app you
+ * pick". Every one of those sentences is true and none of them is what a parent
+ * needs in the four seconds before a system prompt. §9 names the three things
+ * that must be front-loaded and nothing else:
+ *
+ * > You choose the apps. HopPotty can't see inside them. You can turn this off
+ * > anytime.
+ *
+ * So the three promises are three lines — a mark, a sentence, no card — and the
+ * sealed tokens, the framework, what persists and what the shield actually does
+ * moved behind **How this works**, a disclosure row a caregiver can open if they
+ * want it. Trust is not built by saying more at the moment of the ask; it is
+ * built by making the short version true and the long version reachable.
+ *
+ * The count: four cards became none, ~120 words became 21 above the fold.
  */
 function screenTimeAsk(appearance = 'light') {
   const col = c(appearance);
   const dark = appearance.startsWith('dark');
-  const soft = (hex) => (dark ? alpha(hex, 0.2) : mix(hex, '#FFFFFF', 0.8));
+  const accent = dark ? P.hopGreenLight : P.hopGreenInk;
+
+  /** One promise: a mark and a sentence. No card — a card per line was three
+   *  containers doing the work one list does. */
+  const promise = (glyph, text) => `
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      <div style="width:22px;padding-top:2px;flex:0 0 auto">${glyph(accent, 19)}</div>
+      <div style="flex:1;${type('parentBody', { color: col.textPrimary })};font-size:17px;line-height:1.36">${text}</div>
+    </div>`;
 
   return phone(appearance, `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 24px 8px;overflow:hidden">
       ${backRow(col)}
 
-      <div style="flex:0 0 auto;padding-top:10px">
+      <div style="flex:0 0 auto;padding-top:12px">
         ${eyebrow(col, 'Permission')}
-        <div style="${type('parentLargeTitle', { color: col.textPrimary })};font-size:30px;margin-top:5px">HopPotty uses Screen Time</div>
-        <div style="${type('parentCallout', { color: col.textSecondary })};font-size:15px;margin-top:9px;line-height:1.45">
-          iOS does the pausing. HopPotty asks permission to pause only the apps you pick, and never sees what happens inside them.</div>
+        <div style="${type('parentLargeTitle', { color: col.textPrimary })};font-size:30px;margin-top:6px">HopPotty uses Screen Time</div>
       </div>
 
-      <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:10px;padding-top:20px">
-        ${promiseRow(col, appearance, {
-          glyph: MARK.lock, tint: dark ? P.hopGreenLight : P.hopGreenInk, soft: soft(P.hopGreen),
-          text: 'The pause ends when this time is up, whatever happened in the bathroom. Screen access is never held back for a result.',
-        })}
-        ${promiseRow(col, appearance, {
-          glyph: EXTRA.shield, tint: col.eventPee, soft: soft(P.pondBlue),
-          text: 'Apple hands over a sealed token for each app you pick. HopPotty can count them and pause them — it cannot read a name or an icon.',
-        })}
-        ${promiseRow(col, appearance, {
-          glyph: MARK.check, tint: dark ? P.lavender : P.lavenderDeep, soft: soft(P.lavender),
-          text: 'Every event, star and note lives on your device. There is no account, no analytics, and nothing is uploaded.',
-        })}
+      <div style="flex:0.55"></div>
+
+      <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:20px">
+        ${promise(EXTRA.apps, 'You choose the apps.')}
+        ${promise(MARK.lock, "HopPotty can't see inside them.")}
+        ${promise(EXTRA.slider, 'You can turn this off anytime.')}
       </div>
 
-      <div style="flex:0 0 auto;margin-top:18px;display:flex;gap:11px;align-items:flex-start;
-        border-radius:${T.radius.l}px;padding:13px 15px;background:${col.surfaceSunken};border:1px solid ${col.divider}">
-        ${iconTile(dark ? alpha('#FFFFFF', .08) : '#FFFFFF', EXTRA.info(col.textSecondary, 17), { size: 30, radius: 9 })}
-        <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.4">
-          The next screen is Apple's. HopPotty cannot see or change what it asks.</div>
+      <!-- Everything else: the sealed tokens, the framework, what persists. -->
+      <div style="flex:0 0 auto;padding-top:26px">
+        ${listGroup(col, appearance, {
+          rows: [listRow(col, { label: 'How this works', chevron: true, last: true })],
+        })}
       </div>
 
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto">
         <div style="${type('parentCaption', { color: col.textSecondary })};line-height:1.4;
-          text-align:center;padding:0 6px 14px">
-          Without Screen Time permission, apps are never paused. Hop still checks in on your schedule, and you can turn pausing on later in Settings.</div>
+          text-align:center;padding:0 10px 14px">
+          The next screen is Apple's. Without permission, apps are never paused.</div>
         ${pageDots(col, 4, 3)}
         <div style="margin-top:18px">${ctaButton(col, appearance, 'Allow Screen Time')}</div>
+        <div style="height:${T.hitTarget.parentMinimum}px;display:grid;place-items:center;
+          ${type('parentBody', { color: col.textSecondary })};font-size:16px">Not now</div>
       </div>
     </div>`);
 }
@@ -780,9 +799,23 @@ function deleteDataConfirm(appearance = 'light') {
  * child's account graduating to an adult one, a change in iOS Settings, or
  * another parental-controls app taking over (`ScreenTimeArchitecture.md` §12.8).
  *
- * So the screen states what stopped, states that the apps came straight back,
- * says what still works, and offers the one action that can change it. It does
- * not scold, and it does not imply the child is being kept from anything.
+ * ## Three things this screen was getting wrong
+ *
+ * 1. **Hop was on it.** A smiling frog with a warning badge clipped to his ear
+ *    is the app being cheerful at a caregiver who has just lost a feature. §56
+ *    lists the four places Hop belongs on a parent surface and an error is not
+ *    one of them. The illustration is gone; the mark is a plain glyph on a
+ *    neutral disc, which is what iOS does.
+ * 2. **The heading and the first line contradicted each other.** The title said
+ *    permission "was turned off" and the first bullet under it said "Screen
+ *    access is back" — both true, in that order, and impossible to read.
+ * 3. **The copy was long where it mattered least.** A paragraph explaining that
+ *    iOS can revoke authorization on its own sat above the buttons.
+ *
+ * §48 gives the shape and very nearly the words: "Potty Pause needs attention /
+ * Screen Time permission may have changed" → **Review Settings / Not Now**. The
+ * three things that still work stay, because that is the reassurance a caregiver
+ * actually needs, and they are a grouped list rather than a card of bullets.
  */
 function accessRestored(appearance = 'light') {
   const col = c(appearance);
@@ -790,55 +823,47 @@ function accessRestored(appearance = 'light') {
   const warnSoft = dark ? alpha(P.sunshine, .18) : P.sunshineSoft;
   const warnInk = dark ? P.sunshine : P.sunshineDeep;
 
-  const still = (glyph, text, last) => `
-    <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;
-      ${last ? '' : `box-shadow:inset 0 -1px 0 ${col.divider};`}">
-      ${glyph}
-      <div style="flex:1;${type('parentCallout', { color: col.textSecondary })};font-size:14px;line-height:1.4">${text}</div>
-    </div>`;
+  const still = (glyph, text, last) => listRow(col, {
+    icon: `<div style="width:22px;padding-top:1px;flex:0 0 auto;display:grid;place-items:center">${glyph}</div>`,
+    label: `<span style="${type('parentCallout', { color: col.textSecondary })};font-size:15px;line-height:1.4">${text}</span>`,
+    accessory: '', last, align: 'flex-start',
+  });
 
   return phone(appearance, `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 24px 8px;overflow:hidden">
       ${backRow(col)}
 
-      <div style="flex:0 0 auto;display:flex;justify-content:center;padding-top:6px">
-        <div style="position:relative;width:150px;height:150px">
-          <div style="position:absolute;inset:0;border-radius:75px;background:${dark ? alpha(P.sunshine, .1) : mix(P.sunshineSoft, P.cloud, .3)}"></div>
-          <div data-hop style="position:absolute;left:50%;top:6px;transform:translateX(-50%)">
-            ${svg('Art/character/hop-wait.svg', { width: 162 })}
-          </div>
-          <div style="position:absolute;right:-2px;top:6px;width:38px;height:38px;border-radius:19px;
-            background:${warnSoft};border:2px solid ${col.backgroundPrimary};display:grid;place-items:center">
-            ${EXTRA.warning(warnInk, 20)}
-          </div>
+      <div style="flex:0.35"></div>
+
+      <div style="flex:0 0 auto;display:flex;justify-content:center">
+        <div style="width:64px;height:64px;border-radius:32px;background:${warnSoft};display:grid;place-items:center">
+          ${EXTRA.warning(warnInk, 32)}
         </div>
       </div>
 
-      <div style="flex:0 0 auto;text-align:center;padding-top:10px">
-        <div style="${type('parentLargeTitle', { color: col.textPrimary })};font-size:28px;line-height:1.16">Screen Time permission<br>was turned off</div>
-        <div style="${type('parentCallout', { color: col.textSecondary })};font-size:15px;margin-top:10px;line-height:1.45">
-          HopPotty needs Screen Time permission to pause apps. You can grant it again in Settings.</div>
+      <div style="flex:0 0 auto;text-align:center;padding-top:16px">
+        <div style="${type('parentLargeTitle', { color: col.textPrimary })};font-size:27px;line-height:1.2">Potty Pause needs attention</div>
+        <div style="${type('parentCallout', { color: col.textSecondary })};font-size:15px;margin-top:8px;line-height:1.45">
+          Screen Time permission may have changed, so apps are not being paused.</div>
       </div>
 
-      <div style="flex:0 0 auto;margin-top:18px;background:${col.surface};border-radius:${T.radius.l}px;
-        padding:2px 15px 4px;box-shadow:${elevation(appearance, 'resting')}">
-        ${still(MARK.check(col.success, 18), 'Screen access is back. Any pause that was up has already ended.')}
-        ${still(MARK.bell(dark ? P.lavender : P.lavenderDeep, 17), 'Hop still checks in on your schedule. Reminders keep working without it.')}
-        ${still(MARK.star(col.celebration, 17), 'Stars and pond decorations stay exactly as they are.', true)}
-      </div>
-
-      <div style="flex:0 0 auto;margin-top:12px;display:flex;gap:11px;align-items:flex-start;padding:0 4px">
-        ${EXTRA.info(col.textSecondary, 15)}
-        <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.42">
-          iOS can turn this off on its own — when a child's account changes, or when another parental-controls app takes over.</div>
+      <div style="flex:0 0 auto;margin-top:22px">
+        ${listGroup(col, appearance, {
+          header: 'What still works',
+          rows: [
+            still(MARK.check(col.success, 17), 'Screen access is back. Any pause that was running has ended.'),
+            still(MARK.bell(dark ? P.lavender : P.lavenderDeep, 16), 'Hop still checks in on your schedule.'),
+            still(MARK.star(col.celebration, 16), 'Stars and pond decorations are untouched.', true),
+          ],
+        })}
       </div>
 
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto">
-        ${ctaButton(col, appearance, 'Open Settings')}
+        ${ctaButton(col, appearance, 'Review Settings')}
         <div style="height:10px"></div>
-        ${secondaryButton(col, 'Not now')}
+        ${secondaryButton(col, 'Not Now')}
       </div>
     </div>`);
 }
@@ -852,68 +877,46 @@ function accessRestored(appearance = 'light') {
  *
  * Nothing here is phrased as a shortfall. An empty period is a fact about the
  * period, not about the child — so the copy says the entries are not there yet
- * and stops, and the pattern cards say plainly that they need more days rather
- * than showing a chart of one point.
+ * and stops.
+ *
+ * This is one of the four places Hop is still allowed on a parent screen (§56:
+ * "hero empty states"). A blank Progress screen is exactly where a caregiver
+ * needs a friendly reason not to worry, and it is a state they see once.
+ *
+ * Three cards became one. The "Today so far" card said "no visits" and "no
+ * stars" — two rows restating the sentence directly above them — and the
+ * "Patterns" card was a card built to hold one sentence, which §35 rules out by
+ * name. Both are now a single footnote under the state they qualify.
  */
 function progressEmpty(appearance = 'light') {
   const col = c(appearance);
-  const dark = appearance.startsWith('dark');
-  const TINT = tints(appearance);
-
-  const zeroRow = (glyph, tint, soft, text, label, last) => `
-    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;
-      ${last ? '' : `box-shadow:inset 0 -1px 0 ${col.divider};`}">
-      <div style="width:30px;height:30px;border-radius:15px;background:${soft};display:grid;place-items:center;flex:0 0 auto">${glyph(tint, 16)}</div>
-      <div style="flex:1;${type('parentCallout', { color: col.textSecondary })};font-size:14.5px">${text}</div>
-      <span style="${type('parentFootnote', { color: col.textSecondary })};flex:0 0 auto">${label}</span>
-    </div>`;
 
   return `
-  <div style="display:flex;flex-direction:column;height:${H}px;background:${col.backgroundPrimary}">
+  <div style="display:flex;flex-direction:column;height:${H}px;background:${pageGround(col)}">
     ${statusBar(col.textPrimary)}
-    <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:${T.spacing.s}px;padding:0 ${PAGE}px 8px;overflow:hidden">
+    <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:14px;padding:2px ${PAGE}px 8px;overflow:hidden">
 
-      <div style="flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between">
+      <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding-top:4px">
         <div style="${type('parentLargeTitle', { color: col.textPrimary })};font-size:30px">Progress</div>
-        <div style="display:flex;align-items:center;gap:7px;height:32px;padding:0 12px 0 5px;border-radius:16px;
-          background:${col.surface};box-shadow:${elevation(appearance, 'resting')}">
-          ${avatarDisc(24, { fill: P.hopGreenSoft, ring: null })}
-          <span style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};">Maya</span>
-        </div>
+        ${childChip(col, appearance)}
       </div>
 
       <div style="flex:0 0 auto">${segmented(col, appearance, ['Day', 'Week', 'Month'], 0)}</div>
 
-      <div style="flex:0 0 auto;background:${col.surface};border-radius:${T.radius.xl}px;padding:${T.spacing.m}px 18px;
-        box-shadow:${elevation(appearance, 'resting')};text-align:center">
-        <div data-hop style="display:flex;justify-content:center">${svg('Art/character/hop-wait.svg', { width: 118 })}</div>
-        <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:17px;margin-top:6px">
-          Nothing logged in this period</div>
-        <div style="${type('parentCallout', { color: col.textSecondary })};font-size:14px;margin-top:6px;line-height:1.42;padding:0 6px">
-          Entries appear here as you and your child log them. Nothing is missing — the period simply has no entries.</div>
-        <div style="margin-top:${T.spacing.m}px;height:${T.hitTarget.parentMinimum}px;border-radius:22px;background:${col.brandAction};display:grid;place-items:center;
-          ${type('parentHeadline', { color: col.textOnBrand, weight: 'semibold' })};font-size:16px">Log a visit</div>
+      <div style="flex:0 0 auto;background:${col.surface};border-radius:${T.radius.l}px;padding:22px 20px 20px;
+        border:0.5px solid ${col.divider};box-shadow:${elevation(appearance, 'resting')};text-align:center">
+        <div data-hop style="display:flex;justify-content:center">${svg('Art/character/hop-wait.svg', { width: 116 })}</div>
+        <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:17px;margin-top:10px">
+          Nothing logged yet today</div>
+        <div style="${type('parentCallout', { color: col.textSecondary })};font-size:15px;margin-top:6px;line-height:1.4;padding:0 4px">
+          Entries appear here as you and your child log them.</div>
+        <div style="margin-top:18px;height:${T.hitTarget.parentMinimum}px;border-radius:${T.radius.m}px;
+          background:${col.brandAction};display:grid;place-items:center;
+          ${type('parentHeadline', { color: col.textOnBrand, weight: 'semibold' })};font-size:17px">Log a visit</div>
       </div>
 
-      <div style="flex:0 0 auto;background:${col.surface};border-radius:${T.radius.xl}px;padding:14px 16px 13px;
-        box-shadow:${elevation(appearance, 'resting')}">
-        <div style="${type('parentCallout', { color: col.textSecondary, weight: 'semibold' })}">Today so far</div>
-        <div style="margin-top:4px">
-          ${zeroRow(MARK.ring, TINT.tried.tint, TINT.tried.soft, 'No potty visits logged yet', 'Visits')}
-          ${zeroRow(MARK.star, TINT.star.tint, TINT.star.soft, 'None yet today', 'Stars', true)}
-        </div>
-      </div>
-
-      <div style="flex:0 0 auto;background:${col.surface};border-radius:${T.radius.xl}px;padding:15px 16px 13px;
-        box-shadow:${elevation(appearance, 'resting')}">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:28px;height:28px;border-radius:9px;background:${TINT.pee.soft};display:grid;place-items:center;flex:0 0 auto">${MARK.chart(TINT.pee.tint, 16)}</div>
-          <span style="${type('parentCallout', { color: col.textSecondary, weight: 'semibold' })}">Patterns</span>
-        </div>
-        <div style="${type('parentCallout', { color: col.textSecondary })};font-size:14px;margin-top:${T.spacing.s}px;line-height:1.42">
-          A few more days of logging will fill this in. Patterns need several days before they describe anything.</div>
-        <div style="margin-top:${T.spacing.s}px">${patternLabel(col)}</div>
-      </div>
+      <div style="${type('parentCaption', { color: col.textSecondary })};padding:0 6px;line-height:1.4">
+        Patterns need several days of entries before they describe anything.</div>
 
       <div style="flex:1"></div>
     </div>
@@ -1326,70 +1329,35 @@ function liveActivity(appearance = 'light') {
 // 44 — Progress on iPad
 // ---------------------------------------------------------------------------
 
-const PAD = { w: 1024, h: 768, rail: 244 };
-
-/** The split-view sidebar, with Progress selected. */
-function sidebar(col, appearance, active) {
-  const rows = [
-    ['Home', `<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><path d="M12 3.2 21 11h-2.4v8.2a1 1 0 0 1-1 1H14V15h-4v5.2H6.4a1 1 0 0 1-1-1V11H3z"/></svg>`],
-    ['Progress', `<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><rect x="3" y="12" width="4" height="8.5" rx="1.4"/><rect x="10" y="7" width="4" height="13.5" rx="1.4"/><rect x="17" y="3.5" width="4" height="17" rx="1.4"/></svg>`],
-    ["Hop's pond", `<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><ellipse cx="12" cy="13" rx="9" ry="6"/><path d="M12 13 L21 9.4 A9 6 0 0 0 18 7.4Z" fill="${col.backgroundSecondary}"/></svg>`],
-    ['Settings', `<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><path d="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2zm8.4 3.6c0 .5 0 1-.1 1.5l2 1.6-2 3.4-2.4-1a7.6 7.6 0 0 1-2.5 1.5l-.4 2.5h-4l-.4-2.5a7.6 7.6 0 0 1-2.5-1.5l-2.4 1-2-3.4 2-1.6a8.6 8.6 0 0 1 0-3l-2-1.6 2-3.4 2.4 1a7.6 7.6 0 0 1 2.5-1.5L10 2h4l.4 2.5a7.6 7.6 0 0 1 2.5 1.5l2.4-1 2 3.4-2 1.6c.1.5.1 1 .1 1.5z"/></svg>`],
-  ];
-  return `<div style="position:absolute;left:0;top:0;bottom:0;width:${PAD.rail}px;background:${col.surfaceSunken};
-    border-right:1px solid ${col.divider};display:flex;flex-direction:column">
-    ${statusBarPad(col.textSecondary)}
-    <div style="padding:14px 18px 10px;display:flex;align-items:center;gap:11px">
-      ${avatarDisc(38, { fill: P.hopGreenSoft, ring: P.hopGreenLight, ringWidth: 2 })}
-      <div style="${type('parentTitle', { color: col.textPrimary })};font-size:20px">HopPotty</div>
-    </div>
-    <div style="padding:4px 12px;display:flex;flex-direction:column;gap:2px">
-      ${rows.map(([label, icon]) => {
-        const on = label === active;
-        return `<div style="height:44px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;
-          color:${on ? col.brandAction : col.textSecondary};
-          ${on ? `background:${col.surface};box-shadow:${elevation(appearance, 'resting')};` : ''}">
-          ${icon}<span style="${type('parentBody', { weight: on ? 'semibold' : 'medium' })};font-size:15.5px;
-            color:${on ? col.textPrimary : col.textSecondary}">${label}</span>
-        </div>`;
-      }).join('')}
-    </div>
-    <div style="flex:1"></div>
-  </div>`;
-}
-
 /**
- * Progress, laid out for the iPad the way Home is in 15.
+ * Progress, laid out for the iPad.
  *
- * The extra width buys two things and nothing else: the week's chart gets room
- * to be read, and the two smaller observations sit beside it instead of below
- * the fold. Every card still carries the same hedge in the same words.
+ * §44 asks for intentional split navigation, not a stretched phone. The rail is
+ * the one `parent.js` draws for Home, so both iPad screens are the same app; the
+ * detail column is two columns of unequal purpose rather than a masonry of
+ * identical cards.
+ *
+ * What this replaces was the clearest example in the app of what the brief calls
+ * a SaaS dashboard: **seven cards**, three of them carrying the same
+ * "Pattern, not medical advice" pill, one of them the banned "Longest dry
+ * stretch" with a week-on-week bar pair under it, and one of them a card whose
+ * entire content was a single hedging sentence. Seven became two cards and one
+ * grouped list, and the banned metric is gone from the iPad exactly as it is
+ * from the phone.
  */
 function insightsPad(appearance = 'light') {
   const col = c(appearance);
-  const dark = appearance.startsWith('dark');
   const TINT = tints(appearance);
-  const w = PAD.w - PAD.rail;      // 780
-  const gutter = T.spacing.pageRegular, gap = 20;
+  const w = PAD.w - PAD.rail;
+  const gutter = T.spacing.pageRegular, gap = 24;
   const colW = Math.round((w - gutter * 2 - gap) / 2);
 
   const cardBox = (inner, { pad = '18px 20px 16px' } = {}) => `
-    <div style="background:${col.surface};border-radius:${T.radius.xl}px;padding:${pad};
-      box-shadow:${elevation(appearance, 'resting')}">${inner}</div>`;
-
-  const head = (label, glyph, tint, soft) => `
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="width:28px;height:28px;border-radius:9px;background:${soft};display:grid;place-items:center;flex:0 0 auto">${glyph(tint, 16)}</div>
-      <span style="${type('parentHeadline', { color: col.textSecondary, weight: 'semibold' })};font-size:14.5px">${label}</span>
-    </div>`;
-
-  const dayShape = (values, peak) => `<div style="display:flex;align-items:flex-end;gap:5px;height:72px">
-    ${values.map((v, i) => `<div style="flex:1;height:${Math.max(10, v * 72)}px;border-radius:3px;
-      background:${i === peak ? col.eventTried : alpha(col.eventTried, dark ? .3 : .22)}"></div>`).join('')}
-  </div>`;
+    <div style="background:${col.surface};border-radius:${T.radius.l}px;padding:${pad};
+      border:0.5px solid ${col.divider};box-shadow:${elevation(appearance, 'resting')}">${inner}</div>`;
 
   return `
-  <div style="position:relative;width:${PAD.w}px;height:${PAD.h}px;overflow:hidden;background:${col.backgroundPrimary}">
+  <div style="position:relative;width:${PAD.w}px;height:${PAD.h}px;overflow:hidden;background:${pageGround(col)}">
     ${sidebar(col, appearance, 'Progress')}
 
     <div style="position:absolute;left:${PAD.rail}px;top:0;width:${w}px;height:${PAD.h}px;overflow:hidden;
@@ -1399,118 +1367,39 @@ function insightsPad(appearance = 'light') {
       <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:8px ${gutter}px 20px;overflow:hidden">
 
         <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:space-between">
-          <div style="${type('parentLargeTitle', { color: col.textPrimary })};font-size:32px">Progress</div>
+          <div style="${type('parentLargeTitle', { color: col.textPrimary })};font-size:30px">Progress</div>
           <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:210px">${segmented(col, appearance, ['Day', 'Week', 'Month'], 1)}</div>
-            <div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 13px 0 5px;border-radius:17px;
-              background:${col.surface};box-shadow:${elevation(appearance, 'resting')}">
-              ${avatarDisc(26, { fill: P.hopGreenSoft, ring: null })}
-              <span style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};">Maya</span>
-            </div>
+            <div style="width:230px">${segmented(col, appearance, ['Day', 'Week', 'Month'], 1)}</div>
+            ${childChip(col, appearance)}
           </div>
         </div>
 
-        <div style="flex:0 0 auto;display:flex;gap:${gap}px;padding-top:16px;align-items:flex-start">
+        <div style="flex:0 0 auto;display:flex;gap:${gap}px;padding-top:20px;align-items:flex-start">
 
-          <div style="width:${colW}px;flex:0 0 auto">
+          <div style="width:${colW}px;flex:0 0 auto;display:flex;flex-direction:column;gap:${gap}px">
             ${cardBox(`
-              ${head('Visits recorded', MARK.check, TINT.check.tint, TINT.check.soft)}
-              <div style="${type('metric', { color: col.textPrimary })};font-size:32px;margin-top:8px">18 visits</div>
-              <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:4px;line-height:1.38">
-                across 5 days with entries, compared with 12 in the period before.</div>
-              <div style="margin:8px -4px 0">
-                ${sparkline([2, 4, 1, 3, 4, 2, 2], {
-                  w: colW - 32, h: 128, stroke: TINT.check.tint, fill: TINT.check.tint,
+              <div style="${type('parentCallout', { color: col.textSecondary })};font-size:15px">Potty check-ins</div>
+              <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px">
+                <span style="${type('parentLargeTitle', { color: col.textPrimary })};font-size:32px;
+                  font-variant-numeric:tabular-nums">18</span>
+                <span style="${type('parentCallout', { color: col.textSecondary })};font-size:15px">across 5 days with entries</span>
+              </div>
+              <div style="margin-top:16px">
+                ${columnChart(col, [2, 4, 1, 3, 4, 2, 2], ['M', 'T', 'W', 'T', 'F', 'S', 'S'], {
+                  h: 150, tint: TINT.check.tint, dim: col.divider,
                 })}
-              </div>
-              <div style="display:flex;justify-content:space-between;margin-top:4px">
-                ${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d) => `<span style="${type('parentFootnote', { color: col.textSecondary })};width:22px;text-align:center">${d}</span>`).join('')}
-              </div>
-              <div style="margin-top:12px">${patternLabel(col)}</div>`)}
-
-            <div style="height:${gap}px"></div>
-
-            ${cardBox(`
-              <div style="${type('parentCallout', { color: col.textSecondary, weight: 'semibold' })}">What was logged</div>
-              <div style="display:flex;margin-top:12px">
-                ${metricChip(col, { glyph: 'check', value: '38', label: 'Checks', tint: TINT.check.tint, tintSoft: TINT.check.soft })}
-                ${metricChip(col, { glyph: 'tried', value: '31', label: 'Tried', tint: TINT.tried.tint, tintSoft: TINT.tried.soft })}
-                ${metricChip(col, { glyph: 'pee', value: '19', label: 'Pee', tint: TINT.pee.tint, tintSoft: TINT.pee.soft })}
-                ${metricChip(col, { glyph: 'poop', value: '6', label: 'Poop', tint: TINT.poop.tint, tintSoft: TINT.poop.soft })}
-                ${metricChip(col, { glyph: 'accident', value: '4', label: 'Accidents', tint: TINT.accident.tint, tintSoft: TINT.accident.soft })}
               </div>`)}
 
-            <div style="height:${gap}px"></div>
-
-            ${cardBox(`
-              <div style="display:flex;gap:13px;align-items:flex-start">
-                <div style="width:34px;height:34px;border-radius:11px;background:${TINT.accident.soft};display:grid;place-items:center;flex:0 0 auto">
-                  ${EXTRA.info(TINT.accident.tint, 18)}
-                </div>
-                <div style="flex:1">
-                  <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15px">4 accidents were logged, 3 of them after 3 PM.</div>
-                  <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:4px;line-height:1.38">
-                    Recorded as a neutral fact. Accidents never touch your child's stars, and your child never sees this entry.</div>
-                </div>
-              </div>`)}
+            ${cardBox(`<div style="display:flex;align-items:stretch">${weekTotals(col, appearance)}</div>`,
+              { pad: '16px 2px' })}
           </div>
 
           <div style="width:${colW}px;flex:0 0 auto">
-            ${cardBox(`
-              ${head('Typical gap', MARK.clock, TINT.tried.tint, TINT.tried.soft)}
-              <div style="display:flex;align-items:flex-start;gap:16px;margin-top:8px">
-                <div style="flex:1;min-width:0">
-                  <div style="${type('metric', { color: col.textPrimary })};font-size:28px">45–55 min</div>
-                  <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:4px;line-height:1.38">
-                    Half of the recorded gaps between visits fell in this range. From 20 gaps.</div>
-                </div>
-                <div style="width:140px;flex:0 0 auto;padding-top:14px">${dayShape([0.3, 0.45, 0.6, 1, 0.72, 0.4, 0.25], 3)}</div>
-              </div>
-              <div style="margin-top:12px">${patternLabel(col)}</div>`)}
-
-            <div style="height:${gap}px"></div>
-
-            ${cardBox(`
-              ${head('Longest dry stretch', MARK.droplets, TINT.pee.tint, TINT.pee.soft)}
-              <div style="display:flex;align-items:flex-start;gap:16px;margin-top:8px">
-                <div style="flex:1;min-width:0">
-                  <div style="${type('metric', { color: col.textPrimary })};font-size:28px">2h 15m</div>
-                  <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:4px;line-height:1.38">
-                    on Thursday morning. Last week's longest was 1h 50m.</div>
-                </div>
-                <div style="width:140px;flex:0 0 auto;padding-top:12px">
-                  <div style="${type('parentFootnote', { color: col.textSecondary })};">This week</div>
-                  <div style="height:10px;border-radius:5px;background:${TINT.pee.tint};margin-top:4px"></div>
-                  <div style="${type('parentFootnote', { color: col.textSecondary })};margin-top:9px">Last week</div>
-                  <div style="height:10px;width:81%;border-radius:5px;background:${TINT.pee.soft};margin-top:4px"></div>
-                </div>
-              </div>
-              <div style="margin-top:12px">${patternLabel(col)}</div>`)}
-
-            <div style="height:${gap}px"></div>
-
-            ${cardBox(`
-              <div style="display:flex;gap:13px;align-items:flex-start">
-                <div style="width:34px;height:34px;border-radius:11px;background:${TINT.star.soft};display:grid;place-items:center;flex:0 0 auto">
-                  ${MARK.star(TINT.star.tint, 18)}
-                </div>
-                <div style="flex:1">
-                  <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15px">Most visits happened between 9:00 AM and 11:00 AM.</div>
-                  <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:4px;line-height:1.38">
-                    The average gap between logged visits was 1 hour 10 minutes.</div>
-                </div>
-              </div>`)}
-
-            <div style="height:${gap}px"></div>
-
-            ${cardBox(`
-              <div style="display:flex;gap:13px;align-items:flex-start">
-                <div style="width:34px;height:34px;border-radius:11px;background:${col.surfaceSunken};display:grid;place-items:center;flex:0 0 auto">
-                  ${EXTRA.info(col.textSecondary, 18)}
-                </div>
-                <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.4">
-                  These are patterns in what you logged. They describe your child's week and nothing else.</div>
-              </div>`, { pad: '16px 20px' })}
+            ${sectionHeader(col, 'This week')}
+            ${listGroup(col, appearance, {
+              rows: observationRows(col),
+              footer: 'Patterns in what you logged over 7 days. Descriptions of a period, not medical advice.',
+            })}
           </div>
         </div>
 

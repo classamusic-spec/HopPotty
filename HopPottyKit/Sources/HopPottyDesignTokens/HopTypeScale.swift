@@ -64,7 +64,14 @@ public enum HopTypography {
     public static let buttonLarge = HopTextStyle(name: "buttonLarge", family: .rounded, size: 22, weight: .bold, lineHeightMultiple: 1.15)
 
     // Parent surfaces — standard design, Apple-utility density.
-    public static let parentLargeTitle = HopTextStyle(name: "parentLargeTitle", family: .rounded, size: 32, weight: .bold, lineHeightMultiple: 1.14, tracking: -0.5)
+    //
+    // `parentLargeTitle` was `.rounded`, which contradicted the line above it:
+    // a rounded bold 32pt heading is the single loudest signal that a screen
+    // belongs to a children's app, and it sat on top of Home, Progress and
+    // every Settings screen. Parent surfaces are SF Pro. Only parent surfaces
+    // use this style — the rounded `parentTitle` below is shared with child
+    // screens and is deliberately left alone.
+    public static let parentLargeTitle = HopTextStyle(name: "parentLargeTitle", family: .standard, size: 32, weight: .bold, lineHeightMultiple: 1.14, tracking: -0.5)
     public static let parentTitle = HopTextStyle(name: "parentTitle", family: .rounded, size: 22, weight: .semibold, lineHeightMultiple: 1.20, tracking: -0.2)
     public static let parentHeadline = HopTextStyle(name: "parentHeadline", family: .standard, size: 17, weight: .semibold, lineHeightMultiple: 1.29)
     public static let parentBody = HopTextStyle(name: "parentBody", family: .standard, size: 17, weight: .regular, lineHeightMultiple: 1.35)
@@ -75,8 +82,12 @@ public enum HopTypography {
     // Numerics. Monospaced digits are applied at the SwiftUI layer so countdowns
     // do not jitter as they tick.
     public static let metric = HopTextStyle(name: "metric", family: .rounded, size: 28, weight: .bold, lineHeightMultiple: 1.10, tracking: -0.3)
-    public static let timer = HopTextStyle(name: "timer", family: .rounded, size: 56, weight: .bold, lineHeightMultiple: 1.0, tracking: -1.4)
-    public static let timerHero = HopTextStyle(name: "timerHero", family: .rounded, size: 72, weight: .heavy, lineHeightMultiple: 1.0, tracking: -2.0, scalesWithDynamicType: false)
+    // The two countdowns a caregiver reads — the dashboard hero and the Live
+    // Activity — are parent surfaces, so they are SF Pro too. `metric` stays
+    // rounded: it is shared with the child's star badge, where the warmth is
+    // the point.
+    public static let timer = HopTextStyle(name: "timer", family: .standard, size: 56, weight: .bold, lineHeightMultiple: 1.0, tracking: -1.4)
+    public static let timerHero = HopTextStyle(name: "timerHero", family: .standard, size: 72, weight: .heavy, lineHeightMultiple: 1.0, tracking: -2.0, scalesWithDynamicType: false)
 
     public static let all: [HopTextStyle] = [
         hero, childTitle, childInstruction, celebration, buttonLarge,

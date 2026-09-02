@@ -1,44 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 290" width="512" height="290">
 <g transform="translate(16 8) scale(3.2)">
-  <g transform="rotate(0 75 50)">
-    <ellipse cx="75" cy="40" rx="44" ry="33" fill="#63C88A"/>
-    <ellipse cx="75" cy="56" rx="61" ry="27" fill="#63C88A"/>
-    <circle cx="42.4" cy="25.7" r="20.5" fill="#63C88A"/>
-    <circle cx="108.4" cy="25.7" r="20.5" fill="#63C88A"/>
-  </g>
-  
+<g id="hop-root"><g id="hop-silhouette" fill="#356B50" stroke="#356B50" stroke-linejoin="round" stroke-linecap="round"><g transform="rotate(0 75 50)"><path d="M 119 40 C 119 58.23 99.3 73 75 73 C 50.7 73 31 58.23 31 40 C 31 21.77 50.7 7 75 7 C 99.3 7 119 21.77 119 40 Z M 136 56 C 136 70.91 108.69 83 75 83 C 41.31 83 14 70.91 14 56 C 14 41.09 41.31 29 75 29 C 108.69 29 136 41.09 136 56 Z M 62.9 25.7 C 62.9 37.02 53.72 46.2 42.4 46.2 C 31.08 46.2 21.9 37.02 21.9 25.7 C 21.9 14.38 31.08 5.2 42.4 5.2 C 53.72 5.2 62.9 14.38 62.9 25.7 Z M 128.9 25.7 C 128.9 37.02 119.72 46.2 108.4 46.2 C 97.08 46.2 87.9 37.02 87.9 25.7 C 87.9 14.38 97.08 5.2 108.4 5.2 C 119.72 5.2 128.9 14.38 128.9 25.7 Z" stroke-width="4"/></g></g><g id="head" transform="rotate(0 75 50)"><g fill="#356B50" stroke="#356B50" stroke-linejoin="round" stroke-linecap="round" opacity="0.62"><path d="M 119 40 C 119 58.23 99.3 73 75 73 C 50.7 73 31 58.23 31 40 C 31 21.77 50.7 7 75 7 C 99.3 7 119 21.77 119 40 Z M 136 56 C 136 70.91 108.69 83 75 83 C 41.31 83 14 70.91 14 56 C 14 41.09 41.31 29 75 29 C 108.69 29 136 41.09 136 56 Z M 62.9 25.7 C 62.9 37.02 53.72 46.2 42.4 46.2 C 31.08 46.2 21.9 37.02 21.9 25.7 C 21.9 14.38 31.08 5.2 42.4 5.2 C 53.72 5.2 62.9 14.38 62.9 25.7 Z M 128.9 25.7 C 128.9 37.02 119.72 46.2 108.4 46.2 C 97.08 46.2 87.9 37.02 87.9 25.7 C 87.9 14.38 97.08 5.2 108.4 5.2 C 119.72 5.2 128.9 14.38 128.9 25.7 Z" stroke-width="2.3"/></g><ellipse cx="75" cy="40" rx="44" ry="33" fill="#63C88A"/><ellipse cx="75" cy="56" rx="61" ry="27" fill="#63C88A"/><circle cx="42.4" cy="25.7" r="20.5" fill="#63C88A"/><circle cx="108.4" cy="25.7" r="20.5" fill="#63C88A"/><g id="accent-details">
     <ellipse cx="75.3" cy="19.4" rx="4.4" ry="2.6" fill="#45A971"/>
     <ellipse cx="72.8" cy="26.2" rx="2.6" ry="1.9" fill="#45A971"/>
-    <ellipse cx="80.6" cy="24.6" rx="3.0" ry="1.6" fill="#45A971"/>
-  <g>
+    <ellipse cx="80.6" cy="24.6" rx="3.0" ry="1.6" fill="#45A971"/></g><g id="eyes-group"><g id="left-eye"><g>
       <clipPath id="eyeClip42"><circle cx="42.4" cy="25.7" r="16.5"/></clipPath>
       <circle cx="42.4" cy="25.7" r="16.5" fill="#FFFFFF"/>
       <g clip-path="url(#eyeClip42)">
-        <circle cx="42.4" cy="26.7" r="12.3" fill="#243047"/>
+        <circle id="left-pupil" cx="42.4" cy="26.7" r="12.3" fill="#243047"/>
         <circle cx="45.6" cy="21.7" r="3.4" fill="#FFFFFF"/>
         
       </g>
-    </g><g>
+    </g></g><g id="right-eye"><g>
       <clipPath id="eyeClip108"><circle cx="108.4" cy="25.7" r="16.5"/></clipPath>
       <circle cx="108.4" cy="25.7" r="16.5" fill="#FFFFFF"/>
       <g clip-path="url(#eyeClip108)">
-        <circle cx="108.4" cy="26.7" r="12.3" fill="#243047"/>
+        <circle id="right-pupil" cx="108.4" cy="26.7" r="12.3" fill="#243047"/>
         <circle cx="111.60000000000001" cy="21.7" r="3.4" fill="#FFFFFF"/>
         
       </g>
-    </g>
-  
+    </g></g></g><g id="cheeks">
     <circle cx="32" cy="51" r="7.6" fill="#FF9F8F"/>
-    <circle cx="118" cy="51" r="7.6" fill="#FF9F8F"/>
-  
+    <circle cx="118" cy="51" r="7.6" fill="#FF9F8F"/></g>
     <circle cx="67.4" cy="41" r="2.1" fill="#1B5E39"/>
-    <circle cx="82.6" cy="41" r="2.1" fill="#1B5E39"/>
-  <g transform="translate(75 50) scale(1) translate(-75 -50)">
+    <circle cx="82.6" cy="41" r="2.1" fill="#1B5E39"/><g id="mouth"><g transform="translate(75 50) scale(1) translate(-75 -50)">
     <clipPath id="mouthClipopen">
       <path d="M 53 47.5 Q 75 52 97 47.5 C 96 60 88 69.5 75 69.5 C 62 69.5 54 60 53 47.5 Z"/>
     </clipPath>
     <path d="M 53 47.5 Q 75 52 97 47.5 C 96 60 88 69.5 75 69.5 C 62 69.5 54 60 53 47.5 Z" fill="#8A3F30"/>
     <ellipse cx="75" cy="66" rx="15" ry="7.5" fill="#FF6F7D" clip-path="url(#mouthClipopen)"/>
-  </g>
+  </g></g></g></g>
 </g>
 </svg>
