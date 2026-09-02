@@ -1372,9 +1372,9 @@ const PAPER_UNIT = 30;
 const paperSquares = (x, y, n) => `
     <rect x="${R(x)}" y="${R(y + 4)}" width="${R(PAPER_UNIT * n)}" height="${PAPER_UNIT}" rx="5" fill="${P.sand300}" opacity="0.5"/>
     <rect x="${R(x)}" y="${R(y)}" width="${R(PAPER_UNIT * n)}" height="${PAPER_UNIT}" rx="5" fill="url(#paperSheet)"/>
-    <rect x="${R(x)}" y="${R(y)}" width="${R(PAPER_UNIT * n)}" height="${PAPER_UNIT}" rx="5" fill="none" stroke="${P.sand200}" stroke-width="2.2"/>
+    <rect x="${R(x)}" y="${R(y)}" width="${R(PAPER_UNIT * n)}" height="${PAPER_UNIT}" rx="5" fill="none" stroke="${P.sand300}" stroke-width="2.4"/>
     ${Array.from({ length: n - 1 }, (_, i) =>
-      `<path d="M ${R(x + PAPER_UNIT * (i + 1))} ${R(y + 4)} V ${R(y + PAPER_UNIT - 4)}" stroke="${P.sand300}" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="3 5"/>`).join('')}`;
+      `<path d="M ${R(x + PAPER_UNIT * (i + 1))} ${R(y + 4)} V ${R(y + PAPER_UNIT - 4)}" stroke="${P.sand400}" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="3 5"/>`).join('')}`;
 
 /** An eighth note, for "scrub for as long as a song". */
 function musicNote(cx, cy, s, color) {
@@ -1510,9 +1510,10 @@ const quizIcons = {
     ${g('translate(58 102) scale(0.6)', wipeHand())}`,
 
   paperCorner: () => `${disc(P.sunshineSoft)}
-    ${iconShadow(60, 84, 17, P.sunshineDeep, 0.2)}
-    <path d="M 47 46 h 26 v 25 l -6.5 6 l -6.5 -6 l -6.5 6 l -6.5 -6 Z" fill="${P.sand300}" opacity="0.55" transform="translate(0 4)"/>
-    <path d="M 47 46 h 26 v 25 l -6.5 6 l -6.5 -6 l -6.5 6 l -6.5 -6 Z" fill="url(#paperSheet)" stroke="${P.sand200}" stroke-width="2.2" stroke-linejoin="round"/>`,
+    ${iconShadow(60, 80, 19, P.sunshineDeep, 0.24)}
+    ${g('rotate(-7 60 58)', `
+      <path d="M 45 48 h 30 v 16 l -7.5 6 l -7.5 -6 l -7.5 6 l -7.5 -6 Z" fill="${P.sand400}" opacity="0.55" transform="translate(0 4)"/>
+      <path d="M 45 48 h 30 v 16 l -7.5 6 l -7.5 -6 l -7.5 6 l -7.5 -6 Z" fill="url(#paperSheet)" stroke="${P.sand400}" stroke-width="2.6" stroke-linejoin="round"/>`)}`,
 
   paperFewSquares: () => `${disc(P.sunshineSoft)}
     ${iconShadow(60, 88, 34, P.sunshineDeep, 0.14)}
@@ -1529,26 +1530,26 @@ const quizIcons = {
   // -- Hand washing ---------------------------------------------------------
 
   washHands: () => `${disc(P.hopGreenSoft)}
-    <path d="M 60 10 v 32" stroke="${P.pondBlueDeep}" stroke-width="15" stroke-linecap="round" fill="none"/>
-    <path d="M 60 13 v 26" stroke="${P.pondBlueLight}" stroke-width="6" stroke-linecap="round" fill="none"/>
-    <path d="M 43 19 v 15" stroke="${P.pondBlue}" stroke-width="8" stroke-linecap="round" fill="none"/>
-    <path d="M 77 21 v 13" stroke="${P.pondBlue}" stroke-width="8" stroke-linecap="round" fill="none"/>
-    ${g('translate(60 62) scale(0.76) translate(-60 -60)', handPair())}
-    ${[[25, 54, 10], [95, 48, 8], [88, 78, 11], [29, 82, 7.5]].map(([cx, cy, r]) =>
+    <path d="M 92 20 h -22 q -10 0 -10 10 v 4" stroke="${P.sand400}" stroke-width="12" fill="none" stroke-linecap="round"/>
+    <path d="M 92 20 h -22 q -10 0 -10 10 v 4" stroke="${P.sand200}" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M 60 32 v 16" stroke="${P.pondBlue}" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <path d="M 60 34 v 11" stroke="${P.pondBlueLight}" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    ${g('translate(60 70) scale(0.72) translate(-60 -60)', handPair())}
+    ${[[24, 62, 10], [96, 58, 8], [88, 84, 10], [30, 88, 7]].map(([cx, cy, r]) =>
       `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#bubbleFill)" stroke="${P.pondBlue}" stroke-width="2" stroke-opacity="0.35"/>`).join('')}
-    <path d="M 46 96 q 6 6 14 4" stroke="${P.pondBlue}" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.6"/>
-    <path d="M 74 96 q -6 6 -14 4" stroke="${P.pondBlue}" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.6"/>`,
+    <path d="M 44 98 q 8 7 16 5" stroke="${P.pondBlue}" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.55"/>
+    <path d="M 76 98 q -8 7 -16 5" stroke="${P.pondBlue}" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.55"/>`,
 
   oneFinger: () => `${disc(P.peachSoft)}
-    ${iconShadow(60, 106, 27, P.peachInk, 0.12)}
-    <path d="M 90 20 h -22 q -10 0 -10 10 v 4" stroke="${P.sand400}" stroke-width="12" fill="none" stroke-linecap="round"/>
-    <path d="M 90 20 h -22 q -10 0 -10 10 v 4" stroke="${P.sand200}" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <path d="${drop(58, 42, 13, 4.6)}" fill="${P.pondBlue}"/>
-    <rect x="50" y="50" width="17" height="42" rx="8.5" fill="url(#handGrad)"/>
-    <rect x="34" y="66" width="52" height="38" rx="17" fill="url(#handGrad)"/>
-    <rect x="24" y="72" width="16" height="26" rx="8" fill="url(#handGradDeep)"/>
-    <path d="M 44 80 q 20 7 38 0" stroke="${P.handDeep}" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.3"/>
-    <path d="M 46 91 q 20 7 38 0" stroke="${P.handDeep}" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.22"/>`,
+    ${iconShadow(60, 108, 26, P.peachInk, 0.12)}
+    <path d="M 90 18 h -22 q -10 0 -10 10 v 4" stroke="${P.sand400}" stroke-width="12" fill="none" stroke-linecap="round"/>
+    <path d="M 90 18 h -22 q -10 0 -10 10 v 4" stroke="${P.sand200}" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="${drop(58, 41, 15, 5.2)}" fill="${P.pondBlue}"/>
+    <rect x="50" y="50" width="16" height="42" rx="8" fill="url(#handGrad)"/>
+    <rect x="36" y="72" width="48" height="34" rx="16" fill="url(#handGrad)"/>
+    <rect x="26" y="76" width="15" height="24" rx="7.5" fill="url(#handGradDeep)"/>
+    <path d="M 46 84 q 18 7 34 0" stroke="${P.handDeep}" stroke-width="3.2" fill="none" stroke-linecap="round" opacity="0.3"/>
+    <path d="M 47 94 q 18 7 34 0" stroke="${P.handDeep}" stroke-width="3.2" fill="none" stroke-linecap="round" opacity="0.2"/>`,
 
   quickSplash: () => `${disc(P.pondBlueSoft)}
     <ellipse cx="60" cy="84" rx="38" ry="10" fill="${P.pondBlueDeep}" opacity="0.28"/>
@@ -1569,23 +1570,20 @@ const quizIcons = {
 
   // -- Flushing and the two things that are not a flush ---------------------
 
+  // Two passes of a tank-and-lever close-up read as a soap dispenser at 40pt.
+  // This is the shared `toilet` object with its water actually swirling and
+  // its lever picked out in warm yellow: "the thing you press", and "flushing
+  // the toilet", in one picture. It never shares a question with the plain
+  // Toilet icon, so the repeated object costs nothing.
   flush: () => `${disc(P.lavenderSoft)}
-    ${iconShadow(58, 104, 34, P.lavenderInk, 0.13)}
-    <ellipse cx="58" cy="92" rx="34" ry="14" fill="${P.sand300}"/>
-    <ellipse cx="58" cy="89" rx="34" ry="14" fill="url(#porcelainGrad)"/>
-    <ellipse cx="58" cy="89" rx="25" ry="10" fill="${P.pondBlueDeep}" opacity="0.4"/>
-    <ellipse cx="58" cy="88" rx="25" ry="10" fill="url(#waterStream)"/>
-    <path d="M 58 88 m -18 0 a 18 8 0 1 1 26 6" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" opacity="0.9"/>
-    <path d="M 58 90 m -8 0 a 8 4 0 1 1 12 3" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" opacity="0.7"/>
-    <rect x="30" y="26" width="56" height="48" rx="9" fill="${P.sand300}"/>
-    <rect x="30" y="22" width="56" height="48" rx="9" fill="url(#porcelainGrad)"/>
-    <rect x="26" y="16" width="64" height="12" rx="6" fill="${P.sand300}"/>
-    <rect x="26" y="14" width="64" height="11" rx="5.5" fill="url(#porcelainGrad)"/>
-    <path d="M 37 30 v 32" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.6"/>
-    <circle cx="88" cy="38" r="9" fill="${P.sand400}"/>
-    <path d="M 88 37 L 104 46" stroke="${P.sand400}" stroke-width="12" stroke-linecap="round" fill="none"/>
-    <path d="M 88 37 L 104 46" stroke="url(#metalGrad)" stroke-width="8" stroke-linecap="round" fill="none"/>
-    <circle cx="88" cy="37" r="7" fill="url(#metalGrad)"/>`,
+    ${toilet(52, 110, 0.29, { lidOpen: false })}
+    <path d="M 51 46 m -14 0 a 14 6 0 1 1 20 5" fill="none" stroke="${P.pondBlueDeep}" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 51 49 m -6 0 a 6 3 0 1 1 9 2" fill="none" stroke="${P.pondBlueDeep}" stroke-width="4" stroke-linecap="round" opacity="0.85"/>
+    <circle cx="27" cy="34" r="5" fill="${P.pondBlueLight}"/>
+    <circle cx="72" cy="28" r="4" fill="${P.pondBlueLight}" opacity="0.85"/>
+    <circle cx="38" cy="22" r="3.2" fill="${P.pondBlue}" opacity="0.6"/>
+    <rect x="60" y="36" width="18" height="8" rx="4" fill="${P.sunshineDeep}"/>
+    <rect x="60" y="35" width="18" height="7" rx="3.5" fill="${P.sunshineBright}"/>`,
 
   lightSwitch: () => `${disc(P.sunshineSoft)}
     <circle cx="60" cy="50" r="44" fill="url(#glowWarm)"/>
@@ -1652,10 +1650,9 @@ const quizIcons = {
     <rect x="92" y="50" width="8" height="46" rx="4" fill="${P.lavenderDeep}"/>
     ${[58, 70, 82].map((y) => `<rect x="72" y="${y}" width="26" height="6" rx="3" fill="${P.lavender}"/>`).join('')}
     <rect x="63" y="42" width="40" height="9" rx="4.5" fill="${P.lavender}"/>
-    <path d="M 67 47 C 47 55 33 73 29 95" stroke="${P.peachDeep}" stroke-width="19" stroke-linecap="round" fill="none"/>
-    <path d="M 68 42 C 48 50 34 69 30 91" stroke="url(#chuteGrad)" stroke-width="13" stroke-linecap="round" fill="none"/>
-    <path d="M 70 37 C 50 45 36 65 32 87" stroke="${P.peachSoft}" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.85"/>
-    <path d="M 22 92 q 8 -8 18 -4" stroke="${P.peachDeep}" stroke-width="8" stroke-linecap="round" fill="none"/>`,
+    <path d="M 67 47 C 49 54 34 70 31 86 q -1 9 9 9" stroke="${P.peachDeep}" stroke-width="16" stroke-linecap="round" fill="none"/>
+    <path d="M 68 42 C 50 49 35 66 32 82 q -1 8 9 8" stroke="url(#chuteGrad)" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <path d="M 70 37 C 52 44 37 62 34 78 q -1 7 8 7" stroke="${P.peachSoft}" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.85"/>`,
 
   toyBox: () => `${disc(P.sunshineSoft)}
     ${iconShadow(60, 102, 38, P.sunshineDeep, 0.13)}
@@ -1744,16 +1741,15 @@ const quizIcons = {
     </g>`,
 
   toothbrush: () => `${disc(P.sunshineSoft)}
-    ${g('rotate(-34 60 60)', `
-      <rect x="32" y="53" width="64" height="15" rx="7.5" fill="${P.pondBlueDeep}"/>
-      <rect x="32" y="52" width="64" height="13" rx="6.5" fill="url(#blueBall)"/>
-      <rect x="72" y="54" width="17" height="7" rx="3.5" fill="#FFFFFF" opacity="0.35"/>
-      <rect x="20" y="49" width="28" height="21" rx="9" fill="${P.pondBlueDeep}"/>
-      <rect x="20" y="48" width="28" height="19" rx="9" fill="url(#blueBall)"/>
-      <rect x="8" y="45" width="18" height="27" rx="6" fill="${P.sand400}"/>
-      <rect x="8" y="44" width="18" height="25" rx="6" fill="${P.porcelainMid}"/>
-      ${[48, 55, 62].map((y) => `<path d="M 10 ${y} h 14" stroke="${P.sand300}" stroke-width="3.2" stroke-linecap="round"/>`).join('')}
-      <ellipse cx="7" cy="56" rx="6" ry="10" fill="${P.hopGreenLight}"/>`)}`,
+    ${g('rotate(-32 60 60)', `
+      <rect x="44" y="53" width="54" height="15" rx="7.5" fill="${P.pondBlueDeep}"/>
+      <rect x="44" y="52" width="54" height="13" rx="6.5" fill="url(#blueBall)"/>
+      <rect x="74" y="54" width="18" height="7" rx="3.5" fill="#FFFFFF" opacity="0.35"/>
+      <rect x="10" y="51" width="44" height="19" rx="9" fill="${P.pondBlueDeep}"/>
+      <rect x="10" y="50" width="44" height="17" rx="8.5" fill="url(#blueBall)"/>
+      ${[13, 21, 29, 37, 45].map((x) => `<rect x="${x}" y="${x === 13 || x === 45 ? 40 : 37}" width="7" height="${x === 13 || x === 45 ? 16 : 19}" rx="3.5" fill="${P.sand300}"/>
+      <rect x="${x}" y="${x === 13 || x === 45 ? 39 : 36}" width="7" height="${x === 13 || x === 45 ? 16 : 19}" rx="3.5" fill="${P.porcelainMid}"/>`).join('')}
+      <path d="M 16 36 q 14 -10 28 -2 q -14 8 -28 2 Z" fill="${P.hopGreenLight}"/>`)}`,
 
   shoes: () => `${disc(P.peachSoft)}
     ${iconShadow(60, 100, 42, P.peachInk, 0.11)}
@@ -1775,8 +1771,7 @@ const quizIcons = {
       <rect x="-22" y="-32" width="36" height="6" rx="3" fill="${P.pondBlue}"/>
       <rect x="-22" y="-22" width="36" height="6" rx="3" fill="${P.lavender}"/>
       <rect x="-22" y="-12" width="36" height="6" rx="3" fill="${P.pondBlue}"/>
-      <path d="M -13 10 q 0 16 15 24" stroke="${P.pondBlueLight}" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.55"/>
-      <path d="M 24 32 q 10 5 15 11" stroke="${P.pondBlueLight}" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.55"/>`)}`,
+      <path d="M 22 30 q 12 6 18 13" stroke="${P.pondBlueLight}" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.6"/>`)}`,
 
   hat: () => `${disc(P.sunshineSoft)}
     ${iconShadow(60, 92, 44, P.sunshineDeep, 0.13)}

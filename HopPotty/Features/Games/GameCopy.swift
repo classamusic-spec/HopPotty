@@ -112,5 +112,152 @@ enum GameCopy {
             + [matched]
             + matchPairs.flatMap { [$0.toolLabel, $0.useLabel] }
             + [pathGoal, pathHop, pathStep]
+            + boardEntries
+    }
+}
+
+// MARK: - The five newer boards
+
+/// Names for the things the newer boards move around.
+///
+/// `MiniGameCatalog` names each game, its opening line, its closing line and
+/// everything Hop says out loud. It does not name *a fly*, *the flusher* or *the
+/// third spot on the path*, because those are properties of a board rather than
+/// of the catalog — and a child using VoiceOver needs every one of them.
+///
+/// Same rule as the section above: real `HopCopyEntry` values under `games.`
+/// keys, never literals in a view (`Docs/CONTRACTS.md` §5), and they move into
+/// `HopCopy` unchanged the day Core grows a home for per-board strings.
+extension GameCopy {
+
+    // MARK: Fly Snack
+
+    /// One fly, whatever colour it is drawn in. The three sprites are three
+    /// drawings of the same thing, so they get one word: colour is decoration
+    /// here and never meaning (`Docs/CONTRACTS.md` §6).
+    enum Fly: String, CaseIterable, Identifiable, Sendable {
+        case blue, green, gold
+
+        var id: String { rawValue }
+        var illustration: HopIllustrationKey { HopIllustrationKey(rawValue: "icon.games.fly." + rawValue) }
+    }
+
+    static let fly = HopCopyEntry.child("games.flySnack.a11y.fly", "A fly")
+    static let flySnackHop = HopCopyEntry.child("games.flySnack.a11y.hop", "Hop on his lily pad")
+    static let flySnackHopFull = HopCopyEntry.child("games.flySnack.a11y.hopFull", "Hop, with a full tummy")
+    /// The meter is labelled but never given a value: a running tally read out
+    /// after every catch is a score, and this game does not have one.
+    static let tummyMeter = HopCopyEntry.child("games.flySnack.a11y.tummy", "Hop's tummy")
+
+    // MARK: Mud Off
+
+    /// One patch on Hop's hands. Three kinds so that two patches side by side
+    /// are distinguishable by name rather than by colour.
+    enum Mess: String, CaseIterable, Identifiable, Sendable {
+        case brown, green, paint
+
+        var id: String { rawValue }
+        var illustration: HopIllustrationKey { HopIllustrationKey(rawValue: "icon.games.mud." + rawValue) }
+
+        var label: HopCopyEntry {
+            switch self {
+            case .brown: .child("games.mudOff.a11y.mud.brown", "A patch of mud")
+            case .green: .child("games.mudOff.a11y.mud.green", "A patch of pond weed")
+            case .paint: .child("games.mudOff.a11y.mud.paint", "A patch of paint")
+            }
+        }
+    }
+
+    /// Every patch is a button as well as a swipe target, so a child who cannot
+    /// yet drag — or who is using VoiceOver or Switch Control — plays the same
+    /// board rather than a described one.
+    static let wipeHint = HopCopyEntry.child("games.mudOff.a11y.wipeHint", "Swipe across it, or tap it")
+    static let mudOffHop = HopCopyEntry.child("games.mudOff.a11y.hop", "Hop, holding out his hands")
+    static let sparkle = HopCopyEntry.child("games.mudOff.a11y.sparkle", "Sparkles")
+    static let waterTap = HopCopyEntry.child("games.mudOff.a11y.tap", "The tap")
+
+    // MARK: Listen to Your Body
+
+    static let ball = HopCopyEntry.child("games.bodySignal.a11y.ball", "Hop's ball")
+    static let thoughtBubble = HopCopyEntry.child("games.bodySignal.a11y.bubble", "Hop's bubble")
+    static let bodySignalHop = HopCopyEntry.child("games.bodySignal.a11y.hop", "Hop, playing")
+
+    // MARK: Flush and Wave
+
+    static let flusher = HopCopyEntry.child("games.flushWave.a11y.flusher", "The flusher")
+    static let swirl = HopCopyEntry.child("games.flushWave.a11y.swirl", "The water, swirling")
+    static let flushWaveTap = HopCopyEntry.child("games.flushWave.a11y.tap", "The tap")
+    static let flushWaveHop = HopCopyEntry.child("games.flushWave.a11y.hop", "Hop, by the toilet")
+
+    // MARK: Potty Order
+
+    /// One card, and the place it belongs on the path. `order` is the whole
+    /// rule of the game, so it lives on the case rather than in the board.
+    enum OrderCard: String, CaseIterable, Identifiable, Sendable {
+        case pantsDown, sit, wipe, wash
+
+        var id: String { rawValue }
+        var order: Int { Self.allCases.firstIndex(of: self) ?? 0 }
+        var illustration: HopIllustrationKey { HopIllustrationKey(rawValue: "icon.games.card." + rawValue) }
+
+        var label: HopCopyEntry {
+            switch self {
+            case .pantsDown: .child("games.pottyOrder.card.pantsDown", "Pants down")
+            case .sit: .child("games.pottyOrder.card.sit", "Sit on the potty")
+            case .wipe: .child("games.pottyOrder.card.wipe", "Wipe")
+            case .wash: .child("games.pottyOrder.card.wash", "Wash hands")
+            }
+        }
+
+        /// What the empty slot for this card is called. Words rather than
+        /// numbers, because "spot three of four" is a fact about a list and
+        /// "then" is a fact about a story.
+        var slotLabel: HopCopyEntry {
+            switch self {
+            case .pantsDown: .child("games.pottyOrder.slot.first", "First")
+            case .sit: .child("games.pottyOrder.slot.second", "Next")
+            case .wipe: .child("games.pottyOrder.slot.third", "Then")
+            case .wash: .child("games.pottyOrder.slot.fourth", "Last")
+            }
+        }
+    }
+
+    static let pickUpHint = HopCopyEntry.child(
+        "games.pottyOrder.a11y.pickUpHint",
+        "Drag it to a spot, or pick it up and tap a spot"
+    )
+    static let slotFilled = HopCopyEntry.child("games.pottyOrder.a11y.slotFilled", "Filled")
+
+    /// The entries declared in this extension, folded into ``allEntries``.
+    static var boardEntries: [HopCopyEntry] {
+        [fly, flySnackHop, flySnackHopFull, tummyMeter]
+            + Mess.allCases.map(\.label)
+            + [wipeHint, mudOffHop, sparkle, waterTap]
+            + [ball, thoughtBubble, bodySignalHop]
+            + [flusher, swirl, flushWaveTap, flushWaveHop]
+            + OrderCard.allCases.flatMap { [$0.label, $0.slotLabel] }
+            + [pickUpHint, slotFilled]
+    }
+}
+
+// MARK: - Reaching a game's spoken lines by name
+
+extension MiniGame {
+    /// The voice line whose id ends in `name` — `line("tummyFull")` finds
+    /// `games.flySnack.spoken.tummyFull`.
+    ///
+    /// By name rather than by index into `voiceLines`, because an index is a
+    /// crash waiting for the day someone inserts a line in the middle, and
+    /// because `voiceLines[2]` tells a reader nothing about what Hop says. When
+    /// no line matches, the game's own closing line stands in: a renamed line
+    /// should degrade to a warm sentence, never to an empty bubble.
+    func line(_ name: String) -> HopPottyCore.HopVoiceLine {
+        if let match = voiceLines.first(where: { $0.id.rawValue.hasSuffix("." + name) }) {
+            return match
+        }
+        return voiceLines.first ?? HopPottyCore.HopVoiceLine(
+            id: HopVoiceLineID(rawValue: id.rawValue + ".spoken.fallback"),
+            text: (done ?? childDescription).value
+        )
     }
 }

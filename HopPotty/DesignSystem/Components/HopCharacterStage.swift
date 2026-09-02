@@ -58,6 +58,12 @@ private struct HopStageLabel: ViewModifier {
 
 /// A small, circular Hop for a row or a toolbar. Always `idle`, never ambient:
 /// a chip that breathes in a settings list is a distraction.
+///
+/// This is the app's use of the generator's `face` entry. Rather than a second
+/// drawing, it is `idle` scaled and shifted so that
+/// ``HopPoseGeometry/faceCrop`` — the rectangle Hop's head occupies — fills the
+/// circle. One drawing, one set of numbers, and a head that cannot drift out of
+/// step with the body it belongs to.
 public struct HopChip: View {
     private let diameter: CGFloat
 
@@ -65,11 +71,20 @@ public struct HopChip: View {
         self.diameter = diameter
     }
 
+    /// How big the whole 512 canvas has to be for the head to fill the circle,
+    /// with a tenth of the head's width left as breathing room.
+    private var renderSize: CGFloat {
+        diameter * HopCanvas.side / (HopPoseGeometry.faceCrop.width * 1.1)
+    }
+
+    /// Moves the head's centre onto the circle's centre.
+    private var faceOffset: CGFloat {
+        (HopCanvas.side / 2 - HopPoseGeometry.faceCrop.midY) * renderSize / HopCanvas.side
+    }
+
     public var body: some View {
-        HopCharacterView(pose: .idle, size: diameter * 1.9, ambient: false, castsShadow: false)
-            // The character sits in the lower two-thirds of its canvas; the
-            // offset re-centres the face inside the circle.
-            .offset(y: -diameter * 0.30)
+        HopCharacterView(pose: .idle, size: renderSize, ambient: false, castsShadow: false)
+            .offset(y: faceOffset)
             .frame(width: diameter, height: diameter)
             .clipShape(Circle())
             .background {

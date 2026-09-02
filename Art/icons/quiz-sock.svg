@@ -9,6 +9,5 @@
       <rect x="-22" y="-32" width="36" height="6" rx="3" fill="#6FC7E8"/>
       <rect x="-22" y="-22" width="36" height="6" rx="3" fill="#AFA5EF"/>
       <rect x="-22" y="-12" width="36" height="6" rx="3" fill="#6FC7E8"/>
-      <path d="M -13 10 q 0 16 15 24" stroke="#9BDCF1" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.55"/>
-      <path d="M 24 32 q 10 5 15 11" stroke="#9BDCF1" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.55"/></g></g>
+      <path d="M 22 30 q 12 6 18 13" stroke="#9BDCF1" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.6"/></g></g>
 </svg>

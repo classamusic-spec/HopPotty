@@ -6,13 +6,18 @@ import HopPottyDesignTokens
 /// Vector paths rather than a raster asset, for three reasons that all matter:
 /// the poses interpolate (Hop moves between them instead of cutting), one
 /// drawing serves a 28pt dashboard chip and a 320pt celebration without a
-/// separate export, and the geometry stays in step with
-/// `Scripts/hop-art.js`, which generates the same character for the app icon
-/// and the marketing art.
+/// separate export, and the geometry stays in step with `Scripts/hop-art.js`,
+/// which generates the same character for the app icon and the marketing art.
+///
+/// The style is the reference's: **flat**. No gradients, no outlines, no sheen.
+/// Depth is value steps in the green ramp alone — the body green, one step down
+/// for spots and toe creases, and the ink green for the three lines (nostrils,
+/// shut eyes, closed mouth). Anything softer than that stops reading at 28pt,
+/// which is the size Hop appears at most often.
 ///
 /// Ambient motion — the breath and the blink — is owned here and routed through
-/// the modifiers in `Motion/`, so it stops under Reduce Motion without this
-/// file ever asking whether Reduce Motion is on.
+/// the modifiers in `Motion/`, so it stops under Reduce Motion without this file
+/// ever asking whether Reduce Motion is on.
 public struct HopCharacterView: View {
     @Environment(\.hopTheme) private var theme
     @State private var ambientBlink: Double = 0
@@ -29,21 +34,24 @@ public struct HopCharacterView: View {
         self.castsShadow = castsShadow
     }
 
-    private var geometry: HopPoseGeometry { pose.geometry }
-    private var scale: CGFloat { size / HopCanvas.side }
-
-    /// The pose's own blink, plus the ambient one. A pose that already has the
-    /// eyes shut cannot be blinked further closed.
-    private var blink: Double {
-        min(1, geometry.blink + ambientBlink * (1 - geometry.blink))
+    /// The pose's parameters with the ambient blink folded in. Everything the
+    /// drawing reads comes from here, so a single value drives every layer and
+    /// they cannot fall out of step mid-transition.
+    private var geometry: HopPoseGeometry {
+        var resolved = pose.geometry
+        // A pose that already has the eyes shut cannot be blinked further closed.
+        resolved.eyes.blink = min(1, resolved.eyes.blink + ambientBlink * (1 - resolved.eyes.blink))
+        return resolved
     }
+
+    /// Points per reference unit — the conversion every stroke width needs.
+    private var unit: CGFloat { HopCanvas.unit(for: size) }
 
     public var body: some View {
         ZStack {
             Color.clear
-            if castsShadow { groundShadow }
+            if castsShadow && geometry.showsShadow { groundShadow }
             character
-                .offset(y: geometry.groupOffsetY * scale)
                 .hopBreathing(ambient)
         }
         .frame(width: size, height: size)
@@ -52,260 +60,154 @@ public struct HopCharacterView: View {
         .accessibilityHidden(true)
     }
 
-    // MARK: - Layers, in the order `hop-art.js` stacks them
+    // MARK: - Layers, in the order `figure()` stacks them
+    //
+    // shadow, pack, legs, torso, belly, arms, head, face, tongue, wiggle, zzz.
+    // The order is what makes limbs read as attached rather than stacked: the
+    // belly sits over the torso, the arms over the belly, the head over both.
 
     private var character: some View {
         ZStack {
-            if geometry.showsBag { bag }
-            HopBodyShape(squash: geometry.squash)
-                .fill(bodyGradient)
-                .frame(width: size, height: size)
-            sheen
-            if geometry.showsBag { bagStrap }
-            arm(geometry.leftArm)
-            arm(geometry.rightArm)
-            belly
-            foot(geometry.leftFoot)
-            foot(geometry.rightFoot)
+            pack
+            fill(.legs, HopCharacterPalette.body)
+            stroke(.toeCreases, HopCharacterPalette.bodyDeep.opacity(0.8), width: HopAnatomy.creaseStroke)
+            fill(.torso, HopCharacterPalette.body)
+            fill(.belly, HopCharacterPalette.belly)
+            fill(.arms, HopCharacterPalette.body)
+            fill(.head, HopCharacterPalette.body)
+            face
+            wiggleMarks
+            sleepMarks
+        }
+        .frame(width: size, height: size)
+    }
+
+    private var face: some View {
+        ZStack {
+            fill(.spots, HopCharacterPalette.bodyDeep)
             eyes
-            cheeks
+            fill(.cheeks, HopCharacterPalette.cheek)
+            fill(.nostrils, HopCharacterPalette.ink)
             mouth
+            // Drawn after the face so the tongue leaves the open mouth rather
+            // than sitting under it.
+            fill(.tongue, HopCharacterPalette.tongue)
+                .opacity(min(1, geometry.tongueExtension * 4))
         }
     }
 
-    /// The body gradient's unit points are the SVG's `objectBoundingBox` stops
-    /// re-expressed against the full canvas, since the shape is drawn at canvas
-    /// scale rather than inside its own bounding box.
-    private var bodyGradient: LinearGradient {
-        LinearGradient(
-            stops: [
-                .init(color: HopCharacterPalette.bodyLight, location: 0),
-                .init(color: HopCharacterPalette.bodyMid, location: 0.52),
-                .init(color: HopCharacterPalette.bodyDeep, location: 1),
-            ],
-            startPoint: UnitPoint(x: 0.322, y: 0.363),
-            endPoint: UnitPoint(x: 0.708, y: 0.840)
-        )
-    }
-
-    private var sheen: some View {
-        Ellipse()
-            .fill(
-                RadialGradient(
-                    stops: [
-                        .init(color: .white.opacity(0.45), location: 0),
-                        .init(color: .white.opacity(0), location: 1),
-                    ],
-                    center: UnitPoint(x: 0.34, y: 0.22),
-                    startRadius: 0,
-                    endRadius: 0.6 * 192 * scale
-                )
-            )
-            .frame(width: 192 * scale, height: 140 * scale)
-            .position(x: 200 * scale, y: 248 * scale)
-    }
-
-    private var belly: some View {
-        Ellipse()
-            .fill(HopCharacterPalette.belly.opacity(0.95))
-            .overlay {
-                Ellipse().stroke(HopCharacterPalette.bellyEdge, lineWidth: 3 * scale)
-            }
-            .frame(width: 172 * scale, height: 112 * scale)
-            .position(x: 256 * scale, y: 364 * scale)
-    }
-
-    private var cheeks: some View {
-        ZStack {
-            cheek(x: 158)
-            cheek(x: 354)
-        }
-    }
-
-    private func cheek(x: CGFloat) -> some View {
-        Ellipse()
-            .fill(
-                RadialGradient(
-                    stops: [
-                        .init(color: HopCharacterPalette.cheekCore.opacity(0.85), location: 0),
-                        .init(color: HopCharacterPalette.cheek.opacity(0.55), location: 0.55),
-                        .init(color: HopCharacterPalette.cheek.opacity(0), location: 1),
-                    ],
-                    center: .center,
-                    startRadius: 0,
-                    endRadius: 30 * scale
-                )
-            )
-            .frame(width: 60 * scale, height: 38 * scale)
-            .position(x: x * scale, y: 308 * scale)
-    }
-
-    private var groundShadow: some View {
-        let lift = geometry.lift
-        return Ellipse()
-            .fill(
-                RadialGradient(
-                    stops: [
-                        .init(color: HopCharacterPalette.groundShadow.opacity(0.20), location: 0),
-                        .init(color: HopCharacterPalette.groundShadow.opacity(0), location: 1),
-                    ],
-                    center: .center,
-                    startRadius: 0,
-                    endRadius: (132 - lift * 0.35) * scale
-                )
-            )
-            .frame(width: (132 - lift * 0.35) * 2 * scale, height: (26 - lift * 0.06) * 2 * scale)
-            .position(x: 256 * scale, y: (452 + lift * 0.25) * scale)
-    }
-
-    private func arm(_ arm: HopArmGeometry) -> some View {
-        ZStack {
-            HopArmShape(origin: arm.origin, angle: arm.angle, length: arm.length, width: arm.width)
-                .fill(HopCharacterPalette.bodyDeep)
-            HopArmShape(origin: arm.origin, angle: arm.angle, length: arm.length, width: arm.width, isHighlight: true)
-                .fill(HopCharacterPalette.bodyMid.opacity(0.5))
-        }
-        .frame(width: size, height: size)
-    }
-
-    private func foot(_ foot: HopFootGeometry) -> some View {
-        ZStack {
-            HopFootShape(centre: foot.resolvedCentre, flip: foot.flip, part: .body)
-                .fill(HopCharacterPalette.bodyDeep)
-            HopFootShape(centre: foot.resolvedCentre, flip: foot.flip, part: .highlight)
-                .fill(HopCharacterPalette.bodyLight.opacity(0.45))
-            HopFootShape(centre: foot.resolvedCentre, flip: foot.flip, part: .outline)
-                .stroke(HopCharacterPalette.bodyShadow.opacity(0.35), lineWidth: 2.5 * scale)
-        }
-        .frame(width: size, height: size)
-    }
-
+    /// The white, then everything inside it clipped to it, then the line a shut
+    /// eye leaves. The clip is what keeps a lowered lid inside the eye —
+    /// unclipped it read as a pair of ears above the head.
     private var eyes: some View {
         ZStack {
-            HopEyeView(centreX: 194, gaze: geometry.gaze, blink: blink, scale: scale)
-            HopEyeView(centreX: 318, gaze: geometry.gaze, blink: blink, scale: scale)
-            lash(x: 194)
-            lash(x: 318)
+            fill(.eyeWhites, HopCharacterPalette.eyeWhite)
+            ZStack {
+                fill(.pupils, HopCharacterPalette.pupil)
+                fill(.highlights, HopCharacterPalette.highlight)
+                fill(.lids, HopCharacterPalette.body)
+            }
+            .frame(width: size, height: size)
+            .clipShape(shape(.eyeWhites))
+            // The line arrives as the lid closes rather than snapping in at the
+            // end, which is what makes a slow blink read as a slow blink.
+            stroke(.closedEyes, HopCharacterPalette.ink, width: HopAnatomy.closedEyeStroke)
+                .opacity(min(1, geometry.eyes.blink * 1.6))
         }
     }
 
-    private func lash(x: CGFloat) -> some View {
-        HopEyeLashShape(centre: CGPoint(x: x, y: 196), radius: 57)
-            .stroke(
-                HopCharacterPalette.ink.opacity(0.85),
-                style: StrokeStyle(lineWidth: 8 * scale, lineCap: .round)
-            )
-            .frame(width: size, height: size)
-            // The lash arrives as the lid closes rather than snapping in at the
-            // end, which is what makes a slow blink read as a slow blink.
-            .opacity(min(1, blink * 1.6))
-    }
-
+    /// The open mouth and the smile line cross-fade rather than swap, so a pose
+    /// change that opens Hop's mouth is one continuous movement. The open mouth
+    /// also scales about the face centre, so it shrinks into the face as it goes.
     private var mouth: some View {
         ZStack {
-            HopMouthShape(open: geometry.mouthOpen)
-                .fill(HopCharacterPalette.ink.opacity(0.9))
-                .frame(width: size, height: size)
-                .opacity(openMouthOpacity)
+            ZStack {
+                fill(.mouthInterior, HopCharacterPalette.mouthInterior)
+                fill(.mouthTongue, HopCharacterPalette.tongue)
+                    .frame(width: size, height: size)
+                    .clipShape(shape(.mouthInterior))
+            }
+            .opacity(openMouthOpacity)
 
-            HopMouthShape(open: geometry.mouthOpen, isTongue: true)
-                .fill(HopCharacterPalette.cheek.opacity(0.85))
-                .frame(width: size, height: size)
-                .opacity(openMouthOpacity)
-
-            HopSmileShape(smile: geometry.mouthSmile)
-                .stroke(
-                    HopCharacterPalette.mouth,
-                    style: StrokeStyle(lineWidth: 11 * scale, lineCap: .round)
-                )
-                .frame(width: size, height: size)
+            stroke(.smile, HopCharacterPalette.ink, width: HopAnatomy.smileStroke)
                 .opacity(1 - openMouthOpacity)
         }
     }
 
-    /// The two mouths cross-fade rather than swap, so a pose change that opens
-    /// Hop's mouth is one continuous movement.
     private var openMouthOpacity: Double {
-        min(1, geometry.mouthOpen * 3)
+        min(1, geometry.mouthOpenScale * 3)
     }
 
-    private var bag: some View {
+    private var pack: some View {
         ZStack {
-            HopBagShape(part: .body).fill(HopCharacterPalette.bagBody)
-            HopBagShape(part: .flap).fill(HopCharacterPalette.bagFlap)
-            HopBagShape(part: .buckle).fill(HopCharacterPalette.bagStrap)
-            HopBagShape(part: .body)
-                .stroke(HopCharacterPalette.bagStrap.opacity(0.45), lineWidth: 3 * scale)
+            fill(.pack, HopCharacterPalette.bagBody)
+            stroke(.packStrap, HopCharacterPalette.bagStrap, width: HopAnatomy.strapStroke)
         }
+        .opacity(geometry.withPack ? 1 : 0)
+    }
+
+    private var wiggleMarks: some View {
+        stroke(.wiggle, HopCharacterPalette.bodyDeep, width: HopAnatomy.wiggleStroke)
+            .opacity(geometry.wiggling ? 0.6 : 0)
+    }
+
+    /// The two `z`s. Type rather than paths, because they are lettering — and
+    /// because at 28pt they are two dots either way.
+    private var sleepMarks: some View {
+        ZStack {
+            sleepMark("z", size: 9, baseline: CGPoint(x: 122, y: 14))
+            sleepMark("z", size: 12, baseline: CGPoint(x: 131, y: 6))
+        }
+        .opacity(geometry.sleeping ? 0.7 : 0)
         .frame(width: size, height: size)
     }
 
-    private var bagStrap: some View {
-        HopBagShape(part: .strap)
-            .stroke(
-                HopCharacterPalette.bagStrap.opacity(0.92),
-                style: StrokeStyle(lineWidth: 12 * scale, lineCap: .round)
-            )
+    private func sleepMark(_ text: String, size fontSize: CGFloat, baseline: CGPoint) -> some View {
+        // `position` centres, the SVG places a baseline: nudge up by roughly a
+        // third of the em and right by a quarter, which lands a lowercase `z`
+        // where the generator draws it.
+        let centre = CGPoint(x: baseline.x + fontSize * 0.25, y: baseline.y - fontSize * 0.34)
+        let placed = centre.applying(geometry.bodyTransform)
+        return Text(text)
+            .font(.system(size: fontSize * unit, weight: .heavy, design: .rounded))
+            .foregroundStyle(HopCharacterPalette.ink)
+            .position(HopCanvas.viewPoint(placed, forSize: size))
+    }
+
+    /// The ground shadow shrinks and fades as Hop leaves the ground, which is
+    /// most of what sells a jump.
+    private var groundShadow: some View {
+        fill(.shadow, HopCharacterPalette.groundShadow)
+            .opacity(max(0, 0.12 - geometry.lift * 0.002))
+    }
+
+    // MARK: - Layer plumbing
+
+    private func shape(_ part: HopFigureShape.Part) -> HopFigureShape {
+        HopFigureShape(geometry: geometry, part: part)
+    }
+
+    private func fill(_ part: HopFigureShape.Part, _ color: Color) -> some View {
+        shape(part)
+            .fill(color)
+            .frame(width: size, height: size)
+    }
+
+    /// Stroke widths are authored in reference units, like everything else, and
+    /// converted here — a stroke does not scale with the path it is applied to.
+    private func stroke(_ part: HopFigureShape.Part, _ color: Color, width: CGFloat) -> some View {
+        shape(part)
+            .stroke(color, style: StrokeStyle(lineWidth: width * unit, lineCap: .round, lineJoin: .round))
             .frame(width: size, height: size)
     }
 }
 
-/// One eye: a skin dome, the white, and a pupil with two catchlights, all
-/// clipped to the opening so a blink closes over them instead of fading them.
-private struct HopEyeView: View {
-    let centreX: CGFloat
-    let gaze: CGSize
-    let blink: Double
-    let scale: CGFloat
-
-    private let centreY: CGFloat = 196
-    private let radius: CGFloat = 57
-    private let pupilRadius: CGFloat = 25
-
-    private var opening: Double { max(0.001, 1 - blink) }
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [HopCharacterPalette.domeLight, HopCharacterPalette.domeDeep],
-                        center: UnitPoint(x: 0.36, y: 0.28),
-                        startRadius: 0,
-                        endRadius: 0.75 * (radius + 3) * 2 * scale
-                    )
-                )
-                .frame(width: (radius + 3) * 2 * scale, height: (radius + 3) * 2 * scale)
-
-            ZStack {
-                Ellipse().fill(HopCharacterPalette.eyeWhite)
-                pupil
-            }
-            .frame(width: radius * 2 * scale, height: radius * 2 * scale)
-            .mask {
-                Ellipse().scaleEffect(y: opening, anchor: .center)
-            }
-        }
-        .position(x: centreX * scale, y: centreY * scale)
-    }
-
-    private var pupil: some View {
-        ZStack {
-            Circle()
-                .fill(HopCharacterPalette.pupil)
-                .frame(width: pupilRadius * 2 * scale, height: pupilRadius * 2 * scale)
-
-            Circle()
-                .fill(Color.white.opacity(0.96))
-                .frame(width: pupilRadius * 0.72 * scale, height: pupilRadius * 0.72 * scale)
-                .offset(x: -pupilRadius * 0.36 * scale, y: -pupilRadius * 0.42 * scale)
-
-            Circle()
-                .fill(Color.white.opacity(0.72))
-                .frame(width: pupilRadius * 0.34 * scale, height: pupilRadius * 0.34 * scale)
-                .offset(x: pupilRadius * 0.32 * scale, y: pupilRadius * 0.34 * scale)
-        }
-        .scaleEffect(1 - blink * 0.35)
-        .offset(x: gaze.width * scale, y: gaze.height * (1 - blink) * scale)
+extension HopCanvas {
+    /// A point authored in reference space, in the coordinates of a
+    /// `size` × `size` view — for the few pieces that are not paths.
+    static func viewPoint(_ point: CGPoint, forSize size: CGFloat) -> CGPoint {
+        let scale = size / side
+        let onCanvas = point.applying(referenceTransform)
+        return CGPoint(x: onCanvas.x * scale, y: onCanvas.y * scale)
     }
 }
