@@ -202,11 +202,13 @@ function timerCard(col, appearance) {
   return `<div style="background:${alpha(col.surface, dark ? .94 : .95)};border-radius:${T.radius.xl}px;
     border:1px solid ${alpha(col.divider, dark ? .8 : .9)};padding:16px 17px 15px;
     box-shadow:${elevation(appearance, 'raised')};backdrop-filter:blur(22px)">
-    <div style="${type('parentCaption', { color: col.textSecondary, weight: 'semibold' })};text-transform:uppercase;letter-spacing:.6px;font-size:11.5px">Next Potty Pause</div>
-    <div style="${type('timerHero', { color: col.textPrimary })};font-size:44px;margin-top:1px;font-variant-numeric:tabular-nums">28:14</div>
-    <div style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:4px 11px;border-radius:20px;background:${modeSoft}">
-      <div style="width:7px;height:7px;border-radius:4px;background:${dark ? T.palette.hopGreenLight : T.palette.hopGreenDeep}"></div>
-      <span style="${type('parentFootnote', { color: modeInk, weight: 'semibold' })};font-size:12px">Routine Mode</span>
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center">
+      <div style="${type('parentCaption', { color: col.textSecondary, weight: 'semibold' })};text-transform:uppercase;letter-spacing:.6px;font-size:11.5px">Next Potty Pause</div>
+      <div style="${type('timerHero', { color: col.textPrimary })};font-size:44px;margin-top:1px;font-variant-numeric:tabular-nums">28:14</div>
+      <div style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:4px 11px;border-radius:20px;background:${modeSoft}">
+        <div style="width:7px;height:7px;border-radius:4px;background:${dark ? T.palette.hopGreenLight : T.palette.hopGreenDeep}"></div>
+        <span style="${type('parentFootnote', { color: modeInk, weight: 'semibold' })};font-size:12px">Routine Mode</span>
+      </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:12px">
       ${pillButton(col, 'Skip', { fill: 'transparent', textColor: col.textSecondary })}
