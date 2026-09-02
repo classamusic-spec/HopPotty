@@ -541,6 +541,23 @@ The third `nonisolated static func` in the project, `PurchaseService.verified`,
 was checked and is fine: `VerificationResult` and `Transaction` are both
 `Sendable`, so nothing crosses.
 
+> **This sweep was incomplete, and the way it failed is the useful part.**
+> Run 68 produced a *third* instance —
+> `ScreenTimeService.swift:164:30: sending 'self.center'` — fixed in Layer 12
+> below.
+>
+> The search that closed this layer looked for `nonisolated static func` and for
+> `UNUserNotificationCenter`, because that was the shape of the two instances in
+> hand. The third has neither: the object is `AuthorizationCenter`, and nothing
+> is *handed* to a nonisolated helper at all. It leaves the actor because a
+> non-isolated Apple method is called on a main-actor stored property — the same
+> error, arrived at by a different route, and invisible to that pattern.
+>
+> So the lesson stated above held, and the application of it did not. Auditing
+> by reading beats reading the diagnostic list, but only if the search is for
+> *the condition* — a non-`Sendable` value leaving an actor — rather than for the
+> syntax of the examples already found.
+
 ---
 
 ## Layer 11 — the preview layer, twice
@@ -586,6 +603,64 @@ default, and every call site here omitted the label. Plus a second
 `DeletionReceipt()` construction site, the twin of the four fixed in layer 4.5 —
 the compiler found the first four together and this one only once they were
 gone.
+
+---
+
+## Layer 12 — the same class, a third time, by another route
+
+*Run 68. 1 diagnostic. Fixed in `9c52d38`; run 69 then reported the app target
+at 1 error, and run 70 built clean.*
+
+```
+HopPotty/Services/ScreenTime/ScreenTimeService.swift:164:30:
+error: sending 'self.center' risks causing data races
+```
+
+`center` is an `AuthorizationCenter`, stored on a `@MainActor` class. Calling
+`try await center.requestAuthorization(for: .individual)` sends it out of the
+actor, because Apple's method is not isolated and `AuthorizationCenter` is not
+`Sendable`.
+
+**Layer 10's fix does not apply here, and that is the point.** There the repair
+was to move the boundary — stop hopping off the main actor, because the hop was
+the crossing. Here there is no boundary to move: `requestAuthorization(for:)`
+and `revokeAuthorization` belong to Apple, they are not isolated, and this type
+has to call them. The value genuinely leaves.
+
+So the annotation is `nonisolated(unsafe)` on the stored property, and it is
+honest rather than a silencer: what leaves is a process-wide singleton
+(`AuthorizationCenter.shared`) whose entire purpose is to be reached from the
+app *and* all three extensions, which HopPotty never mutates and stores nothing
+in. It stays injectable, so tests and the mock scheme are unaffected.
+
+---
+
+## Layer 13 — a bug no compiler could have found
+
+*Not a build failure. Found by the App Store readiness audit, fixed in
+`2be839a`.*
+
+`PurchaseService` hard-coded the product id `com.hoppotty.family.unlock`, while
+`Config/Base.xcconfig`, `HopPotty.storekit`, `Info.plist` and
+`Docs/ProductRequirements.md` all said `com.hoppotty.family`. One extra word.
+
+It compiles perfectly. At runtime `Product.products(for:)` returns nothing, the
+paywall sits in its unavailable state forever, and a family who paid stays
+locked — which reads in review as "the in-app purchase does not work"
+(Guideline 2.1). `Scripts/verify-config.sh` compared the xcconfig to the
+StoreKit file and stopped there, never looking at the Swift.
+
+The `Info.plist` key was always documented as the single place this is
+configured and simply had no reader. It has one now. The fallback for a missing
+key is *derived* by applying the xcconfig's own rule to the running bundle
+rather than written out, because a literal fallback would be wrong for any fork
+that changes its bundle prefix — and would reintroduce the very drift being
+removed. `verify-config.sh` now fails on any hard-coded product id in Swift.
+
+**Worth stating plainly: a green build is not a working app.** Everything in
+Layers 1–12 was found by a compiler. This one needed a person reading the
+codebase against its own documentation, and there is no reason to think it is
+the only one of its kind.
 
 ---
 
