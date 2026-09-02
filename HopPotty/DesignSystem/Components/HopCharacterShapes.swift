@@ -6,17 +6,44 @@ import SwiftUI
 /// (`hop_mascot.svg`), exactly as `Scripts/hop-art.js` draws him, so every
 /// number in ``HopPoseGeometry`` and ``HopAnatomy`` can be checked against the
 /// generator line for line. That space is then placed onto the 512 × 512 canvas
-/// the art files ship in — scale 3.2, offset (16, 0) — and the canvas is fitted
-/// to whatever rectangle the view was given. Two steps, both at the edge, so
-/// nothing in between has to know how big Hop is on screen.
+/// the art files ship in, and the canvas is fitted to whatever rectangle the
+/// view was given. Two steps, both at the edge, so nothing in between has to
+/// know how big Hop is on screen.
+///
+/// ## The placement is not a preference, it is a fit
+///
+/// It used to be `scale 3.2, offset (16, 0)`, which was hand-written and wrong:
+/// the pose set actually draws 169 × 174 reference units, so at 3.2 it needed
+/// 542 × 558 of a 512 box. **Fourteen of the fifteen poses were clipped** —
+/// every one but `face` lost its ground shadow, `idle`/`blink`/`talk` were cut
+/// on both sides, and `jump` lost the top of its head, which is what a caregiver
+/// reported. `Scripts/check-hop-fit.js` now measures the rendered alpha bounds
+/// of every pose and fails on any content that touches an edge.
+///
+/// These numbers are the generator's, solved rather than chosen: the stage
+/// rectangle the pose set occupies is `x 5…145`, `y −3…164`, so a 512 canvas
+/// with a 12-unit margin gives `scale 2.9` and the origin that centres it. They
+/// must equal `wrap()` in `Scripts/hop-art.js`; if that file's stage changes,
+/// these change with it or the app and the shipped art draw different frogs.
 enum HopCanvas {
     /// The side of the shipped canvas, which `Art/character/hop-*.svg` uses.
     static let side: CGFloat = 512
     /// The reference space, in which all anatomy is authored.
     static let referenceSize = CGSize(width: 150, height: 160)
-    /// `transform="translate(16 0) scale(3.2)"` from the generator's `wrap`.
-    static let referenceScale: CGFloat = 3.2
-    static let referenceOrigin = CGPoint(x: 16, y: 0)
+    /// `transform="translate(38.5 22.55) scale(2.9)"` from the generator's `wrap`.
+    static let referenceScale: CGFloat = 2.9
+    static let referenceOrigin = CGPoint(x: 38.5, y: 22.55)
+
+    /// The reference y a grounded pose's toes touch, and the ankle that puts
+    /// them there. `hop-art.js` sets `ankle = groundAnkle + lift` for every
+    /// grounded pose, which is what makes standing and sitting share one ground
+    /// line — and therefore lets a screen place any pose with one constant.
+    static let groundLine: CGFloat = 163.6
+    static let groundAnkle: CGFloat = 146
+
+    /// Where Hop's feet sit in the canvas, as a fraction of its height. Screens
+    /// position him by this rather than by guessing at his silhouette.
+    static var feetFraction: CGFloat { (groundLine * referenceScale + referenceOrigin.y) / side }
 
     /// Reference space → canvas space.
     static let referenceTransform = CGAffineTransform(scaleX: referenceScale, y: referenceScale)

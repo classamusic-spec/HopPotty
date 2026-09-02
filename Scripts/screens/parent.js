@@ -102,8 +102,17 @@ function tabBar(col, active) {
 const HOME_DECOR = ['cloudPuff', 'fernPatch', 'lilyPadLarge', 'lilyPadSmall', 'lilyFlower',
   'fishOrange', 'reedsLeft', 'reedsRight', 'butterflyBlue'];
 
-/** Fraction of `hop-sit.svg`'s box that is above the pad he is squatting on. */
-const SIT_FEET = 0.965;
+/**
+ * Fraction of Hop's box above the ground his feet stand on.
+ *
+ * Derived, not measured by eye: `hop-art.js` puts the ground line at reference
+ * y 163.6 and places the reference space at `scale 2.9, offset (38.5, 22.55)`,
+ * so the feet land at `(163.6 × 2.9 + 22.55) / 512`. Every grounded pose shares
+ * it, because the generator sets `ankle = 146 + lift` for all of them — so this
+ * one number seats sit, idle, wait and the rest on the same line.
+ * `HopCanvas.feetFraction` computes the same value in Swift.
+ */
+const SIT_FEET = 0.9707;
 /** Where the bank Hop stands on sits inside `pond-scene.svg`, as a fraction. */
 const PAD_X = 0.5;
 const BANK_FRACTION = 0.53;
