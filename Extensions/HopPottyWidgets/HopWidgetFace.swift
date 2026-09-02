@@ -216,11 +216,13 @@ struct HopWidgetFace: View {
         }
     }
 
-    /// The artwork's clip, or the whole frame when there is none.
+    /// The clip the artwork applies to this shape, or the whole artboard when it
+    /// applies none.
     ///
-    /// A rectangle the size of the view rather than `nil`, because
-    /// `clipShape` takes a shape and the two branches have to be the same view
-    /// type. It clips nothing.
+    /// The artboard rather than `nil`, because `clipShape` takes a shape and
+    /// both branches have to be one type. The artboard is bigger than the head
+    /// that is fitted to the view, so it falls outside the frame and clips
+    /// nothing.
     private func clip(_ shape: HopWidgetFaceShape) -> some Shape {
         shape.clip.map { HopWidgetFacePath(data: $0) }
             ?? HopWidgetFacePath(data: everything)

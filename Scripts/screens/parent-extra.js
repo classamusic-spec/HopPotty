@@ -572,8 +572,8 @@ function paywallFamily(appearance = 'light') {
     <div style="display:flex;gap:13px;align-items:flex-start">
       ${iconTile(soft(hue), glyph(tint, 18), { size: 34, radius: 11 })}
       <div style="flex:1;min-width:0">
-        <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15.5px">${title}</div>
-        <div style="${type('parentCallout', { color: col.textSecondary })};font-size:13.5px;margin-top:2px;line-height:1.38">${body}</div>
+        <div style="${type('parentCallout', { color: col.textPrimary, weight: 'semibold' })}">${title}</div>
+        <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:2px;line-height:1.38">${body}</div>
       </div>
     </div>`;
 
@@ -592,7 +592,7 @@ function paywallFamily(appearance = 'light') {
         </div>
       </div>
 
-      <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:12px;padding-top:16px">
+      <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:${T.spacing.m}px;padding-top:${T.spacing.m}px">
         ${feature(EXTRA.people, dark ? P.hopGreenLight : P.hopGreenInk, P.hopGreen, 'More than one child',
           'Give each child their own pond, stars and schedule.')}
         ${feature(EXTRA.pond, col.eventPee, P.pondBlue, 'The whole pond',
@@ -605,28 +605,28 @@ function paywallFamily(appearance = 'light') {
           'Take a copy of the timeline with you.')}
       </div>
 
-      <div style="flex:1;min-height:8px"></div>
+      <div style="flex:1"></div>
 
-      <div style="flex:0 0 auto;background:${col.surfaceSunken};border-radius:${T.radius.l}px;padding:11px 15px;
+      <div style="flex:0 0 auto;background:${col.surfaceSunken};border-radius:${T.radius.l}px;padding:${T.spacing.s}px 15px;
         border:1px solid ${col.divider}">
         ${[
           'One purchase, not a subscription. The price is the price.',
           'Shared with everyone in your Family Sharing group.',
           'No ads, no analytics, no tracking — in either version.',
-        ].map((line, i) => `<div style="display:flex;gap:10px;align-items:flex-start;${i ? 'margin-top:7px' : ''}">
+        ].map((line, i) => `<div style="display:flex;gap:10px;align-items:flex-start;${i ? `margin-top:${T.spacing.xs}px` : ''}">
           ${MARK.check(col.success, 15)}
           <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.35">${line}</div>
         </div>`).join('')}
       </div>
 
-      <div style="height:12px;flex:0 0 auto"></div>
+      <div style="height:${T.spacing.s}px;flex:0 0 auto"></div>
 
       <div style="flex:0 0 auto">
         <div style="text-align:center;${type('parentTitle', { color: col.textPrimary })};font-size:22px">$19.99 once</div>
         <div style="margin-top:12px">${ctaButton(col, appearance, 'Unlock HopPotty')}</div>
-        <div style="margin-top:9px">${secondaryButton(col, 'Restore purchase', { height: 50 })}</div>
+        <div style="margin-top:${T.spacing.s}px">${secondaryButton(col, 'Restore purchase', { height: 50 })}</div>
         <div style="${type('parentCaption', { color: col.textSecondary })};line-height:1.42;
-          text-align:center;padding:12px 2px 0">
+          text-align:center;padding:${T.spacing.s}px 2px 0">
           The free version keeps one child, the full routine and every reminder. Nothing your child earned is ever behind the purchase.</div>
       </div>
     </div>
@@ -667,7 +667,7 @@ function parentGate(appearance = 'light') {
       <div style="flex:0 0 auto;${type('parentBody', { color: col.textSecondary })};font-size:16px;line-height:1.4">
         Hold the button, then answer the question.</div>
 
-      <div style="flex:0 0 auto;display:flex;align-items:center;gap:14px;margin-top:18px;
+      <div style="flex:0 0 auto;display:flex;align-items:center;gap:14px;margin-top:${T.spacing.l}px;
         background:${col.surface};border-radius:${T.radius.l}px;padding:13px 15px;box-shadow:${elevation(appearance, 'resting')}">
         <div style="position:relative;width:52px;height:52px;flex:0 0 auto">
           <svg width="52" height="52" viewBox="0 0 52 52">
@@ -680,12 +680,12 @@ function parentGate(appearance = 'light') {
           </div>
         </div>
         <div style="flex:1">
-          <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15.5px">Held</div>
+          <div style="${type('parentCallout', { color: col.textPrimary, weight: 'semibold' })}">Held</div>
           <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:1px">Press and hold, one second.</div>
         </div>
       </div>
 
-      <div style="flex:0 0 auto;padding-top:22px">
+      <div style="flex:0 0 auto;padding-top:${T.spacing.xl}px">
         <div style="${type('parentTitle', { color: col.textPrimary })};font-size:24px">What is 13 plus 24?</div>
         <div style="margin-top:14px;height:56px;border-radius:${T.radius.m}px;background:${col.surface};
           border:1.5px solid ${col.brandAction};display:flex;align-items:center;padding:0 16px;
@@ -1414,18 +1414,13 @@ function insightsPad(appearance = 'light') {
 
           <div style="width:${colW}px;flex:0 0 auto">
             ${cardBox(`
-              ${head('Successful tries', MARK.check, TINT.check.tint, TINT.check.soft)}
-              <div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px">
-                <div style="${type('timerHero', { color: col.textPrimary })};font-size:52px;line-height:1">67%</div>
-                <div style="display:flex;align-items:center;gap:4px;padding:3px 10px 3px 7px;border-radius:11px;
-                  background:${TINT.check.soft};margin-bottom:9px">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${TINT.check.tint}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"/><path d="M5.6 12.4 12 6l6.4 6.4"/></svg>
-                  <span style="${type('parentFootnote', { color: TINT.check.tint, weight: 'semibold' })};">+12% vs last week</span>
-                </div>
-              </div>
+              ${head('Visits recorded', MARK.check, TINT.check.tint, TINT.check.soft)}
+              <div style="${type('metric', { color: col.textPrimary })};font-size:32px;margin-top:8px">18 visits</div>
+              <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:4px;line-height:1.38">
+                across 5 days with entries, compared with 12 in the period before.</div>
               <div style="margin:8px -4px 0">
-                ${sparkline([0.42, 0.5, 0.44, 0.58, 0.55, 0.63, 0.67], {
-                  w: colW - 32, h: 150, stroke: TINT.check.tint, fill: TINT.check.tint,
+                ${sparkline([2, 4, 1, 3, 4, 2, 2], {
+                  w: colW - 32, h: 138, stroke: TINT.check.tint, fill: TINT.check.tint,
                 })}
               </div>
               <div style="display:flex;justify-content:space-between;margin-top:4px">
@@ -1436,7 +1431,7 @@ function insightsPad(appearance = 'light') {
             <div style="height:${gap}px"></div>
 
             ${cardBox(`
-              <div style="${type('parentHeadline', { color: col.textSecondary, weight: 'semibold' })};font-size:14.5px">What was logged</div>
+              <div style="${type('parentCallout', { color: col.textSecondary, weight: 'semibold' })}">What was logged</div>
               <div style="display:flex;margin-top:12px">
                 ${metricChip(col, { glyph: 'check', value: '38', label: 'Checks', tint: TINT.check.tint, tintSoft: TINT.check.soft })}
                 ${metricChip(col, { glyph: 'tried', value: '31', label: 'Tried', tint: TINT.tried.tint, tintSoft: TINT.tried.soft })}
@@ -1462,12 +1457,12 @@ function insightsPad(appearance = 'light') {
 
           <div style="width:${colW}px;flex:0 0 auto">
             ${cardBox(`
-              ${head('Best time of day', MARK.clock, TINT.tried.tint, TINT.tried.soft)}
+              ${head('Typical gap', MARK.clock, TINT.tried.tint, TINT.tried.soft)}
               <div style="display:flex;align-items:flex-start;gap:16px;margin-top:8px">
                 <div style="flex:1;min-width:0">
                   <div style="${type('metric', { color: col.textPrimary })};font-size:28px">45–55 min</div>
                   <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:4px;line-height:1.38">
-                    after the last visit is when most successful tries happened.</div>
+                    Half of the recorded gaps between visits fell in this range. From 20 gaps.</div>
                 </div>
                 <div style="width:140px;flex:0 0 auto;padding-top:14px">${dayShape([0.3, 0.45, 0.6, 1, 0.72, 0.4, 0.25], 3)}</div>
               </div>

@@ -750,11 +750,13 @@ function build({ quiet = false } = {}) {
  * exact the geometry is. Gating on that number would mean gating on the
  * rasteriser's mood.
  *
- * So a pixel counts only if it differs *and* sits somewhere the artwork is flat
- * — inside a fill, away from any edge. Nothing that is merely antialiased can
- * land there, and nothing that is actually wrong can avoid it: a shape that
- * moved, changed colour, went missing or arrived unclipped repaints an area,
- * and an area is interior.
+ * So a pixel counts only if it differs *and* both drawings are flat around it —
+ * inside a fill, away from any edge in either one. Nothing that is merely
+ * antialiased can land there, and nothing that is actually wrong can avoid it: a
+ * shape that moved, changed colour, went missing or arrived unclipped repaints
+ * an area, and an area is interior. A deliberate two-unit shift of one pupil —
+ * six tenths of a percent of the head's width — fails this at four times the
+ * limit; that is the calibration.
  */
 const TOLERANCE = 0.0002;
 /** Below this a pixel is antialiasing along an edge, not a different drawing. */
@@ -887,14 +889,22 @@ async function check() {
 // --sheet: what the five families get, at the sizes they get it
 // ---------------------------------------------------------------------------
 
-/** Where `HopWidgetFace` is used, and how wide Hop's head is there. */
+/**
+ * Every place `HopWidgetFace` is used, and how wide Hop's head is there.
+ *
+ * Keep this in step with the call sites in `NextPauseWidget.swift` and
+ * `PottyPauseActivity.swift` — the sheet is worth having only while the sizes on
+ * it are the sizes that ship.
+ */
 const USES = [
-  { label: 'systemMedium', size: 64, mono: false },
-  { label: 'Live Activity', size: 46, mono: false },
-  { label: 'systemSmall', size: 40, mono: false },
+  { label: 'systemMedium', size: 72, mono: false },
+  { label: 'Live Activity (lock screen)', size: 54, mono: false },
+  { label: 'systemSmall', size: 48, mono: false },
+  { label: 'Dynamic Island (expanded)', size: 46, mono: false },
   { label: 'accessoryRectangular', size: 30, mono: true },
-  { label: 'accessoryCircular', size: 24, mono: true },
-  { label: 'Dynamic Island (compact)', size: 18, mono: true },
+  { label: 'accessoryCircular', size: 26, mono: true },
+  { label: 'Dynamic Island (compact)', size: 22, mono: true },
+  { label: 'Dynamic Island (minimal)', size: 20, mono: true },
 ];
 
 /** sRGB relative luminance, for the naive-vibrancy comparison. */

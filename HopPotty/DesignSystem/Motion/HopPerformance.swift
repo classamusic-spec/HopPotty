@@ -770,9 +770,11 @@ final class HopPerformer {
         // amplitude is a metronome.
         for lean in [1.4, -1.8] {
             guard isCurrent(mine) else { return }
+            // The hand goes the way the body is not.
+            let swing = CGFloat(-lean * 2.6)
             frame = HopFrame(
                 pose: .wave,
-                secondary: HopSecondary(hands: CGSize(width: 0, height: -lean * 2.6)),
+                secondary: HopSecondary(hands: CGSize(width: 0, height: swing)),
                 lean: lean,
                 spring: HopMotion.jumpFall
             )
