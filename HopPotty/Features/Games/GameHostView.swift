@@ -15,6 +15,13 @@ import HopPottyCore
 ///   is never rendered as a number;
 /// * **every ending is the same ending** — one cheer, one star, whether the
 ///   board finished itself or the child said when.
+///
+/// The one thing an ending is allowed to vary is *where it goes*. A round that
+/// reached `MiniGameCompletion.handOffToRoutine` says so through
+/// ``handsOffToRoutine``, and the ending then names the place it is taking the
+/// child rather than offering a door back to the game list — see
+/// `MiniGameRoundResult.handOffStep`, which is what actually carries the
+/// hand-off out to the caller.
 struct GameHostView<Board: View>: View {
     @Environment(\.hopTheme) private var theme
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -22,6 +29,11 @@ struct GameHostView<Board: View>: View {
     let game: MiniGame
     let isFinished: Bool
     let completion: Double
+    /// Whether this round reached the ending that walks the child into the
+    /// guided routine. False for every round of every other game, and false for
+    /// a hand-off game the child left early: being taken to the bathroom is the
+    /// end of Hop's story, not a toll for having opened the game.
+    var handsOffToRoutine: Bool = false
     let onPlayAgain: () -> Void
     let onLeave: () -> Void
     @ViewBuilder var board: () -> Board
@@ -87,16 +99,31 @@ struct GameHostView<Board: View>: View {
                 HopCharacterStage(pose: .cheer, size: ChildStage.characterSize(for: horizontalSizeClass))
                     .accessibilityHidden(true)
 
-                Text(HopCopy.games.finished.localized)
+                // The game's own closing line where it wrote one, and the shared
+                // "Great playing!" where it did not. Both say the same thing
+                // about the round: it happened, and that was the whole ask.
+                Text((game.done ?? HopCopy.games.finished).localized)
                     .hopTextStyle(.celebration)
                     .foregroundStyle(theme.color.textPrimary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isHeader)
 
-                HopSpokenLine(HopVoice.shared.gameFinished)
+                HopSpokenLine(endingLine)
 
-                HopPrimaryButton(HopCopy.games.doneButton.localized, icon: "checkmark", size: .childPrimary, action: onLeave)
+                if handsOffToRoutine {
+                    // The button says where it is going, because that is what
+                    // it does: this round ends at the potty rather than back on
+                    // the game list.
+                    HopPrimaryButton(
+                        GameCopy.handOffButton.localized,
+                        icon: "figure.walk",
+                        size: .childPrimary,
+                        action: onLeave
+                    )
+                } else {
+                    HopPrimaryButton(HopCopy.games.doneButton.localized, icon: "checkmark", size: .childPrimary, action: onLeave)
+                }
                 HopPrimaryButton(HopCopy.games.againButton.localized, icon: "arrow.clockwise", size: .child, action: onPlayAgain)
             }
             .padding(theme.spacing.xxxl)
@@ -111,6 +138,12 @@ struct GameHostView<Board: View>: View {
         .hopTransition(.childCelebrate)
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isModal)
+    }
+
+    /// What Hop says over the ending. A hand-off round says where everyone is
+    /// going; every other round gets the shared cheer.
+    private var endingLine: HopPottyCore.HopVoiceLine {
+        handsOffToRoutine ? game.line("handOff") : HopVoice.shared.gameFinished
     }
 }
 
@@ -163,6 +196,20 @@ private struct GameProgressDots: View {
         game: MiniGameCatalog.pottyPath,
         isFinished: true,
         completion: 1,
+        onPlayAgain: {},
+        onLeave: {}
+    ) {
+        Color.clear
+    }
+    .hopThemedRoot()
+}
+
+#Preview("Game host · finished at the potty") {
+    GameHostView(
+        game: MiniGameCatalog.flySnack,
+        isFinished: true,
+        completion: 1,
+        handsOffToRoutine: true,
         onPlayAgain: {},
         onLeave: {}
     ) {

@@ -48,14 +48,20 @@ struct FlushWaveGameView: View {
 
     // MARK: - Pieces
 
-    /// The water going round. Two full turns over the two seconds, drawn by
-    /// mapping the model's progress onto an angle — so under Reduce Motion the
-    /// token cross-fades between the quarter-turns the clock reports instead of
-    /// spinning a wheel on a child's screen.
+    /// The water going round: one turn over the two seconds, drawn by mapping
+    /// the model's progress onto an angle.
+    ///
+    /// One turn rather than several, deliberately. Rotation is the one transform
+    /// a motion token cannot soften — the token decides how each step *lands*,
+    /// but the turning itself is in the value, and a wheel that keeps spinning
+    /// is exactly what Reduce Motion is asked for. A quarter-turn per tick with
+    /// the shrink and the fade doing most of the work reads as water going down
+    /// either way, and does not spin on the screen of a child who asked for
+    /// less of that.
     private func swirl(in size: CGSize) -> some View {
         HopArtwork("icon.games.swirl", accessibilityLabel: GameCopy.swirl.localized)
             .frame(width: size.width * 0.46, height: size.width * 0.46)
-            .rotationEffect(.degrees(session.swirlProgress * 720))
+            .rotationEffect(.degrees(session.swirlProgress * 360))
             .scaleEffect(0.7 + session.swirlProgress * 0.3)
             .opacity(session.swirlProgress > 0 ? 1 : 0)
             .position(x: size.width * 0.5, y: size.height * 0.42)
@@ -184,6 +190,16 @@ private struct FlushWaveHostPreview: View {
         let session = FlushWaveSession()
         session.flush()
         session.advance(by: FlushWaveSession.swirlDuration + 0.1)
+        return session
+    }())
+}
+
+#Preview("Flush and Wave · flusher and tap both offered") {
+    FlushWaveHostPreview(session: {
+        let session = FlushWaveSession()
+        session.flush()
+        session.advance(by: FlushWaveSession.swirlDuration + 0.1)
+        session.advance(by: FlushWaveSession.waveDuration + 0.1)
         return session
     }())
 }

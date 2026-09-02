@@ -228,6 +228,20 @@ extension GameCopy {
     )
     static let slotFilled = HopCopyEntry.child("games.pottyOrder.a11y.slotFilled", "Filled")
 
+    // MARK: The hand-off ending
+
+    /// The button that ends a `MiniGameCompletion.handOffToRoutine` round.
+    ///
+    /// It names where the child is going rather than saying "All done", because
+    /// that ending does not go back to the game list — it goes to the bathroom.
+    /// Same words as the shield's invitation, on purpose: a child who has
+    /// learned what "Let's go!" leads to should find the same phrase here.
+    static let handOffButton = HopCopyEntry.child(
+        "games.handOff.button",
+        "Let's go!",
+        comment: "Ends a mini-game that finishes by starting the guided routine. Should match the shield's invitation in tone."
+    )
+
     /// The entries declared in this extension, folded into ``allEntries``.
     static var boardEntries: [HopCopyEntry] {
         [fly, flySnackHop, flySnackHopFull, tummyMeter]
@@ -237,6 +251,7 @@ extension GameCopy {
             + [flusher, swirl, flushWaveTap, flushWaveHop]
             + OrderCard.allCases.flatMap { [$0.label, $0.slotLabel] }
             + [pickUpHint, slotFilled]
+            + [handOffButton]
     }
 }
 
