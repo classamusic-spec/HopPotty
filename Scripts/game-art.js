@@ -102,6 +102,23 @@ const DEFS = {
   towelGrad: lin('towelGrad', [[0, '#A8DCF2'], [1, '#6FC0E2']]),
   paperSheet: lin('paperSheet', [[0, '#FFFFFF'], [1, P.sand100]], { x1: 0.2, x2: 0.9 }),
   metalGrad: lin('metalGrad', [[0, P.sand100], [1, P.sand400]], { x1: 0.15, x2: 0.9 }),
+  // Material vocabulary shared with `scene-art.js`, so the bathroom in Flush
+  // Wave and the garden in Mud Off are lit the same way as the routine steps:
+  // one key light from the top left, warm porcelain against cool tile, and
+  // chrome as a hard dark-to-light flip rather than a soft grey ramp.
+  porcelainTop: lin('porcelainTop', [[0, '#FFFFFF'], [1, '#E9E3DA']], { x1: 0.25, x2: 0.85 }),
+  ceramicAO: rad('ceramicAO', [[0, P.sand600, 0.34], [0.62, P.sand600, 0.1], [1, P.sand600, 0]]),
+  chromeGrad: lin('chromeGrad', [[0, '#F7F4EF'], [0.2, '#D6D0C7'], [0.4, '#8C857A'], [0.5, '#6B6459'],
+    [0.58, '#C3BCB1'], [0.78, '#FDFBF7'], [1, '#B6AFA4']], { x1: 0, y1: 0, x2: 1, y2: 0 }),
+  chromeGradV: lin('chromeGradV', [[0, '#FBF9F5'], [0.24, '#DCD6CD'], [0.46, '#8C857A'], [0.54, '#6B6459'],
+    [0.66, '#CAC3B8'], [0.86, '#F7F4EF'], [1, '#AEA79C']]),
+  tileSheen: lin('tileSheen', [[0, '#FFFFFF', 0.55], [0.42, '#FFFFFF', 0.14], [1, '#FFFFFF', 0]], { x1: 0.05, y1: 0, x2: 0.8, y2: 1 }),
+  wallLight: rad('wallLight', [[0, '#FFFFFF', 0.66], [0.5, '#FFFFFF', 0.24], [1, '#FFFFFF', 0]], { cx: 0.16, cy: 0.1, r: 0.72 }),
+  floorGlow: rad('floorGlow', [[0, '#FFFDF6', 0.85], [0.55, '#FFFDF6', 0.3], [1, '#FFFDF6', 0]], { cx: 0.42, cy: 0.55, r: 0.6 }),
+  floorFall: lin('floorFall', [[0, P.sand500, 0.24], [0.28, P.sand500, 0.05], [1, P.sand500, 0]]),
+  hillHaze: lin('hillHaze', [[0, '#D9EEE8'], [1, '#C6E6DA']]),
+  hedgeFar: lin('hedgeFar', [[0, '#B3E0C8'], [1, '#8FCFAC']]),
+  meadowLight: lin('meadowLight', [[0, '#FFFFFF', 0], [0.45, '#FFF6DE', 0.32], [1, '#FFF6DE', 0]], { x1: 0.1, y1: 0, x2: 0.9, y2: 0.4 }),
 
   // -- New to the games set --------------------------------------------------
   // Dusk is the one lighting condition the existing scenes do not cover. It is
@@ -369,14 +386,22 @@ function cattail(x, baseY, h, { tilt = 0, head = true, s = 1 } = {}) {
 }
 
 /** A garden standpipe: a tap on a post with a tin basin under it. */
+/** A crisp specular: the one hard highlight that reads as glaze or metal. */
+const specular = (cx, cy, rx, ry, rot = -22, o = 0.9) =>
+  `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#FFFFFF" opacity="${o}" transform="rotate(${rot} ${cx} ${cy})"/>`;
+
+/** A soft cast shadow on a wall, pushed away from the key light. */
+const wallShadow = (cx, cy, rx, ry = rx, o = 0.62) =>
+  `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#softShadow)" opacity="${o}"/>`;
+
 function gardenTap(cx, baseY, s = 1) {
   return g(`translate(${cx} ${baseY}) scale(${s})`, `
     ${contactShadow(6, 4, 96, 18)}
-    <rect x="-13" y="-210" width="26" height="212" rx="13" fill="${P.sand300}"/>
-    <rect x="-13" y="-210" width="11" height="212" rx="5.5" fill="#FFFFFF" opacity="0.45"/>
-    <path d="M 0 -210 v -22 q 0 -18 18 -18 h 26" stroke="${P.sand300}" stroke-width="24" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M 0 -210 v -22 q 0 -18 18 -18 h 26" stroke="${P.sand200}" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="38" y="-262" width="20" height="26" rx="9" fill="${P.sand400}"/>
+    <rect x="-13" y="-210" width="26" height="212" rx="13" fill="url(#chromeGrad)"/>
+    <rect x="-9" y="-206" width="6" height="204" rx="3" fill="#FFFFFF" opacity="0.7"/>
+    <path d="M 0 -210 v -22 q 0 -18 18 -18 h 26" stroke="url(#chromeGradV)" stroke-width="24" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M -5 -214 v -18 q 0 -13 13 -13 h 24" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+    <rect x="38" y="-262" width="20" height="26" rx="9" fill="url(#chromeGrad)"/>
     <circle cx="0" cy="-256" r="17" fill="${P.pondBlue}"/>
     <circle cx="0" cy="-256" r="9" fill="${P.pondBlueSoft}"/>
     <rect x="-30" y="-262" width="60" height="12" rx="6" fill="${P.pondBlueDeep}" opacity="0.35"/>
@@ -385,11 +410,11 @@ function gardenTap(cx, baseY, s = 1) {
     <ellipse cx="46" cy="-8" rx="104" ry="30" fill="${P.sand400}" opacity="0.5"/>
     <path d="M -50 -76 h 192 q 10 0 8 12 l -14 56 q -2 10 -14 12 q -76 10 -152 0 q -12 -2 -14 -12 l -14 -56 q -2 -12 8 -12 Z" fill="url(#metalGrad)"/>
     <path d="M -50 -76 h 46 l 8 82 q -20 -2 -36 -6 q -12 -2 -14 -12 l -14 -56 q -2 -8 10 -8 Z" fill="#FFFFFF" opacity="0.4"/>
-    <ellipse cx="46" cy="-76" rx="98" ry="22" fill="${P.sand300}"/>
-    <ellipse cx="46" cy="-79" rx="98" ry="22" fill="url(#metalGrad)"/>
-    <ellipse cx="46" cy="-77" rx="78" ry="16" fill="${P.pondBlue}"/>
+    <ellipse cx="46" cy="-76" rx="98" ry="22" fill="${P.sand400}" opacity="0.6"/>
+    <ellipse cx="46" cy="-79" rx="98" ry="22" fill="url(#porcelainTop)"/>
+    <ellipse cx="46" cy="-77" rx="78" ry="16" fill="${P.sand400}" opacity="0.55"/>
     <ellipse cx="46" cy="-79" rx="78" ry="16" fill="${P.pondBlueLight}"/>
-    <ellipse cx="18" cy="-83" rx="30" ry="6" fill="#FFFFFF" opacity="0.6"/>`);
+    ${specular(18, -84, 28, 6, -5, 0.6)}`);
 }
 
 /** A kind toilet, seen from the front.
@@ -404,28 +429,34 @@ function kindToilet(cx, baseY, s = 1) {
   return g(`translate(${cx} ${baseY}) scale(${s})`, `
     ${contactShadow(0, 6, 150, 26)}
     <!-- cistern -->
-    <path d="M -96 -196 q 0 -20 20 -20 h 152 q 20 0 20 20 v 96 q 0 20 -20 20 h -152 q -20 0 -20 -20 Z" fill="${P.sand300}"/>
+    <path d="M -96 -196 q 0 -20 20 -20 h 152 q 20 0 20 20 v 96 q 0 20 -20 20 h -152 q -20 0 -20 -20 Z" fill="${P.sand400}" opacity="0.5"/>
     <path d="M -96 -204 q 0 -20 20 -20 h 152 q 20 0 20 20 v 96 q 0 20 -20 20 h -152 q -20 0 -20 -20 Z" fill="url(#porcelainGrad)"/>
-    <path d="M -96 -204 q 0 -20 20 -20 h 40 v 136 h -40 q -20 0 -20 -20 Z" fill="#FFFFFF" opacity="0.5"/>
-    <ellipse cx="0" cy="-224" rx="96" ry="18" fill="${P.porcelainMid}"/>
-    <ellipse cx="0" cy="-227" rx="96" ry="18" fill="url(#porcelainGrad)"/>
+    <path d="M -96 -204 q 0 -20 20 -20 h 40 v 136 h -40 q -20 0 -20 -20 Z" fill="#FFFFFF" opacity="0.55"/>
+    <path d="M 96 -186 v 78 q 0 20 -20 20 h -34 q 40 -8 40 -40 Z" fill="${P.sand500}" opacity="0.14"/>
+    <ellipse cx="0" cy="-224" rx="96" ry="18" fill="${P.sand400}" opacity="0.6"/>
+    <ellipse cx="0" cy="-227" rx="96" ry="18" fill="url(#porcelainTop)"/>
     <!-- flusher: a big soft push button, the one thing a child must find -->
-    <ellipse cx="0" cy="-227" rx="40" ry="15" fill="${P.pondBlueDeep}" opacity="0.35"/>
+    <ellipse cx="0" cy="-226" rx="46" ry="17" fill="${P.sand500}" opacity="0.28"/>
+    <ellipse cx="0" cy="-229" rx="46" ry="17" fill="url(#chromeGrad)"/>
+    <ellipse cx="0" cy="-227" rx="40" ry="15" fill="${P.pondBlueDeep}" opacity="0.4"/>
     <ellipse cx="0" cy="-232" rx="40" ry="15" fill="url(#blueBall)"/>
     <ellipse cx="0" cy="-234" rx="26" ry="9" fill="${P.pondBlueSoft}" opacity="0.9"/>
-    <ellipse cx="-12" cy="-236" rx="12" ry="4" fill="#FFFFFF" opacity="0.75"/>
+    ${specular(-12, -237, 13, 4, -6, 0.85)}
     <!-- bowl -->
     <path d="M -84 -120 C -96 -52 -66 -14 -50 -6 Q 0 12 50 -6 C 66 -14 96 -52 84 -120 Z" fill="url(#porcelainGrad)"/>
     <path d="M -84 -120 C -96 -52 -66 -14 -50 -6 Q -34 0 -20 2 C -48 -20 -60 -66 -56 -120 Z" fill="#FFFFFF" opacity="0.45"/>
+    <path d="M 84 -120 C 96 -52 66 -14 50 -6 Q 34 0 20 2 C 48 -20 60 -66 56 -120 Z" fill="${P.sand500}" opacity="0.14"/>
     <path d="M -58 4 q 58 16 116 0 l 6 22 q -62 16 -128 0 Z" fill="${P.sand200}"/>
+    <ellipse cx="0" cy="18" rx="76" ry="12" fill="url(#ceramicAO)"/>
     <!-- concentric seat: rim, seat ring, water -->
-    <ellipse cx="0" cy="-116" rx="112" ry="40" fill="${P.sand300}"/>
-    <ellipse cx="0" cy="-124" rx="112" ry="40" fill="url(#porcelainGrad)"/>
-    <ellipse cx="0" cy="-124" rx="84" ry="27" fill="${P.sand300}" opacity="0.8"/>
+    <ellipse cx="0" cy="-116" rx="112" ry="40" fill="${P.sand400}" opacity="0.6"/>
+    <ellipse cx="0" cy="-124" rx="112" ry="40" fill="url(#porcelainTop)"/>
+    <path d="M -112 -124 a 112 40 0 0 1 112 -40 a 112 40 0 0 0 -92 54 Z" fill="#FFFFFF" opacity="0.7"/>
+    <ellipse cx="0" cy="-124" rx="84" ry="27" fill="${P.sand400}" opacity="0.7"/>
     <ellipse cx="0" cy="-128" rx="84" ry="27" fill="${P.porcelainMid}"/>
-    <ellipse cx="0" cy="-128" rx="62" ry="19" fill="${P.pondBlueDeep}" opacity="0.45"/>
+    <ellipse cx="0" cy="-128" rx="62" ry="19" fill="${P.pondBlueDeep}" opacity="0.5"/>
     <ellipse cx="0" cy="-132" rx="62" ry="19" fill="${P.pondBlueLight}"/>
-    <ellipse cx="-24" cy="-136" rx="24" ry="6" fill="#FFFFFF" opacity="0.55"/>`);
+    ${specular(-24, -137, 26, 6, -5, 0.6)}`);
 }
 
 /** A pedestal sink beside the toilet: a rounded basin on a soft column. */
@@ -434,14 +465,16 @@ function pedestalSink(cx, baseY, s = 1) {
     ${contactShadow(0, 4, 92, 18)}
     <path d="M -34 0 q -14 0 -10 -18 l 16 -104 h 56 l 16 104 q 4 18 -10 18 Z" fill="url(#porcelainSide)"/>
     <path d="M -34 0 q -14 0 -10 -18 l 16 -104 h 20 l -14 122 Z" fill="#FFFFFF" opacity="0.45"/>
-    <path d="M 0 -206 v -34 q 0 -26 -26 -26 h -34" stroke="${P.sand300}" stroke-width="20" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M 0 -206 v -34 q 0 -26 -26 -26 h -34" stroke="${P.sand200}" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="-76" y="-276" width="26" height="20" rx="9" fill="${P.sand400}"/>
-    <ellipse cx="0" cy="-118" rx="92" ry="28" fill="${P.sand300}"/>
-    <ellipse cx="0" cy="-126" rx="92" ry="28" fill="url(#porcelainGrad)"/>
-    <ellipse cx="0" cy="-126" rx="66" ry="18" fill="${P.porcelainShade}"/>
+    <path d="M 0 -206 v -34 q 0 -26 -26 -26 h -34" stroke="url(#chromeGradV)" stroke-width="20" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M -5 -210 v -30 q 0 -21 -21 -21 h -30" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+    <rect x="-76" y="-276" width="26" height="20" rx="9" fill="url(#chromeGrad)"/>
+    <ellipse cx="0" cy="-108" rx="60" ry="10" fill="url(#ceramicAO)"/>
+    <ellipse cx="0" cy="-118" rx="92" ry="28" fill="${P.sand400}" opacity="0.55"/>
+    <ellipse cx="0" cy="-126" rx="92" ry="28" fill="url(#porcelainTop)"/>
+    <path d="M -92 -126 a 92 28 0 0 1 92 -28 a 92 28 0 0 0 -76 38 Z" fill="#FFFFFF" opacity="0.7"/>
+    <ellipse cx="0" cy="-126" rx="66" ry="18" fill="${P.sand400}" opacity="0.6"/>
     <ellipse cx="0" cy="-129" rx="64" ry="17" fill="${P.pondBlueLight}"/>
-    <ellipse cx="-22" cy="-133" rx="24" ry="6" fill="#FFFFFF" opacity="0.6"/>`);
+    ${specular(-22, -134, 26, 6, -5, 0.6)}`);
 }
 
 /** A towel folded over a wall rail. */
@@ -589,7 +622,13 @@ const scenes = {
     <circle cx="546" cy="66" r="34" fill="url(#sunDisc)"/>
     ${cloud(180, 62, 118, { opacity: 0.6 })}
     ${cloud(392, 40, 84, { opacity: 0.42 })}
+    <path d="M -20 192 Q 130 148 310 178 Q 490 208 660 168 L 660 300 L -20 300 Z" fill="url(#hillHaze)"/>
     <path d="M -20 214 Q 140 168 320 200 Q 500 232 660 190 L 660 320 L -20 320 Z" fill="url(#hillFar)"/>
+    <g fill="url(#hedgeFar)" opacity="0.85">
+      ${[[24, 226, 58], [148, 216, 64], [286, 222, 60], [418, 214, 66], [552, 224, 58], [656, 218, 54]]
+        .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}
+      <rect x="-20" y="222" width="${SW + 40}" height="60"/>
+    </g>
     <g fill="url(#hedgeGreen)">
       ${[[-10, 250, 78], [86, 236, 88], [200, 244, 82], [312, 232, 92], [432, 244, 84], [548, 236, 90], [648, 250, 76]]
         .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}
@@ -600,7 +639,9 @@ const scenes = {
         .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}
     </g>
     <rect x="0" y="316" width="${SW}" height="${SH - 316}" fill="url(#ground)"/>
-    <path d="M -20 380 Q 180 356 340 382 Q 500 408 660 384 L 660 500 L -20 500 Z" fill="url(#groundNear)" opacity="0.55"/>
+    <rect x="0" y="316" width="${SW}" height="130" fill="url(#meadowLight)"/>
+    <ellipse cx="330" cy="330" rx="380" ry="34" fill="${P.hopGreenInk}" opacity="0.1"/>
+    <path d="M -20 380 Q 180 356 340 382 Q 500 408 660 384 L 660 500 L -20 500 Z" fill="url(#groundNear)" opacity="0.6"/>
     <g opacity="0.55">
       <path d="${splat(474, 424, 54, [1, 0.72, 0.96, 0.7, 1.04, 0.74, 0.92, 0.68], 0.34)}" fill="#B07747" opacity="0.4"/>
       <path d="${splat(474, 421, 48, [1, 0.72, 0.96, 0.7, 1.04, 0.74, 0.92, 0.68], 0.34)}" fill="#C08A5E" opacity="0.5"/>
@@ -684,16 +725,25 @@ const scenes = {
    *  the left wall. */
   'games-flushWave': () => `
     ${room({ floorY: 372, wall: P.pondBlueSoft, floor: P.sand100, orbs: false })}
-    <circle cx="330" cy="112" r="86" fill="#FFFFFF" opacity="0.4"/>
-    <circle cx="80" cy="60" r="52" fill="${P.sunshineSoft}" opacity="0.7"/>
-    <rect x="0" y="252" width="${SW}" height="120" fill="#BEE4F3"/>
-    <g stroke="#FFFFFF" stroke-width="4" opacity="0.5" stroke-linecap="round">
-      <path d="M 0 308 h ${SW}"/>
-      <path d="M 72 256 v 52 M 216 256 v 52 M 360 256 v 52 M 504 256 v 52"/>
-      <path d="M 144 310 v 58 M 288 310 v 58 M 432 310 v 58 M 576 310 v 58"/>
+    <rect x="0" y="0" width="${SW}" height="372" fill="url(#wallLight)"/>
+    <g id="wall-tile">
+      <rect x="0" y="252" width="${SW}" height="120" fill="#FFFFFF" opacity="0.5"/>
+      <path d="M 80 252 V 372 M 160 252 V 372 M 240 252 V 372 M 320 252 V 372 M 400 252 V 372 M 480 252 V 372 M 560 252 V 372 M 0 292 H ${SW} M 0 332 H ${SW}"
+        stroke="${P.pondBlueSoft}" stroke-width="3.4" opacity="0.9" fill="none"/>
+      <path d="M 80 252 V 372 M 160 252 V 372 M 240 252 V 372 M 320 252 V 372 M 400 252 V 372 M 480 252 V 372 M 560 252 V 372 M 0 292 H ${SW} M 0 332 H ${SW}"
+        stroke="#FFFFFF" stroke-width="1.4" opacity="0.5" fill="none" transform="translate(-1.6 -1.6)"/>
+      <rect x="0" y="252" width="${SW}" height="120" fill="url(#tileSheen)"/>
+      <rect x="0" y="252" width="${SW}" height="11" fill="${P.sand500}" opacity="0.1"/>
+      <rect x="0" y="239" width="${SW}" height="15" rx="7.5" fill="${P.sand200}"/>
+      <rect x="0" y="239" width="${SW}" height="6" rx="3" fill="#FFFFFF" opacity="0.7"/>
     </g>
-    <rect x="0" y="240" width="${SW}" height="16" rx="8" fill="${P.sand200}"/>
-    <ellipse cx="452" cy="330" rx="150" ry="120" fill="url(#softShadow)" opacity="0.55"/>
+    <rect x="0" y="389" width="${SW}" height="91" fill="url(#floorGlow)"/>
+    <g stroke="${P.sand300}" stroke-width="2.4" opacity="0.4" fill="none" stroke-linecap="round">
+      <path d="M 296 389 L 8 480 M 314 389 L 160 480 M 326 389 L 312 480 M 338 389 L 464 480 M 350 389 L 616 480
+        M 0 402 H ${SW} M 0 424 H ${SW} M 0 450 H ${SW}"/>
+    </g>
+    <rect x="0" y="389" width="${SW}" height="91" fill="url(#floorFall)"/>
+    ${wallShadow(474, 316, 168, 138, 0.7)}
     ${kindToilet(452, 430, 0.76)}
     ${pedestalSink(122, 428, 0.74)}
     ${towelOnRail(268, 128, 0.8)}

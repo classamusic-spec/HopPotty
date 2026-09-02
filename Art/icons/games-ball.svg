@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
 <defs><radialGradient id="peachBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B2"/><stop offset="1" stop-color="#C96755"/></radialGradient></defs>
 <g id="games-ball">
-    <ellipse cx="60" cy="106" rx="34" ry="5.78" fill="#243047" opacity="0.11"/>
+    <ellipse cx="60" cy="108" rx="34" ry="5.78" fill="#243047" opacity="0.11"/>
     <circle cx="60" cy="62" r="44" fill="url(#peachBall)"/>
-    <path d="M 22 84 q 38 -22 76 0 q -6 12 -16 20 q -22 8 -44 0 q -10 -8 -16 -20 Z" fill="#FFF9F2" opacity="0.9"/>
-    <path d="M 16 62 q 44 -26 88 0" stroke="#FFF9F2" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.85"/>
-    <circle cx="60" cy="62" r="44" fill="none" stroke="#C96755" stroke-width="3" opacity="0.28"/>
-    <ellipse cx="44" cy="40" rx="16" ry="11" transform="rotate(-24 44 40)" fill="#FFFFFF" opacity="0.5"/></g>
+    <path d="M 16.5 56 q 43.5 -20 87 0 q -43.5 22 -87 0 Z" fill="#FFF9F2"/>
+    <path d="M 20 62 q 40 -13 80 0 q -40 14 -80 0 Z" fill="#8FDCAC"/>
+    <circle cx="60" cy="62" r="44" fill="none" stroke="#C96755" stroke-width="3" opacity="0.25"/>
+    <ellipse cx="44" cy="38" rx="16" ry="11" transform="rotate(-24 44 38)" fill="#FFFFFF" opacity="0.5"/></g>
 </svg>

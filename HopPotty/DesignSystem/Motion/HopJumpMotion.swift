@@ -22,15 +22,11 @@ public extension HopSpring {
     /// ``HopAnimationToken`` is a closed set of *named* motions and the jump
     /// beats are not one of them: they are four springs that only mean anything
     /// in sequence, and a token per beat would invite feature code to pick one
-    /// on its own. So the beats name springs directly — and this is the only
-    /// other place in HopPotty that substitutes for one. It must stay identical
-    /// to the token's substitution, which is why it is written the same way and
-    /// reads the same constant.
+    /// on its own. So the beats name springs directly — but the *substitution*
+    /// is not repeated here; it delegates to the one implementation of that rule
+    /// so the two can never drift apart.
     func animation(reduceMotion: Bool) -> Animation {
-        guard !reduceMotion else {
-            return .easeInOut(duration: HopMotion.reducedMotionFade)
-        }
-        return .spring(duration: self.duration, bounce: self.bounce)
+        HopAnimationToken.animation(for: self, reduceMotion: reduceMotion)
     }
 
     /// Wall-clock length, for code that has to sequence around this spring.

@@ -61,6 +61,19 @@ public enum HopAnimationToken: String, CaseIterable, Sendable {
     /// child alike — becomes the same short cross-fade, so a state change is
     /// still legible but nothing travels across the screen.
     public func animation(reduceMotion: Bool) -> Animation {
+        Self.animation(for: spring, reduceMotion: reduceMotion)
+    }
+
+    /// How *any* spring degrades under Reduce Motion — the single implementation
+    /// of that rule in the app.
+    ///
+    /// Most motion names itself as a token and comes through the instance method
+    /// above. The jump beats are the exception: they are four springs that only
+    /// mean anything in sequence, so they are deliberately not tokens (a token
+    /// per beat would invite feature code to pick one on its own) and they call
+    /// this directly. Two copies of an accessibility guarantee is how one of
+    /// them silently stops being true, so there is only ever this one.
+    public static func animation(for spring: HopSpring, reduceMotion: Bool) -> Animation {
         guard !reduceMotion else {
             return .easeInOut(duration: HopMotion.reducedMotionFade)
         }
