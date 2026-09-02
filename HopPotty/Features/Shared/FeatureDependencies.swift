@@ -137,7 +137,15 @@ final class ParentScreenTimeAdapter {
                 return before == .notDetermined ? .cancelled : .denied
             }
         case .failure(let failure):
-            return failure == .restricted ? .restricted : .failed(failure)
+            // No `failure == .restricted` check here, because there is no such
+            // failure to check for. `ScreenTimeFailure` has no `.restricted`
+            // case by design: `ScreenTimeService.requestAuthorization` catches
+            // `FamilyControlsError.restricted` and returns
+            // `.success(.restricted)` for it, which the branch above already
+            // handles. Restriction is a *status* in this design, never a
+            // failure, and the line that used to be here was written against an
+            // API that never existed.
+            return .failed(failure)
         }
     }
 
@@ -230,7 +238,20 @@ final class ParentScreenTimeAdapter {
             monitoring.cancelAllMonitoring()
             return nil
         }
-        switch monitoring.register(MonitoringPlan(schedule: schedule, now: clock.now)) {
+        // `MonitoringPlan.make(for:hasSelection:)`, which is the only way to
+        // build one -- `MonitoringPlan.init` takes activities, not a schedule,
+        // and there has never been an `init(schedule:now:)`. The other two
+        // callers in the project (`PottyPauseEffectExecutor` and the Lab) always
+        // used the factory; this was the one place that invented a shape for it.
+        //
+        // `hasSelection` matters rather than being a formality: a `.screenActivity`
+        // trigger with nothing picked can never fire, and `make` returns an empty
+        // plan carrying `.selectionRequired` instead of registering a lie.
+        let plan = MonitoringPlan.make(
+            for: schedule,
+            hasSelection: !service.selectionSummary.isEmpty
+        )
+        switch monitoring.register(plan) {
         case .success: return nil
         case .failure(let failure): return failure
         }

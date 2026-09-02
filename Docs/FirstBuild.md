@@ -339,8 +339,8 @@ most of these, but not the ones that only bite an existing checkout:
 
 ## Layer 6 — a wrong diagnosis, and what it was worth anyway
 
-*Run 61. 17 diagnostics — and a detour worth writing down, because it is the
-kind of mistake that looks like evidence.*
+*Runs 61 and 62. No new errors — a detour, written down because it is the kind
+of mistake that looks like evidence.*
 
 For forty-six minutes the GitHub Actions API reported run 61's Build step as
 still running. Every earlier build had finished in about two minutes, so the
@@ -448,7 +448,7 @@ share in either.
 
 ## Layer 8 — one warning, which is one build failure
 
-*Run 64. 1 diagnostic.*
+*Run 63. 1 diagnostic.*
 
 ```
 ChildProfileEditor.swift:57:20: error: immutable value 'childID' was never used;
@@ -464,6 +464,41 @@ tucking warnings into a collapsed `<details>`.
 The condition is about *whether* this editor is editing an existing child, not
 about which one, and the file already has a name for that: `isNew`. Every other
 `if let childID` in the file does use the value; this was the one that did not.
+
+---
+
+## Layer 9 — one file that had invented two APIs
+
+*Run 64. 3 diagnostics, all in `Features/Shared/FeatureDependencies.swift`.*
+
+```
+FeatureDependencies.swift:140:32: error: type 'ScreenTimeFailure' has no member 'restricted'
+FeatureDependencies.swift:233:61: error: cannot convert value of type 'PottySchedule'
+                                  to expected argument type '[MonitoringPlan.Activity]'
+FeatureDependencies.swift:233:82: error: extra argument 'now' in call
+```
+
+`FeatureDependencies` is the seam between `Features/` and `Services/` — the
+place the parallel-authorship risk was always going to concentrate. It had
+invented two APIs, and both inventions are instructive.
+
+**`ScreenTimeFailure.restricted` never existed, and should not.** The line read
+`failure == .restricted ? .restricted : .failed(failure)`. But
+`ScreenTimeService.requestAuthorization` catches `FamilyControlsError.restricted`
+and returns `.success(.restricted)` for it — which the branch six lines above
+already handles. Restriction is a **status** in this design, never a failure,
+and the check was for something the service is built never to produce.
+
+**`MonitoringPlan(schedule:now:)` never existed either.** `MonitoringPlan.init`
+takes `activities:`; the factory is `MonitoringPlan.make(for:hasSelection:)`.
+The project's two other callers — `PottyPauseEffectExecutor` and the Lab — both
+use the factory correctly. This one place invented a shape for it.
+
+That second one is more than a signature mismatch. `hasSelection` is not a
+formality: a `.screenActivity` trigger with nothing picked can never fire, and
+`make` returns an empty plan carrying `.selectionRequired` rather than
+registering a monitoring activity that would be a lie. Going through the
+invented initializer would have skipped that reasoning entirely.
 
 ---
 
