@@ -143,6 +143,20 @@ function meadow(w, h, { horizon = 0.66, pond = false, glow = null, dim = 0, prop
  */
 function pond(w, h, unlocked = []) {
   const has = (k) => unlocked.includes(k);
+  /**
+   * Stable ids for the motion layer.
+   *
+   * The web prototype (and the app's SwiftUI pond) animate this scene by name:
+   * `pond-ripples`, `pond-lily-N`, `pond-reeds`, `pond-fish`, `pond-clouds`,
+   * `pond-dragonfly`, `pond-shimmer`. Nothing here depends on them — an id is
+   * an anchor, not a behaviour — but renaming one silently stops a layer
+   * moving, so treat them as published names.
+   *
+   * `sway` also writes the pivot into the element, because a reed has to rotate
+   * about the point it grows from and that point is only known here.
+   */
+  const anchor = (id, inner) => `<g id="${id}">${inner}</g>`;
+  const sway = (x, y, inner) => `<g style="transform-origin:${x}px ${y}px">${inner}</g>`;
   const id = 'p' + Math.random().toString(36).slice(2, 7);
   const SKY = h * 0.28, WATER = h * 0.40, SHORE = h * 0.735;
   const at = (fx, fy) => [w * fx, h * fy];
@@ -169,10 +183,12 @@ function pond(w, h, unlocked = []) {
     </defs>
 
     <rect width="${w}" height="${h}" fill="url(#${id}sky)"/>
-    <circle cx="${w * 0.17}" cy="${SKY * 0.42}" r="${w * 0.42}" fill="url(#${id}sun)"/>
+    <g id="pond-shimmer"><circle cx="${w * 0.17}" cy="${SKY * 0.42}" r="${w * 0.42}" fill="url(#${id}sun)"/></g>
     ${has('sunbeam') ? `<circle cx="${w * 0.17}" cy="${SKY * 0.42}" r="${w * 0.09}" fill="${P.sunshine}" opacity="0.9"/>` : ''}
-    ${has('cloudPuff') ? cloud(w * 0.74, SKY * 0.34, 0.95, '#FFFFFF', 0.9) : ''}
-    ${cloud(w * 0.28, SKY * 0.2, 0.5, '#FFFFFF', 0.42)}
+    <g id="pond-clouds">
+      ${has('cloudPuff') ? anchor('pond-cloud-1', cloud(w * 0.74, SKY * 0.34, 0.95, '#FFFFFF', 0.9)) : ''}
+      ${anchor('pond-cloud-2', cloud(w * 0.28, SKY * 0.2, 0.5, '#FFFFFF', 0.42))}
+    </g>
     ${has('rainbow') ? `<g opacity="0.5" fill="none" stroke-width="8" stroke-linecap="round">
         ${[P.peachPop, P.sunshine, P.hopGreenLight, P.pondBlueLight, P.lavender].map((cc, i) =>
           `<path d="M ${w * 0.34 + i * 9} ${WATER} A ${w * 0.34 - i * 9} ${h * 0.16 - i * 8} 0 0 1 ${w * 1.06 - i * 9} ${WATER}" stroke="${cc}"/>`).join('')}
@@ -206,7 +222,7 @@ function pond(w, h, unlocked = []) {
     <!-- water -->
     <path d="M 0 ${WATER + 8} C ${w * 0.3} ${WATER - 18}, ${w * 0.72} ${WATER - 14}, ${w} ${WATER + 10} L ${w} ${h} L 0 ${h} Z"
           fill="url(#${id}water)"/>
-    <g fill="none" stroke="#FFFFFF" stroke-linecap="round">
+    <g id="pond-ripples" fill="none" stroke="#FFFFFF" stroke-linecap="round">
       <path d="M ${w * 0.08} ${WATER + 46} q 26 -10 52 0 t 52 0" stroke-opacity="0.3" stroke-width="4"/>
       <path d="M ${w * 0.5} ${WATER + 92} q 24 -9 48 0 t 48 0" stroke-opacity="0.22" stroke-width="4"/>
       <path d="M ${w * 0.04} ${WATER + 150} q 24 -9 48 0 t 48 0" stroke-opacity="0.18" stroke-width="4"/>
@@ -215,18 +231,18 @@ function pond(w, h, unlocked = []) {
     ${has('moonReflection') ? `<ellipse cx="${w * 0.52}" cy="${WATER + 170}" rx="46" ry="14" fill="${P.sunshineSoft}" opacity=".4"/>` : ''}
 
     <!-- things in the water -->
-    ${has('waterLilyCluster') ? lilyPad(...at(0.22, 0.66), 0.8, mix(P.hopGreen, P.hopGreenLight, 0.35)) : ''}
-    ${has('lilyPadLarge') ? lilyPad(...at(0.56, 0.508), 1.6, mix(P.hopGreen, P.hopGreenDeep, 0.3)) : ''}
-    ${has('lilyPadSmall') ? lilyPad(...at(0.3, 0.585), 0.95, mix(P.hopGreen, P.hopGreenDeep, 0.12)) : ''}
-    ${has('lilyFlower') ? `<g transform="translate(${w * 0.78} ${h * 0.545})">
+    ${has('waterLilyCluster') ? anchor('pond-lily-4', lilyPad(...at(0.22, 0.66), 0.8, mix(P.hopGreen, P.hopGreenLight, 0.35))) : ''}
+    ${has('lilyPadLarge') ? anchor('pond-lily-1', lilyPad(...at(0.56, 0.508), 1.6, mix(P.hopGreen, P.hopGreenDeep, 0.3))) : ''}
+    ${has('lilyPadSmall') ? anchor('pond-lily-2', lilyPad(...at(0.3, 0.585), 0.95, mix(P.hopGreen, P.hopGreenDeep, 0.12))) : ''}
+    ${has('lilyFlower') ? `<g id="pond-lily-3"><g transform="translate(${w * 0.78} ${h * 0.545})">
         ${[0, 60, 120, 180, 240, 300].map((a) => `<ellipse cx="0" cy="-8" rx="5" ry="10" fill="#FFFFFF" transform="rotate(${a})"/>`).join('')}
-        <circle r="4.4" fill="${P.sunshine}"/></g>` : ''}
-    ${has('fishOrange') ? `<g transform="translate(${w * 0.72} ${h * 0.64})">
+        <circle r="4.4" fill="${P.sunshine}"/></g></g>` : ''}
+    ${has('fishOrange') ? `<g id="pond-fish"><g transform="translate(${w * 0.72} ${h * 0.64})">
         <ellipse rx="17" ry="10" fill="${P.peachPop}"/><path d="M15 0 L28 -9 L28 9 Z" fill="${P.peachPop}"/>
-        <circle cx="-7" cy="-2" r="2.6" fill="${INK_}"/></g>` : ''}
-    ${has('fishBlue') ? `<g transform="translate(${w * 0.24} ${h * 0.7}) scale(-1 1)">
+        <circle cx="-7" cy="-2" r="2.6" fill="${INK_}"/></g></g>` : ''}
+    ${has('fishBlue') ? `<g id="pond-fish-2"><g transform="translate(${w * 0.24} ${h * 0.7}) scale(-1 1)">
         <ellipse rx="13" ry="8" fill="${P.pondBlueLight}"/><path d="M11 0 L21 -7 L21 7 Z" fill="${P.pondBlueLight}"/>
-        <circle cx="-5" cy="-2" r="2.2" fill="${INK_}"/></g>` : ''}
+        <circle cx="-5" cy="-2" r="2.2" fill="${INK_}"/></g></g>` : ''}
     ${has('tadpoleFriend') ? `<g transform="translate(${w * 0.44} ${h * 0.685})">
         <circle r="10" fill="${P.hopGreenDeep}"/><path d="M9 0 C 16 -7, 22 7, 28 0 C 22 4, 16 9, 9 0Z" fill="${P.hopGreenDeep}"/>
         <circle cx="-2" cy="-3" r="2.6" fill="#FFFFFF"/></g>` : ''}
@@ -239,9 +255,11 @@ function pond(w, h, unlocked = []) {
     <!-- near shore -->
     <path d="M 0 ${SHORE + 12} C ${w * 0.26} ${SHORE - 26}, ${w * 0.68} ${SHORE - 22}, ${w} ${SHORE + 6} L ${w} ${h} L 0 ${h} Z"
           fill="url(#${id}bank)"/>
-    ${has('reedsLeft') ? reeds(w * 0.08, SHORE + 16, 1.15, true) : ''}
-    ${has('reedsRight') ? reeds(w * 0.93, SHORE + 10, 1.0, true) : ''}
-    ${has('cattails') ? reeds(w * 0.19, SHORE + 30, 0.85, true) : ''}
+    <g id="pond-reeds">
+      ${has('reedsLeft') ? sway(w * 0.08, SHORE + 16, reeds(w * 0.08, SHORE + 16, 1.15, true)) : ''}
+      ${has('reedsRight') ? sway(w * 0.93, SHORE + 10, reeds(w * 0.93, SHORE + 10, 1.0, true)) : ''}
+      ${has('cattails') ? sway(w * 0.19, SHORE + 30, reeds(w * 0.19, SHORE + 30, 0.85, true)) : ''}
+    </g>
     ${has('stoneSmall') ? `<ellipse cx="${w * 0.3}" cy="${SHORE + 6}" rx="21" ry="13" fill="${P.sand300}"/>` : ''}
     ${has('stoneStack') ? `<g transform="translate(${w * 0.1} ${h * 0.94})">
         <ellipse rx="20" ry="10" fill="${P.sand300}"/><ellipse cy="-15" rx="15" ry="8" fill="${mix(P.sand300, P.sand100, 0.4)}"/>
@@ -258,18 +276,18 @@ function pond(w, h, unlocked = []) {
         <circle cx="0" cy="0" r="9" fill="${P.peachDeep}"/><circle cx="0" cy="0" r="4.4" fill="${P.peachSoft}"/></g>` : ''}
 
     <!-- in front of everything -->
-    ${has('butterflyBlue') ? `<g transform="translate(${w * 0.19} ${h * 0.44})">
+    ${has('butterflyBlue') ? `<g id="pond-butterfly"><g transform="translate(${w * 0.19} ${h * 0.44})">
         <ellipse cx="-9" cy="-3" rx="10" ry="12" fill="${P.pondBlueLight}" transform="rotate(-22)"/>
         <ellipse cx="9" cy="-3" rx="10" ry="12" fill="${P.pondBlue}" transform="rotate(22)"/>
-        <rect x="-1.8" y="-10" width="3.6" height="19" rx="1.8" fill="${INK_}" opacity="0.7"/></g>` : ''}
-    ${has('butterflyYellow') ? `<g transform="translate(${w * 0.86} ${h * 0.47})">
+        <rect x="-1.8" y="-10" width="3.6" height="19" rx="1.8" fill="${INK_}" opacity="0.7"/></g></g>` : ''}
+    ${has('butterflyYellow') ? `<g id="pond-butterfly-2"><g transform="translate(${w * 0.86} ${h * 0.47})">
         <ellipse cx="-8" cy="-3" rx="9" ry="11" fill="${P.sunshine}" transform="rotate(-22)"/>
         <ellipse cx="8" cy="-3" rx="9" ry="11" fill="${P.sunshineBright}" transform="rotate(22)"/>
-        <rect x="-1.6" y="-9" width="3.2" height="17" rx="1.6" fill="${INK_}" opacity="0.7"/></g>` : ''}
-    ${has('dragonfly') ? `<g transform="translate(${w * 0.6} ${h * 0.36})">
+        <rect x="-1.6" y="-9" width="3.2" height="17" rx="1.6" fill="${INK_}" opacity="0.7"/></g></g>` : ''}
+    ${has('dragonfly') ? `<g id="pond-dragonfly"><g transform="translate(${w * 0.6} ${h * 0.36})">
         <ellipse cx="-12" cy="-5" rx="15" ry="5" fill="${P.pondBlueLight}" opacity="0.85" transform="rotate(-14)"/>
         <ellipse cx="12" cy="-5" rx="15" ry="5" fill="${P.pondBlueLight}" opacity="0.85" transform="rotate(14)"/>
-        <rect x="-2" y="-4" width="4" height="24" rx="2" fill="${P.lavenderDeep}"/></g>` : ''}
+        <rect x="-2" y="-4" width="4" height="24" rx="2" fill="${P.lavenderDeep}"/></g></g>` : ''}
     ${has('fireflies') ? [[0.86, 0.62], [0.9, 0.68], [0.8, 0.66]].map(([fx, fy]) =>
         `<circle cx="${w * fx}" cy="${h * fy}" r="5" fill="${P.sunshine}" opacity="0.9"/>
          <circle cx="${w * fx}" cy="${h * fy}" r="11" fill="${P.sunshine}" opacity="0.28"/>`).join('') : ''}

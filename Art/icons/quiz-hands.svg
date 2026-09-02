@@ -1,17 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-<defs><linearGradient id="handGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFDCC9"/><stop offset="1" stop-color="#F5C4A9"/></linearGradient></defs>
-<g id="quiz-hands"><circle cx="60" cy="60" r="58" fill="#FFE8E3"/>
-    <g transform="translate(34 90) scale(1 1)">
-      <path d="M -20 0 q -8 -34 6 -46 q 16 -14 30 -2 q 12 10 10 30 q -2 22 -22 22 q -20 0 -24 -4 Z" fill="url(#handGrad)"/>
-      <rect x="-22" y="-56" width="13" height="26" rx="6.5" fill="url(#handGrad)"/>
-      <rect x="-9" y="-62" width="13" height="32" rx="6.5" fill="url(#handGrad)"/>
-      <rect x="4" y="-60" width="13" height="30" rx="6.5" fill="url(#handGrad)"/>
-      <rect x="16" y="-50" width="12" height="22" rx="6" fill="url(#handGrad)"/>
-      <path d="M -24 -34 q 22 8 42 -2" stroke="#DCA084" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.4"/></g><g transform="translate(86 90) scale(-1 1)">
-      <path d="M -20 0 q -8 -34 6 -46 q 16 -14 30 -2 q 12 10 10 30 q -2 22 -22 22 q -20 0 -24 -4 Z" fill="url(#handGrad)"/>
-      <rect x="-22" y="-56" width="13" height="26" rx="6.5" fill="url(#handGrad)"/>
-      <rect x="-9" y="-62" width="13" height="32" rx="6.5" fill="url(#handGrad)"/>
-      <rect x="4" y="-60" width="13" height="30" rx="6.5" fill="url(#handGrad)"/>
-      <rect x="16" y="-50" width="12" height="22" rx="6" fill="url(#handGrad)"/>
-      <path d="M -24 -34 q 22 8 42 -2" stroke="#DCA084" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.4"/></g></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><defs><linearGradient id="handGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFDCC9"/><stop offset="1" stop-color="#F5C4A9"/></linearGradient></defs>
+<g id="quiz-hands"><circle cx="60" cy="60" r="58" fill="#FFE8E3"/><g transform="translate(34 90) scale(1 1)"><path d="M -20 0 q -8 -34 6 -46 q 16 -14 30 -2 q 12 10 10 30 q -2 22 -22 22 q -20 0 -24 -4 Z" fill="url(#handGrad)"/><rect x="-22" y="-56" width="13" height="26" rx="6.5" fill="url(#handGrad)"/><rect x="-9" y="-62" width="13" height="32" rx="6.5" fill="url(#handGrad)"/><rect x="4" y="-60" width="13" height="30" rx="6.5" fill="url(#handGrad)"/><rect x="16" y="-50" width="12" height="22" rx="6" fill="url(#handGrad)"/><path d="M -24 -34 q 22 8 42 -2" stroke="#DCA084" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.4"/></g><g transform="translate(86 90) scale(-1 1)"><path d="M -20 0 q -8 -34 6 -46 q 16 -14 30 -2 q 12 10 10 30 q -2 22 -22 22 q -20 0 -24 -4 Z" fill="url(#handGrad)"/><rect x="-22" y="-56" width="13" height="26" rx="6.5" fill="url(#handGrad)"/><rect x="-9" y="-62" width="13" height="32" rx="6.5" fill="url(#handGrad)"/><rect x="4" y="-60" width="13" height="30" rx="6.5" fill="url(#handGrad)"/><rect x="16" y="-50" width="12" height="22" rx="6" fill="url(#handGrad)"/><path d="M -24 -34 q 22 8 42 -2" stroke="#DCA084" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.4"/></g></g></svg>

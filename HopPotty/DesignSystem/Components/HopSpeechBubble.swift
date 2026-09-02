@@ -60,13 +60,36 @@ struct HopSpeechBubbleShape: Shape {
 /// yet and the grown-up beside them is the one doing the reading.
 public struct HopSpeechBubble: View {
     @Environment(\.hopTheme) private var theme
+    @State private var hasArrived = false
 
     private let text: String
     private let tail: HopBubbleTail
+    private let animatesArrival: Bool
 
-    public init(_ text: String, tail: HopBubbleTail = .bottomLeading) {
+    public init(_ text: String, tail: HopBubbleTail = .bottomLeading, animatesArrival: Bool = false) {
         self.text = text
         self.tail = tail
+        self.animatesArrival = animatesArrival
+    }
+
+    private var isArriving: Bool { animatesArrival && !hasArrived }
+
+    /// The bubble grows *out of the tail*, which is where Hop is. Scaling about
+    /// the centre would make the words appear beside him; scaling about the tail
+    /// makes them come from him, and for a pre-reader that is the difference
+    /// between a caption and a character speaking.
+    ///
+    /// Off by default. Most callers already wrap this in a transition of their
+    /// own, and a bubble that grows inside a view that is also growing is the
+    /// exact double-animation this is meant to avoid.
+    private var arrivalAnchor: UnitPoint {
+        switch tail {
+        case .bottomLeading: .bottomLeading
+        case .bottomTrailing: .bottomTrailing
+        case .topLeading: .topLeading
+        case .topTrailing: .topTrailing
+        case .hidden: .center
+        }
     }
 
     private let cornerRadius: CGFloat = 26
@@ -106,6 +129,13 @@ public struct HopSpeechBubble: View {
                     }
             }
             .modifier(theme.elevation(.resting))
+            .scaleEffect(isArriving && !theme.reduceMotion ? 0.72 : 1, anchor: arrivalAnchor)
+            .opacity(isArriving ? 0 : 1)
+            .hopAnimation(.childArrive, value: hasArrived)
+            // A new line replacing an old one inside a bubble that is already
+            // on screen cross-fades; the bubble itself does not re-arrive.
+            .hopValueChange(text)
+            .onAppear { hasArrived = true }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(text)
     }
@@ -143,6 +173,28 @@ public struct HopSpeechBubble: View {
     .hopBackground()
     .hopThemedRoot()
     .preferredColorScheme(.dark)
+}
+
+#Preview("Speech bubble · arrival from the tail") {
+    VStack(alignment: .leading, spacing: 32) {
+        HopSpeechBubble("Let's go and try!", animatesArrival: true)
+        HopSpeechBubble("All done — high five!", tail: .topTrailing, animatesArrival: true)
+    }
+    .padding()
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .hopBackground()
+    .hopThemedRoot()
+}
+
+#Preview("Speech bubble · arrival, Reduce Motion") {
+    VStack(alignment: .leading, spacing: 32) {
+        HopSpeechBubble("Let's go and try!", animatesArrival: true)
+        HopSpeechBubble("All done — high five!", tail: .topTrailing, animatesArrival: true)
+    }
+    .padding()
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .hopBackground()
+    .hopThemedRoot(reduceMotion: true)
 }
 
 #Preview("Speech bubble · high contrast") {

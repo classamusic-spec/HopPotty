@@ -1,11 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-<defs><linearGradient id="padGreen" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#8FDCAC"/><stop offset="1" stop-color="#2F8C57"/></linearGradient><linearGradient id="padGreenLight" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#63C88A"/></linearGradient></defs>
-<g id="item-lilyPadLarge">
-    <path d="M 28.56 80.96 A 44 20.24 0 1 1 14.96 91.79 L 58 96 Z" fill="url(#padGreen)" opacity="0.85"/>
-    <path d="M 113.86 148.55 A 84 38.64 0 1 1 174.19 133.79 L 108 110 Z" fill="#2F8C57" opacity="0.5"/>
-    <path d="M 113.86 143.55 A 84 38.64 0 1 1 174.19 128.79 L 108 105 Z" fill="url(#padGreenLight)"/>
-    <g stroke="#E3F5EA" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.32">
-      <path d="M 108 105 l 52 -22"/><path d="M 108 105 l 6 -34"/><path d="M 108 105 l -56 -13"/><path d="M 108 105 l -28 28"/>
-    </g>
-    <ellipse cx="80" cy="90" rx="30" ry="9" fill="#FFFFFF" opacity="0.18"/></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><defs><linearGradient id="padGreen" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#8FDCAC"/><stop offset="1" stop-color="#2F8C57"/></linearGradient><linearGradient id="padGreenLight" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#63C88A"/></linearGradient></defs>
+<g id="item-lilyPadLarge"><path d="M 28.6 81 A 44 20.2 0 1 1 15 91.8 L 58 96 Z" fill="url(#padGreen)" opacity="0.85"/><path d="M 113.9 148.5 A 84 38.6 0 1 1 174.2 133.8 L 108 110 Z" fill="#2F8C57" opacity="0.5"/><path d="M 113.9 143.5 A 84 38.6 0 1 1 174.2 128.8 L 108 105 Z" fill="url(#padGreenLight)"/><g stroke="#E3F5EA" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.32"><path d="M 108 105 l 52 -22"/><path d="M 108 105 l 6 -34"/><path d="M 108 105 l -56 -13"/><path d="M 108 105 l -28 28"/></g><ellipse cx="80" cy="90" rx="30" ry="9" fill="#FFFFFF" opacity="0.18"/></g></svg>

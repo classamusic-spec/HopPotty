@@ -31,6 +31,39 @@ function svg(relPath, { width, height, opacity } = {}) {
   return `<img src="data:image/svg+xml;base64,${b64}" style="${style}">`;
 }
 
+/**
+ * The same art as `svg`, but inlined into the document instead of wrapped in an
+ * `<img>`.
+ *
+ * An `<img>` is a black box: nothing outside it can reach an `id` inside it. The
+ * pond is the one place where that matters — the web prototype animates the
+ * ripples, the pads and the reeds by targeting the stable ids the drawing
+ * exposes — so the pond asks for its scene inline. Everything else stays an
+ * `<img>`, which is cheaper and cannot leak ids into the page.
+ */
+function svgInline(relPath, { width, height } = {}) {
+  const abs = path.join(ROOT, relPath);
+  if (!fs.existsSync(abs)) return '';
+  const src = fs.readFileSync(abs, 'utf8')
+    .replace(/<\?xml[^>]*\?>/g, '')
+    .replace(/<!DOCTYPE[^>]*>/gi, '')
+    .trim();
+  // Force the box the caller asked for; the drawing keeps its own viewBox, so
+  // it letterboxes exactly the way `object-fit:contain` did on the `<img>`.
+  return src.replace(/^<svg\b([^>]*)>/i, (_m, attrs) => {
+    const kept = attrs.replace(/\s(?:width|height|style)="[^"]*"/gi, '');
+    return `<svg${kept}${width ? ` width="${width}"` : ''}${height ? ` height="${height}"` : ''}` +
+      ` style="display:block">`;
+  });
+}
+
+/** `artOr`, inlined. Falls back to the same drawn-here HTML when nothing exists. */
+function artOrInline(candidates, opts, fallback) {
+  const list = Array.isArray(candidates) ? candidates : [candidates];
+  for (const rel of list) if (hasArt(rel)) return svgInline(rel, opts);
+  return fallback || '';
+}
+
 /** Resolved semantic colours for an appearance. */
 const c = (appearance = 'light') => T.appearances[appearance];
 
@@ -137,5 +170,5 @@ function artOr(candidates, opts, fallback) {
   return fallback || '';
 }
 
-module.exports = { T, c, baseCSS, type, statusBar, homeIndicator, svg, shadow, ROOT,
-  alpha, mix, elevation, hasArt, artOr };
+module.exports = { T, c, baseCSS, type, statusBar, homeIndicator, svg, svgInline, shadow, ROOT,
+  alpha, mix, elevation, hasArt, artOr, artOrInline };

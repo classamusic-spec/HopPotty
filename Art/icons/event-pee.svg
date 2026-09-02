@@ -1,9 +1,2 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
-
-<g id="event-pee">
-    <path d="M 48 19
-    C 60 37.6 72 54.6 72 57
-    A 24 24 0 1 1 24 57
-    C 24 54.6 36 37.6 48 19 Z" fill="#6FC7E8"/>
-    <path d="M 38 58 q 1 -15 8 -24" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.5"/></g>
-</svg>
+<g id="event-pee"><path d="M 48 19 C 60 37.6 72 54.6 72 57 A 24 24 0 1 1 24 57 C 24 54.6 36 37.6 48 19 Z" fill="#6FC7E8"/><path d="M 38 58 q 1 -15 8 -24" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.5"/></g></svg>

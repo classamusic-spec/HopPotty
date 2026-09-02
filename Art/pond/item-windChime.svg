@@ -1,22 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-<defs><linearGradient id="padGreenLight" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#63C88A"/></linearGradient></defs>
-<g id="item-windChime">
-    <path d="M 100 22 v 14" stroke="#A76F46" stroke-width="4.6" stroke-linecap="round"/>
-    <ellipse cx="100" cy="46" rx="42" ry="11" fill="#A76F46"/>
-    <ellipse cx="100" cy="42" rx="42" ry="11" fill="#E0A472"/>
-    
-      <path d="M 66 48 v 34" stroke="#D8CEC1" stroke-width="2.6" opacity="0.85"/>
-      <rect x="59.6" y="82" width="13" height="42" rx="6.5" fill="#AFA5EF"/>
-      <rect x="59.6" y="82" width="4.6" height="42" rx="2.3" fill="#FFFFFF" opacity="0.35"/>
-      <path d="M 86 48 v 52" stroke="#D8CEC1" stroke-width="2.6" opacity="0.85"/>
-      <rect x="79.6" y="100" width="13" height="42" rx="6.5" fill="#6FC7E8"/>
-      <rect x="79.6" y="100" width="4.6" height="42" rx="2.3" fill="#FFFFFF" opacity="0.35"/>
-      <path d="M 114 48 v 46" stroke="#D8CEC1" stroke-width="2.6" opacity="0.85"/>
-      <rect x="107.6" y="94" width="13" height="42" rx="6.5" fill="#FFD769"/>
-      <rect x="107.6" y="94" width="4.6" height="42" rx="2.3" fill="#FFFFFF" opacity="0.35"/>
-      <path d="M 134 48 v 30" stroke="#D8CEC1" stroke-width="2.6" opacity="0.85"/>
-      <rect x="127.6" y="78" width="13" height="42" rx="6.5" fill="#FF9F8F"/>
-      <rect x="127.6" y="78" width="4.6" height="42" rx="2.3" fill="#FFFFFF" opacity="0.35"/>
-    <path d="M 100 48 v 78" stroke="#D8CEC1" stroke-width="2.6" opacity="0.85"/>
-    <g transform="translate(100 138) scale(0.72)"><path d="M -11.24 12.8 A 30 13.8 0 1 1 11.24 12.8 L 0 0 Z" fill="url(#padGreenLight)"/></g></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><defs><linearGradient id="padGreenLight" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#63C88A"/></linearGradient></defs>
+<g id="item-windChime"><path d="M 100 22 v 14" stroke="#A76F46" stroke-width="4.6" stroke-linecap="round"/><ellipse cx="100" cy="46" rx="42" ry="11" fill="#A76F46"/><ellipse cx="100" cy="42" rx="42" ry="11" fill="#E0A472"/><path d="M 66 48 v 34" stroke="#D8CEC1" stroke-width="2.6" opacity="0.85"/><rect x="59.6" y="82" width="13" height="42" rx="6.5" fill="#AFA5EF"/><rect x="59.6" y="82" width="4.6" height="42" rx="2.3" fill="#FFFFFF" opacity="0.35"/><path d="M 86 48 v 52" stroke="#D8CEC1" stroke-width="2.6" opacity="0.85"/><rect x="79.6" y="100" width="13" height="42" rx="6.5" fill="#6FC7E8"/><rect x="79.6" y="100" width="4.6" height="42" rx="2.3" fill="#FFFFFF" opacity="0.35"/><path d="M 114 48 v 46" stroke="#D8CEC1" stroke-width="2.6" opacity="0.85"/><rect x="107.6" y="94" width="13" height="42" rx="6.5" fill="#FFD769"/><rect x="107.6" y="94" width="4.6" height="42" rx="2.3" fill="#FFFFFF" opacity="0.35"/><path d="M 134 48 v 30" stroke="#D8CEC1" stroke-width="2.6" opacity="0.85"/><rect x="127.6" y="78" width="13" height="42" rx="6.5" fill="#FF9F8F"/><rect x="127.6" y="78" width="4.6" height="42" rx="2.3" fill="#FFFFFF" opacity="0.35"/><path d="M 100 48 v 78" stroke="#D8CEC1" stroke-width="2.6" opacity="0.85"/><g transform="translate(100 138) scale(0.72)"><path d="M -11.2 12.8 A 30 13.8 0 1 1 11.2 12.8 L 0 0 Z" fill="url(#padGreenLight)"/></g></g></svg>

@@ -1,10 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-<defs><radialGradient id="blueBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#BDE9F8"/><stop offset="1" stop-color="#2A87AC"/></radialGradient></defs>
-<g id="item-fishBlue"><g transform="translate(200 0) scale(-1 1)">
-    <path d="M 58 100 q -26 -30 -40 -36 q 8 36 0 72 q 14 -6 40 -36 Z" fill="#9BDCF1"/>
-    <ellipse cx="108" cy="100" rx="58" ry="35" fill="url(#blueBall)"/>
-    <path d="M 100 70 q 20 -24 42 -14 q -16 12 -22 24 Z" fill="#9BDCF1" opacity="0.9"/>
-    <ellipse cx="112" cy="90" rx="30" ry="14" fill="#FFFFFF" opacity="0.32"/>
-    <circle cx="142" cy="94" r="9" fill="#FFFFFF"/><circle cx="144" cy="94" r="5" fill="#243047"/>
-    <path d="M 148 108 q 12 4 16 -2" stroke="#2A87AC" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7"/></g></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><defs><radialGradient id="blueBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#BDE9F8"/><stop offset="1" stop-color="#2A87AC"/></radialGradient></defs>
+<g id="item-fishBlue"><g transform="translate(200 0) scale(-1 1)"><path d="M 58 100 q -26 -30 -40 -36 q 8 36 0 72 q 14 -6 40 -36 Z" fill="#9BDCF1"/><ellipse cx="108" cy="100" rx="58" ry="35" fill="url(#blueBall)"/><path d="M 100 70 q 20 -24 42 -14 q -16 12 -22 24 Z" fill="#9BDCF1" opacity="0.9"/><ellipse cx="112" cy="90" rx="30" ry="14" fill="#FFFFFF" opacity="0.32"/><circle cx="142" cy="94" r="9" fill="#FFFFFF"/><circle cx="144" cy="94" r="5" fill="#243047"/><path d="M 148 108 q 12 4 16 -2" stroke="#2A87AC" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7"/></g></g></svg>

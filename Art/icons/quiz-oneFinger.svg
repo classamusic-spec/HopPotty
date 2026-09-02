@@ -1,16 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-<defs><linearGradient id="handGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFDCC9"/><stop offset="1" stop-color="#F5C4A9"/></linearGradient><linearGradient id="handGradDeep" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#F5C4A9"/><stop offset="1" stop-color="#DCA084"/></linearGradient></defs>
-<g id="quiz-oneFinger"><circle cx="60" cy="60" r="58" fill="#FFE8E3"/>
-    <ellipse cx="60" cy="108" rx="26" ry="4.42" fill="#8A3F30" opacity="0.12"/>
-    <path d="M 90 18 h -22 q -10 0 -10 10 v 4" stroke="#AFA69B" stroke-width="12" fill="none" stroke-linecap="round"/>
-    <path d="M 90 18 h -22 q -10 0 -10 10 v 4" stroke="#EBE3D8" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <path d="M 58 33.5
-    C 60.6 38 63.2 42.78 63.2 43.3
-    A 5.2 5.2 0 1 1 52.8 43.3
-    C 52.8 42.78 55.4 38 58 33.5 Z" fill="#6FC7E8"/>
-    <rect x="50" y="50" width="16" height="42" rx="8" fill="url(#handGrad)"/>
-    <rect x="36" y="72" width="48" height="34" rx="16" fill="url(#handGrad)"/>
-    <rect x="26" y="76" width="15" height="24" rx="7.5" fill="url(#handGradDeep)"/>
-    <path d="M 46 84 q 18 7 34 0" stroke="#DCA084" stroke-width="3.2" fill="none" stroke-linecap="round" opacity="0.3"/>
-    <path d="M 47 94 q 18 7 34 0" stroke="#DCA084" stroke-width="3.2" fill="none" stroke-linecap="round" opacity="0.2"/></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><defs><linearGradient id="handGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFDCC9"/><stop offset="1" stop-color="#F5C4A9"/></linearGradient><linearGradient id="handGradDeep" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#F5C4A9"/><stop offset="1" stop-color="#DCA084"/></linearGradient></defs>
+<g id="quiz-oneFinger"><circle cx="60" cy="60" r="58" fill="#FFE8E3"/><ellipse cx="60" cy="108" rx="26" ry="4.4" fill="#8A3F30" opacity="0.12"/><path d="M 90 18 h -22 q -10 0 -10 10 v 4" stroke="#AFA69B" stroke-width="12" fill="none" stroke-linecap="round"/><path d="M 90 18 h -22 q -10 0 -10 10 v 4" stroke="#EBE3D8" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M 58 33.5 C 60.6 38 63.2 42.8 63.2 43.3 A 5.2 5.2 0 1 1 52.8 43.3 C 52.8 42.8 55.4 38 58 33.5 Z" fill="#6FC7E8"/><rect x="50" y="50" width="16" height="42" rx="8" fill="url(#handGrad)"/><rect x="36" y="72" width="48" height="34" rx="16" fill="url(#handGrad)"/><rect x="26" y="76" width="15" height="24" rx="7.5" fill="url(#handGradDeep)"/><path d="M 46 84 q 18 7 34 0" stroke="#DCA084" stroke-width="3.2" fill="none" stroke-linecap="round" opacity="0.3"/><path d="M 47 94 q 18 7 34 0" stroke="#DCA084" stroke-width="3.2" fill="none" stroke-linecap="round" opacity="0.2"/></g></svg>

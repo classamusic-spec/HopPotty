@@ -1,13 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-<defs><linearGradient id="stoneGrad" x1="0.25" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#EFEAE3"/><stop offset="1" stop-color="#C9C2B8"/></linearGradient><linearGradient id="stoneGradCool" x1="0.25" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#E6E4EE"/><stop offset="1" stop-color="#BDB8CC"/></linearGradient></defs>
-<g id="item-stoneStack">
-    <ellipse cx="100" cy="168" rx="66" ry="15" fill="#243047" opacity="0.10"/>
-    <ellipse cx="100" cy="148" rx="62" ry="26" fill="url(#stoneGrad)"/>
-    <ellipse cx="88.84" cy="139.16" rx="34.1" ry="10.4" fill="#FFFFFF" opacity="0.25"/>
-    <ellipse cx="96" cy="108" rx="46" ry="24" fill="url(#stoneGradCool)"/>
-    <ellipse cx="87.72" cy="99.84" rx="25.3" ry="9.6" fill="#FFFFFF" opacity="0.25"/>
-    <ellipse cx="102" cy="74" rx="32" ry="19" fill="url(#stoneGrad)"/>
-    <ellipse cx="96.24" cy="67.54" rx="17.6" ry="7.6" fill="#FFFFFF" opacity="0.25"/>
-    <ellipse cx="100" cy="48" rx="20" ry="13" fill="url(#stoneGradCool)"/>
-    <ellipse cx="96.4" cy="43.58" rx="11" ry="5.2" fill="#FFFFFF" opacity="0.25"/></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><defs><linearGradient id="stoneGrad" x1="0.25" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#EFEAE3"/><stop offset="1" stop-color="#C9C2B8"/></linearGradient><linearGradient id="stoneGradCool" x1="0.25" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#E6E4EE"/><stop offset="1" stop-color="#BDB8CC"/></linearGradient></defs>
+<g id="item-stoneStack"><ellipse cx="100" cy="168" rx="66" ry="15" fill="#243047" opacity="0.10"/><ellipse cx="100" cy="148" rx="62" ry="26" fill="url(#stoneGrad)"/><ellipse cx="88.8" cy="139.2" rx="34.1" ry="10.4" fill="#FFFFFF" opacity="0.25"/><ellipse cx="96" cy="108" rx="46" ry="24" fill="url(#stoneGradCool)"/><ellipse cx="87.7" cy="99.8" rx="25.3" ry="9.6" fill="#FFFFFF" opacity="0.25"/><ellipse cx="102" cy="74" rx="32" ry="19" fill="url(#stoneGrad)"/><ellipse cx="96.2" cy="67.5" rx="17.6" ry="7.6" fill="#FFFFFF" opacity="0.25"/><ellipse cx="100" cy="48" rx="20" ry="13" fill="url(#stoneGradCool)"/><ellipse cx="96.4" cy="43.6" rx="11" ry="5.2" fill="#FFFFFF" opacity="0.25"/></g></svg>

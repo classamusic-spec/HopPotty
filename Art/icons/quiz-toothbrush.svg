@@ -1,17 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-<defs><radialGradient id="blueBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#BDE9F8"/><stop offset="1" stop-color="#2A87AC"/></radialGradient></defs>
-<g id="quiz-toothbrush"><circle cx="60" cy="60" r="58" fill="#FFF3D4"/>
-    <g transform="rotate(-32 60 60)">
-      <rect x="44" y="53" width="54" height="15" rx="7.5" fill="#2A87AC"/>
-      <rect x="44" y="52" width="54" height="13" rx="6.5" fill="url(#blueBall)"/>
-      <rect x="74" y="54" width="18" height="7" rx="3.5" fill="#FFFFFF" opacity="0.35"/>
-      <rect x="10" y="51" width="44" height="19" rx="9" fill="#2A87AC"/>
-      <rect x="10" y="50" width="44" height="17" rx="8.5" fill="url(#blueBall)"/>
-      <rect x="13" y="40" width="7" height="16" rx="3.5" fill="#D8CEC1"/>
-      <rect x="13" y="39" width="7" height="16" rx="3.5" fill="#F4F1EC"/><rect x="21" y="37" width="7" height="19" rx="3.5" fill="#D8CEC1"/>
-      <rect x="21" y="36" width="7" height="19" rx="3.5" fill="#F4F1EC"/><rect x="29" y="37" width="7" height="19" rx="3.5" fill="#D8CEC1"/>
-      <rect x="29" y="36" width="7" height="19" rx="3.5" fill="#F4F1EC"/><rect x="37" y="37" width="7" height="19" rx="3.5" fill="#D8CEC1"/>
-      <rect x="37" y="36" width="7" height="19" rx="3.5" fill="#F4F1EC"/><rect x="45" y="40" width="7" height="16" rx="3.5" fill="#D8CEC1"/>
-      <rect x="45" y="39" width="7" height="16" rx="3.5" fill="#F4F1EC"/>
-      <path d="M 16 36 q 14 -10 28 -2 q -14 8 -28 2 Z" fill="#8FDCAC"/></g></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><defs><radialGradient id="blueBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#BDE9F8"/><stop offset="1" stop-color="#2A87AC"/></radialGradient></defs>
+<g id="quiz-toothbrush"><circle cx="60" cy="60" r="58" fill="#FFF3D4"/><g transform="rotate(-32 60 60)"><rect x="44" y="53" width="54" height="15" rx="7.5" fill="#2A87AC"/><rect x="44" y="52" width="54" height="13" rx="6.5" fill="url(#blueBall)"/><rect x="74" y="54" width="18" height="7" rx="3.5" fill="#FFFFFF" opacity="0.35"/><rect x="10" y="51" width="44" height="19" rx="9" fill="#2A87AC"/><rect x="10" y="50" width="44" height="17" rx="8.5" fill="url(#blueBall)"/><rect x="13" y="40" width="7" height="16" rx="3.5" fill="#D8CEC1"/><rect x="13" y="39" width="7" height="16" rx="3.5" fill="#F4F1EC"/><rect x="21" y="37" width="7" height="19" rx="3.5" fill="#D8CEC1"/><rect x="21" y="36" width="7" height="19" rx="3.5" fill="#F4F1EC"/><rect x="29" y="37" width="7" height="19" rx="3.5" fill="#D8CEC1"/><rect x="29" y="36" width="7" height="19" rx="3.5" fill="#F4F1EC"/><rect x="37" y="37" width="7" height="19" rx="3.5" fill="#D8CEC1"/><rect x="37" y="36" width="7" height="19" rx="3.5" fill="#F4F1EC"/><rect x="45" y="40" width="7" height="16" rx="3.5" fill="#D8CEC1"/><rect x="45" y="39" width="7" height="16" rx="3.5" fill="#F4F1EC"/><path d="M 16 36 q 14 -10 28 -2 q -14 8 -28 2 Z" fill="#8FDCAC"/></g></g></svg>

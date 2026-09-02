@@ -100,6 +100,14 @@ enum HopAnatomy {
     static let jawCentre = CGPoint(x: 75, y: 56)
     static let jawRadii = CGSize(width: 61, height: 27)
 
+    /// The top of Hop's head, in reference units.
+    static let crownTop: CGFloat = crownCentre.y - crownRadii.height
+
+    /// The floor Hop stands on, in reference units — the line the ground shadow
+    /// is centred on in `figure()`. Motion anchors here rather than at the
+    /// bottom of the view, because the view is a square and Hop is not.
+    static let groundLine: CGFloat = 159
+
     /// The head's bounding box in reference space: the jaw sets the width, the
     /// eye sockets the top, the jaw the bottom.
     static let headBoundsInReference = CGRect(

@@ -1,13 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-<defs><radialGradient id="glowWarm" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.75"/><stop offset="0.5" stop-color="#FFD769" stop-opacity="0.28"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient><linearGradient id="woodGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#A76F46"/></linearGradient></defs>
-<g id="item-starLantern"><path d="M 26 14 q 40 14 78 6 q 38 -8 70 2" stroke="url(#woodGrad)" stroke-width="8" stroke-linecap="round" fill="none"/>
-      <g fill="#63C88A" opacity="0.85">
-        <ellipse cx="48" cy="10" rx="11" ry="5.6" transform="rotate(-18 48 10)"/>
-        <ellipse cx="146" cy="10" rx="10" ry="5" transform="rotate(16 146 10)"/>
-      </g>
-      <path d="M 100 16 v 14" stroke="#A76F46" stroke-width="4.4" stroke-linecap="round"/>
-      <rect x="86" y="28" width="28" height="10" rx="5" fill="#A76F46"/>
-      <circle cx="100" cy="110" r="86" fill="url(#glowWarm)"/>
-      <path d="M 100 48 L 116.46 87.35 L 158.97 90.84 L 126.63 118.65 L 136.44 160.16 L 100 138 L 63.56 160.16 L 73.37 118.65 L 41.03 90.84 L 83.54 87.35 Z" fill="#FFD769" stroke="#FFD769" stroke-width="14" stroke-linejoin="round"/>
-      <path d="M 97 69 L 106.4 92.06 L 131.24 93.88 L 112.22 109.94 L 118.16 134.12 L 97 121 L 75.84 134.12 L 81.78 109.94 L 62.76 93.88 L 87.6 92.06 Z" fill="#FFF3CE" stroke="#FFF3CE" stroke-width="14" stroke-linejoin="round"/></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><defs><radialGradient id="glowWarm" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.75"/><stop offset="0.5" stop-color="#FFD769" stop-opacity="0.28"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient><linearGradient id="woodGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#A76F46"/></linearGradient></defs>
+<g id="item-starLantern"><path d="M 26 14 q 40 14 78 6 q 38 -8 70 2" stroke="url(#woodGrad)" stroke-width="8" stroke-linecap="round" fill="none"/><g fill="#63C88A" opacity="0.85"><ellipse cx="48" cy="10" rx="11" ry="5.6" transform="rotate(-18 48 10)"/><ellipse cx="146" cy="10" rx="10" ry="5" transform="rotate(16 146 10)"/></g><path d="M 100 16 v 14" stroke="#A76F46" stroke-width="4.4" stroke-linecap="round"/><rect x="86" y="28" width="28" height="10" rx="5" fill="#A76F46"/><circle cx="100" cy="110" r="86" fill="url(#glowWarm)"/><path d="M 100 48 L 116.5 87.3 L 159 90.8 L 126.6 118.7 L 136.4 160.2 L 100 138 L 63.6 160.2 L 73.4 118.7 L 41 90.8 L 83.5 87.3 Z" fill="#FFD769" stroke="#FFD769" stroke-width="14" stroke-linejoin="round"/><path d="M 97 69 L 106.4 92.1 L 131.2 93.9 L 112.2 109.9 L 118.2 134.1 L 97 121 L 75.8 134.1 L 81.8 109.9 L 62.8 93.9 L 87.6 92.1 Z" fill="#FFF3CE" stroke="#FFF3CE" stroke-width="14" stroke-linejoin="round"/></g></svg>

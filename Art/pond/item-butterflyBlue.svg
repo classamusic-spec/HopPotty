@@ -1,19 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-<defs><radialGradient id="blueBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#BDE9F8"/><stop offset="1" stop-color="#2A87AC"/></radialGradient></defs>
-<g id="item-butterflyBlue"><g transform="translate(100 100)">
-    
-    <path d="M 2 -18 C 18 -60 58 -74 70 -50 C 82 -26 52 -4 6 -2 Z" fill="url(#blueBall)"/>
-    <path d="M 4 2 C 34 4 56 20 48 42 C 40 62 12 54 4 22 Z" fill="#9BDCF1"/>
-    <circle cx="46" cy="-40" r="9" fill="#FFFFFF" opacity="0.55"/>
-    <circle cx="28" cy="26" r="6" fill="#FFFFFF" opacity="0.45"/>
-    <g transform="scale(-1 1)">
-    <path d="M 2 -18 C 18 -60 58 -74 70 -50 C 82 -26 52 -4 6 -2 Z" fill="url(#blueBall)"/>
-    <path d="M 4 2 C 34 4 56 20 48 42 C 40 62 12 54 4 22 Z" fill="#9BDCF1"/>
-    <circle cx="46" cy="-40" r="9" fill="#FFFFFF" opacity="0.55"/>
-    <circle cx="28" cy="26" r="6" fill="#FFFFFF" opacity="0.45"/></g>
-    <ellipse cx="0" cy="4" rx="5.4" ry="30" fill="#33415C"/>
-    <circle cx="0" cy="-28" r="8" fill="#33415C"/>
-    <path d="M -3 -34 q -10 -14 -18 -18" stroke="#33415C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
-    <path d="M 3 -34 q 10 -14 18 -18" stroke="#33415C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
-    <circle cx="-21" cy="-52" r="3.4" fill="#33415C"/><circle cx="21" cy="-52" r="3.4" fill="#33415C"/></g></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><defs><radialGradient id="blueBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#BDE9F8"/><stop offset="1" stop-color="#2A87AC"/></radialGradient></defs>
+<g id="item-butterflyBlue"><g transform="translate(100 100)"><path d="M 2 -18 C 18 -60 58 -74 70 -50 C 82 -26 52 -4 6 -2 Z" fill="url(#blueBall)"/><path d="M 4 2 C 34 4 56 20 48 42 C 40 62 12 54 4 22 Z" fill="#9BDCF1"/><circle cx="46" cy="-40" r="9" fill="#FFFFFF" opacity="0.55"/><circle cx="28" cy="26" r="6" fill="#FFFFFF" opacity="0.45"/><g transform="scale(-1 1)"><path d="M 2 -18 C 18 -60 58 -74 70 -50 C 82 -26 52 -4 6 -2 Z" fill="url(#blueBall)"/><path d="M 4 2 C 34 4 56 20 48 42 C 40 62 12 54 4 22 Z" fill="#9BDCF1"/><circle cx="46" cy="-40" r="9" fill="#FFFFFF" opacity="0.55"/><circle cx="28" cy="26" r="6" fill="#FFFFFF" opacity="0.45"/></g><ellipse cx="0" cy="4" rx="5.4" ry="30" fill="#33415C"/><circle cx="0" cy="-28" r="8" fill="#33415C"/><path d="M -3 -34 q -10 -14 -18 -18" stroke="#33415C" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M 3 -34 q 10 -14 18 -18" stroke="#33415C" stroke-width="3.4" fill="none" stroke-linecap="round"/><circle cx="-21" cy="-52" r="3.4" fill="#33415C"/><circle cx="21" cy="-52" r="3.4" fill="#33415C"/></g></g></svg>

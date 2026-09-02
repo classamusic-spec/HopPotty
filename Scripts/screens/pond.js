@@ -6,7 +6,7 @@
  * no randomness anywhere — `PondCatalog` fixes the order and the cost, so a
  * child always knows what is coming and how far away it is.
  */
-const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation, artOr } = require('./ui');
+const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation, artOrInline } = require('./ui');
 const { MARK } = require('./kit');
 const scenes = require('./scenes');
 const P = T.palette;
@@ -35,7 +35,10 @@ const THUMB = {
 
 function hopsPond(appearance = 'light') {
   const col = c(appearance);
-  const scene = artOr(['Art/pond/pond-scene.svg', 'Art/scenes/pond.svg'], { width: 393, height: 852 },
+  // Inline, not an `<img>`: the pond exposes stable ids (`pond-ripples`,
+  // `pond-lily-1`, `pond-reeds`, …) and the web prototype's motion layer has to
+  // be able to reach them. An `<img>` would seal them off.
+  const scene = artOrInline(['Art/pond/pond-scene.svg', 'Art/scenes/pond.svg'], { width: 393, height: 852 },
     scenes.pond(393, 852, UNLOCKED));
 
   const tile = (inner, { locked = false, cost } = {}) => `

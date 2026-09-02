@@ -1,20 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-<defs><linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAF3F8"/></linearGradient></defs>
-<g id="item-rainbow"><g fill="none" stroke-linecap="round" opacity="0.9">
-      <path d="M 18 150 a 82 82 0 0 1 164 0" stroke="#FF9F8F" stroke-width="14" opacity="0.92"/><path d="M 33 150 a 67 67 0 0 1 134 0" stroke="#FFD769" stroke-width="14" opacity="0.88"/><path d="M 48 150 a 52 52 0 0 1 104 0" stroke="#63C88A" stroke-width="14" opacity="0.84"/><path d="M 63 150 a 37 37 0 0 1 74 0" stroke="#6FC7E8" stroke-width="14" opacity="0.8"/><path d="M 78 150 a 22 22 0 0 1 44 0" stroke="#AFA5EF" stroke-width="14" opacity="0.76"/>
-    </g>
-    <g opacity="0.95"><path d="
-    M 3.96 164.36
-    a 14.8 14.8 0 0 1 4.44 -28.12
-    a 19.24 19.24 0 0 1 31.08 -10.36
-    a 16.28 16.28 0 0 1 29.6 11.84
-    a 13.32 13.32 0 0 1 -2.96 26.64
-    Z" fill="url(#cloudFill)"/></g>
-    <g opacity="0.95"><path d="
-    M 127.96 164.36
-    a 14.8 14.8 0 0 1 4.44 -28.12
-    a 19.24 19.24 0 0 1 31.08 -10.36
-    a 16.28 16.28 0 0 1 29.6 11.84
-    a 13.32 13.32 0 0 1 -2.96 26.64
-    Z" fill="url(#cloudFill)"/></g></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><defs><linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EAF3F8"/></linearGradient></defs>
+<g id="item-rainbow"><g fill="none" stroke-linecap="round" opacity="0.9"><path d="M 18 150 a 82 82 0 0 1 164 0" stroke="#FF9F8F" stroke-width="14" opacity="0.9"/><path d="M 33 150 a 67 67 0 0 1 134 0" stroke="#FFD769" stroke-width="14" opacity="0.9"/><path d="M 48 150 a 52 52 0 0 1 104 0" stroke="#63C88A" stroke-width="14" opacity="0.8"/><path d="M 63 150 a 37 37 0 0 1 74 0" stroke="#6FC7E8" stroke-width="14" opacity="0.8"/><path d="M 78 150 a 22 22 0 0 1 44 0" stroke="#AFA5EF" stroke-width="14" opacity="0.8"/></g><g opacity="0.95"><path d=" M 4 164.4 a 14.8 14.8 0 0 1 4.4 -28.1 a 19.2 19.2 0 0 1 31.1 -10.4 a 16.3 16.3 0 0 1 29.6 11.8 a 13.3 13.3 0 0 1 -3 26.6 Z" fill="url(#cloudFill)"/></g><g opacity="0.95"><path d=" M 128 164.4 a 14.8 14.8 0 0 1 4.4 -28.1 a 19.2 19.2 0 0 1 31.1 -10.4 a 16.3 16.3 0 0 1 29.6 11.8 a 13.3 13.3 0 0 1 -3 26.6 Z" fill="url(#cloudFill)"/></g></g></svg>

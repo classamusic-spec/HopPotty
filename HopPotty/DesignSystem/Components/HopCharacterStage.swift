@@ -6,16 +6,30 @@ import HopPottyDesignTokens
 /// The drawing itself is decorative — ``HopCharacterView`` hides it — and the
 /// stage is what carries the label, because the label depends on what Hop is
 /// doing here, not on how he is drawn.
+///
+/// **The label follows the act's resting pose, never the beat.** Hop hopping,
+/// waving or speaking is the same element saying the same thing: a mascot that
+/// re-announced itself every time it moved would take VoiceOver focus away from
+/// the thing the child is actually being asked to do.
 public struct HopCharacterStage: View {
-    private let pose: HopPose
+    private let act: HopAct
     private let size: CGFloat
     private let ambient: Bool
+    private let gaze: HopGaze
     private let accessibilityLabel: String?
 
-    public init(pose: HopPose, size: CGFloat, ambient: Bool = true) {
-        self.pose = pose
+    /// Hop holding a pose, optionally hopping and optionally looking somewhere.
+    public init(
+        pose: HopPose,
+        size: CGFloat,
+        ambient: Bool = true,
+        jumping jump: HopJump? = nil,
+        gaze: HopGaze = .forward
+    ) {
+        self.act = jump.map { HopAct(pose: pose, beat: .hop($0)) } ?? HopAct(pose: pose)
         self.size = size
         self.ambient = ambient
+        self.gaze = gaze
         self.accessibilityLabel = nil
     }
 
@@ -25,17 +39,55 @@ public struct HopCharacterStage: View {
     ///
     /// A distinct argument label, not a defaulted parameter, so this never
     /// competes with the primary initialiser at a two-argument call site.
-    public init(pose: HopPose, size: CGFloat, ambient: Bool = true, describedAs description: String) {
-        self.pose = pose
+    public init(
+        pose: HopPose,
+        size: CGFloat,
+        ambient: Bool = true,
+        jumping jump: HopJump? = nil,
+        gaze: HopGaze = .forward,
+        describedAs description: String
+    ) {
+        self.act = jump.map { HopAct(pose: pose, beat: .hop($0)) } ?? HopAct(pose: pose)
         self.size = size
         self.ambient = ambient
+        self.gaze = gaze
+        self.accessibilityLabel = description
+    }
+
+    /// Hop performing an act — greeting, delighting, speaking, celebrating,
+    /// arriving, leaving. One line at a call site; safe to change at any moment.
+    public init(
+        act: HopAct,
+        size: CGFloat,
+        ambient: Bool = true,
+        gaze: HopGaze = .forward
+    ) {
+        self.act = act
+        self.size = size
+        self.ambient = ambient
+        self.gaze = gaze
+        self.accessibilityLabel = nil
+    }
+
+    /// An act, with the spoken description overridden. Empty makes it decorative.
+    public init(
+        act: HopAct,
+        size: CGFloat,
+        ambient: Bool = true,
+        gaze: HopGaze = .forward,
+        describedAs description: String
+    ) {
+        self.act = act
+        self.size = size
+        self.ambient = ambient
+        self.gaze = gaze
         self.accessibilityLabel = description
     }
 
     public var body: some View {
-        HopCharacterView(pose: pose, size: size, ambient: ambient)
+        HopCharacterView(act: act, size: size, ambient: ambient, gaze: gaze)
             .frame(width: size, height: size)
-            .modifier(HopStageLabel(label: accessibilityLabel ?? pose.accessibilityDescription))
+            .modifier(HopStageLabel(label: accessibilityLabel ?? act.pose.accessibilityDescription))
     }
 }
 
@@ -132,17 +184,105 @@ private struct HopPoseTransitionPreview: View {
     }
 }
 
+/// Drives one act at a time so the beats, the anticipation and the recovery can
+/// be watched, and so an interrupt can be forced by tapping a second act
+/// mid-beat — which is the thing that has to land cleanly.
+private struct HopActPreview: View {
+    @State private var act: HopAct = .idle
+    @State private var replay = 0
+    @State private var label = "idle"
+
+    private var options: [(String, HopAct)] {
+        [
+            ("idle", .idle),
+            ("wave", .greeting),
+            ("delight", .delighted()),
+            ("speak 2s", .speaking(for: 2)),
+            ("hop ×1", .hopping(HopJump(hops: 1, drift: .inPlace, replay: replay))),
+            ("hop ×3", .hopping(HopJump(hops: 3, drift: .right, replay: replay))),
+            ("celebrate", .celebrating(HopJump(hops: 2, drift: .left, replay: replay))),
+            ("enter", .entering(from: .left)),
+            ("exit", .exiting(toward: .right)),
+            ("sleep", .holding(.sleep)),
+            ("wait", .holding(.wait)),
+        ]
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            HopCharacterStage(act: act, size: 200)
+                .frame(height: 200 + HopJump.headroom(for: 200), alignment: .bottom)
+
+            Text(label).hopTextStyle(.parentCaption)
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 96))], spacing: 8) {
+                ForEach(options, id: \.0) { option in
+                    HopSecondaryButton(option.0) {
+                        replay += 1
+                        label = option.0
+                        act = option.1
+                    }
+                }
+            }
+        }
+        .padding()
+    }
+}
+
 #Preview("Hop · all poses") {
     HopPoseSheet()
         .hopBackground()
         .hopThemedRoot()
 }
 
-#Preview("Hop · ambient (breath + blink)") {
+#Preview("Hop · idle (breath, blink, weight, settle)") {
     VStack(spacing: 32) {
         HopCharacterStage(pose: .idle, size: 240)
         HopCharacterStage(pose: .wait, size: 160)
+        Text("Never perfectly still, never busy.").hopTextStyle(.parentCaption)
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground()
+    .hopThemedRoot()
+}
+
+#Preview("Hop · one jump") {
+    VStack(spacing: 24) {
+        HopCharacterStage(pose: .idle, size: 220, jumping: HopJump())
+            .frame(height: 220 + HopJump.headroom(for: 220), alignment: .bottom)
+        Text("Crouch, rise, hang, land, settle.").hopTextStyle(.parentCaption)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground()
+    .hopThemedRoot()
+}
+
+#Preview("Hop · repeated jump") {
+    VStack(spacing: 24) {
+        HopCharacterStage(pose: .cheer, size: 220, jumping: HopJump(hops: 3, drift: .right))
+            .frame(height: 220 + HopJump.headroom(for: 220), alignment: .bottom)
+        Text("One burst, not a queue.").hopTextStyle(.parentCaption)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground()
+    .hopThemedRoot()
+}
+
+#Preview("Hop · acts and interrupts") {
+    HopActPreview()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .hopBackground()
+        .hopThemedRoot()
+}
+
+#Preview("Hop · gaze") {
+    HStack(spacing: 24) {
+        HopCharacterStage(pose: .idle, size: 150, gaze: .left)
+        HopCharacterStage(pose: .idle, size: 150, gaze: .forward)
+        HopCharacterStage(pose: .idle, size: 150, gaze: .right)
+        HopCharacterStage(pose: .scrub, size: 150, gaze: .down)
+    }
+    .padding()
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .hopBackground()
     .hopThemedRoot()
@@ -150,8 +290,11 @@ private struct HopPoseTransitionPreview: View {
 
 #Preview("Hop · Reduce Motion (must be still)") {
     VStack(spacing: 32) {
-        HopCharacterStage(pose: .idle, size: 240)
-        Text("No breath, no blink.").hopTextStyle(.parentCaption)
+        HopCharacterStage(pose: .idle, size: 200, jumping: HopJump(hops: 3))
+        HopCharacterStage(act: .greeting, size: 160)
+        Text("No breath, no blink, no travel — the beats are cross-fades.")
+            .hopTextStyle(.parentCaption)
+            .multilineTextAlignment(.center)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .hopBackground()

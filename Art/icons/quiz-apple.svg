@@ -1,13 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-<defs><radialGradient id="peachBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B2"/><stop offset="1" stop-color="#C96755"/></radialGradient></defs>
-<g id="quiz-apple"><circle cx="60" cy="60" r="58" fill="#E0F4FC"/>
-    <ellipse cx="58" cy="102" rx="30" ry="5.1" fill="#15566F" opacity="0.12"/>
-    <path d="M 54 44 q -32 -11 -32 27 q 0 35 23 35 q 9 0 9 -4 q 0 4 9 4 q 23 0 23 -35 q 0 -38 -32 -27 Z" fill="url(#peachBall)"/>
-    <path d="M 40 50 q -12 9 -12 26" stroke="#FFFFFF" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.32"/>
-    <path d="M 54 45 q 2 -14 -4 -20" stroke="#A76F46" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <path d="M 56 33 q 18 -14 26 0 q -14 14 -26 0 Z" fill="#63C88A"/>
-    <g transform="rotate(10 86 92)">
-      <path d="M 64 100 q 12 -22 34 -16 q 10 3 7 10 q -5 11 -23 11 q -18 0 -18 -5 Z" fill="#D8CEC1"/>
-      <path d="M 64 98 q 12 -22 34 -16 q 10 3 7 10 q -5 11 -23 11 q -18 0 -18 -5 Z" fill="#FFFCF8"/>
-      <path d="M 64 98 q 12 -22 34 -16 q 8 2 8 7 q -18 -8 -42 9 Z" fill="url(#peachBall)"/></g></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><defs><radialGradient id="peachBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B2"/><stop offset="1" stop-color="#C96755"/></radialGradient></defs>
+<g id="quiz-apple"><circle cx="60" cy="60" r="58" fill="#E0F4FC"/><ellipse cx="58" cy="102" rx="30" ry="5.1" fill="#15566F" opacity="0.12"/><path d="M 54 44 q -32 -11 -32 27 q 0 35 23 35 q 9 0 9 -4 q 0 4 9 4 q 23 0 23 -35 q 0 -38 -32 -27 Z" fill="url(#peachBall)"/><path d="M 40 50 q -12 9 -12 26" stroke="#FFFFFF" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.32"/><path d="M 54 45 q 2 -14 -4 -20" stroke="#A76F46" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M 56 33 q 18 -14 26 0 q -14 14 -26 0 Z" fill="#63C88A"/><g transform="rotate(10 86 92)"><path d="M 64 100 q 12 -22 34 -16 q 10 3 7 10 q -5 11 -23 11 q -18 0 -18 -5 Z" fill="#D8CEC1"/><path d="M 64 98 q 12 -22 34 -16 q 10 3 7 10 q -5 11 -23 11 q -18 0 -18 -5 Z" fill="#FFFCF8"/><path d="M 64 98 q 12 -22 34 -16 q 8 2 8 7 q -18 -8 -42 9 Z" fill="url(#peachBall)"/></g></g></svg>

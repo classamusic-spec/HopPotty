@@ -1,20 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-<defs><radialGradient id="greenBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#2F8C57"/></radialGradient><linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A8DFC0"/><stop offset="0.5" stop-color="#8FDCAC"/><stop offset="1" stop-color="#7ECBA0"/></linearGradient><linearGradient id="groundNear" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7CC79E"/><stop offset="1" stop-color="#5FB287"/></linearGradient><clipPath id="iconDiscClip"><circle cx="60" cy="60" r="58"/></clipPath><radialGradient id="sunDisc" cx="0.4" cy="0.35" r="0.75"><stop offset="0" stop-color="#FFF0C2"/><stop offset="1" stop-color="#FFD769"/></radialGradient><radialGradient id="sunGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.95"/><stop offset="0.45" stop-color="#FFD769" stop-opacity="0.45"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient><linearGradient id="woodGradV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#C98A5B"/></linearGradient></defs>
-<g id="quiz-outside"><circle cx="60" cy="60" r="58" fill="#E0F4FC"/>
-    <g clip-path="url(#iconDiscClip)">
-      <circle cx="90" cy="32" r="24" fill="url(#sunGlow)"/>
-      <circle cx="90" cy="32" r="13" fill="url(#sunDisc)"/>
-      <ellipse cx="30" cy="26" rx="17" ry="9" fill="#FFFFFF" opacity="0.7"/>
-      <ellipse cx="42" cy="28" rx="12" ry="7" fill="#FFFFFF" opacity="0.7"/>
-      <path d="M 0 86 q 26 -24 60 -24 q 38 0 60 26 v 32 h -120 Z" fill="url(#ground)"/>
-      <rect x="36" y="56" width="9" height="30" rx="4" fill="url(#woodGradV)"/>
-      <circle cx="40" cy="48" r="18" fill="#2F8C57"/>
-      <circle cx="40" cy="45" r="18" fill="url(#greenBall)"/>
-      <circle cx="26" cy="55" r="11" fill="url(#greenBall)"/>
-      <circle cx="54" cy="54" r="12" fill="url(#greenBall)"/>
-      <path d="M 0 98 q 30 -12 60 -8 q 34 4 60 14 v 18 h -120 Z" fill="url(#groundNear)"/>
-      <circle cx="78" cy="92" r="4" fill="#FFD769"/>
-      <circle cx="94" cy="100" r="3.4" fill="#FF9F8F"/>
-      <circle cx="22" cy="100" r="3.4" fill="#FFFFFF" opacity="0.8"/>
-    </g></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><defs><radialGradient id="greenBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#2F8C57"/></radialGradient><linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD3AC"/><stop offset="0.45" stop-color="#7DC9A0"/><stop offset="1" stop-color="#6CBE92"/></linearGradient><linearGradient id="groundNear" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5FB287"/><stop offset="1" stop-color="#47996F"/></linearGradient><clipPath id="iconDiscClip"><circle cx="60" cy="60" r="58"/></clipPath><radialGradient id="sunDisc" cx="0.4" cy="0.35" r="0.75"><stop offset="0" stop-color="#FFF0C2"/><stop offset="1" stop-color="#FFD769"/></radialGradient><radialGradient id="sunGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.95"/><stop offset="0.45" stop-color="#FFD769" stop-opacity="0.45"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient><linearGradient id="woodGradV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#C98A5B"/></linearGradient></defs>
+<g id="quiz-outside"><circle cx="60" cy="60" r="58" fill="#E0F4FC"/><g clip-path="url(#iconDiscClip)"><circle cx="90" cy="32" r="24" fill="url(#sunGlow)"/><circle cx="90" cy="32" r="13" fill="url(#sunDisc)"/><ellipse cx="30" cy="26" rx="17" ry="9" fill="#FFFFFF" opacity="0.7"/><ellipse cx="42" cy="28" rx="12" ry="7" fill="#FFFFFF" opacity="0.7"/><path d="M 0 86 q 26 -24 60 -24 q 38 0 60 26 v 32 h -120 Z" fill="url(#ground)"/><rect x="36" y="56" width="9" height="30" rx="4" fill="url(#woodGradV)"/><circle cx="40" cy="48" r="18" fill="#2F8C57"/><circle cx="40" cy="45" r="18" fill="url(#greenBall)"/><circle cx="26" cy="55" r="11" fill="url(#greenBall)"/><circle cx="54" cy="54" r="12" fill="url(#greenBall)"/><path d="M 0 98 q 30 -12 60 -8 q 34 4 60 14 v 18 h -120 Z" fill="url(#groundNear)"/><circle cx="78" cy="92" r="4" fill="#FFD769"/><circle cx="94" cy="100" r="3.4" fill="#FF9F8F"/><circle cx="22" cy="100" r="3.4" fill="#FFFFFF" opacity="0.8"/></g></g></svg>

@@ -129,17 +129,28 @@ const DEFS = {
   // behind it. That single ramp is the whole depth cue for the pond backdrop.
   hillHaze: lin('hillHaze', [[0, '#D9EEE8'], [1, '#C6E6DA']]),
   hillFar: lin('hillFar', [[0, '#C7E9D6'], [1, '#AEDFC4']]),
-  hillMid: lin('hillMid', [[0, '#A9DEC0'], [1, '#8CD1A9']]),
-  ground: lin('ground', [[0, '#9CDBB8'], [0.42, P.hopGreenLight], [1, '#74C398']]),
-  groundNear: lin('groundNear', [[0, '#6FBF95'], [1, '#4EA278']]),
+  hillMid: lin('hillMid', [[0, '#A9DEC0'], [1, '#93D5B0']]),
+  ground: lin('ground', [[0, '#8FD3AC'], [0.45, '#7DC9A0'], [1, '#6CBE92']]),
+  groundNear: lin('groundNear', [[0, '#5FB287'], [1, '#47996F']]),
   meadowLight: lin('meadowLight', [[0, '#FFFFFF', 0], [0.45, '#FFF6DE', 0.32], [1, '#FFF6DE', 0]], { x1: 0.1, y1: 0, x2: 0.9, y2: 0.4 }),
   // Water, from the far rim to the near one: the far bank's own reflection,
   // then the broad band of sky, then depth and the near bank's shadow.
-  water: lin('water', [[0, '#4AA3C8'], [0.13, '#74C9E9'], [0.42, '#94DAF1'], [0.7, P.pondBlue], [1, '#3E97C0']]),
+  water: lin('water', [[0, '#4CACD2'], [0.13, '#7ACDEB'], [0.44, '#98DCF2'], [0.74, '#6EC5E8'], [1, '#4CA3CA']]),
   waterShallow: lin('waterShallow', [[0, '#CDEBEE'], [1, '#9FDCEE']]),
   waterDeep: lin('waterDeep', [[0, '#7FCFEC'], [1, P.pondBlueDeep]]),
   waterSkyPatch: rad('waterSkyPatch', [[0, '#FFFFFF', 0.5], [0.55, '#FFFFFF', 0.16], [1, '#FFFFFF', 0]], { cx: 0.4, cy: 0.4, r: 0.62 }),
-  shoreSand: lin('shoreSand', [[0, P.sand100], [0.55, P.sand200], [1, '#DFD5C7']]),
+  // The bank fades in from nothing at the far rim: grass runs straight down to
+  // the water where you are looking across it, and only opens into a beach at
+  // the near edge where you are looking down on it.
+  shoreSand: lin('shoreSand', [[0, P.sand200, 0], [0.36, P.sand200, 0.26], [0.7, P.sand100, 0.72], [1, '#E3D9CA', 0.92]]),
+  shoreWet: lin('shoreWet', [[0, P.sand300, 0], [0.4, P.sand300, 0.3], [1, P.sand400, 0.5]]),
+  // A bank that slopes into the water, as one soft ramp rather than two rings.
+  pondBank: rad('pondBank', [[0, '#4FA97E', 0.5], [0.68, '#4FA97E', 0.4], [0.9, '#4FA97E', 0.14], [1, '#4FA97E', 0]]),
+  waterFarBank: lin('waterFarBank', [[0, '#3F9670', 0.36], [0.34, P.pondBlueDeep, 0.22], [1, P.pondBlueDeep, 0]]),
+  waterNearShade: lin('waterNearShade', [[0, P.pondBlueInk, 0], [1, P.pondBlueInk, 0.14]]),
+  // Barely there on purpose: enough corner fall-off to keep the eye in the
+  // middle of the scene, not enough to read as a photographic vignette.
+  pondVignette: rad('pondVignette', [[0.58, P.hopGreenInk, 0], [1, P.hopGreenInk, 0.16]], { cx: 0.5, cy: 0.54, r: 0.78 }),
 
   // -- Plants --
   padGreen: lin('padGreen', [[0, P.hopGreenLight], [1, P.hopGreenDeep]], { x1: 0.2, x2: 0.9 }),
@@ -196,6 +207,10 @@ const DEFS = {
   // A clip so an icon may draw ground, sky or a stack that runs past the disc
   // and still end exactly on its edge, instead of being hand-trimmed per icon.
   iconDiscClip: '<clipPath id="iconDiscClip"><circle cx="60" cy="60" r="58"/></clipPath>',
+  // Everything that happens *inside* the pond — reflections, caustics, the far
+  // bank's shadow — is drawn as a plain shape and cut to the waterline here,
+  // rather than each one being hand-fitted to an ellipse.
+  pondWaterClip: '<clipPath id="pondWaterClip"><ellipse cx="600" cy="558" rx="470" ry="232"/></clipPath>',
   tvScreenClip: '<clipPath id="tvScreenClip"><rect x="23" y="35" width="74" height="36" rx="7"/></clipPath>',
   mirrorGlassClip: '<clipPath id="mirrorGlassClip"><ellipse cx="60" cy="58" rx="28" ry="36"/></clipPath>',
   paperSheet: lin('paperSheet', [[0, '#FFFFFF'], [1, P.sand100]], { x1: 0.2, x2: 0.9 }),
@@ -245,7 +260,10 @@ ${body}
 // Shape primitives. Everything downstream is assembled from these, which is
 // what keeps the whole set looking like one hand.
 // ---------------------------------------------------------------------------
-const R = (n) => Math.round(n * 100) / 100;
+// One decimal is already a tenth of a device pixel at the largest size any of
+// these files is drawn at, and the second decimal costs a byte per number
+// across a hundred files.
+const R = (n) => Math.round(n * 10) / 10;
 const g = (transform, inner) => `<g transform="${transform}">${inner}</g>`;
 const ellipsePath = (cx, cy, rx, ry) =>
   `M ${R(cx - rx)} ${R(cy)} a ${R(rx)} ${R(ry)} 0 1 0 ${R(rx * 2)} 0 a ${R(rx)} ${R(ry)} 0 1 0 ${R(-rx * 2)} 0`;
@@ -345,6 +363,30 @@ function treeline(x0, x1, y, n, fill, { h = 46, w = 84, opacity = 1, jitter = 0.
     s += canopy(x, y + (nz(i * 5.3) - 0.5) * 9, w * k, h * k, fill, opacity);
   }
   return s;
+}
+
+/** A closed ellipse with its radius modulated, smoothed through the midpoints
+ *  of the control polygon.
+ *
+ *  The waterline itself has to stay a true ellipse — every `PondAnchor` is
+ *  positioned against it — but the *bank* around it does not, and a bank that
+ *  is exactly concentric with the water reads as the rim of a plate. */
+function wobbleEllipse(cx, cy, rx, ry, { n = 16, amp = 0.05, seed = 0 } = {}) {
+  const pt = (i) => {
+    const a = (i / n) * Math.PI * 2;
+    // Outward only: the bank may bulge away from the water but must never cut
+    // inside it, or the waterline stops being the ellipse every anchor assumes.
+    const k = 1 + nz(seed + i * 1.9) * amp;
+    return [cx + rx * k * Math.cos(a), cy + ry * k * Math.sin(a)];
+  };
+  const p = Array.from({ length: n }, (_, i) => pt(i));
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  let d = `M ${R(mid(p[n - 1], p[0])[0])} ${R(mid(p[n - 1], p[0])[1])}`;
+  for (let i = 0; i < n; i++) {
+    const m = mid(p[i], p[(i + 1) % n]);
+    d += ` Q ${R(p[i][0])} ${R(p[i][1])} ${R(m[0])} ${R(m[1])}`;
+  }
+  return d + ' Z';
 }
 
 /** A tuft of grass: a fan of blades from one root, near ones taller and
@@ -640,43 +682,162 @@ const POND_CY = SCENE_H * 0.62;
 const POND_RX = 470;
 const POND_RY = 232;
 
+/** One set of surface rings, drawn as nested open arcs so the group can be
+ *  scaled from its own centre without the strokes shearing. */
+function ripple(cx, cy, rx, { o = 0.42, w = 9, n = 3 } = {}) {
+  return Array.from({ length: n }, (_, i) => {
+    const k = 1 - i * 0.34;
+    return `<path d="M ${R(cx - rx * k)} ${R(cy + i * rx * 0.1)} q ${R(rx * k)} ${R(-rx * 0.19 * k)} ${R(rx * 2 * k)} 0"
+      fill="none" stroke="#FFFFFF" stroke-width="${R(w * k)}" stroke-linecap="round" opacity="${R(o * (1 - i * 0.2))}"/>`;
+  }).join('');
+}
+
+/** A fish seen *through* the surface: a soft dark silhouette, no features.
+ *  The bright catalogue fish sit on top of the water; these live under it, so
+ *  the pond has depth even before a single decoration is unlocked. */
+const shadowFish = (x, y, s, o) => g(`translate(${R(x)} ${R(y)}) scale(${s})`,
+  `<path d="M -30 0 q 14 -15 38 -15 q 26 0 32 15 q -6 15 -32 15 q -24 0 -38 -15 Z" fill="${P.pondBlueInk}" opacity="${o}"/>
+   <path d="M -30 0 q -15 -11 -24 -13 q 5 13 0 26 q 9 -2 24 -13 Z" fill="${P.pondBlueInk}" opacity="${R(o * 0.75)}"/>`);
+
+/** A caustic glint: the sun broken up by the surface. */
+const glint = (x, y, w, o) =>
+  `<ellipse cx="${R(x)}" cy="${R(y)}" rx="${R(w)}" ry="${R(w * 0.24)}" fill="#FFFFFF" opacity="${o}"/>`;
+
+/** A small distant lily pad. Deliberately plainer and paler than the
+ *  `lilyPadSmall` decoration a child unlocks — this is scenery, not a reward. */
+const farPad = (x, y, r, o = 0.5) =>
+  `<path d="${pad(x, y, r, { squash: 0.34, notch: 58, spread: 22 })}" fill="${P.hopGreenDeep}" opacity="${R(o * 0.4)}"/>
+   <path d="${pad(x, y - r * 0.06, r, { squash: 0.34, notch: 58, spread: 22 })}" fill="url(#padGreenLight)" opacity="${o}"/>`;
+
 const pondLayers = {
+  // Key light: an off-frame sun, high and to the left. Every highlight and
+  // every shadow in the three layers below is placed against that one call.
   sky: () => `
     <rect x="0" y="0" width="${SCENE_W}" height="${SCENE_H}" fill="url(#skyPond)"/>
-    ${cloud(210, 150, 190, { opacity: 0.7 })}
-    ${cloud(940, 108, 150, { opacity: 0.55 })}
+    <ellipse id="pond-sunglow" cx="140" cy="20" rx="660" ry="440" fill="url(#skyGlow)"/>
+    <g id="pond-clouds">
+      <g id="pond-cloud-1">${cloud(262, 150, 216, { opacity: 0.95 })}${cloud(180, 182, 128, { opacity: 0.6 })}</g>
+      <g id="pond-cloud-2">${cloud(712, 96, 154, { opacity: 0.72 })}</g>
+      <g id="pond-cloud-3">${cloud(1098, 198, 116, { opacity: 0.46 })}</g>
+    </g>
+    <g id="pond-birds" fill="none" stroke="${P.pondBlueDeep}" stroke-width="4.4" stroke-linecap="round" opacity="0.22">
+      <path d="M 452 232 q 15 -13 28 0 q 13 -13 28 0"/>
+      <path d="M 536 196 q 11 -10 21 0 q 10 -10 21 0"/>
+    </g>
     <rect x="0" y="0" width="${SCENE_W}" height="470" fill="url(#skyHaze)"/>`,
 
+  // Four bands, each warmer, greener and darker than the one behind it. The
+  // treelines are broken into groups rather than run edge to edge, so the
+  // horizon has a silhouette instead of a texture.
   backdrop: () => `
-    <path d="M -20 372 Q 190 268 430 336 Q 610 386 760 330 Q 960 258 1220 356 L 1220 460 L -20 460 Z" fill="url(#hillFar)"/>
-    <path d="M -20 408 Q 240 336 470 392 Q 700 448 940 388 Q 1090 350 1220 396 L 1220 500 L -20 500 Z" fill="url(#hillMid)" opacity="0.9"/>
-    <path d="M -20 430 Q 300 388 600 424 Q 900 460 1220 418 L 1220 920 L -20 920 Z" fill="url(#ground)"/>
-    <ellipse cx="${POND_CX}" cy="${POND_CY + 6}" rx="${POND_RX + 52}" ry="${POND_RY + 40}" fill="#8FD3AE" opacity="0.45"/>`,
+    <g id="pond-hills-far">
+      <path d="M -20 342 Q 180 268 420 326 Q 620 374 800 312 Q 990 248 1220 326 L 1220 500 L -20 500 Z" fill="url(#hillHaze)"/>
+      ${treeline(-30, 336, 322, 5, '#BADFD0', { h: 62, w: 116, opacity: 0.85 })}
+      ${treeline(392, 704, 356, 4, '#C4E5D8', { h: 40, w: 92, opacity: 0.66 })}
+      ${treeline(778, 1244, 314, 6, '#BADFD0', { h: 64, w: 120, opacity: 0.85 })}
+    </g>
+    <g id="pond-hills-mid">
+      <path d="M -20 378 Q 190 322 430 360 Q 610 392 760 350 Q 960 306 1220 372 L 1220 520 L -20 520 Z" fill="url(#hillFar)"/>
+      ${treeline(-30, 292, 394, 4, '#A2D8BB', { h: 74, w: 134 })}
+      ${treeline(898, 1252, 388, 4, '#A2D8BB', { h: 78, w: 140 })}
+      <path d="M -20 416 Q 240 356 470 404 Q 700 452 940 398 Q 1090 364 1220 404 L 1220 540 L -20 540 Z" fill="url(#hillMid)" opacity="0.95"/>
+      ${canopy(330, 428, 158, 100, '#8CD1A9')}
+      ${canopy(1132, 436, 178, 112, '#8CD1A9')}
+      ${canopy(1052, 440, 112, 70, '#96D6B1')}
+    </g>
+    <path d="M -20 428 Q 300 396 600 428 Q 900 458 1220 420 L 1220 920 L -20 920 Z" fill="url(#ground)"/>
+    <rect x="0" y="424" width="${SCENE_W}" height="330" fill="url(#meadowLight)"/>
+    <g id="pond-meadow" opacity="0.22">
+      <path d="M -20 452 Q 180 428 372 452 Q 300 478 96 486 Q -20 486 -20 452 Z" fill="#A6DFBE"/>
+      <path d="M 1220 448 Q 1020 424 848 450 Q 940 478 1140 486 Q 1220 486 1220 448 Z" fill="#A6DFBE"/>
+      <path d="M -20 636 Q 108 610 214 640 Q 120 664 -20 668 Z" fill="#4FA97E"/>
+      <path d="M 1220 624 Q 1082 598 982 630 Q 1084 654 1220 660 Z" fill="#4FA97E"/>
+    </g>
+    <g id="pond-shrubs">
+      ${canopy(10, 524, 178, 92, '#6FC299')}${canopy(108, 532, 100, 48, '#7FCBA4')}
+      ${canopy(1192, 530, 184, 96, '#6FC299')}${canopy(1098, 538, 104, 50, '#7FCBA4')}
+    </g>
+    <ellipse id="pond-basin" cx="${POND_CX}" cy="${POND_CY + 12}" rx="${POND_RX + 118}" ry="${POND_RY + 92}" fill="url(#pondBank)"/>`,
 
   water: () => `
-    <ellipse cx="${POND_CX}" cy="${POND_CY}" rx="${POND_RX}" ry="${POND_RY}" fill="url(#water)"/>
-    <ellipse cx="${POND_CX}" cy="${POND_CY - 18}" rx="${POND_RX - 40}" ry="${POND_RY - 46}" fill="#8FD8F0" opacity="0.35"/>
-    <path d="M 330 ${POND_CY - 108} q 90 -22 180 0" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" opacity="0.34"/>
-    <path d="M 700 ${POND_CY - 66} q 70 -18 140 0" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity="0.26"/>
-    <path d="M 400 ${POND_CY + 118} q 110 24 220 0" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" opacity="0.22"/>`,
+    <ellipse id="pond-surface" cx="${POND_CX}" cy="${POND_CY}" rx="${POND_RX}" ry="${POND_RY}" fill="url(#water)"/>
+    <g clip-path="url(#pondWaterClip)">
+      <rect x="120" y="324" width="960" height="96" fill="url(#waterFarBank)"/>
+      <g id="pond-reflection" transform="translate(0 652) scale(1 -1)" opacity="0.17">
+        ${[[286, 96, 44], [452, 74, 34], [648, 110, 50], [828, 82, 38], [1004, 118, 52]]
+          .map(([x, w, h]) => canopy(x, 326, w, h, '#3F9670')).join('')}
+      </g>
+      <ellipse cx="470" cy="512" rx="352" ry="140" fill="url(#waterSkyPatch)"/>
+      <rect x="120" y="666" width="960" height="128" fill="url(#waterNearShade)"/>
+      <g id="pond-fish">
+        <g id="pond-fish-1">${shadowFish(392, 636, 1.05, 0.2)}</g>
+        <g id="pond-fish-2">${shadowFish(884, 668, 0.86, 0.16)}</g>
+        <g id="pond-fish-3">${shadowFish(690, 726, 0.68, 0.13)}</g>
+      </g>
+      <g id="pond-shimmer">
+        ${Array.from({ length: 17 }, (_, i) => {
+          // Clustered along the axis the key light runs down, not scattered:
+          // a glint is the sun broken up, so it belongs where the sun is.
+          const t = i / 16;
+          const x = 292 + t * 520 + (nz(i * 1.7) - 0.5) * 190;
+          const y = 452 + t * 176 + (nz(i * 4.9) - 0.5) * 140;
+          const w = 12 + nz(i * 9.1) * 34;
+          return glint(x, y, w, R(0.12 + nz(i * 6.3) * 0.26));
+        }).join('')}
+      </g>
+    </g>
+    <g id="pond-ripples">
+      <g id="pond-ripple-1">${ripple(432, 470, 104, { o: 0.4, w: 8 })}</g>
+      <g id="pond-ripple-2">${ripple(806, 540, 88, { o: 0.3, w: 7 })}</g>
+      <g id="pond-ripple-3">${ripple(520, 692, 128, { o: 0.26, w: 9 })}</g>
+      <g id="pond-ripple-4">${ripple(910, 412, 62, { o: 0.24, w: 6, n: 2 })}</g>
+    </g>
+    <g id="pond-lilies">
+      <g id="pond-lily-1">${farPad(386, 400, 38, 0.52)}</g>
+      <g id="pond-lily-2">${farPad(516, 378, 27, 0.44)}</g>
+      <g id="pond-lily-3">${farPad(748, 392, 32, 0.48)}</g>
+    </g>`,
 
+  // The sand ring is drawn from two ellipses with the outer one pushed *down*,
+  // so the bank is a thin sliver across the far side and a broad beach at the
+  // near one. A concentric ring reads as a bathtub surround.
   shore: () => `
-    <path d="${ellipsePath(POND_CX, POND_CY + 10, POND_RX + 40, POND_RY + 32)} ${ellipsePath(POND_CX, POND_CY, POND_RX, POND_RY)}" fill-rule="evenodd" fill="url(#shoreSand)" opacity="0.85"/>
-    <g fill="${P.hopGreenDeep}" opacity="0.4">
-      <path d="${blade(192, 706, 52, 26, 10)}"/><path d="${blade(212, 708, 38, -22, 9)}"/><path d="${blade(204, 710, 30, 6, 8)}"/>
-      <path d="${blade(1012, 692, 50, -26, 10)}"/><path d="${blade(992, 694, 36, 22, 9)}"/><path d="${blade(1002, 696, 28, -6, 8)}"/>
-      <path d="${blade(626, 808, 42, 22, 10)}"/><path d="${blade(648, 810, 30, -18, 9)}"/>
+    <g id="pond-shore">
+      <path d="${wobbleEllipse(POND_CX, POND_CY + 24, POND_RX + 20, POND_RY + 18, { amp: 0.075, seed: 3 })} ${ellipsePath(POND_CX, POND_CY, POND_RX, POND_RY)}" fill-rule="evenodd" fill="url(#shoreSand)"/>
+      <path d="${ellipsePath(POND_CX, POND_CY + 5, POND_RX + 11, POND_RY + 8)} ${ellipsePath(POND_CX, POND_CY, POND_RX, POND_RY)}" fill-rule="evenodd" fill="url(#shoreWet)"/>
+      ${[[186, 806, 15], [252, 828, 11], [1002, 798, 13], [1074, 772, 9], [880, 826, 10]]
+        .map(([x, y, r]) => pebble(x, y, r, r * 0.44, { fill: 'url(#stoneGrad)', light: 0.7 })).join('')}
+    </g>
+    <g id="pond-reeds">
+      <g id="pond-reed-1">${tuft(296, 380, 34, P.hopGreenDeep, { opacity: 0.36 })}</g>
+      <g id="pond-reed-2">${tuft(452, 348, 25, P.hopGreenDeep, { n: 4, opacity: 0.3 })}</g>
+      <g id="pond-reed-3">${tuft(702, 344, 25, P.hopGreenDeep, { n: 4, opacity: 0.3 })}</g>
+      <g id="pond-reed-4">${tuft(866, 368, 33, P.hopGreenDeep, { opacity: 0.36 })}</g>
+      <g id="pond-reed-5">${tuft(1022, 428, 42, P.hopGreenDeep, { opacity: 0.44 })}</g>
+      <g id="pond-reed-6">${tuft(208, 456, 40, P.hopGreenDeep, { opacity: 0.44 })}</g>
+      <g id="pond-reed-7">${tuft(1120, 596, 54, P.hopGreenDeep, { opacity: 0.5 })}</g>
+      <g id="pond-reed-8">${tuft(112, 640, 50, P.hopGreenDeep, { opacity: 0.5 })}</g>
+      <g id="pond-reed-9">${tuft(646, 814, 54, P.hopGreenInk, { opacity: 0.28 })}</g>
+      <g id="pond-reed-10">${tuft(348, 796, 40, P.hopGreenInk, { n: 4, opacity: 0.24 })}</g>
     </g>`,
 
   // Kept low and thin: the near bank sits below every shore anchor (the lowest
   // is y=0.90), so it frames the scene instead of swallowing the front row.
+  // The two corner clumps are the darkest, least detailed things in the scene —
+  // near-black-green silhouettes that push everything else away from the eye.
   foreground: () => `
-    <path d="M -20 884 Q 300 856 620 876 Q 900 894 1220 862 L 1220 920 L -20 920 Z" fill="url(#groundNear)" opacity="0.9"/>
-    <g fill="${P.hopGreenInk}" opacity="0.18">
-      <path d="${blade(74, 894, 62, 20, 10)}"/><path d="${blade(108, 898, 46, -14, 8)}"/>
-      <path d="${blade(1126, 886, 66, -20, 10)}"/><path d="${blade(1090, 890, 48, 14, 8)}"/>
+    <g id="pond-foreground">
+      <path d="M -20 872 Q 300 842 620 866 Q 900 888 1220 848 L 1220 920 L -20 920 Z" fill="url(#groundNear)"/>
+      <path d="M -20 872 Q 300 842 620 866 Q 900 888 1220 848" fill="none" stroke="#8AD0A8" stroke-width="5" opacity="0.5"/>
+      <g id="pond-grass-near">
+        ${tuft(64, 908, 78, P.hopGreenInk, { opacity: 0.3 })}
+        ${tuft(166, 914, 54, P.hopGreenInk, { n: 4, opacity: 0.24 })}
+        ${tuft(1142, 902, 84, P.hopGreenInk, { opacity: 0.3 })}
+        ${tuft(1038, 912, 56, P.hopGreenInk, { n: 4, opacity: 0.24 })}
+      </g>
     </g>
-    <ellipse cx="600" cy="910" rx="760" ry="80" fill="${P.hopGreenInk}" opacity="0.08"/>`,
+    <ellipse cx="600" cy="916" rx="780" ry="86" fill="${P.hopGreenInk}" opacity="0.09"/>
+    <rect x="0" y="0" width="${SCENE_W}" height="${SCENE_H}" fill="url(#pondVignette)"/>`,
 };
 
 // --- Decorations. All drawn inside 0 0 200 200, centred on (100, 100). ------
@@ -1137,10 +1298,20 @@ const ITEM_LAYER = {
   foreground: ['butterflyBlue', 'butterflyYellow', 'dragonfly', 'ladybug', 'fireflies'],
 };
 
+/** Ids the motion pass addresses by name. A placed decoration keeps its
+ *  `pond-item-<id>` handle either way; these are the extra aliases the
+ *  animation work asked for, so a gentle drift can find its subject without
+ *  knowing the catalogue. */
+const ITEM_ALIAS = { dragonfly: 'pond-dragonfly', fireflies: 'pond-fireflies', duckling: 'pond-duckling' };
+
 function placeItem(id) {
   const [x, y, s] = PLACEMENT[id];
   const k = (s * ITEM_SPAN) / 200;
-  return g(`translate(${R(x * SCENE_W)} ${R(y * SCENE_H)}) scale(${R(k)}) translate(-100 -100)`, ITEMS[id]());
+  // The translate puts the item's own centre on the anchor, so every group's
+  // transform origin is already the middle of the thing being animated.
+  const alias = ITEM_ALIAS[id] ? ` id="${ITEM_ALIAS[id]}"` : '';
+  const inner = `<g${alias} transform="translate(-100 -100)">${ITEMS[id]()}</g>`;
+  return `<g id="pond-item-${id}" transform="translate(${R(x * SCENE_W)} ${R(y * SCENE_H)}) scale(${R(k)})">${inner}</g>`;
 }
 
 // ===========================================================================
@@ -1155,52 +1326,130 @@ const SW = 640, SH = 480;
  *  left the potty and the toilet as vague pale blobs. The tint is the figure /
  *  ground contrast the whole set depends on.
  */
-function bathroom({ floorY = 356, wall = P.pondBlueSoft, floor = P.sand100 } = {}) {
+function bathroom({ floorY = 356, wall = P.pondBlueSoft, floor = P.sand100, dado = 160 } = {}) {
+  const tileTop = R(floorY - dado);
+  const skirtH = 17;
+  const floorTop = R(floorY + skirtH);
+  const cols = 8, rows = 3;
+  const tw = SW / cols, th = dado / rows;
+
+  // Tile grout. Straight, because we are looking square at the wall — the
+  // perspective in this room belongs to the floor and nowhere else.
+  const grout = [];
+  for (let i = 1; i < cols; i++) grout.push(`M ${R(i * tw)} ${tileTop} V ${R(floorY)}`);
+  for (let j = 1; j < rows; j++) grout.push(`M 0 ${R(tileTop + j * th)} H ${SW}`);
+
+  // Floor tiles converge on one vanishing point sitting just above the skirting,
+  // and the runs toward the viewer open up as they come. Two cheap rules, and
+  // the floor stops being a beige rectangle.
+  const vx = SW / 2, vy = floorY - 46;
+  const runs = [];
+  for (let j = -5; j <= 5; j++) {
+    if (!j) continue;
+    const bx = vx + j * 152;
+    const t = (floorTop - vy) / (SH - vy);
+    runs.push(`M ${R(vx + (bx - vx) * t)} ${floorTop} L ${R(bx)} ${SH}`);
+  }
+  const bands = 5;
+  for (let k = 1; k < bands; k++) {
+    runs.push(`M 0 ${R(floorTop + (SH - floorTop) * Math.pow(k / bands, 1.8))} H ${SW}`);
+  }
+
   return `
     <rect x="0" y="0" width="${SW}" height="${SH}" fill="${wall}"/>
-    <circle cx="118" cy="104" r="80" fill="#FFFFFF" opacity="0.45"/>
-    <circle cx="556" cy="82" r="54" fill="${P.sunshineSoft}" opacity="0.75"/>
-    <rect x="0" y="${floorY}" width="${SW}" height="${SH - floorY}" fill="${floor}"/>
-    <rect x="0" y="${floorY - 10}" width="${SW}" height="14" rx="7" fill="${P.sand200}"/>`;
+    <rect x="0" y="0" width="${SW}" height="${R(floorY)}" fill="url(#wallFall)"/>
+    <rect id="key-light" x="0" y="0" width="${SW}" height="${R(floorY)}" fill="url(#wallLight)"/>
+    <g id="wall-tile">
+      <rect x="0" y="${tileTop}" width="${SW}" height="${R(dado)}" fill="#FFFFFF" opacity="0.5"/>
+      <path d="${grout.join(' ')}" stroke="${wall}" stroke-width="3.4" opacity="0.9" fill="none"/>
+      <path d="${grout.join(' ')}" stroke="#FFFFFF" stroke-width="1.4" opacity="0.5" fill="none" transform="translate(-1.6 -1.6)"/>
+      <rect x="0" y="${tileTop}" width="${SW}" height="${R(dado)}" fill="url(#tileSheen)"/>
+      <rect x="0" y="${tileTop}" width="${SW}" height="12" fill="${P.sand500}" opacity="0.1"/>
+      <rect x="0" y="${R(tileTop - 13)}" width="${SW}" height="15" rx="7.5" fill="${P.sand200}"/>
+      <rect x="0" y="${R(tileTop - 13)}" width="${SW}" height="6" rx="3" fill="#FFFFFF" opacity="0.7"/>
+    </g>
+    <rect x="0" y="${R(floorY)}" width="${SW}" height="${R(SH - floorY)}" fill="${floor}"/>
+    <rect x="0" y="${floorTop}" width="${SW}" height="${R(SH - floorTop)}" fill="url(#floorGlow)"/>
+    <g id="floor-tile" stroke="${P.sand300}" stroke-width="2.4" opacity="0.42" fill="none" stroke-linecap="round">
+      <path d="${runs.join(' ')}"/>
+    </g>
+    <rect x="0" y="${floorTop}" width="${SW}" height="${R(SH - floorTop)}" fill="url(#floorFall)"/>
+    <g id="skirting">
+      <rect x="0" y="${R(floorY)}" width="${SW}" height="${skirtH}" fill="${P.sand200}"/>
+      <rect x="0" y="${R(floorY)}" width="${SW}" height="5" rx="2.5" fill="#FFFFFF" opacity="0.75"/>
+      <rect x="0" y="${R(floorY + skirtH - 4)}" width="${SW}" height="4" fill="${P.sand400}" opacity="0.5"/>
+    </g>`;
 }
+
+/** Two shadows, not one: a soft halo for the ambient occlusion and a tight,
+ *  darker core where the object actually touches. Without the core an object
+ *  hovers; without the halo it looks stamped on. Offset a little to the right,
+ *  because the key light in every one of these rooms comes from the top left. */
 const contactShadow = (cx, cy, rx, ry = rx * 0.2) =>
-  `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${R(ry)}" fill="url(#softShadow)"/>`;
+  `<ellipse cx="${R(cx + rx * 0.05)}" cy="${R(cy + ry * 0.12)}" rx="${R(rx * 1.16)}" ry="${R(ry * 1.18)}" fill="url(#softShadow)"/>
+   <ellipse cx="${R(cx + rx * 0.06)}" cy="${R(cy)}" rx="${R(rx * 0.66)}" ry="${R(ry * 0.6)}" fill="${P.sand600}" opacity="0.2"/>`;
+
+/** A crisp specular: the one hard highlight that says "glazed", as opposed to
+ *  the broad soft one that only says "light". */
+const specular = (cx, cy, rx, ry, rot = -22, o = 0.9) =>
+  `<ellipse cx="${R(cx)}" cy="${R(cy)}" rx="${R(rx)}" ry="${R(ry)}" fill="#FFFFFF" opacity="${o}" transform="rotate(${rot} ${R(cx)} ${R(cy)})"/>`;
 
 /** The child-height potty: a low bowl, a seat ring you can see the hole in,
  *  and a rounded back rest. Each part is a different tone so it reads as an
  *  object rather than a green mass. */
 function pottyChair(cx, baseY, s = 1) {
   return g(`translate(${cx} ${baseY}) scale(${s})`, `
-    ${contactShadow(0, 4, 128, 22)}
+    ${contactShadow(0, 6, 122, 22)}
     <path d="M -86 -70 q -8 -60 86 -60 q 94 0 86 60 q -86 -20 -172 0 Z" fill="${P.hopGreenDeep}"/>
     <path d="M -72 -82 q -6 -38 72 -38 q 78 0 72 38 q -72 -14 -144 0 Z" fill="url(#greenBall)"/>
+    <path d="M -68 -80 q -4 -32 60 -34 q -40 8 -44 36 Z" fill="#FFFFFF" opacity="0.32"/>
     <path d="M -84 -64 C -88 -6 -70 20 -58 26 Q 0 44 58 26 C 70 20 88 -6 84 -64 Z" fill="url(#greenBall)"/>
-    <path d="M -84 -64 C -88 -6 -70 20 -58 26 Q -36 34 -20 36 Q -54 12 -54 -64 Z" fill="#FFFFFF" opacity="0.2"/>
+    <path d="M -84 -64 C -88 -6 -70 20 -58 26 Q -36 34 -20 36 Q -54 12 -54 -64 Z" fill="#FFFFFF" opacity="0.22"/>
+    <path d="M 84 -64 C 88 -6 70 20 58 26 Q 42 32 30 34 Q 56 14 56 -64 Z" fill="${P.hopGreenInk}" opacity="0.18"/>
+    <ellipse cx="0" cy="0" rx="58" ry="11" fill="url(#ceramicAO)"/>
     <ellipse cx="0" cy="-58" rx="96" ry="28" fill="${P.hopGreenDeep}"/>
     <ellipse cx="0" cy="-64" rx="96" ry="28" fill="url(#padGreenLight)"/>
+    <path d="M -96 -64 a 96 28 0 0 1 96 -28 a 96 28 0 0 0 -78 38 Z" fill="#FFFFFF" opacity="0.42"/>
     <ellipse cx="0" cy="-64" rx="52" ry="14" fill="${P.hopGreenInk}" opacity="0.5"/>
     <ellipse cx="0" cy="-67" rx="52" ry="14" fill="${P.pondBlueSoft}"/>
-    <ellipse cx="-26" cy="-72" rx="23" ry="6" fill="#FFFFFF" opacity="0.5"/>`);
+    <ellipse cx="0" cy="-67" rx="52" ry="14" fill="url(#waterSkyPatch)"/>
+    ${specular(-26, -72, 22, 5.4, -6, 0.6)}`);
 }
 
-/** A grown-up toilet, three-quarter view. Shared by Flush and the quiz icon. */
+/** A grown-up toilet, three-quarter view. Shared by Flush and the quiz icon.
+ *
+ *  Anchored at the point where the pedestal meets the floor, with the water
+ *  surface held at local y ≈ -204: the Flush screen draws its swirl straight
+ *  onto that surface in scene coordinates, so the height of the bowl is a
+ *  contract, not a drawing decision. */
 function toilet(cx, baseY, s = 1, { lidOpen = true } = {}) {
   return g(`translate(${cx} ${baseY}) scale(${s})`, `
-    ${contactShadow(0, 4, 126, 22)}
-    <path d="M -58 0 q -22 0 -18 -24 l 20 -116 h 102 l 20 116 q 4 24 -18 24 Z" fill="url(#porcelainSide)"/>
-    <path d="M -58 0 q -22 0 -18 -24 l 20 -116 h 34 l -16 140 Z" fill="#FFFFFF" opacity="0.4"/>
-    <path d="M 54 -320 q 0 -22 22 -22 h 68 q 22 0 22 22 v 128 q 0 20 -22 20 h -68 q -22 0 -22 -20 Z" fill="${P.sand300}"/>
-    <path d="M 50 -324 q 0 -22 22 -22 h 68 q 22 0 22 22 v 128 q 0 20 -22 20 h -68 q -22 0 -22 -20 Z" fill="url(#porcelainGrad)"/>
-    <path d="M 50 -324 q 0 -22 22 -22 h 18 v 170 h -18 q -22 0 -22 -20 Z" fill="#FFFFFF" opacity="0.45"/>
-    <rect x="74" y="-310" width="34" height="14" rx="7" fill="${P.pondBlue}"/>
-    <path d="M -96 -186 q 0 -28 32 -28 h 112 q 32 0 32 30 q 0 52 -88 52 q -88 0 -88 -54 Z" fill="url(#porcelainGrad)"/>
-    <ellipse cx="-4" cy="-192" rx="96" ry="33" fill="${P.sand300}" opacity="0.8"/>
-    <ellipse cx="-4" cy="-200" rx="96" ry="33" fill="url(#porcelainGrad)"/>
-    <ellipse cx="-4" cy="-200" rx="72" ry="24" fill="${P.sand200}" opacity="0.7"/>
-    <ellipse cx="-4" cy="-203" rx="72" ry="24" fill="${P.porcelainMid}"/>
-    <ellipse cx="-4" cy="-203" rx="54" ry="17" fill="${P.pondBlueDeep}" opacity="0.5"/>
-    <ellipse cx="-4" cy="-206" rx="54" ry="17" fill="${P.pondBlueLight}"/>
-    <rect x="34" y="-236" width="46" height="14" rx="7" fill="${P.sand200}"/>`);
+    ${contactShadow(0, 6, 128, 24)}
+    <ellipse cx="128" cy="-244" rx="78" ry="96" fill="${P.sand500}" opacity="0.08"/>
+    <path d="M 52 -318 q 0 -24 24 -24 h 68 q 24 0 24 24 v 122 q 0 22 -24 22 h -68 q -24 0 -24 -22 Z" fill="url(#porcelainGrad)"/>
+    <path d="M 52 -318 q 0 -24 24 -24 h 18 v 166 h -18 q -24 0 -24 -22 Z" fill="#FFFFFF" opacity="0.55"/>
+    <path d="M 168 -300 v 100 q 0 22 -24 22 h -20 q 34 -8 34 -40 Z" fill="${P.sand400}" opacity="0.28"/>
+    <path d="M 44 -330 q 0 -16 18 -16 h 96 q 18 0 18 16 q 0 13 -18 13 h -96 q -18 0 -18 -13 Z" fill="url(#porcelainTop)"/>
+    <rect x="78" y="-306" width="40" height="16" rx="8" fill="url(#chromeGrad)"/>
+    ${specular(88, -301, 9, 2.6, -8, 0.8)}
+    <path d="M -56 0 q -24 0 -20 -26 l 18 -110 h 100 l 18 110 q 4 26 -20 26 Z" fill="url(#porcelainSide)"/>
+    <path d="M -56 0 q -24 0 -20 -26 l 18 -110 h 30 l -14 136 Z" fill="#FFFFFF" opacity="0.5"/>
+    <path d="M 56 -136 l 18 110 q 4 26 -20 26 h -24 q 30 -6 28 -34 Z" fill="${P.sand500}" opacity="0.16"/>
+    <ellipse cx="0" cy="-4" rx="62" ry="12" fill="url(#ceramicAO)"/>
+    <path d="M -98 -184 q 0 -30 34 -30 h 122 q 34 0 34 32 q 0 54 -95 54 q -95 0 -95 -56 Z" fill="url(#porcelainGrad)"/>
+    <path d="M -98 -184 q 0 -30 34 -30 h 30 q -32 24 -26 82 q -38 -14 -38 -52 Z" fill="#FFFFFF" opacity="0.45"/>
+    <path d="M -4 -128 q 70 -2 92 -34 q -6 40 -92 42 q -86 -2 -92 -42 q 22 32 92 34 Z" fill="${P.sand500}" opacity="0.2"/>
+    <ellipse cx="-4" cy="-190" rx="98" ry="34" fill="${P.sand300}" opacity="0.85"/>
+    <ellipse cx="-4" cy="-198" rx="98" ry="34" fill="url(#porcelainTop)"/>
+    <ellipse cx="-4" cy="-199" rx="74" ry="25" fill="${P.sand300}" opacity="0.8"/>
+    <ellipse cx="-4" cy="-203" rx="74" ry="25" fill="${P.porcelainMid}"/>
+    <path d="M -78 -203 a 74 25 0 0 1 74 -25 a 74 25 0 0 0 -60 34 Z" fill="#FFFFFF" opacity="0.8"/>
+    <ellipse cx="-4" cy="-202" rx="55" ry="18" fill="${P.pondBlueDeep}" opacity="0.55"/>
+    <ellipse cx="-4" cy="-206" rx="55" ry="18" fill="${P.pondBlueLight}"/>
+    <ellipse cx="-4" cy="-206" rx="55" ry="18" fill="url(#waterSkyPatch)"/>
+    ${specular(-32, -211, 20, 5, -6, 0.6)}
+    <rect x="34" y="-234" width="48" height="15" rx="7.5" fill="url(#chromeGrad)"/>
+    ${specular(48, -229, 11, 2.4, -4, 0.75)}`);
 }
 
 /** A hand: a rounded palm with four fingers and a thumb, drawn from the wrist
@@ -1225,10 +1474,16 @@ function hand(fill, shade) {
 /** A towel folded over a wall rail. Anchored at the centre of the rail. */
 function towelOnRail(cx, railY, s = 1) {
   return g(`translate(${cx} ${railY}) scale(${s})`, `
-    <rect x="-52" y="0" width="104" height="12" rx="6" fill="${P.sand300}"/>
+    <ellipse cx="6" cy="46" rx="62" ry="56" fill="${P.sand500}" opacity="0.08"/>
+    <rect x="-58" y="-2" width="10" height="9" rx="3" fill="${P.sand400}"/>
+    <rect x="48" y="-2" width="10" height="9" rx="3" fill="${P.sand400}"/>
+    <rect x="-52" y="0" width="104" height="12" rx="6" fill="url(#chromeGradV)"/>
+    <rect x="-48" y="2" width="96" height="3" rx="1.5" fill="#FFFFFF" opacity="0.8"/>
     <path d="M -38 5 h 76 q 8 0 8 10 v 56 q 0 8 -9 8 q -10 -10 -18 0 q -10 10 -20 0 q -10 -10 -18 0 q -9 7 -15 0 v -64 q 0 -10 8 -10 Z" fill="url(#towelGrad)"/>
-    <path d="M -38 5 h 26 v 74 q -10 5 -19 -2 q -13 2 -13 -9 v -53 q 0 -10 8 -10 Z" fill="#FFFFFF" opacity="0.32"/>
-    <rect x="-42" y="34" width="84" height="11" rx="5.5" fill="#FFFFFF" opacity="0.8"/>`);
+    <path d="M -38 5 h 26 v 74 q -10 5 -19 -2 q -13 2 -13 -9 v -53 q 0 -10 8 -10 Z" fill="#FFFFFF" opacity="0.34"/>
+    <path d="M 22 5 h 16 q 8 0 8 10 v 56 q 0 8 -9 8 q -6 -6 -12 -2 Z" fill="${P.pondBlueDeep}" opacity="0.2"/>
+    <rect x="-42" y="34" width="84" height="11" rx="5.5" fill="#FFFFFF" opacity="0.82"/>
+    <path d="M -30 13 v 62 M -6 13 v 66 M 18 13 v 66" stroke="#FFFFFF" stroke-width="1.6" opacity="0.3" fill="none"/>`);
 }
 
 /** A pump bottle of hand soap, standing on its base at the origin. */
@@ -1236,10 +1491,12 @@ function soapPump(cx, baseY, s = 1) {
   return g(`translate(${cx} ${baseY}) scale(${s})`, `
     ${contactShadow(0, 3, 40, 8)}
     <path d="M -26 0 q -8 -58 26 -58 q 34 0 26 58 Z" fill="url(#lavenderBall)"/>
-    <path d="M -26 0 q -8 -58 26 -58 q -14 24 -12 58 Z" fill="#FFFFFF" opacity="0.3"/>
-    <rect x="-20" y="-34" width="40" height="13" rx="6.5" fill="#FFFFFF" opacity="0.55"/>
-    <rect x="-11" y="-76" width="22" height="20" rx="7" fill="${P.sand400}"/>
-    <path d="M 0 -82 h 20 q 9 0 9 9 v 7" stroke="${P.sand400}" stroke-width="10" fill="none" stroke-linecap="round"/>`);
+    <path d="M -24 0 q -7 -54 22 -56 q -14 24 -12 56 Z" fill="#FFFFFF" opacity="0.34"/>
+    <path d="M 16 -54 q 12 12 10 54 h -8 q 4 -34 -6 -52 Z" fill="${P.lavenderInk}" opacity="0.22"/>
+    <rect x="-20" y="-34" width="40" height="13" rx="6.5" fill="#FFFFFF" opacity="0.6"/>
+    <rect x="-11" y="-76" width="22" height="20" rx="7" fill="url(#chromeGrad)"/>
+    <path d="M 0 -82 h 20 q 9 0 9 9 v 7" stroke="url(#chromeGradV)" stroke-width="10" fill="none" stroke-linecap="round"/>
+    ${specular(-6, -72, 3, 6, 0, 0.7)}`);
 }
 
 /** A potted fern. The pot is peach so it stays warm against a cool wall. */
@@ -1283,21 +1540,25 @@ function friendlyDoor(cx, baseY, s = 1) {
 
 /** A counter-top basin: a rim, a well you can see into, and a wall-mounted
  *  gooseneck tap running into it. */
-function basinAndTap(cx, rimY, s = 1) {
+function basinAndTap(cx, rimY, s = 1, { stream = true } = {}) {
   return g(`translate(${cx} ${rimY}) scale(${s})`, `
-    <path d="M 92 6 V -58 q 0 -40 -48 -40 h -50 v 18" stroke="${P.sand300}" stroke-width="22" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M 92 6 V -58 q 0 -40 -48 -40 h -50 v 18" stroke="${P.sand200}" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="88" y="-58" width="48" height="15" rx="7.5" fill="${P.sand400}"/>
-    <circle cx="140" cy="-50" r="11" fill="${P.sand300}"/>
-    <circle cx="137" cy="-53" r="5" fill="#FFFFFF" opacity="0.6"/>
-    <path d="M -6 -74 q -4 40 -2 66" stroke="url(#waterStream)" stroke-width="26" stroke-linecap="round" fill="none"/>
-    <path d="M -12 -62 q -3 30 -2 46" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.5"/>
-    <ellipse cx="0" cy="10" rx="124" ry="36" fill="${P.sand300}" opacity="0.75"/>
-    <ellipse cx="0" cy="0" rx="124" ry="36" fill="url(#porcelainGrad)"/>
-    <ellipse cx="0" cy="2" rx="96" ry="26" fill="${P.porcelainShade}"/>
+    <path d="M 92 6 V -58 q 0 -40 -48 -40 h -50 v 18" stroke="${P.sand400}" stroke-width="23" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 92 6 V -58 q 0 -40 -48 -40 h -50 v 18" stroke="url(#chromeGradV)" stroke-width="19" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 86 0 V -58 q 0 -34 -42 -34 h -48" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+    <rect x="86" y="-60" width="52" height="18" rx="9" fill="url(#chromeGrad)"/>
+    <circle cx="142" cy="-51" r="12" fill="url(#chromeGrad)"/>
+    ${specular(138, -55, 5, 2.6, -30, 0.85)}
+    ${stream ? `<path d="M -6 -74 q -4 40 -2 66" stroke="url(#waterStream)" stroke-width="26" stroke-linecap="round" fill="none"/>
+    <path d="M -12 -62 q -3 30 -2 46" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.55"/>` : ''}
+    <ellipse cx="0" cy="12" rx="124" ry="36" fill="${P.sand400}" opacity="0.35"/>
+    <ellipse cx="0" cy="0" rx="124" ry="36" fill="url(#porcelainTop)"/>
+    <path d="M -124 0 a 124 36 0 0 1 124 -36 a 124 36 0 0 0 -100 48 Z" fill="#FFFFFF" opacity="0.75"/>
+    <ellipse cx="0" cy="2" rx="97" ry="27" fill="${P.sand400}" opacity="0.55"/>
+    <ellipse cx="0" cy="0" rx="95" ry="26" fill="${P.porcelainShade}"/>
     <ellipse cx="0" cy="4" rx="92" ry="24" fill="${P.pondBlueLight}"/>
-    <ellipse cx="0" cy="11" rx="76" ry="16" fill="${P.pondBlue}" opacity="0.35"/>
-    <ellipse cx="-34" cy="-5" rx="40" ry="9" fill="#FFFFFF" opacity="0.6"/>`);
+    <ellipse cx="0" cy="4" rx="92" ry="24" fill="url(#waterSkyPatch)"/>
+    <ellipse cx="0" cy="12" rx="76" ry="15" fill="${P.pondBlue}" opacity="0.4"/>
+    ${specular(-38, -6, 34, 7, -6, 0.55)}`);
 }
 
 const scenes = {
@@ -1305,7 +1566,13 @@ const scenes = {
     ${bathroom()}
     <rect x="428" y="150" width="150" height="126" rx="24" fill="#FFFFFF" opacity="0.75"/>
     <path d="M 503 150 v 126 M 428 213 h 150" stroke="${P.pondBlueSoft}" stroke-width="9"/>
-    <ellipse cx="330" cy="428" rx="200" ry="30" fill="${P.lavenderSoft}"/>
+    ${contactShadow(330, 440, 196, 26)}
+    <ellipse cx="330" cy="432" rx="202" ry="31" fill="${P.lavender}" opacity="0.45"/>
+    <ellipse cx="330" cy="426" rx="198" ry="29" fill="${P.lavenderSoft}"/>
+    <ellipse cx="318" cy="420" rx="150" ry="17" fill="#FFFFFF" opacity="0.55"/>
+    <g stroke="${P.lavender}" stroke-width="4" opacity="0.4" stroke-linecap="round">
+      <path d="M 146 434 l -8 9 M 200 446 l -6 10 M 268 453 l -3 11 M 340 455 l 0 11 M 412 450 l 4 11 M 476 440 l 7 10 M 522 428 l 9 9"/>
+    </g>
     ${pottyChair(348, 400, 1)}
     ${g('translate(122 404) scale(0.47) translate(-256 -440)', `
       ${hopBody({ squash: 0.05 })}${hopSheen}
@@ -1313,29 +1580,46 @@ const scenes = {
       ${hopBelly()}${hopFoot(198, 438)}${hopFoot(320, 438, -1)}
       ${hopEyes({ gaze: [16, 6] })}${hopCheeks()}${hopMouth({ smile: 0.9 })}`)}`,
 
+  // The roll is the subject, so it gets the only hard specular in the frame and
+  // its own cast shadow on the tile behind it. Everything else — the shelf, the
+  // plant — is midground and stays soft.
   'routine-wipe': () => `
     ${bathroom()}
-    <rect x="128" y="120" width="344" height="22" rx="11" fill="${P.sand300}"/>
-    <rect x="138" y="142" width="18" height="44" rx="9" fill="${P.sand300}"/>
-    <rect x="446" y="142" width="18" height="44" rx="9" fill="${P.sand300}"/>
-    <rect x="180" y="146" width="240" height="16" rx="8" fill="${P.sand200}"/>
-    ${contactShadow(300, 430, 150, 24)}
+    <ellipse cx="336" cy="288" rx="112" ry="112" fill="${P.sand500}" opacity="0.09"/>
+    <rect x="128" y="118" width="344" height="20" rx="10" fill="url(#chromeGradV)"/>
+    <rect x="134" y="121" width="332" height="4" rx="2" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="128" y="138" width="344" height="7" rx="3.5" fill="${P.sand400}" opacity="0.35"/>
+    <rect x="136" y="145" width="18" height="46" rx="9" fill="url(#chromeGradV)"/>
+    <rect x="446" y="145" width="18" height="46" rx="9" fill="url(#chromeGradV)"/>
+    <rect x="180" y="150" width="240" height="16" rx="8" fill="${P.sand200}"/>
+    <rect x="180" y="150" width="240" height="6" rx="3" fill="#FFFFFF" opacity="0.7"/>
+    ${contactShadow(302, 432, 138, 22)}
     <path d="M 300 258 q 96 -8 96 84 q 0 62 -18 106 q -44 12 -84 -6 q 22 -60 6 -184 Z" fill="${P.sand100}"/>
-    <path d="M 300 258 q 96 -8 96 84 q 0 62 -18 106 q -20 5 -40 3 q 26 -66 20 -122 q -6 -58 -58 -71 Z" fill="#FFFFFF" opacity="0.75"/>
-    <path d="M 296 440 q 40 14 82 2" stroke="${P.sand200}" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M 300 258 q 96 -8 96 84 q 0 62 -18 106 q -20 5 -40 3 q 26 -66 20 -122 q -6 -58 -58 -71 Z" fill="#FFFFFF" opacity="0.8"/>
+    <path d="M 376 342 q 6 56 -12 108 q -12 4 -24 4 q 24 -58 20 -114 Z" fill="${P.sand400}" opacity="0.28"/>
+    <path d="M 296 440 q 40 14 82 2" stroke="${P.sand300}" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.7"/>
     <circle cx="300" cy="256" r="96" fill="url(#porcelainGrad)"/>
-    <circle cx="300" cy="256" r="96" fill="none" stroke="${P.sand200}" stroke-width="5"/>
-    <circle cx="300" cy="256" r="40" fill="${P.sand200}"/>
-    <circle cx="300" cy="256" r="27" fill="${P.sand100}"/>
-    <circle cx="272" cy="222" r="34" fill="#FFFFFF" opacity="0.7"/>
-    <g opacity="0.45">
-      <circle cx="546" cy="252" r="12" fill="${P.lavender}"/>
-      <circle cx="574" cy="294" r="8" fill="${P.pondBlue}"/>
-      <circle cx="530" cy="304" r="6" fill="${P.peach}"/>
-    </g>`,
+    <path d="M 300 160 a 96 96 0 0 0 -76 155 a 96 96 0 0 1 76 -139 Z" fill="#FFFFFF" opacity="0.8"/>
+    <path d="M 300 352 a 96 96 0 0 0 82 -142 a 96 96 0 0 1 -82 128 Z" fill="${P.sand400}" opacity="0.26"/>
+    <circle cx="300" cy="256" r="41" fill="${P.sand300}"/>
+    <circle cx="300" cy="254" r="38" fill="${P.sand100}"/>
+    <ellipse cx="291" cy="246" rx="24" ry="20" fill="${P.sand300}" opacity="0.55"/>
+    ${specular(268, 214, 30, 13, -34, 0.62)}
+    ${pottedPlant(556, 428, 0.72)}`,
 
   'routine-flush': () => `
     ${bathroom()}
+    ${g('translate(566 214)', `
+      <ellipse cx="8" cy="40" rx="46" ry="48" fill="${P.sand500}" opacity="0.07"/>
+      <rect x="-38" y="-4" width="15" height="40" rx="5" fill="${P.sand300}"/>
+      <rect x="-36" y="-2" width="6" height="36" rx="3" fill="#FFFFFF" opacity="0.7"/>
+      <path d="M -28 22 h 46" stroke="url(#chromeGrad)" stroke-width="9" stroke-linecap="round" fill="none"/>
+      <circle cx="6" cy="24" r="34" fill="url(#porcelainGrad)"/>
+      <path d="M 6 -10 a 34 34 0 0 0 -28 54 a 34 34 0 0 1 28 -48 Z" fill="#FFFFFF" opacity="0.8"/>
+      <circle cx="6" cy="24" r="13" fill="${P.sand300}"/>
+      <circle cx="6" cy="23" r="11" fill="${P.sand100}"/>
+      <path d="M 34 34 q 9 32 3 56 q -13 6 -24 -2 q 8 -26 5 -54 Z" fill="${P.sand100}"/>
+      <path d="M 34 34 q 9 32 3 56 q -6 3 -13 1 q 8 -28 3 -57 Z" fill="#FFFFFF" opacity="0.75"/>`)}
     ${toilet(324, 432, 1.02)}
     <g>
       <path d="M 320 228 m -62 0 a 62 27 0 1 1 90 23" fill="none" stroke="${P.pondBlueDeep}" stroke-width="16" stroke-linecap="round" opacity="0.85"/>
@@ -1347,24 +1631,43 @@ const scenes = {
       <circle cx="264" cy="150" r="5.4" fill="${P.pondBlue}" opacity="0.5"/>
     </g>`,
 
+  // Pass 2 had the tap, the water and the hands but no basin, so the water fell
+  // out of the frame and the hands hung in the air. The counter also moves the
+  // whole station clear of the bottom-left corner, which is where the app
+  // stands the live character.
   'routine-wash': () => `
-    ${bathroom({ floorY: 446 })}
-    <path d="M 262 214 v -54 q 0 -34 -34 -34 h -78" stroke="${P.sand300}" stroke-width="26" fill="none" stroke-linecap="round"/>
-    <path d="M 262 214 v -54 q 0 -34 -34 -34 h -78" stroke="${P.sand200}" stroke-width="14" fill="none" stroke-linecap="round"/>
-    <rect x="112" y="108" width="52" height="30" rx="15" fill="${P.pondBlue}"/>
-    <rect x="238" y="208" width="48" height="30" rx="12" fill="${P.sand300}"/>
-    <path d="M 262 238 q -8 76 -4 122" stroke="url(#waterStream)" stroke-width="34" stroke-linecap="round" fill="none"/>
-    <path d="M 254 250 q -6 60 -4 96" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.55"/>
-    ${g('translate(196 396) rotate(-14) scale(0.86)', hand('url(#handGrad)', P.handDeep))}
-    ${g('translate(392 404) scale(-1 1) rotate(-16) scale(0.86)', hand('url(#handGradDeep)', P.peachDeep))}
-    <g>
-      <circle cx="176" cy="288" r="26" fill="url(#bubbleFill)"/>
-      <circle cx="386" cy="252" r="21" fill="url(#bubbleFill)"/>
-      <circle cx="446" cy="330" r="29" fill="url(#bubbleFill)"/>
-      <circle cx="140" cy="352" r="18" fill="url(#bubbleFill)"/>
-      <circle cx="424" cy="402" r="15" fill="url(#bubbleFill)"/>
-      <circle cx="330" cy="196" r="13" fill="url(#bubbleFill)"/>
-      <circle cx="104" cy="252" r="11" fill="url(#bubbleFill)"/>
+    ${bathroom({ floorY: 446, dado: 190 })}
+    <path d="M 356 240 v -62 q 0 -36 -36 -36 h -74" stroke="${P.sand400}" stroke-width="30" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 356 240 v -62 q 0 -36 -36 -36 h -74" stroke="url(#chromeGradV)" stroke-width="25" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 349 232 v -54 q 0 -30 -30 -30 h -70" stroke="#FFFFFF" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+    <rect x="200" y="122" width="60" height="34" rx="17" fill="url(#chromeGrad)"/>
+    ${specular(216, 130, 13, 3.4, -10, 0.85)}
+    <rect x="330" y="232" width="52" height="30" rx="12" fill="url(#chromeGrad)"/>
+    <path d="M 356 262 q -6 66 -4 108" stroke="url(#waterStream)" stroke-width="36" stroke-linecap="round" fill="none"/>
+    <path d="M 347 274 q -5 52 -4 84" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <g id="wash-counter">
+      <ellipse cx="356" cy="392" rx="196" ry="34" fill="${P.sand500}" opacity="0.16"/>
+      <path d="M 66 390 h 580 q 16 0 16 16 v 74 h -612 v -74 q 0 -16 16 -16 Z" fill="url(#porcelainGrad)"/>
+      <path d="M 66 390 h 580 q 16 0 16 16 v 12 h -612 v -12 q 0 -16 16 -16 Z" fill="#FFFFFF" opacity="0.75"/>
+      <path d="M 50 418 h 612" stroke="${P.sand300}" stroke-width="3" opacity="0.6" fill="none"/>
+      <ellipse cx="356" cy="404" rx="158" ry="42" fill="${P.sand400}" opacity="0.4"/>
+      <ellipse cx="356" cy="400" rx="152" ry="38" fill="${P.porcelainShade}"/>
+      <ellipse cx="356" cy="404" rx="146" ry="35" fill="${P.pondBlueLight}"/>
+      <ellipse cx="356" cy="404" rx="146" ry="35" fill="url(#waterSkyPatch)"/>
+      <ellipse cx="356" cy="416" rx="118" ry="22" fill="${P.pondBlue}" opacity="0.4"/>
+      ${specular(292, 386, 46, 9, -5, 0.55)}
+    </g>
+    ${g('translate(282 406) rotate(-14) scale(0.86)', hand('url(#handGrad)', P.handDeep))}
+    ${g('translate(452 412) scale(-1 1) rotate(-16) scale(0.86)', hand('url(#handGradDeep)', P.peachDeep))}
+    <g id="wash-bubbles">
+      <circle cx="238" cy="292" r="26" fill="url(#bubbleFill)"/>
+      <circle cx="470" cy="256" r="21" fill="url(#bubbleFill)"/>
+      <circle cx="524" cy="334" r="29" fill="url(#bubbleFill)"/>
+      <circle cx="196" cy="356" r="18" fill="url(#bubbleFill)"/>
+      <circle cx="500" cy="404" r="15" fill="url(#bubbleFill)"/>
+      <circle cx="416" cy="192" r="13" fill="url(#bubbleFill)"/>
+      <circle cx="150" cy="256" r="11" fill="url(#bubbleFill)"/>
+      <circle cx="588" cy="286" r="9" fill="url(#bubbleFill)"/>
     </g>`,
 
   'routine-highFive': () => `
@@ -2125,10 +2428,28 @@ function appIcon() {
 // ===========================================================================
 const ROOT = path.resolve(__dirname, '..');
 const out = [];
+
+/**
+ * Whitespace is free to write and not free to ship.
+ *
+ * These files are parsed on every render and go into the app bundle, and the
+ * source indentation that makes the *generator* readable is dead weight in the
+ * output — roughly a fifth of the composited pond. Nothing here contains a
+ * text node, so collapsing runs of whitespace cannot change what is drawn. One
+ * newline is kept in front of each `<g id=...>` so a diff still lands on a
+ * layer rather than on one enormous line.
+ */
+const tidy = (s) => s
+  .replace(/\s+/g, ' ')
+  .replace(/>\s+</g, '><')
+  .replace(/\s+\/>/g, '/>')
+  .replace(/<g id="/g, '\n<g id="')
+  .trim();
+
 function write(rel, content) {
   const file = path.join(ROOT, rel);
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, content.trim() + '\n');
+  fs.writeFileSync(file, tidy(content) + '\n');
   out.push(rel);
 }
 

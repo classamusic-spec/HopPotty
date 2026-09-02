@@ -10,7 +10,7 @@
  * `artOr`, with ids from `PondCatalog`), so Home and the reward screen are
  * literally the same place seen from two crops — not two drawings of a pond.
  */
-const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation, artOr } = require('./ui');
+const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation, artOrInline } = require('./ui');
 const { tints, statusBarPad } = require('./kit');
 const scenes = require('./scenes');
 const pondScreen = require('./pond');
@@ -119,7 +119,9 @@ const PAD_Y = 0.508;
 function pondBackdrop(appearance, { w, boxH, top, height }) {
   const col = c(appearance);
   const dark = appearance.startsWith('dark');
-  const scene = artOr(['Art/pond/pond-scene.svg', 'Art/scenes/pond.svg'],
+  // Inline rather than an `<img>` for the same reason `10-hops-pond` is: the
+  // scene's stable ids are what the motion layer animates.
+  const scene = artOrInline(['Art/pond/pond-scene.svg', 'Art/scenes/pond.svg'],
     { width: w, height: boxH }, scenes.pond(w, boxH, HOME_DECOR));
   // The crop can start above the drawing and end below it; these are the two
   // colours its own gradients start and end on, so the seams are invisible.
@@ -302,7 +304,7 @@ function parentHome(appearance = 'light') {
       background:${col.backgroundPrimary};border-radius:${T.radius.hero}px ${T.radius.hero}px 0 0;
       box-shadow:0 -10px 30px ${alpha(col.shadow, dark ? .5 : .12)};overflow:hidden">
       ${grabber(col)}
-      <div style="display:flex;flex-direction:column;gap:11px;padding:2px ${PAGE}px 0">
+      <div data-arrive style="display:flex;flex-direction:column;gap:11px;padding:2px ${PAGE}px 0">
         ${todayBlock(col, appearance)}
         ${routineBlock(col, appearance)}
         ${insightBlock(col, appearance)}
@@ -386,7 +388,7 @@ function parentHomePad(appearance = 'light') {
         border-radius:${T.radius.hero}px ${T.radius.hero}px 0 0;
         box-shadow:0 -10px 30px ${alpha(col.shadow, dark ? .5 : .12)};overflow:hidden">
         ${grabber(col)}
-        <div style="display:flex;gap:${gap}px;padding:4px ${gutter}px 0;align-items:flex-start">
+        <div data-arrive style="display:flex;gap:${gap}px;padding:4px ${gutter}px 0;align-items:flex-start">
           <div style="width:${colW}px;display:flex;flex-direction:column;gap:14px">
             ${todayBlock(col, appearance)}
             ${insightBlock(col, appearance)}

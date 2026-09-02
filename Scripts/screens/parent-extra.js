@@ -304,7 +304,7 @@ function firstPauseSet(appearance = 'light') {
       <div style="flex:0 0 auto;position:relative;display:flex;justify-content:center">
         <div style="position:absolute;left:50%;top:22px;width:214px;height:214px;margin-left:-107px;border-radius:107px;
           background:${dark ? alpha(P.hopGreen, .12) : mix(P.hopGreenSoft, P.cloud, .28)}"></div>
-        <div style="position:relative">${svg('Art/character/hop-cheer.svg', { width: 226 })}</div>
+        <div data-hop style="position:relative">${svg('Art/character/hop-cheer.svg', { width: 226 })}</div>
         ${sparkle(10, 38, 21, .95)}${sparkle(298, 20, 15, .8)}${sparkle(32, 162, 13, .7)}${sparkle(308, 138, 19, .85)}
       </div>
 
@@ -804,7 +804,7 @@ function accessRestored(appearance = 'light') {
       <div style="flex:0 0 auto;display:flex;justify-content:center;padding-top:6px">
         <div style="position:relative;width:150px;height:150px">
           <div style="position:absolute;inset:0;border-radius:75px;background:${dark ? alpha(P.sunshine, .1) : mix(P.sunshineSoft, P.cloud, .3)}"></div>
-          <div style="position:absolute;left:50%;top:6px;transform:translateX(-50%)">
+          <div data-hop style="position:absolute;left:50%;top:6px;transform:translateX(-50%)">
             ${svg('Art/character/hop-wait.svg', { width: 150 })}
           </div>
           <div style="position:absolute;right:-2px;top:6px;width:38px;height:38px;border-radius:19px;
@@ -886,7 +886,7 @@ function progressEmpty(appearance = 'light') {
 
       <div style="flex:0 0 auto;background:${col.surface};border-radius:${T.radius.xl}px;padding:16px 18px 16px;
         box-shadow:${elevation(appearance, 'resting')};text-align:center">
-        <div style="display:flex;justify-content:center">${svg('Art/character/hop-wait.svg', { width: 100 })}</div>
+        <div data-hop style="display:flex;justify-content:center">${svg('Art/character/hop-wait.svg', { width: 100 })}</div>
         <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:17px;margin-top:6px">
           Nothing logged in this period</div>
         <div style="${type('parentCallout', { color: col.textSecondary })};font-size:14px;margin-top:6px;line-height:1.42;padding:0 6px">

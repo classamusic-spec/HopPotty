@@ -1,7 +1,7 @@
 import SwiftUI
 import HopPottyDesignTokens
 
-/// Hop, drawn.
+/// Hop, drawn and performed.
 ///
 /// Vector paths rather than a raster asset, for three reasons that all matter:
 /// the poses interpolate (Hop moves between them instead of cutting), one
@@ -15,49 +15,180 @@ import HopPottyDesignTokens
 /// shut eyes, closed mouth). Anything softer than that stops reading at 28pt,
 /// which is the size Hop appears at most often.
 ///
-/// Ambient motion — the breath and the blink — is owned here and routed through
-/// the modifiers in `Motion/`, so it stops under Reduce Motion without this file
-/// ever asking whether Reduce Motion is on.
+/// ## Two layers, and why they are separate
+///
+/// **The drawing** is ``HopPose`` plus ``HopExpression``: which of the fourteen
+/// authored poses, and the small adjustments — gaze, a happy squint, a mouth
+/// mid-word — that no pose can carry because the poses have to stay one-to-one
+/// with the generator.
+///
+/// **The performance** is ``HopPerformer``: a state machine that turns a
+/// ``HopAct`` into a sequence of complete ``HopFrame``s. It owns the beats, the
+/// anticipation, the recovery and the legal-transition table, and it publishes
+/// one absolute frame at a time, which is what makes interrupting it safe.
+///
+/// This view renders whatever frame it is handed and adds the ambient life —
+/// breath, weight shift, blink, micro-settle — through the modifiers in
+/// `Motion/`, all of which stop under Reduce Motion without this file ever
+/// asking whether Reduce Motion is on.
 public struct HopCharacterView: View {
     @Environment(\.hopTheme) private var theme
+    @State private var performer = HopPerformer()
     @State private var ambientBlink: Double = 0
+    @State private var ambientSettle: CGSize = .zero
 
-    private let pose: HopPose
+    private let act: HopAct
     private let size: CGFloat
     private let ambient: Bool
     private let castsShadow: Bool
+    private let gaze: HopGaze
 
-    public init(pose: HopPose, size: CGFloat, ambient: Bool = true, castsShadow: Bool = true) {
-        self.pose = pose
+    /// Hop holding a pose, optionally hopping.
+    ///
+    /// The original three-argument form still means exactly what it did; `jumping`
+    /// and `gaze` are additions with defaults. Passing a `HopJump` plays a hop
+    /// and comes back to `pose`; passing `nil` cancels one in flight and lands
+    /// him cleanly.
+    public init(
+        pose: HopPose,
+        size: CGFloat,
+        ambient: Bool = true,
+        castsShadow: Bool = true,
+        jumping jump: HopJump? = nil,
+        gaze: HopGaze = .forward
+    ) {
+        self.init(
+            act: jump.map { HopAct(pose: pose, beat: .hop($0)) } ?? HopAct(pose: pose),
+            size: size,
+            ambient: ambient,
+            castsShadow: castsShadow,
+            gaze: gaze
+        )
+    }
+
+    /// Hop performing an act — waving, delighting, speaking, hopping, arriving
+    /// or leaving. Changing the act at any moment is safe, including mid-beat.
+    public init(
+        act: HopAct,
+        size: CGFloat,
+        ambient: Bool = true,
+        castsShadow: Bool = true,
+        gaze: HopGaze = .forward
+    ) {
+        self.act = act
         self.size = size
         self.ambient = ambient
         self.castsShadow = castsShadow
+        self.gaze = gaze
     }
 
-    /// The pose's parameters with the ambient blink folded in. Everything the
-    /// drawing reads comes from here, so a single value drives every layer and
-    /// they cannot fall out of step mid-transition.
+    // MARK: - What is being drawn right now
+
+    /// The performer's frame, with every travelling quantity zeroed if Reduce
+    /// Motion is on. Resolved here rather than when the beat was scheduled, so
+    /// switching the setting on mid-hop grounds Hop on the very next frame.
+    private var frame: HopFrame { performer.frame.resolved(reduceMotion: theme.reduceMotion) }
+
+    /// The frame's own expression, plus where the caller has pointed Hop, plus
+    /// the ambient micro-settle. Three sources, one value, so the eyes cannot
+    /// end up fighting over who owns them.
+    private var expression: HopExpression {
+        var combined = frame.expression
+        let look = gaze.expression
+        combined.gaze.width += look.gaze.width + ambientSettle.width
+        combined.gaze.height += look.gaze.height + ambientSettle.height
+        combined.tilt += look.tilt
+        return combined
+    }
+
+    /// The pose's parameters with the expression and the ambient blink folded
+    /// in. Everything the drawing reads comes from here, so a single value
+    /// drives every layer and they cannot fall out of step mid-transition.
     private var geometry: HopPoseGeometry {
-        var resolved = pose.geometry
+        var resolved = frame.pose.geometry
+        resolved.apply(expression)
         // A pose that already has the eyes shut cannot be blinked further closed.
-        resolved.eyes.blink = min(1, resolved.eyes.blink + ambientBlink * (1 - resolved.eyes.blink))
+        resolved.close(eyesBy: ambientBlink)
         return resolved
+    }
+
+    /// The spring carrying Hop into the current frame, already degraded if
+    /// Reduce Motion is on.
+    private var beatAnimation: Animation {
+        performer.frame.spring.animation(reduceMotion: theme.reduceMotion)
+    }
+
+    /// What the *drawing* animates on. Deliberately excludes the ambient blink
+    /// and micro-settle: those carry their own animations, and folding them in
+    /// here would re-time them to whatever beat happened to be running.
+    private var drawKey: HopDrawKey {
+        HopDrawKey(pose: frame.pose, expression: frame.expression, gaze: gaze)
+    }
+
+    private var performanceKey: HopPerformanceKey {
+        HopPerformanceKey(act: act, reduceMotion: theme.reduceMotion)
     }
 
     /// Points per reference unit — the conversion every stroke width needs.
     private var unit: CGFloat { HopCanvas.unit(for: size) }
 
+    /// How far a full-height hop lifts Hop, in points.
+    private var riseUnit: CGFloat { HopJump.headroom(for: size) }
+    /// One unit of sideways drift — Hop's own height — in points.
+    private var strideUnit: CGFloat { size * HopCanvas.figureHeightRatio }
+
+    // MARK: - Ambient life
+
+    /// Ambient motion stands down while a beat is moving Hop's body: a breath
+    /// swelling against a landing squash is two animations arguing.
+    private var breathes: Bool { ambient && !performer.suspendsAmbient }
+    private var blinks: Bool { breathes && frame.pose.blinks }
+
     public var body: some View {
         ZStack {
             Color.clear
-            if castsShadow && geometry.showsShadow { groundShadow }
-            character
-                .hopBreathing(ambient)
+            if castsShadow && geometry.showsShadow { shadowLayer }
+            characterLayer
         }
         .frame(width: size, height: size)
-        .hopBlinking(ambient, phase: $ambientBlink)
-        .hopAnimation(pose.arrivalMotion, value: pose)
+        .hopBlinking(blinks, phase: $ambientBlink)
+        .hopMicroSettle(breathes, offset: $ambientSettle)
+        // One task, keyed on the act. A new act cancels the old one, and the
+        // performer's generation guard stops the cancelled run from writing a
+        // frame over the live one.
+        .task(id: performanceKey) {
+            await performer.perform(act, reduceMotion: theme.reduceMotion)
+        }
+        // The drawing is decorative; ``HopCharacterStage`` carries the label,
+        // because the label depends on what Hop is *for* on this screen. No
+        // performance changes it: a mascot that hops must never take VoiceOver
+        // focus or announce anything new.
         .accessibilityHidden(true)
+    }
+
+    /// Hop himself, with the ambient life on the inside of the beat transforms
+    /// and the beat transforms anchored at his feet.
+    ///
+    /// Order matters. The squash is applied about ``HopCanvas/groundAnchor``
+    /// rather than the view's centre, which is the difference between a
+    /// character flattening *onto the floor* and one being squeezed in mid-air.
+    private var characterLayer: some View {
+        character
+            .hopBreathing(
+                breathes,
+                period: frame.pose.breathPeriod,
+                amplitude: frame.pose.breathAmplitude,
+                anchor: HopCanvas.groundAnchor
+            )
+            .hopWeightShift(breathes, anchor: HopCanvas.groundAnchor)
+            // The drawing's own animation, innermost, so a pose change is timed
+            // by the beat that caused it.
+            .animation(beatAnimation, value: drawKey)
+            .rotationEffect(.degrees(frame.lean), anchor: HopCanvas.groundAnchor)
+            .scaleEffect(x: frame.horizontalScale, y: frame.squash, anchor: HopCanvas.groundAnchor)
+            .offset(x: frame.drift * strideUnit, y: -frame.elevation * riseUnit)
+            .opacity(frame.opacity)
+            .animation(beatAnimation, value: frame)
     }
 
     // MARK: - Layers, in the order `figure()` stacks them
@@ -186,11 +317,22 @@ public struct HopCharacterView: View {
             .position(HopCanvas.viewPoint(placed, forSize: size))
     }
 
-    /// The ground shadow shrinks and fades as Hop leaves the ground, which is
-    /// most of what sells a jump.
-    private var groundShadow: some View {
+    /// The ground shadow does not travel with Hop.
+    ///
+    /// It is drawn outside the beat transforms on purpose: a shadow that rises
+    /// with the character is a sticker with a smudge under it. Instead it stays
+    /// on the ground line and shrinks and fades as he leaves it, which is most
+    /// of what sells a jump.
+    private var shadowLayer: some View {
         fill(.shadow, HopCharacterPalette.groundShadow)
-            .opacity(max(0, 0.12 - geometry.lift * 0.002))
+            .opacity(shadowOpacity)
+            .scaleEffect(x: 1 - 0.42 * frame.elevation, y: 1, anchor: HopCanvas.groundAnchor)
+            .animation(beatAnimation, value: frame)
+    }
+
+    private var shadowOpacity: Double {
+        let base = max(0, 0.12 - geometry.lift * 0.002)
+        return base * (1 - 0.55 * Double(frame.elevation)) * frame.opacity
     }
 
     // MARK: - Layer plumbing
@@ -212,6 +354,21 @@ public struct HopCharacterView: View {
             .stroke(color, style: StrokeStyle(lineWidth: width * unit, lineCap: .round, lineJoin: .round))
             .frame(width: size, height: size)
     }
+}
+
+/// What a pose change animates on: the authored drawing and the deliberate
+/// adjustments to it, and nothing that the ambient layer drives.
+private struct HopDrawKey: Equatable {
+    let pose: HopPose
+    let expression: HopExpression
+    let gaze: HopGaze
+}
+
+/// What restarts the performer. Reduce Motion is part of it because the whole
+/// script is different when it is on — not merely faster.
+private struct HopPerformanceKey: Equatable {
+    let act: HopAct
+    let reduceMotion: Bool
 }
 
 extension HopCanvas {

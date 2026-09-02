@@ -71,7 +71,16 @@ public struct HopAudioButton: View {
                         Circle().fill(theme.color.brandAction)
                     }
             }
-            .buttonStyle(HopBareButtonStyle(minimumTarget: theme.hitTarget.child, tint: theme.color.brandAction))
+            // The child press feel, not the bare one: this is a 72-point target
+            // a three-year-old is aiming at, and it should squash and spring
+            // back like the rest of their controls rather than merely dim.
+            .buttonStyle(
+                HopBareButtonStyle(
+                    minimumTarget: theme.hitTarget.child,
+                    tint: theme.color.brandAction,
+                    feel: .child
+                )
+            )
             .accessibilityLabel(HopStrings.replayAudio)
             .accessibilityValue(line.caption)
 
@@ -81,6 +90,9 @@ public struct HopAudioButton: View {
                     .foregroundStyle(theme.color.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    // A routine step advancing rewrites this line in place.
+                    // Cross-fading is what stops it reading as a flicker.
+                    .hopValueChange(line.caption)
                     // The button already speaks the caption as its value; reading
                     // it twice is noise.
                     .accessibilityHidden(true)
@@ -169,6 +181,17 @@ public struct HopStepIndicator: View {
     .hopBackground()
     .hopThemedRoot()
     .preferredColorScheme(.dark)
+}
+
+#Preview("Audio button · Reduce Motion") {
+    VStack(alignment: .leading, spacing: 40) {
+        HopStepIndicator(total: 4, current: 2)
+        HopAudioButton(line: HopVoiceLine(id: "routine.sit", caption: "Sit down and give it a try."))
+    }
+    .padding()
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    .hopBackground()
+    .hopThemedRoot(reduceMotion: true)
 }
 
 #Preview("Steps · high contrast") {

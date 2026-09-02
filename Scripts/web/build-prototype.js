@@ -22,6 +22,11 @@
  * sharing a document is SVG `id` collision between two screens' gradients, and
  * `nsIds` below namespaces those per screen so it cannot happen.
  *
+ * The screens are static markup; the *motion* over them lives in
+ * `Scripts/web/motion.js`, whose every duration is copied from
+ * `HopPottyKit/Sources/HopPottyDesignTokens/HopMotion.swift`. Same rule as the
+ * colours: the prototype cannot show a timing the app does not use.
+ *
  *   node Scripts/web/build-prototype.js
  *   node Scripts/web/build-prototype.js --verify   (also measures every hotspot)
  */
@@ -29,6 +34,7 @@ const fs = require('fs');
 const path = require('path');
 const { T, c, baseCSS, ROOT } = require('../screens/ui');
 const registry = require('../screens/registry');
+const motion = require('./motion');
 
 const P = T.palette;
 const WEB = path.join(ROOT, 'web');
@@ -191,6 +197,49 @@ const HOTSPOTS = {
 };
 
 // ---------------------------------------------------------------------------
+// Motion: what kind of screen this is, and what Hop does on it
+// ---------------------------------------------------------------------------
+
+/**
+ * Which transition a screen arrives with.
+ *
+ * `parent` is quick and nearly flat — it should feel like the OS. `child` is
+ * slower and carries bounce, because a screen change is narrative work for a
+ * pre-reader. `sheet` rises from the bottom over what is already there.
+ * Anything not named here is a parent screen.
+ */
+const SHEET_SCREENS = ['quick-reminder-sheet', 'choose-apps', 'parent-gate'];
+const isChildScreen = (slug) =>
+  /^(routine-|game-|games-hub)/.test(slug) || ['hops-pond', 'quiz', 'hop-hub', 'potty-pause-shield'].includes(slug);
+const kindOf = (slug) =>
+  SHEET_SCREENS.includes(slug) ? 'sheet' : (isChildScreen(slug) ? 'child' : 'parent');
+
+/**
+ * What Hop does when a screen arrives.
+ *
+ * Everything not listed here still breathes, blinks and glances at whatever the
+ * child is being asked to touch — that is the ambient loop and it needs no
+ * configuration. This table is only for the beats that belong to one screen:
+ *
+ *   wave   a greeting, played once, with a wind-up and a settle
+ *   talk   Hop is speaking a line; the mouth moves for that many seconds
+ *   jump   the celebration hop, on arrival
+ *
+ * `08-routine-step3` is deliberately absent: its jump is fired by the *answer*,
+ * and by one code path for all three answers, so that "I tried" cannot be
+ * celebrated less than "I peed" (Docs/ChildSafety.md §2).
+ */
+const HOP_LIFE = {
+  'onboarding-meet-hop': { wave: true, talk: 2.2 },
+  'potty-pause-shield': { wave: true, talk: 2.6 },
+  'hop-hub': { wave: true },
+  'routine-step1': { talk: 2.4 },
+  'quiz': { talk: 2.8 },
+  'routine-complete': { jump: true },
+  'onboarding-first-pause-set': { jump: true },
+};
+
+// ---------------------------------------------------------------------------
 // Rendering
 // ---------------------------------------------------------------------------
 
@@ -209,13 +258,43 @@ function nsIds(html, prefix) {
     .replace(/url\(#([^)]+)\)/g, (_m, id) => `url(#${prefix}__${id})`);
 }
 
+/**
+ * Names the drawing inside every Hop `<img>`.
+ *
+ * `ui.js` inlines art as a base64 data URI, which is opaque: nothing in the page
+ * can tell `hop-idle` from `hop-cheer`. The motion layer has to — a walking Hop
+ * lilts, a sleeping one breathes slowly, and only a pose with eyes can blink —
+ * so each pose's exact encoded bytes are matched here and the `<img>` is
+ * labelled with the pose it is. Nothing about the rendering changes.
+ */
+let POSE_SRC = null;
+function poseSrc() {
+  if (POSE_SRC) return POSE_SRC;
+  POSE_SRC = [];
+  for (const [name] of HOP_STATES) {
+    const abs = path.join(ROOT, 'Art', 'character', `hop-${name}.svg`);
+    if (!fs.existsSync(abs)) continue;
+    POSE_SRC.push([`src="data:image/svg+xml;base64,${Buffer.from(fs.readFileSync(abs, 'utf8')).toString('base64')}"`, name]);
+  }
+  return POSE_SRC;
+}
+
+function markPoses(html) {
+  let out = html;
+  for (const [needle, name] of poseSrc()) {
+    if (out.indexOf(needle) < 0) continue;
+    out = out.split(needle).join(`${needle} data-pose="${name}"`);
+  }
+  return out;
+}
+
 /** One screen, in one appearance, as a positioned layer. */
 function screenLayer(slug, appearance, html, { hidden = true } = {}) {
   const col = c(appearance);
   const id = `${slug}-${appearance}`;
   return `<div class="screen${hidden ? '' : ' on'}" id="scr-${id}" data-screen="${slug}" ` +
     `data-theme="${appearance}" style="color:${col.textPrimary};background:${col.backgroundPrimary}">` +
-    nsIds(html, id.replace(/[^a-z0-9-]/gi, '')) + `</div>`;
+    markPoses(nsIds(html, id.replace(/[^a-z0-9-]/gi, ''))) + `</div>`;
 }
 
 /** Every registry screen rendered in both appearances. */
@@ -546,6 +625,12 @@ footer.site{margin-top:56px;padding-top:22px;border-top:1px solid ${L.divider};
   nav.site a.cur{background:rgba(143,220,172,.16);color:${D.brandPrimary}}
   .thumb{background:${D.surfaceSunken};box-shadow:inset 0 0 0 1px ${D.divider}}
 }
+
+/* ---- the states gallery ------------------------------------------------ */
+.state .box{position:relative;overflow:hidden}
+.state .hop{position:relative;display:inline-block}
+.state .hop img{max-height:104px;width:auto;display:block}
+${motion.motionCSS()}
 `;
 }
 
@@ -555,12 +640,17 @@ footer.site{margin-top:56px;padding-top:22px;border-top:1px solid ${L.divider};
 
 const RUNTIME = String.raw`
 (function () {
-  var FLOW = __FLOW__, HOT = __HOT__, CAP = __CAP__;
+  var FLOW = __FLOW__, HOT = __HOT__, CAP = __CAP__, KIND = __KIND__, LIFE = __LIFE__;
   var W = __W__, H = __H__;
+  var PRESS = __PRESS__, CHILD_PRESS = __CHILD_PRESS__, TAP_MS = __TAP_MS__, STEP = __STEP__, CAPD = __CAPD__;
   var body = document.body, viewport = document.getElementById('viewport');
   var device = document.querySelector('.device');
   var theme = localStorage.getItem('hp-theme') || 'light';
-  var cur = FLOW[0];
+  var cur = FLOW[0], curLayer = null;
+  var hist = [], pending = null, busy = false, leaving = null;
+
+  function reduced() { return HopLife.reduced(); }
+  function kindOf(slug) { return KIND[slug] || 'parent'; }
 
   /* --- scale the device to the window -------------------------------- */
   function fit() {
@@ -593,6 +683,35 @@ const RUNTIME = String.raw`
     return hits[0];
   }
 
+  /**
+   * Press feedback.
+   *
+   * The hotspot is a transparent link; the thing a finger should see move is the
+   * button underneath it. The scale is composed onto whatever transform the
+   * screen already gave that element — several of them are centred with
+   * translateX(-50%) — so pressing can never knock anything out of position.
+   */
+  function pressable(a, el, child) {
+    if (!el) return;
+    if (el.__base === undefined) el.__base = el.style.transform || '';
+    el.classList.add('hp-press');
+    var k = child ? CHILD_PRESS : PRESS;
+    var down = function () {
+      if (reduced()) return;
+      el.classList.remove('hp-releasing');
+      el.style.transform = (el.__base ? el.__base + ' ' : '') + 'scale(' + k + ')';
+    };
+    var up = function () {
+      if (reduced()) return;
+      el.classList.add('hp-releasing');
+      el.style.transform = el.__base;
+    };
+    a.addEventListener('pointerdown', down);
+    a.addEventListener('pointerup', up);
+    a.addEventListener('pointercancel', up);
+    a.addEventListener('pointerleave', up);
+  }
+
   /* --- lay transparent links over the buttons ------------------------ */
   function hotspots(slug, layer) {
     var host = layer.querySelector('.hotspots');
@@ -602,6 +721,7 @@ const RUNTIME = String.raw`
     var base = layer.getBoundingClientRect();
     var k = base.width / W || 1;
     var specs = HOT[slug] || [];
+    var child = kindOf(slug) === 'child';
     var missed = [];
     for (var i = 0; i < specs.length; i++) {
       var s = specs[i];
@@ -620,6 +740,10 @@ const RUNTIME = String.raw`
       a.title = (s.label || s.text || '') + ' → ' + s.to;
       a.style.cssText = 'left:' + x.toFixed(1) + 'px;top:' + y.toFixed(1) + 'px;width:' +
         w.toFixed(1) + 'px;height:' + h.toFixed(1) + 'px';
+      pressable(a, el, child);
+      (function (to, from) {
+        a.addEventListener('click', function (ev) { ev.preventDefault(); tap(to, from); });
+      })(s.to, slug);
       host.appendChild(a);
     }
     layer.appendChild(host);
@@ -628,9 +752,116 @@ const RUNTIME = String.raw`
     window.__hotspotReport[slug] = { placed: host.children.length, missed: missed };
   }
 
+  /* --- Hop ------------------------------------------------------------ */
+  function hopHost(layer) { return layer ? layer.querySelector('[data-hop]') : null; }
+  function hopOf(layer) {
+    var host = hopHost(layer);
+    return host ? HopLife.equip(host) : null;
+  }
+
+  /**
+   * Which way Hop looks.
+   *
+   * Not configured per screen — read off the interface. The biggest tap target
+   * on the screen is the thing the child is being asked to touch, so Hop glances
+   * at it: down at the answers, sideways at a button beside him.
+   */
+  function gazeDir(layer) {
+    var host = hopHost(layer), spots = layer.querySelectorAll('.hs');
+    if (!host || !spots.length) return null;
+    var best = null, area = 0;
+    for (var i = 0; i < spots.length; i++) {
+      var r = spots[i].getBoundingClientRect(), a = r.width * r.height;
+      if (a > area) { area = a; best = r; }
+    }
+    if (!best) return null;
+    var hr = host.getBoundingClientRect();
+    var dx = (best.left + best.width / 2) - (hr.left + hr.width / 2);
+    var dy = (best.top + best.height / 2) - (hr.top + hr.height / 2);
+    if (Math.abs(dx) > Math.abs(dy) * 0.9 && Math.abs(dx) > 40) return dx < 0 ? 'L' : 'R';
+    return dy > 0 ? 'D' : null;
+  }
+
+  function hopsLive(layer, slug) {
+    var cfg = LIFE[slug] || {};
+    var hosts = layer.querySelectorAll('[data-hop]');
+    var dir = gazeDir(layer);
+    for (var i = 0; i < hosts.length; i++) {
+      var h = HopLife.equip(hosts[i]);
+      if (!h) continue;
+      HopLife.live(h, i ? {} : { gaze: dir, wave: cfg.wave, talk: cfg.talk });
+      if (!i && cfg.jump) HopLife.jump(h);
+    }
+  }
+  function hopsRest(layer) {
+    var hosts = layer.querySelectorAll('[data-hop]');
+    for (var i = 0; i < hosts.length; i++) if (hosts[i].__hop) HopLife.rest(hosts[i].__hop);
+  }
+
+  /**
+   * The staggered arrival.
+   *
+   * HopMotion.stagger(index:) — 45ms a step, capped at 360ms. It runs on the
+   * content column a screen already declares (\`.fit\`, or \`[data-arrive]\` where
+   * a screen has no fit column), and never on an element the screen has given
+   * its own transform: the motion layer does not fight the layout.
+   */
+  function arrive(layer, child) {
+    if (reduced()) return;
+    var host = layer.querySelector('[data-arrive]') || layer.querySelector('.fit');
+    if (!host) return;
+    var kids = [], i, el;
+    for (i = 0; i < host.children.length; i++) {
+      el = host.children[i];
+      el.classList.remove('hp-arrive', 'hp-arrive-child');
+      if (el.style && el.style.transform) continue;
+      var r = el.getBoundingClientRect();
+      if (r.height < 24 || r.width < 24) continue;
+      kids.push(el);
+    }
+    void host.offsetWidth;
+    for (i = 0; i < kids.length; i++) {
+      kids[i].style.animationDelay = Math.min(i * STEP, CAPD) + 'ms';
+      kids[i].classList.add(child ? 'hp-arrive-child' : 'hp-arrive');
+    }
+  }
+
+  /**
+   * One screen replacing another.
+   *
+   * Forward, the transition belongs to the screen arriving; back, it belongs to
+   * the screen leaving, because back is that same push run in reverse. dir 0 —
+   * a jump from the screen list, or a hash typed into the bar — is a cross-fade,
+   * since neither direction would be true.
+   */
+  function transition(prev, next, slug, prevSlug, dir) {
+    if (leaving) leaving();
+    if (!prev || prev === next) return;
+    var k = dir ? (dir < 0 ? kindOf(prevSlug) : kindOf(slug)) : 'fade';
+    var back = dir < 0 ? '-back' : '';
+    var inCls = 'hp-in-' + k + (k === 'fade' ? '' : back);
+    var outCls = 'hp-out-' + k + (k === 'fade' ? '' : back);
+    prev.classList.add('leaving', outCls);
+    if (dir < 0) prev.classList.add('hp-above');
+    next.classList.add(inCls);
+    var timer = null;
+    var done = function () {
+      clearTimeout(timer);
+      prev.removeEventListener('animationend', onEnd);
+      prev.classList.remove('leaving', 'hp-above', outCls);
+      next.classList.remove(inCls);
+      leaving = null;
+    };
+    var onEnd = function (e) { if (e.target === prev) done(); };
+    prev.addEventListener('animationend', onEnd);
+    timer = setTimeout(done, 1200);
+    leaving = done;
+  }
+
   /* --- show one screen ------------------------------------------------ */
-  function show(slug, push) {
+  function show(slug, push, dir) {
     if (FLOW.indexOf(slug) < 0) slug = FLOW[0];
+    var prevSlug = cur, prevLayer = curLayer;
     cur = slug;
     var layers = viewport.querySelectorAll('.screen'), shown = null;
     for (var i = 0; i < layers.length; i++) {
@@ -643,7 +874,19 @@ const RUNTIME = String.raw`
         if (layers[j].dataset.screen === slug) { layers[j].classList.add('on'); shown = layers[j]; break; }
       }
     }
-    if (shown) hotspots(slug, shown);
+    if (prevLayer) hopsRest(prevLayer);
+    if (shown) {
+      hotspots(slug, shown);          /* measured before anything is moving */
+      if (dir !== null && shown !== prevLayer) {
+        transition(prevLayer, shown, slug, prevSlug, dir);
+        arrive(shown, kindOf(slug) === 'child');
+      }
+      hopsLive(shown, slug);
+    }
+    curLayer = shown;
+    if (dir === 1) { if (hist[hist.length - 1] !== slug) hist.push(slug); }
+    else if (dir === -1) { hist.pop(); }
+    else { hist = [slug]; }
     var idx = FLOW.indexOf(slug);
     document.getElementById('prev').disabled = idx <= 0;
     document.getElementById('next').disabled = idx >= FLOW.length - 1;
@@ -657,9 +900,45 @@ const RUNTIME = String.raw`
     document.title = 'HopPotty — ' + (CAP[slug] || slug);
   }
 
+  function goTo(slug, dir) {
+    pending = dir;
+    if (location.hash.slice(1) === slug) { pending = null; show(slug, false, dir); }
+    else location.hash = slug;
+  }
+  /** A tap that walks the flow: back if it retraces the last step, else forward. */
+  function nav(slug) {
+    goTo(slug, (hist.length > 1 && hist[hist.length - 2] === slug) ? -1 : 1);
+  }
   function go(delta) {
     var idx = FLOW.indexOf(cur) + delta;
-    if (idx >= 0 && idx < FLOW.length) { location.hash = FLOW[idx]; }
+    if (idx >= 0 && idx < FLOW.length) goTo(FLOW[idx], delta > 0 ? 1 : -1);
+  }
+
+  /**
+   * A tap on a hotspot.
+   *
+   * Two beats live here. On \`08-routine-step3\` any of the three answers makes
+   * Hop physically jump and *then* moves to the celebration — one code path,
+   * one duration, one destination for all three, because Docs/ChildSafety.md
+   * does not allow "I tried" to be celebrated less than "I peed". Everywhere
+   * else Hop gets a short "he noticed you" beat, which is a fifth of the jump
+   * and never repeats itself.
+   */
+  function tap(to, from) {
+    if (busy) return;
+    var h = hopOf(curLayer);
+    if (from === 'routine-step3' && to === 'routine-complete' && h && !reduced()) {
+      busy = true;
+      HopLife.jump(h, function () { busy = false; nav(to); });
+      return;
+    }
+    if (h && !reduced() && kindOf(from) === 'child') {
+      busy = true;
+      HopLife.react(h);
+      setTimeout(function () { busy = false; nav(to); }, TAP_MS);
+      return;
+    }
+    nav(to);
   }
 
   function setTheme(t) {
@@ -668,7 +947,7 @@ const RUNTIME = String.raw`
     document.getElementById('theme').textContent = t === 'dark' ? '☀' : '☾';
     document.getElementById('theme').setAttribute('aria-label',
       t === 'dark' ? 'Switch to light appearance' : 'Switch to dark appearance');
-    show(cur, false);
+    show(cur, false, null);
   }
 
   /* --- wiring --------------------------------------------------------- */
@@ -691,13 +970,21 @@ const RUNTIME = String.raw`
     else if (e.key === 'h') body.classList.toggle('showhs');
     else if (e.key === 'd') setTheme(theme === 'dark' ? 'light' : 'dark');
   });
-  window.addEventListener('hashchange', function () { show(location.hash.slice(1), false); });
+  window.addEventListener('hashchange', function () {
+    var d = pending; pending = null;
+    show(location.hash.slice(1), false, d === null ? 0 : d);
+  });
+  /* A screen nobody is looking at animates nothing. */
+  document.addEventListener('visibilitychange', function () {
+    if (!curLayer) return;
+    if (document.hidden) hopsRest(curLayer); else hopsLive(curLayer, cur);
+  });
 
   fit();
   setTheme(theme);
-  show(location.hash.slice(1) || FLOW[0], true);
+  show(location.hash.slice(1) || FLOW[0], true, null);
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(function () { show(cur, false); });  /* re-measure once type settles */
+    document.fonts.ready.then(function () { show(cur, false, null); });  /* re-measure once type settles */
   }
 })();
 `;
@@ -714,10 +1001,20 @@ function prototypePage(screens) {
   const capMap = {};
   FLOW.forEach((slug) => { capMap[slug] = (CAPTION[slug] || [slug])[0]; });
 
+  const kindMap = {};
+  FLOW.forEach((slug) => { kindMap[slug] = kindOf(slug); });
+
   const runtime = RUNTIME
     .replace('__FLOW__', JSON.stringify(FLOW))
     .replace('__HOT__', JSON.stringify(HOTSPOTS))
     .replace('__CAP__', JSON.stringify(capMap))
+    .replace('__KIND__', JSON.stringify(kindMap))
+    .replace('__LIFE__', JSON.stringify(HOP_LIFE))
+    .replace('__PRESS__', String(motion.M.pressScale))
+    .replace('__CHILD_PRESS__', String(motion.M.childPressScale))
+    .replace('__TAP_MS__', String(Math.round(motion.M.childTap[0] * 1000)))
+    .replace('__STEP__', String(Math.round(motion.M.stagger * 1000)))
+    .replace('__CAPD__', String(Math.round(motion.M.staggerCap * 1000)))
     .replace('__W__', String(DEVICE.w))
     .replace('__H__', String(DEVICE.h));
 
@@ -777,7 +1074,8 @@ ${layers.join('\n')}
   </div>
 </noscript>
 
-<script>${runtime}</script>
+<script>${motion.hopRuntimeJS()}
+${runtime}</script>
 </body>
 </html>`;
 }
@@ -786,22 +1084,30 @@ ${layers.join('\n')}
 // The gallery
 // ---------------------------------------------------------------------------
 
+/**
+ * Hop's repertoire.
+ *
+ * Third entry is what the tile *plays*: a CSS class from `motion.js`, whether
+ * Hop should glance somewhere ('L', 'R', 'D'), and whether he is speaking. A
+ * pose with none of those breathes and blinks, which is the default life of any
+ * Hop standing on a screen.
+ */
 const HOP_STATES = [
-  ['idle', 'At rest. The default pose and the base of the ambient loop.'],
-  ['blink', 'One frame of the ambient loop. Nothing else moves.'],
-  ['wave', 'Greeting. Onboarding and the Potty Pause shield.'],
-  ['talk', 'Speaking a line the child can also hear read aloud.'],
-  ['walk', 'On the way to the potty, step one of the routine.'],
-  ['wait', 'Patient, hands folded. Shown while nothing is expected.'],
-  ['sit', 'Settled. Used where the child is not being hurried.'],
-  ['jump', 'Mid-air. Bubble Wash and moments of delight.'],
-  ['land', 'The beat after a jump.'],
-  ['cheer', 'Celebration. The attempt, never the result.'],
-  ['scrub', 'Washing hands, for the hand-washing step and game.'],
-  ['catch', 'Tongue out. Fly Snack, and reaching for a bubble.'],
-  ['full', 'A full belly after Fly Snack — Hop needs the potty.'],
-  ['sleep', 'Quiet hours. Nap and bedtime, when HopPotty says nothing.'],
-  ['face', 'Head only. Avatars, the tab bar, and question prompts.'],
+  ['idle', 'At rest. The default pose, and the base of the ambient loop: a slow breath and a blink on an interval no one can predict.', { gaze: 'D' }],
+  ['blink', 'The closed-eye drawing the ambient loop cuts to. It is the only frame of it that is a separate file.', {}],
+  ['wave', 'Greeting. Onboarding, Hop’s hub and the Potty Pause shield. Wind-up, wave, settle — never a loop that starts mid-air.', { cls: 'hp-wave-loop' }],
+  ['talk', 'Speaking a line the child can also hear read aloud. The mouth runs for the length of the line and then stops.', { talk: true }],
+  ['walk', 'On the way to the potty, step one of the routine.', { cls: 'hp-a-walk' }],
+  ['wait', 'Patient, hands folded. Shown while nothing is expected — so he looks at whatever is waiting to be touched.', { gaze: 'L' }],
+  ['sit', 'Settled, on his lily pad. Used where the child is not being hurried.', { gaze: 'D' }],
+  ['jump', 'Mid-air. The four beats are crouch, rise, hang, land and settle, at HopMotion’s timings.', { cls: 'hp-jump-loop' }],
+  ['land', 'The beat after a jump.', {}],
+  ['cheer', 'Celebration. The attempt, never the result.', { cls: 'hp-a-cheer' }],
+  ['scrub', 'Washing hands, for the hand-washing step and game.', { cls: 'hp-a-scrub' }],
+  ['catch', 'Tongue out. Fly Snack, and reaching for a bubble.', { cls: 'hp-a-catch' }],
+  ['full', 'A full belly after Fly Snack — Hop needs the potty.', { cls: 'hp-a-full' }],
+  ['sleep', 'Quiet hours. Nap and bedtime, when HopPotty says nothing — the same breath, slowed, and no blink.', { cls: 'hp-a-sleep' }],
+  ['face', 'Head only. Avatars, the tab bar, and question prompts.', { gaze: 'R' }],
 ];
 
 function galleryPage(screens, icons, pondFile) {
@@ -820,11 +1126,21 @@ function galleryPage(screens, icons, pondFile) {
     </figure>`;
   }).join('\n');
 
-  const states = HOP_STATES.map(([name, blurb]) => `
-    <figure class="state">
-      <div class="box"><img src="/assets/art/hop-${name}.svg" alt="Hop, ${name}" loading="lazy"></div>
+  const states = HOP_STATES.map(([name, blurb, demo = {}]) => {
+    const frames = motion.POSE_FRAMES[name] || [];
+    const want = frames.filter((v) => v === 'blink' || v === 'talkShut' ||
+      (demo.gaze && v === 'gaze' + demo.gaze));
+    const overlays = want.map((v) =>
+      `<img class="hop-ov" data-v="${v}" src="/assets/art/hop-${name}.${v}.svg" alt="" aria-hidden="true" loading="lazy">`).join('');
+    const cls = ['hop', demo.cls || motion.POSE_ANIM[name] || ''].filter(Boolean).join(' ');
+    return `
+    <figure class="state hopcell"${demo.gaze ? ` data-gaze="${demo.gaze}"` : ''}${demo.talk ? ' data-talk="1"' : ''}>
+      <div class="box"><div class="${cls}" data-pose="${name}">
+        <img src="/assets/art/hop-${name}.svg" alt="Hop, ${name}" loading="lazy">${overlays}
+      </div></div>
       <b>hop-${name}</b><span>${blurb}</span>
-    </figure>`).join('');
+    </figure>`;
+  }).join('');
 
   const iconTiles = icons.map((f) => `
     <figure class="icon">
@@ -858,7 +1174,8 @@ function galleryPage(screens, icons, pondFile) {
 
   <div class="note">
     These are design renders, not simulator screenshots — drawn in a browser from
-    <code>Scripts/tokens.json</code> and the app’s own SVGs. Nothing on this page needs JavaScript.
+    <code>Scripts/tokens.json</code> and the app’s own SVGs. Nothing here needs JavaScript to read;
+    the only thing it adds is the blink and the mouth in Hop’s state tiles.
   </div>
 
   <h2 class="sec">Screens</h2>
@@ -877,13 +1194,20 @@ function galleryPage(screens, icons, pondFile) {
     </div>
     <div class="copy">
       <h3>The ambient loop</h3>
-      <p>Hop is still by default and blinks every few seconds. That is the entire idle animation:
-        no bobbing, no breathing, nothing that pulls a child’s eye back to the screen while they
-        are meant to be walking to the bathroom. It honours <code>prefers-reduced-motion</code>.</p>
+      <p>Hop breathes, on a 3.4-second cycle a millimetre deep, and blinks on a gap redrawn every
+        time between 2.8 and 6.5 seconds — about one blink in six is a double, because a perfectly
+        regular blink reads as a machine. He glances at whatever the child is being asked to touch.
+        That is all of it: nothing escalates, nothing repeats itself louder, and nothing performs to
+        win back an eye that has wandered. It honours <code>prefers-reduced-motion</code>, which
+        stops every one of these.</p>
     </div>
   </div>
 
   <div class="states" style="margin-top:22px">${states}</div>
+  <p class="secsub" style="margin-top:18px">Every tile above is playing — the pose, its ambient
+    loop, and the eye and mouth frames the motion layer derives from that same drawing. Tiles that
+    scroll out of view stop. With <code>prefers-reduced-motion</code> set, or with JavaScript off,
+    each one is simply the still drawing the app ships.</p>
 
   <h2 class="sec">The pond</h2>
   <p class="secsub">Where stars are spent. The scene is assembled from individually unlockable pieces,
@@ -913,6 +1237,7 @@ function galleryPage(screens, icons, pondFile) {
     It is not the iOS app. <a href="/about">What this is and is not →</a>
   </footer>
 </div>
+<script>${motion.galleryJS()}</script>
 </body>
 </html>`;
 }
@@ -1032,6 +1357,41 @@ function docPage(title, mdSource, sourcePath) {
 // Build
 // ---------------------------------------------------------------------------
 
+/**
+ * The derived Hop frames the states gallery plays.
+ *
+ * The prototype page derives these in the browser, from art it has already
+ * inlined — it makes no network requests and this keeps it that way. The gallery
+ * loads its art by URL, so its frames are written here instead, beside the
+ * originals they come from. Nothing under `Art/` is touched: these are outputs.
+ */
+function writeHopFrames(artDir) {
+  let written = 0, checked = false;
+  for (const [name] of HOP_STATES) {
+    const src = path.join(ROOT, 'Art', 'character', `hop-${name}.svg`);
+    if (!fs.existsSync(src)) continue;
+    const base = fs.readFileSync(src, 'utf8');
+    for (const variant of motion.POSE_FRAMES[name] || []) {
+      const made = motion.VARIANTS[variant](base);
+      if (made === base) continue;             // the rule did not apply to this pose
+      fs.writeFileSync(path.join(artDir, `hop-${name}.${variant}.svg`), made);
+      written++;
+    }
+    // The proof that the eye substitution is the artist's and not ours: closing
+    // hop-idle's eyes has to reproduce hop-blink.svg exactly.
+    if (name === 'idle') {
+      const blink = path.join(ROOT, 'Art', 'character', 'hop-blink.svg');
+      if (fs.existsSync(blink)) {
+        checked = true;
+        if (motion.VARIANTS.blink(base) !== fs.readFileSync(blink, 'utf8')) {
+          console.warn('  ! hop-idle + blink no longer reproduces hop-blink.svg — check motion.js FRAME.blink');
+        }
+      }
+    }
+  }
+  return { written, checked };
+}
+
 function copyArt() {
   const artDir = path.join(ASSETS, 'art');
   fs.mkdirSync(path.join(artDir, 'icons'), { recursive: true });
@@ -1041,6 +1401,7 @@ function copyArt() {
     if (fs.existsSync(src)) fs.copyFileSync(src, path.join(artDir, `hop-${name}.svg`));
     else console.warn('  ! missing', src);
   }
+  const frames = writeHopFrames(artDir);
 
   const icons = fs.readdirSync(path.join(ROOT, 'Art', 'icons')).filter((f) => f.endsWith('.svg')).sort();
   for (const f of icons) fs.copyFileSync(path.join(ROOT, 'Art', 'icons', f), path.join(artDir, 'icons', f));
@@ -1057,7 +1418,7 @@ function copyArt() {
       break;
     }
   }
-  return { icons, pondFile };
+  return { icons, pondFile, frames };
 }
 
 function dirSize(dir) {
@@ -1073,7 +1434,7 @@ function build() {
   fs.rmSync(DIST, { recursive: true, force: true });
   fs.mkdirSync(ASSETS, { recursive: true });
 
-  const { icons, pondFile } = copyArt();
+  const { icons, pondFile, frames } = copyArt();
   fs.writeFileSync(path.join(ASSETS, 'app.css'), siteCSS());
 
   const screens = renderAll();
@@ -1148,6 +1509,8 @@ function build() {
   console.log(`built ${pages.length} pages into web/dist`);
   pages.sort().forEach((p) => console.log('   /' + p.replace(/index\.html$/, '')));
   console.log(`   assets: ${icons.length} icons, ${HOP_STATES.length} Hop states, pond: ${pondFile || 'none'}`);
+  console.log(`   motion: ${frames.written} derived Hop frames` +
+    `${frames.checked ? ', blink derivation verified against hop-blink.svg' : ''}`);
   console.log(`   size:   ${(dirSize(DIST) / 1024 / 1024).toFixed(2)} MB`);
   return { screens, pages };
 }
@@ -1161,7 +1524,7 @@ async function verify() {
   const browser = await chromium.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 480, height: 900 } });
   let bad = 0;
-  for (const slug of FLOW) {
+  for (const slug of FLOW_ALL) {
     await page.goto('file://' + path.join(DIST, 'index.html') + '#' + slug);
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(120);

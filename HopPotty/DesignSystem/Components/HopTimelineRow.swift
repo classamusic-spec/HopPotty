@@ -18,15 +18,43 @@ public extension PottyEventSource {
 ///
 /// Reads as a single line to VoiceOver — time, kind, who recorded it — because
 /// that is one fact. The rail and the node are decorative and hidden.
+///
+/// ## Arrival
+///
+/// `arrivalIndex:` gives a day's worth of entries a staggered arrival: each row
+/// fades and slides a few points toward its rail, and its connector *draws*
+/// downward a beat behind the node, so a timeline reads as being written down
+/// the page rather than as a block appearing. Off by default, and off entirely
+/// under Reduce Motion, where the rows simply fade in together.
 public struct HopTimelineRow: View {
     @Environment(\.hopTheme) private var theme
+    @State private var hasArrived = false
 
     private let event: PottyEvent
     private let isLast: Bool
+    private let arrivalIndex: Int?
 
-    public init(event: PottyEvent, isLast: Bool) {
+    public init(event: PottyEvent, isLast: Bool, arrivalIndex: Int? = nil) {
         self.event = event
         self.isLast = isLast
+        self.arrivalIndex = arrivalIndex
+    }
+
+    /// True only between the first render and the arrival landing.
+    private var isArriving: Bool { arrivalIndex != nil && !hasArrived }
+
+    private var arrivalAnimation: Animation {
+        HopAnimationToken.parentTransition.animation(
+            reduceMotion: theme.reduceMotion,
+            index: arrivalIndex ?? 0
+        )
+    }
+
+    /// The connector follows the node rather than arriving with it. The extra
+    /// beat is what makes it read as a line being drawn; under Reduce Motion
+    /// there is no beat, because there is nothing to draw.
+    private var railAnimation: Animation {
+        theme.reduceMotion ? arrivalAnimation : arrivalAnimation.delay(0.08)
     }
 
     private var tint: Color { theme.color.accent(for: event.kind) }
@@ -69,6 +97,12 @@ public struct HopTimelineRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.bottom, isLast ? 0 : theme.spacing.xl)
         }
+        .opacity(isArriving ? 0 : 1)
+        // Toward the rail, not down the page: a row sliding vertically would
+        // cross the row above it, and the rail is the thing it belongs to.
+        .offset(x: isArriving && !theme.reduceMotion ? -10 : 0)
+        .animation(arrivalAnimation, value: hasArrived)
+        .onAppear { hasArrived = true }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(timeText), \(event.kind.displayName)")
         .accessibilityValue(accessibilityValue)
@@ -88,6 +122,8 @@ public struct HopTimelineRow: View {
                     .frame(width: 2)
                     .frame(maxHeight: .infinity)
                     .padding(.vertical, 2)
+                    .scaleEffect(y: isArriving && !theme.reduceMotion ? 0 : 1, anchor: .top)
+                    .animation(railAnimation, value: hasArrived)
             }
         }
         .frame(width: 32)
@@ -131,12 +167,19 @@ enum HopTimelinePreviewData {
 }
 
 private struct HopTimelinePreview: View {
+    /// Staggered when set, which is what a real day's timeline passes.
+    var staggers = false
+
     var body: some View {
         ScrollView {
             HopCard {
                 VStack(spacing: 0) {
                     ForEach(Array(HopTimelinePreviewData.day.enumerated()), id: \.element.id) { index, event in
-                        HopTimelineRow(event: event, isLast: index == HopTimelinePreviewData.day.count - 1)
+                        HopTimelineRow(
+                            event: event,
+                            isLast: index == HopTimelinePreviewData.day.count - 1,
+                            arrivalIndex: staggers ? index : nil
+                        )
                     }
                 }
             }
@@ -169,5 +212,17 @@ private struct HopTimelinePreview: View {
     HopTimelinePreview()
         .hopBackground()
         .hopThemedRoot(appearance: .lightHighContrast)
+}
+
+#Preview("Timeline · staggered arrival") {
+    HopTimelinePreview(staggers: true)
+        .hopBackground()
+        .hopThemedRoot()
+}
+
+#Preview("Timeline · staggered arrival, Reduce Motion") {
+    HopTimelinePreview(staggers: true)
+        .hopBackground()
+        .hopThemedRoot(reduceMotion: true)
 }
 #endif

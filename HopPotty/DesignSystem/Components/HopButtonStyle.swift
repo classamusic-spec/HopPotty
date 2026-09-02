@@ -52,15 +52,23 @@ public enum HopButtonSize: String, CaseIterable, Sendable {
         }
     }
 
+    /// How this control behaves under a finger.
+    ///
+    /// The parent/child split from `HopMotion` in one value: a caregiver's
+    /// button sinks 3% and comes back on a nearly flat spring, a child's sinks
+    /// 6% and comes back with the bounce. Same code, two personalities.
+    var pressFeel: HopPressFeel {
+        self == .parent ? .parent : .child
+    }
+
     var motion: HopAnimationToken {
         self == .parent ? .parentTap : .childTap
     }
 
-    /// How far the control sinks when pressed. Child controls squash more —
-    /// the feedback has to be visible from a metre away at arm's length.
-    var pressedScale: CGFloat {
-        self == .parent ? 0.975 : 0.945
-    }
+    /// How far the control sinks when pressed. Kept as a named value because it
+    /// is the number a designer asks about; it comes from ``pressFeel`` so
+    /// there is still only one place it is decided.
+    var pressedScale: CGFloat { pressFeel.surfaceScale }
 
     var elevation: HopElevation {
         switch self {
@@ -85,6 +93,20 @@ enum HopButtonAppearance {
 
 /// The one button style. Press feedback, elevation, hit target and Reduce
 /// Motion all live here, so no individual button re-implements them.
+///
+/// ## What a press does
+///
+/// Four things, in this order, and the order is the point:
+///
+/// 1. the **surface sinks** on ``HopAnimationToken/press`` — no bounce, because
+///    a finger going down is not springy;
+/// 2. the **shadow softens** toward the ground by the same transaction, so the
+///    button reads as pressed *into* the page rather than as merely smaller;
+/// 3. a **pressed wash** is drawn over the fill — this is the part that still
+///    happens under Reduce Motion, so the control is never silent;
+/// 4. on release the surface comes back on the audience's own spring, and the
+///    **label settles a beat behind it**, which is the difference between a
+///    control that scales and a control with a front face.
 struct HopButtonStyle: ButtonStyle {
     let size: HopButtonSize
     let appearance: HopButtonAppearance
@@ -108,6 +130,9 @@ struct HopButtonStyle: ButtonStyle {
             RoundedRectangle(cornerRadius: size.cornerRadius, style: .continuous)
         }
 
+        private var isPressed: Bool { configuration.isPressed }
+        private var feel: HopPressFeel { size.pressFeel }
+
         /// Spelled out rather than `size.fillsWidth ? .infinity : nil`, which
         /// asks the compiler to find `.infinity` through an Optional.
         private var maximumWidth: CGFloat? {
@@ -125,24 +150,40 @@ struct HopButtonStyle: ButtonStyle {
             configuration.label
                 .hopTextStyle(size.textStyle)
                 .foregroundStyle(foreground)
+                // The label's own transaction, so it can lag the surface on the
+                // way back up without lagging it on the way down.
+                .scaleEffect(feel.labelScale(isPressed: isPressed, reduceMotion: theme.reduceMotion))
+                .animation(
+                    feel.labelAnimation(isPressed: isPressed, reduceMotion: theme.reduceMotion),
+                    value: isPressed
+                )
                 .padding(.horizontal, size.horizontalPadding)
                 .frame(minHeight: size.minimumHeight)
                 .frame(maxWidth: maximumWidth)
                 .background { background }
-                .modifier(theme.elevation(elevation))
-                .scaleEffect(configuration.isPressed ? size.pressedScale : 1)
+                .modifier(theme.elevation(pressedElevation))
+                .scaleEffect(feel.scale(isPressed: isPressed, reduceMotion: theme.reduceMotion))
                 .opacity(isEnabled ? 1 : 0.4)
-                .animation(theme.animation(size.motion), value: configuration.isPressed)
+                .animation(feel.animation(isPressed: isPressed, reduceMotion: theme.reduceMotion), value: isPressed)
                 .contentShape(shape)
+                .environment(\.hopIsPressed, isPressed)
         }
 
-        private var elevation: HopElevation {
+        /// The elevation the control rests at, independent of the press.
+        private var restingElevation: HopElevation {
             switch appearance {
-            // Tonal controls are flat by definition; a pressed control drops to
-            // the ground so the press reads as a press and not as a colour change.
+            // Tonal controls are flat by definition.
             case .tonal: .flat
-            case .filled: configuration.isPressed ? .flat : size.elevation
+            case .filled: size.elevation
             }
+        }
+
+        /// The elevation it is drawing right now.
+        ///
+        /// Softened rather than swapped for `.flat`: a shadow that is scaled
+        /// down can be animated, and a shadow that is removed cannot — it cuts.
+        private var pressedElevation: HopElevation {
+            feel.elevation(restingElevation, isPressed: isPressed, reduceMotion: theme.reduceMotion)
         }
 
         @ViewBuilder
@@ -153,10 +194,11 @@ struct HopButtonStyle: ButtonStyle {
                     .fill(fill)
                     .overlay {
                         // Drawn, not opacity-based, so a disabled control and a
-                        // pressed control never look alike.
+                        // pressed control never look alike. This is also the
+                        // whole of the press feedback under Reduce Motion.
                         shape
                             .fill(theme.isDark ? Color.white.opacity(0.14) : Color.black.opacity(0.10))
-                            .opacity(configuration.isPressed ? 1 : 0)
+                            .opacity(isPressed ? 1 : 0)
                     }
             case .tonal(let tint):
                 shape
@@ -170,7 +212,7 @@ struct HopButtonStyle: ButtonStyle {
                     .overlay {
                         shape
                             .fill(tint.opacity(0.12))
-                            .opacity(configuration.isPressed ? 1 : 0)
+                            .opacity(isPressed ? 1 : 0)
                     }
             }
         }
@@ -181,9 +223,11 @@ struct HopButtonStyle: ButtonStyle {
 struct HopBareButtonStyle: ButtonStyle {
     let minimumTarget: CGFloat
     let tint: Color
+    /// Additive, with a default, so every existing call site is untouched.
+    var feel: HopPressFeel = .bare
 
     func makeBody(configuration: Configuration) -> some View {
-        Body(configuration: configuration, minimumTarget: minimumTarget, tint: tint)
+        Body(configuration: configuration, minimumTarget: minimumTarget, tint: tint, feel: feel)
     }
 
     private struct Body: View {
@@ -193,15 +237,84 @@ struct HopBareButtonStyle: ButtonStyle {
         let configuration: ButtonStyleConfiguration
         let minimumTarget: CGFloat
         let tint: Color
+        let feel: HopPressFeel
 
         var body: some View {
             configuration.label
                 .foregroundStyle(tint)
                 .frame(minWidth: minimumTarget, minHeight: minimumTarget)
                 .contentShape(Rectangle())
-                .scaleEffect(configuration.isPressed ? 0.92 : 1)
+                .scaleEffect(feel.scale(isPressed: configuration.isPressed, reduceMotion: theme.reduceMotion))
+                // The dim is not conditional on Reduce Motion: it is the only
+                // feedback a borderless control has left when nothing may move.
                 .opacity(configuration.isPressed ? 0.7 : (isEnabled ? 1 : 0.4))
-                .animation(theme.animation(.parentTap), value: configuration.isPressed)
+                .animation(
+                    feel.animation(isPressed: configuration.isPressed, reduceMotion: theme.reduceMotion),
+                    value: configuration.isPressed
+                )
+                .environment(\.hopIsPressed, configuration.isPressed)
         }
+    }
+}
+
+/// A whole surface pressed as one object — a tappable card, a tile.
+///
+/// Deliberately thin. It publishes the press into the environment and leaves the
+/// drawing to the surface, because the surface already knows its own corner
+/// radius, fill and elevation, and a style that guessed at them would have to be
+/// told all three. See ``HopCard`` for the other half.
+struct HopSurfaceButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            // Corners included: a card whose corner is dead to touch is a card
+            // a person taps twice.
+            .contentShape(Rectangle())
+            .environment(\.hopIsPressed, configuration.isPressed)
+    }
+}
+
+// MARK: - Feedback
+
+/// What a control confirmed, in the design system's own words.
+///
+/// Not a haptic pattern and not a `HopHapticEvent`: the design system does not
+/// know what a device can do, and `HopHapticEvent` is a deliberately closed list
+/// owned by `Services/Haptics` (five occasions, "and no more" — a buzz on every
+/// tap teaches a child nothing and gets the whole setting switched off). This
+/// enum is the seam between the two. Nothing plays unless a host installs a
+/// handler, so a preview, a snapshot and a test are all silent.
+public enum HopButtonFeedback: String, CaseIterable, Sendable {
+    /// Something was written down or completed.
+    case confirmation
+    /// One option was chosen from several.
+    case selection
+    /// Something that changes what the app *does* to a child's device.
+    case importantChange
+}
+
+/// Plays a control's feedback. Installed by the app root; no-op by default.
+public struct HopButtonFeedbackHandler: Sendable {
+    /// Un-isolated for the same reason ``HopVoicePlayback`` is: the design
+    /// system only needs to say "this happened", and the service decides which
+    /// actor answers.
+    public let play: @Sendable (HopButtonFeedback) -> Void
+
+    public init(play: @escaping @Sendable (HopButtonFeedback) -> Void) {
+        self.play = play
+    }
+
+    public static let disabled = HopButtonFeedbackHandler { _ in }
+}
+
+private struct HopButtonFeedbackKey: EnvironmentKey {
+    static let defaultValue = HopButtonFeedbackHandler.disabled
+}
+
+public extension EnvironmentValues {
+    /// How a control confirms itself beyond the screen. Install once at the app
+    /// root and map to the haptics service there.
+    var hopButtonFeedback: HopButtonFeedbackHandler {
+        get { self[HopButtonFeedbackKey.self] }
+        set { self[HopButtonFeedbackKey.self] = newValue }
     }
 }

@@ -6,22 +6,80 @@ import HopPottyDesignTokens
 /// Deliberately plain: a fill, a radius, a shadow and a hairline. HopPotty's
 /// depth comes from a small number of cards at different elevations, not from
 /// each card decorating itself.
+///
+/// ## Motion
+///
+/// Both of the moving parts are opt-in, and both default to off, because most
+/// of the cards in this app already sit inside something that animates them and
+/// a surface that animates twice is worse than one that does not animate at all.
+///
+/// - `arrivalIndex:` gives the card a considered arrival — it lifts 14 points
+///   into place — staggered by its index when several arrive together. It runs
+///   **once per card**, on first appearance. A value inside the card changing
+///   later does not re-run it.
+/// - `action:` makes the whole card a control. It then presses like a physical
+///   thing: the surface sinks a little, its shadow softens toward the page, and
+///   a wash confirms the touch even when nothing is allowed to move.
 public struct HopCard<Content: View>: View {
-    @Environment(\.hopTheme) private var theme
-
     private let elevation: HopElevation
+    private let arrivalIndex: Int?
+    private let action: (() -> Void)?
     private let content: Content
 
-    public init(elevation: HopElevation = .resting, @ViewBuilder content: () -> Content) {
+    public init(
+        elevation: HopElevation = .resting,
+        arrivalIndex: Int? = nil,
+        action: (() -> Void)? = nil,
+        @ViewBuilder content: () -> Content
+    ) {
         self.elevation = elevation
+        self.arrivalIndex = arrivalIndex
+        self.action = action
         self.content = content()
     }
+
+    @ViewBuilder
+    public var body: some View {
+        if let action {
+            Button(action: action) {
+                HopCardSurface(elevation: elevation, isTappable: true, content: content)
+            }
+            // Thin by design: the style publishes the press, the surface draws
+            // it. See HopSurfaceButtonStyle.
+            .buttonStyle(HopSurfaceButtonStyle())
+            .accessibilityAddTraits(.isButton)
+            .hopArrival(index: arrivalIndex ?? 0, isEnabled: arrivalIndex != nil)
+        } else {
+            HopCardSurface(elevation: elevation, isTappable: false, content: content)
+                .hopArrival(index: arrivalIndex ?? 0, isEnabled: arrivalIndex != nil)
+        }
+    }
+}
+
+/// The card's drawing, split out so it can read the press state published by
+/// ``HopSurfaceButtonStyle`` when — and only when — the card owns the tap.
+///
+/// The `isTappable` guard matters: without it a plain card nested inside some
+/// other pressed control would sink along with it, and a dashboard where
+/// pressing a row squashes the card behind it looks broken rather than deep.
+private struct HopCardSurface<Content: View>: View {
+    @Environment(\.hopTheme) private var theme
+    @Environment(\.hopIsPressed) private var isPressed
+
+    let elevation: HopElevation
+    let isTappable: Bool
+    /// The already-built content, not a builder closure: this view is only ever
+    /// constructed from ``HopCard``, which has already resolved it.
+    let content: Content
+
+    private var isHeld: Bool { isTappable && isPressed }
+    private var feel: HopPressFeel { .surface }
 
     private var shape: RoundedRectangle {
         RoundedRectangle(cornerRadius: elevation.suggestedRadius, style: .continuous)
     }
 
-    public var body: some View {
+    var body: some View {
         content
             .padding(theme.spacing.xl)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -36,7 +94,16 @@ public struct HopCard<Content: View>: View {
                     lineWidth: theme.isHighContrast ? 1.5 : 0.75
                 )
             }
-            .modifier(theme.elevation(elevation))
+            .overlay {
+                // The half of the press that survives Reduce Motion.
+                shape
+                    .fill(theme.color.textPrimary.opacity(0.05))
+                    .opacity(isHeld ? 1 : 0)
+                    .allowsHitTesting(false)
+            }
+            .modifier(theme.elevation(feel.elevation(elevation, isPressed: isHeld, reduceMotion: theme.reduceMotion)))
+            .scaleEffect(feel.scale(isPressed: isHeld, reduceMotion: theme.reduceMotion))
+            .animation(feel.animation(isPressed: isHeld, reduceMotion: theme.reduceMotion), value: isHeld)
     }
 }
 
@@ -44,6 +111,10 @@ public struct HopCard<Content: View>: View {
 ///
 /// The title is a real header for assistive technology, not just larger text,
 /// so rotor navigation by heading works down a long settings screen.
+///
+/// Deliberately has no arrival animation. A caregiver's settings list is the
+/// one surface in this app that should feel exactly like the OS, and the OS
+/// does not stagger a settings screen in.
 public struct HopSection<Content: View>: View {
     @Environment(\.hopTheme) private var theme
 
@@ -118,7 +189,10 @@ public struct HopRowDivider: View {
 /// scrolling content.
 ///
 /// Presentation itself stays with the caller (`.sheet`, `.presentationDetents`)
-/// so this composes with whatever the feature needs.
+/// so this composes with whatever the feature needs. When a sheet is drawn
+/// *inside* the app rather than presented by the system — an overlay in a
+/// `ZStack` — give it `.hopScreenTransition(.sheet)` so it rises rather than
+/// appearing.
 public struct HopSheet<Content: View>: View {
     @Environment(\.hopTheme) private var theme
 
@@ -223,3 +297,66 @@ public struct HopSheet<Content: View>: View {
     .hopThemedRoot()
     .preferredColorScheme(.dark)
 }
+
+#if DEBUG
+/// The two opt-in behaviours together: cards that arrive staggered, and a card
+/// that is itself a control.
+private struct HopCardMotionGallery: View {
+    @Environment(\.hopTheme) private var theme
+    @State private var generation = 0
+    @State private var taps = 0
+
+    var body: some View {
+        VStack(spacing: theme.spacing.l) {
+            Text(theme.reduceMotion
+                 ? "Reduce Motion: cards fade in where they belong and the press is a wash, not a squash."
+                 : "Cards lift into place, staggered. The tappable card sinks and its shadow softens.")
+                .hopTextStyle(.parentCaption)
+                .foregroundStyle(theme.color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HopSecondaryButton("Play the arrival again", icon: "arrow.clockwise") { generation += 1 }
+
+            VStack(spacing: theme.spacing.m) {
+                ForEach(0..<3, id: \.self) { index in
+                    HopCard(arrivalIndex: index) {
+                        Text("Arrives \(index + 1) of 3").hopTextStyle(.parentHeadline)
+                    }
+                }
+            }
+            .id(generation)
+
+            HopCard(elevation: .raised, action: { taps += 1 }) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Press me").hopTextStyle(.parentHeadline)
+                    Text("Tapped \(taps.formatted()) times")
+                        .hopTextStyle(.parentCallout)
+                        .foregroundStyle(theme.color.textSecondary)
+                        .hopNumericTransition()
+                        .hopAnimation(.parentTransition, value: taps)
+                }
+            }
+        }
+        .padding()
+    }
+}
+
+#Preview("Cards · motion") {
+    ScrollView { HopCardMotionGallery() }
+        .hopBackground()
+        .hopThemedRoot()
+}
+
+#Preview("Cards · motion, Reduce Motion") {
+    ScrollView { HopCardMotionGallery() }
+        .hopBackground()
+        .hopThemedRoot(reduceMotion: true)
+}
+
+#Preview("Cards · motion, dark") {
+    ScrollView { HopCardMotionGallery() }
+        .hopBackground()
+        .hopThemedRoot()
+        .preferredColorScheme(.dark)
+}
+#endif

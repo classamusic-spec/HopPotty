@@ -86,6 +86,110 @@ public enum HopPose: String, CaseIterable, Sendable, Identifiable {
     var geometry: HopPoseGeometry { HopPoseGeometry(self) }
 }
 
+// MARK: - Legal transitions
+
+/// How Hop is supported in a pose. Two poses in the same stance can hand over
+/// to each other directly; two in different stances cannot, because changing
+/// footing is a movement and a movement that happens in one frame is a cut.
+public enum HopStance: Sendable, Equatable {
+    /// On his feet.
+    case standing
+    /// Sat down — on the potty, on a lily pad, on the floor.
+    case seated
+    /// Lying down, asleep.
+    case resting
+}
+
+public extension HopPose {
+    var stance: HopStance {
+        switch self {
+        case .idle, .blink, .talk, .wave, .walk, .jump, .cheer, .land, .full, .scrub: .standing
+        case .wait, .sit, .`catch`: .seated
+        case .sleep: .resting
+        }
+    }
+
+    /// The poses to pass through to get from here to `target`, in order, ending
+    /// with `target` itself. Empty when Hop is already there.
+    ///
+    /// This is the legal-transition table, and it exists because the ugliest
+    /// thing a mascot can do is teleport. Two rules, and they are the whole
+    /// table:
+    ///
+    /// 1. **Waking is not instant.** From ``sleep`` Hop sits up (``wait``) and
+    ///    stands (``idle``) before he does anything else. He is never asleep in
+    ///    one frame and cheering in the next.
+    /// 2. **Changing footing goes through the crouch.** ``wait`` is the pose
+    ///    that joins standing to sitting — knees bent, hands down — so standing
+    ///    up and sitting down both pass through it rather than snapping between
+    ///    two silhouettes that share no shape.
+    ///
+    /// Everything else is a direct hand-over: two standing poses differ only in
+    /// where the arms and the face are, and ``HopPoseGeometry`` interpolates
+    /// those, so the drawing itself does the work.
+    ///
+    /// Under Reduce Motion the route is not used at all — the intermediate
+    /// poses exist to make a change readable *as movement*, and there is no
+    /// movement to read.
+    func route(to target: HopPose) -> [HopPose] {
+        guard self != target else { return [] }
+
+        var path: [HopPose] = []
+        func step(_ pose: HopPose) {
+            guard pose != self, pose != target, path.last != pose else { return }
+            path.append(pose)
+        }
+
+        if self == .sleep {
+            // Sit up first, and only stand if the target is standing.
+            step(.wait)
+            if target.stance == .standing { step(.idle) }
+        } else if target == .sleep {
+            step(.wait)
+        } else if stance != target.stance {
+            step(.wait)
+        }
+
+        path.append(target)
+        return path
+    }
+}
+
+// MARK: - Ambient life, per pose
+
+public extension HopPose {
+    /// How long one breath takes in this pose.
+    ///
+    /// A sleeping frog breathes slower than a waiting one, and a waiting one
+    /// slower than a standing one. It is a small thing that a child will never
+    /// name and would notice immediately if it were wrong.
+    var breathPeriod: Double {
+        switch self {
+        case .sleep: HopMotion.breathePeriod * 1.7
+        case .wait, .sit, .`catch`, .full: HopMotion.breathePeriod * 1.25
+        default: HopMotion.breathePeriod
+        }
+    }
+
+    /// How far the body swells on a breath, as a fraction of Hop's height.
+    var breathAmplitude: CGFloat {
+        switch self {
+        case .sleep: 0.024
+        case .full: 0.021
+        default: 0.016
+        }
+    }
+
+    /// Whether the ambient blink runs here. Poses that already hold the eyes
+    /// shut have nothing to blink, and a sleeping frog does not blink at all.
+    var blinks: Bool {
+        switch self {
+        case .sleep, .blink, .jump: false
+        default: true
+        }
+    }
+}
+
 // MARK: - Pose parameters
 
 /// One leg: a hip, an ankle, and how far the toes fan.

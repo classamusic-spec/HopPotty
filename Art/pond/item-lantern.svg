@@ -1,17 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-<defs><radialGradient id="glowWarm" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.75"/><stop offset="0.5" stop-color="#FFD769" stop-opacity="0.28"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient><linearGradient id="woodGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#A76F46"/></linearGradient><radialGradient id="yellowBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFE9A8"/><stop offset="1" stop-color="#FFC53D"/></radialGradient></defs>
-<g id="item-lantern">
-    <path d="M 22 16 q 44 12 92 4 q 40 -6 66 4" stroke="url(#woodGrad)" stroke-width="9" stroke-linecap="round" fill="none"/>
-    <g fill="#63C88A" opacity="0.85">
-      <ellipse cx="44" cy="12" rx="12" ry="6" transform="rotate(-18 44 12)"/>
-      <ellipse cx="150" cy="12" rx="11" ry="5.6" transform="rotate(16 150 12)"/>
-    </g>
-    <path d="M 100 18 v 12" stroke="#A76F46" stroke-width="4.4" stroke-linecap="round"/>
-    <circle cx="100" cy="34" r="9" fill="none" stroke="#A76F46" stroke-width="5"/>
-    <circle cx="100" cy="100" r="70" fill="url(#glowWarm)"/>
-    <path d="M 68 48 q 32 -12 64 0 q 6 2 4 8 h -72 q -2 -6 4 -8 Z" fill="#A76F46"/>
-    <path d="M 72 58 h 56 v 44 q 0 26 -28 26 q -28 0 -28 -26 Z" fill="url(#yellowBall)"/>
-    <path d="M 78 60 q 8 -2 14 -2 v 66 q -14 -4 -14 -22 Z" fill="#FFFFFF" opacity="0.42"/>
-    <rect x="66" y="124" width="68" height="12" rx="6" fill="#A76F46"/>
-    <path d="M 92 136 h 16 l -4 12 h -8 Z" fill="#A76F46"/></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><defs><radialGradient id="glowWarm" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.75"/><stop offset="0.5" stop-color="#FFD769" stop-opacity="0.28"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient><linearGradient id="woodGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#A76F46"/></linearGradient><radialGradient id="yellowBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFE9A8"/><stop offset="1" stop-color="#FFC53D"/></radialGradient></defs>
+<g id="item-lantern"><path d="M 22 16 q 44 12 92 4 q 40 -6 66 4" stroke="url(#woodGrad)" stroke-width="9" stroke-linecap="round" fill="none"/><g fill="#63C88A" opacity="0.85"><ellipse cx="44" cy="12" rx="12" ry="6" transform="rotate(-18 44 12)"/><ellipse cx="150" cy="12" rx="11" ry="5.6" transform="rotate(16 150 12)"/></g><path d="M 100 18 v 12" stroke="#A76F46" stroke-width="4.4" stroke-linecap="round"/><circle cx="100" cy="34" r="9" fill="none" stroke="#A76F46" stroke-width="5"/><circle cx="100" cy="100" r="70" fill="url(#glowWarm)"/><path d="M 68 48 q 32 -12 64 0 q 6 2 4 8 h -72 q -2 -6 4 -8 Z" fill="#A76F46"/><path d="M 72 58 h 56 v 44 q 0 26 -28 26 q -28 0 -28 -26 Z" fill="url(#yellowBall)"/><path d="M 78 60 q 8 -2 14 -2 v 66 q -14 -4 -14 -22 Z" fill="#FFFFFF" opacity="0.42"/><rect x="66" y="124" width="68" height="12" rx="6" fill="#A76F46"/><path d="M 92 136 h 16 l -4 12 h -8 Z" fill="#A76F46"/></g></svg>

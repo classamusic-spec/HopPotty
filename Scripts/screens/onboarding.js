@@ -53,7 +53,7 @@ function meetHop(appearance = 'light') {
             </svg>
           </div>
 
-          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-48%)">
+          <div data-hop style="position:absolute;left:50%;top:50%;transform:translate(-50%,-48%)">
             ${svg('Art/character/hop-wave.svg', { width: 258 })}
           </div>
 

@@ -1,20 +1,2 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
-
-<g id="quiz-shoes"><circle cx="60" cy="60" r="58" fill="#FFE8E3"/>
-    <ellipse cx="60" cy="100" rx="42" ry="7.14" fill="#8A3F30" opacity="0.11"/>
-    <g transform="translate(26 58)">
-      <path d="M -8 21 q -11 0 -11 -8 q 0 -9 11 -11 l 41 -6 q 12 -1 14 8 l 2 8 q 1 9 -10 9 Z" fill="#D8CEC1"/>
-      <path d="M -8 19 q -11 0 -11 -8 q 0 -9 11 -11 l 41 -6 q 12 -1 14 8 l 2 8 q 1 9 -10 9 Z" fill="#FFFFFF"/>
-      <path d="M -8 0 q 0 -18 13 -18 q 11 0 14 11 q 3 9 16 12 q 12 3 14 11 h -57 Z" fill="#AFA5EF"/>
-      <path d="M -8 -1 q 0 -17 13 -17 q 7 0 11 5 q -16 4 -16 24 h -8 Z" fill="#FFFFFF" opacity="0.22"/>
-      <path d="M 5 -9 q 8 5 11 13" stroke="#FFFFFF" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.85"/>
-      <path d="M 13 -12 q 8 6 11 14" stroke="#FFFFFF" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.85"/>
-      <path d="M -8 14 h 57" stroke="#6F63C0" stroke-width="2.4" fill="none" opacity="0.18"/></g><g transform="translate(54 76)">
-      <path d="M -8 21 q -11 0 -11 -8 q 0 -9 11 -11 l 41 -6 q 12 -1 14 8 l 2 8 q 1 9 -10 9 Z" fill="#D8CEC1"/>
-      <path d="M -8 19 q -11 0 -11 -8 q 0 -9 11 -11 l 41 -6 q 12 -1 14 8 l 2 8 q 1 9 -10 9 Z" fill="#FFFFFF"/>
-      <path d="M -8 0 q 0 -18 13 -18 q 11 0 14 11 q 3 9 16 12 q 12 3 14 11 h -57 Z" fill="#6FC7E8"/>
-      <path d="M -8 -1 q 0 -17 13 -17 q 7 0 11 5 q -16 4 -16 24 h -8 Z" fill="#FFFFFF" opacity="0.22"/>
-      <path d="M 5 -9 q 8 5 11 13" stroke="#FFFFFF" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.85"/>
-      <path d="M 13 -12 q 8 6 11 14" stroke="#FFFFFF" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.85"/>
-      <path d="M -8 14 h 57" stroke="#2A87AC" stroke-width="2.4" fill="none" opacity="0.18"/></g></g>
-</svg>
+<g id="quiz-shoes"><circle cx="60" cy="60" r="58" fill="#FFE8E3"/><ellipse cx="60" cy="100" rx="42" ry="7.1" fill="#8A3F30" opacity="0.11"/><g transform="translate(26 58)"><path d="M -8 21 q -11 0 -11 -8 q 0 -9 11 -11 l 41 -6 q 12 -1 14 8 l 2 8 q 1 9 -10 9 Z" fill="#D8CEC1"/><path d="M -8 19 q -11 0 -11 -8 q 0 -9 11 -11 l 41 -6 q 12 -1 14 8 l 2 8 q 1 9 -10 9 Z" fill="#FFFFFF"/><path d="M -8 0 q 0 -18 13 -18 q 11 0 14 11 q 3 9 16 12 q 12 3 14 11 h -57 Z" fill="#AFA5EF"/><path d="M -8 -1 q 0 -17 13 -17 q 7 0 11 5 q -16 4 -16 24 h -8 Z" fill="#FFFFFF" opacity="0.22"/><path d="M 5 -9 q 8 5 11 13" stroke="#FFFFFF" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.85"/><path d="M 13 -12 q 8 6 11 14" stroke="#FFFFFF" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.85"/><path d="M -8 14 h 57" stroke="#6F63C0" stroke-width="2.4" fill="none" opacity="0.18"/></g><g transform="translate(54 76)"><path d="M -8 21 q -11 0 -11 -8 q 0 -9 11 -11 l 41 -6 q 12 -1 14 8 l 2 8 q 1 9 -10 9 Z" fill="#D8CEC1"/><path d="M -8 19 q -11 0 -11 -8 q 0 -9 11 -11 l 41 -6 q 12 -1 14 8 l 2 8 q 1 9 -10 9 Z" fill="#FFFFFF"/><path d="M -8 0 q 0 -18 13 -18 q 11 0 14 11 q 3 9 16 12 q 12 3 14 11 h -57 Z" fill="#6FC7E8"/><path d="M -8 -1 q 0 -17 13 -17 q 7 0 11 5 q -16 4 -16 24 h -8 Z" fill="#FFFFFF" opacity="0.22"/><path d="M 5 -9 q 8 5 11 13" stroke="#FFFFFF" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.85"/><path d="M 13 -12 q 8 6 11 14" stroke="#FFFFFF" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.85"/><path d="M -8 14 h 57" stroke="#2A87AC" stroke-width="2.4" fill="none" opacity="0.18"/></g></g></svg>

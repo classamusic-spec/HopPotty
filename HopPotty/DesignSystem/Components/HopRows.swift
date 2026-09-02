@@ -5,6 +5,11 @@ import HopPottyDesignTokens
 ///
 /// The whole row is one accessibility element with a button trait, so VoiceOver
 /// reads "Interval, every 45 minutes, button" instead of three fragments.
+///
+/// The value cross-fades when it changes. A settings row is the one place in a
+/// caregiver's app where a number changes underneath them without them asking —
+/// a schedule recalculating, a count of quiet windows going up — and a value
+/// that snaps reads as a glitch rather than as news.
 public struct HopSettingsRow: View {
     @Environment(\.hopTheme) private var theme
     @FocusState private var isFocused: Bool
@@ -40,12 +45,10 @@ public struct HopSettingsRow: View {
                         .foregroundStyle(theme.color.textSecondary)
                         .multilineTextAlignment(.trailing)
                         .fixedSize(horizontal: false, vertical: true)
+                        .hopValueChange(value)
                 }
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(theme.color.textTertiary)
-                    .accessibilityHidden(true)
+                HopRowChevron()
             }
             .padding(.horizontal, theme.spacing.l)
             .padding(.vertical, theme.spacing.m)
@@ -59,6 +62,31 @@ public struct HopSettingsRow: View {
         .accessibilityLabel(title)
         .accessibilityValue(value ?? "")
         .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// The disclosure chevron, which leans in the direction it is about to take you.
+///
+/// Three points of travel, and only while the finger is down. It is the cheapest
+/// possible way to make a row feel like it is answering, and unlike a scale it
+/// does not move the rows underneath it. Off entirely under Reduce Motion, where
+/// the row's highlight is doing the work instead.
+struct HopRowChevron: View {
+    @Environment(\.hopTheme) private var theme
+    @Environment(\.hopIsPressed) private var isPressed
+
+    private var lean: CGFloat {
+        guard isPressed, !theme.reduceMotion else { return 0 }
+        return 3
+    }
+
+    var body: some View {
+        Image(systemName: "chevron.right")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(theme.color.textTertiary)
+            .offset(x: lean)
+            .hopAnimation(.parentTap, value: isPressed)
+            .accessibilityHidden(true)
     }
 }
 
@@ -81,6 +109,8 @@ public struct HopToggleRow: View {
     public var body: some View {
         // A system Toggle, not a bespoke switch: this control's affordance,
         // haptic and VoiceOver behaviour are ones the caregiver already knows.
+        // That includes its animation — a hand-animated switch here would be a
+        // switch that does not match every other switch on the device.
         Toggle(isOn: $isOn) {
             HStack(spacing: theme.spacing.m) {
                 HopRowIcon(systemImage: icon)
@@ -129,6 +159,11 @@ struct HopRowIcon: View {
 
 /// Rows highlight rather than scale: a row that shrinks pulls the rows below it
 /// upward, which reads as the list moving.
+///
+/// The highlight is an opacity change, so it is the same under Reduce Motion as
+/// it is without — the row is never left with no answer to a touch. The style
+/// also publishes the press downward, which is how the chevron in the label
+/// knows to lean without the label having to own a gesture of its own.
 struct HopRowButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         Body(configuration: configuration)
@@ -142,6 +177,7 @@ struct HopRowButtonStyle: ButtonStyle {
             configuration.label
                 .background(theme.color.textPrimary.opacity(configuration.isPressed ? 0.06 : 0))
                 .animation(theme.animation(.parentTap), value: configuration.isPressed)
+                .environment(\.hopIsPressed, configuration.isPressed)
         }
     }
 }
@@ -180,6 +216,10 @@ public struct HopSectionHeader: View {
 
 /// A small status token. Carries a glyph whenever it carries a meaning, so the
 /// tint is never the only signal.
+///
+/// The label cross-fades when it changes, because a pill is very often the thing
+/// a live dashboard rewrites — "Next pause in 12 minutes" becoming "11" — and it
+/// is small enough that a snap is the only thing the eye catches.
 public struct HopPill: View {
     @Environment(\.hopTheme) private var theme
 
@@ -201,6 +241,7 @@ public struct HopPill: View {
             Text(text)
                 .hopTextStyle(.parentFootnote)
                 .lineLimit(1)
+                .hopValueChange(text)
         }
         .foregroundStyle(tint)
         .padding(.horizontal, theme.spacing.s)
@@ -280,3 +321,51 @@ private struct HopRowsPreviewHost: View {
     .hopBackground()
     .hopThemedRoot(appearance: .darkHighContrast)
 }
+
+#if DEBUG
+/// Rows under a finger, and rows whose value is rewritten underneath them —
+/// the two things a settings screen actually does.
+private struct HopRowMotionGallery: View {
+    @Environment(\.hopTheme) private var theme
+    @State private var minutes = 45
+
+    var body: some View {
+        VStack(spacing: theme.spacing.l) {
+            Text(theme.reduceMotion
+                 ? "Reduce Motion: the row still highlights, the chevron does not lean, the value cross-fades."
+                 : "Press and hold a row: it highlights and the chevron leans three points.")
+                .hopTextStyle(.parentCaption)
+                .foregroundStyle(theme.color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HopSection("Reminders") {
+                HopSettingsRow(title: "Interval", value: "Every \(minutes) minutes", icon: "timer") {}
+                HopRowDivider()
+                HopSettingsRow(title: "Quiet hours", value: "2 windows", icon: "moon.fill") {}
+            }
+
+            HStack(spacing: theme.spacing.m) {
+                HopPill("Every \(minutes) min", tint: theme.color.brandSecondary, glyph: .timer)
+                Spacer(minLength: 0)
+            }
+
+            HopSecondaryButton("Change the interval", icon: "slider.horizontal.3") {
+                minutes = minutes == 45 ? 60 : 45
+            }
+        }
+        .padding()
+    }
+}
+
+#Preview("Rows · motion") {
+    ScrollView { HopRowMotionGallery() }
+        .hopBackground()
+        .hopThemedRoot()
+}
+
+#Preview("Rows · motion, Reduce Motion") {
+    ScrollView { HopRowMotionGallery() }
+        .hopBackground()
+        .hopThemedRoot(reduceMotion: true)
+}
+#endif

@@ -79,7 +79,9 @@ public struct HopStarBadge: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 // The number changes without the layout jumping as digits swap.
-                .contentTransition(.numericText())
+                // Routed through the motion tokens so Reduce Motion cross-fades
+                // the digits rather than rolling them.
+                .hopNumericTransition()
         }
         .padding(.horizontal, theme.spacing.m)
         .padding(.vertical, theme.spacing.s)
@@ -92,9 +94,14 @@ public struct HopStarBadge: View {
                 lineWidth: 1.5
             )
         }
-        .scaleEffect(hasArrived ? 1 : 0.86)
+        // The badge grows into place — except under Reduce Motion, where it
+        // only fades in. The scale was travelling in both cases before; a
+        // shortened grow is still a grow.
+        .scaleEffect(hasArrived || theme.reduceMotion ? 1 : 0.86)
         .opacity(hasArrived ? 1 : 0)
         .hopAnimation(.childArrive, value: hasArrived)
+        // A star landing animates the number, not the badge: the arrival above
+        // has already run and does not run again.
         .hopAnimation(.childArrive, value: count)
         .onAppear { hasArrived = true }
         .accessibilityElement(children: .ignore)
@@ -140,6 +147,18 @@ public struct HopStarBadge: View {
     .hopBackground()
     .hopThemedRoot()
     .preferredColorScheme(.dark)
+}
+
+#Preview("Star badge · Reduce Motion") {
+    VStack(spacing: 20) {
+        HopStarBadge(count: 0)
+        HopStarBadge(count: 7, animatesArrival: true)
+        HopStarBadge(count: 1_284)
+    }
+    .padding()
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground()
+    .hopThemedRoot(reduceMotion: true)
 }
 
 #Preview("Star badge · high contrast") {

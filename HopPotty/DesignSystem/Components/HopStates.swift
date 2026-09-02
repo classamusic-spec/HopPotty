@@ -6,24 +6,58 @@ import HopPottyDesignTokens
 ///
 /// Empty is a normal state, not a problem: a family on day one has no entries,
 /// and the screen should look like a beginning rather than a failure.
+///
+/// ## Arrival
+///
+/// The mark, then the words, then the way out — three beats, about 90ms apart,
+/// which is enough to read as composed and not enough to read as slow. It is on
+/// by default because this view is always the whole of what a screen is showing
+/// and is never nested inside something that is already animating it; pass
+/// `animatesArrival: false` at any call site where that stops being true.
+/// Under Reduce Motion the three beats collapse into one cross-fade.
 public struct HopEmptyState: View {
     @Environment(\.hopTheme) private var theme
+    @State private var hasArrived = false
 
     private let glyph: HopGlyph
     private let title: String
     private let message: String
     private let action: (String, () -> Void)?
+    private let animatesArrival: Bool
 
-    public init(glyph: HopGlyph, title: String, message: String, action: (String, () -> Void)?) {
+    public init(
+        glyph: HopGlyph,
+        title: String,
+        message: String,
+        action: (String, () -> Void)?,
+        animatesArrival: Bool = true
+    ) {
         self.glyph = glyph
         self.title = title
         self.message = message
         self.action = action
+        self.animatesArrival = animatesArrival
+    }
+
+    private var isArriving: Bool { animatesArrival && !hasArrived }
+
+    /// Beats rather than list positions: the stagger step is tuned for a list of
+    /// twenty cards, and three elements need a gap you can actually see, so this
+    /// asks for every second slot.
+    private func beat(_ index: Int) -> Animation {
+        HopAnimationToken.parentTransition.animation(reduceMotion: theme.reduceMotion, index: index * 2)
+    }
+
+    private func rise(_ points: CGFloat) -> CGFloat {
+        isArriving && !theme.reduceMotion ? points : 0
     }
 
     public var body: some View {
         VStack(spacing: theme.spacing.l) {
             HopGlyphBadge(glyph, tint: theme.color.neutral, diameter: 72)
+                .scaleEffect(isArriving && !theme.reduceMotion ? 0.86 : 1)
+                .opacity(isArriving ? 0 : 1)
+                .animation(beat(0), value: hasArrived)
 
             VStack(spacing: theme.spacing.s) {
                 Text(title)
@@ -35,14 +69,21 @@ public struct HopEmptyState: View {
             }
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
+            .offset(y: rise(8))
+            .opacity(isArriving ? 0 : 1)
+            .animation(beat(1), value: hasArrived)
 
             if let action {
                 HopSecondaryButton(action.0, action: action.1)
                     .frame(maxWidth: 320)
+                    .offset(y: rise(8))
+                    .opacity(isArriving ? 0 : 1)
+                    .animation(beat(2), value: hasArrived)
             }
         }
         .padding(theme.spacing.xxxl)
         .frame(maxWidth: .infinity)
+        .onAppear { hasArrived = true }
         .accessibilityElement(children: .contain)
     }
 }
@@ -60,19 +101,22 @@ public struct HopErrorState: View {
     private let failure: ScreenTimeFailure
     private let onReviewSettings: () -> Void
     private let onDismiss: () -> Void
+    private let arrivalIndex: Int?
 
     public init(
         failure: ScreenTimeFailure,
         onReviewSettings: @escaping () -> Void,
-        onDismiss: @escaping () -> Void
+        onDismiss: @escaping () -> Void,
+        arrivalIndex: Int? = nil
     ) {
         self.failure = failure
         self.onReviewSettings = onReviewSettings
         self.onDismiss = onDismiss
+        self.arrivalIndex = arrivalIndex
     }
 
     public var body: some View {
-        HopCard {
+        HopCard(arrivalIndex: arrivalIndex) {
             VStack(alignment: .leading, spacing: theme.spacing.l) {
                 HStack(alignment: .top, spacing: theme.spacing.m) {
                     HopGlyphBadge(.shield, tint: theme.color.warning, diameter: 40)
@@ -115,6 +159,13 @@ public struct HopErrorState: View {
 ///
 /// The message is not decoration: a spinner with no words leaves a VoiceOver
 /// user with nothing at all, so the label is what the element announces.
+///
+/// Nothing here animates on arrival, and that is deliberate: this view exists
+/// for the moment *before* there is anything to show, and an entrance animation
+/// on a spinner is an entrance animation on latency. The screen that swaps this
+/// for its content is the thing that should animate — give both branches
+/// `.hopScreenTransition(.cardArrival)` and the container
+/// `.hopScreenChange(.cardArrival, value: state)`.
 public struct HopLoadingState: View {
     @Environment(\.hopTheme) private var theme
 
@@ -156,14 +207,16 @@ public struct HopLockedState: View {
 
     private let feature: PaywallFeature
     private let onUnlock: () -> Void
+    private let arrivalIndex: Int?
 
-    public init(feature: PaywallFeature, onUnlock: @escaping () -> Void) {
+    public init(feature: PaywallFeature, onUnlock: @escaping () -> Void, arrivalIndex: Int? = nil) {
         self.feature = feature
         self.onUnlock = onUnlock
+        self.arrivalIndex = arrivalIndex
     }
 
     public var body: some View {
-        HopCard {
+        HopCard(arrivalIndex: arrivalIndex) {
             VStack(alignment: .leading, spacing: theme.spacing.l) {
                 HStack(spacing: theme.spacing.s) {
                     HopPill(HopStrings.lockedBadge, tint: theme.color.celebration, glyph: .star)
@@ -243,6 +296,52 @@ public struct HopLockedState: View {
     .hopBackground()
     .hopThemedRoot()
     .preferredColorScheme(.dark)
+}
+
+#Preview("States · arrival, Reduce Motion") {
+    ScrollView {
+        VStack(spacing: 24) {
+            HopEmptyState(
+                glyph: .tried,
+                title: HopStrings.timelineEmptyTitle,
+                message: HopStrings.timelineEmptyMessage,
+                action: ("Add an entry", {})
+            )
+            HopErrorState(
+                failure: .authorizationRevoked,
+                onReviewSettings: {},
+                onDismiss: {},
+                arrivalIndex: 0
+            )
+            HopLockedState(feature: .detailedInsights, onUnlock: {}, arrivalIndex: 1)
+        }
+        .padding()
+    }
+    .hopBackground()
+    .hopThemedRoot(reduceMotion: true)
+}
+
+#Preview("States · staggered arrival") {
+    ScrollView {
+        VStack(spacing: 24) {
+            HopEmptyState(
+                glyph: .tried,
+                title: HopStrings.timelineEmptyTitle,
+                message: HopStrings.timelineEmptyMessage,
+                action: ("Add an entry", {})
+            )
+            HopErrorState(
+                failure: .authorizationRevoked,
+                onReviewSettings: {},
+                onDismiss: {},
+                arrivalIndex: 0
+            )
+            HopLockedState(feature: .detailedInsights, onUnlock: {}, arrivalIndex: 1)
+        }
+        .padding()
+    }
+    .hopBackground()
+    .hopThemedRoot()
 }
 
 #Preview("States · iPad high contrast") {

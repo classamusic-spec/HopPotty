@@ -1,26 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
-<defs><linearGradient id="bladeGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FDCAC"/><stop offset="1" stop-color="#2F8C57"/></linearGradient><linearGradient id="bladeGreenDeep" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C88A"/><stop offset="1" stop-color="#1B5E39"/></linearGradient></defs>
-<g id="item-reedsRight"><g transform="translate(200 0) scale(-1 1)">
-    <g fill="url(#bladeGreen)">
-      <path d="M 65 176
-    Q 82.45 110 112.24 69.3
-    Q 114 63.8 116.2 71.5
-    Q 93.75 121 87 176 Z"/><path d="M 88 178
-    Q 100 92.8 116.08 39.6
-    Q 118 33.6 120.4 42
-    Q 113.5 107 112 178 Z"/>
-      <path d="M 120 176
-    Q 114.7 122 92.4 89
-    Q 94 84 96 91
-    Q 128.5 131 140 176 Z"/>
-    </g>
-    <g fill="url(#bladeGreenDeep)" opacity="0.7">
-      <path d="M 79 178
-    Q 75.55 136 58.56 110.7
-    Q 60 106.2 61.8 112.5
-    Q 87.75 143 97 178 Z"/><path d="M 110 178
-    Q 122.8 143.2 144.72 122.4
-    Q 146 118.4 147.6 124
-    Q 131 149 126 178 Z"/>
-    </g></g></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200"><defs><linearGradient id="bladeGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FDCAC"/><stop offset="1" stop-color="#2F8C57"/></linearGradient><linearGradient id="bladeGreenDeep" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63C88A"/><stop offset="1" stop-color="#1B5E39"/></linearGradient></defs>
+<g id="item-reedsRight"><g transform="translate(200 0) scale(-1 1)"><g fill="url(#bladeGreen)"><path d="M 65 176 Q 82.5 110 112.2 69.3 Q 114 63.8 116.2 71.5 Q 93.8 121 87 176 Z"/><path d="M 88 178 Q 100 92.8 116.1 39.6 Q 118 33.6 120.4 42 Q 113.5 107 112 178 Z"/><path d="M 120 176 Q 114.7 122 92.4 89 Q 94 84 96 91 Q 128.5 131 140 176 Z"/></g><g fill="url(#bladeGreenDeep)" opacity="0.7"><path d="M 79 178 Q 75.6 136 58.6 110.7 Q 60 106.2 61.8 112.5 Q 87.8 143 97 178 Z"/><path d="M 110 178 Q 122.8 143.2 144.7 122.4 Q 146 118.4 147.6 124 Q 131 149 126 178 Z"/></g></g></g></svg>
