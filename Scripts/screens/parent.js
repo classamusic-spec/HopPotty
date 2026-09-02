@@ -104,9 +104,24 @@ const HOME_DECOR = ['cloudPuff', 'fernPatch', 'lilyPadLarge', 'lilyPadSmall', 'l
 
 /** Fraction of `hop-sit.svg`'s box that is above the pad he is squatting on. */
 const SIT_FEET = 0.965;
-/** Where `scenes.pond` puts `lilyPadLarge`, as a fraction of its own box. */
-const PAD_X = 0.56;
-const PAD_Y = 0.508;
+/** Where the bank Hop stands on sits inside `pond-scene.svg`, as a fraction. */
+const PAD_X = 0.5;
+const BANK_FRACTION = 0.53;
+
+/**
+ * Geometry for a crop of the pond that keeps the drawing at its own aspect.
+ *
+ * The scene is authored at 393:852 with its bank 53% down. Asking for a box of
+ * some other shape either letterboxes it or distorts it, so instead the box is
+ * always the drawing's natural size for the width given, and the *offset* is
+ * solved from the one thing the layout actually cares about: the screen row the
+ * bank has to land on, because that is where Hop's feet go and where the water
+ * has to start being visible below him.
+ */
+function pondCrop(w, bankY, height) {
+  const boxH = Math.round(w * (1704 / 786));
+  return { boxH, top: Math.round(bankY - boxH * BANK_FRACTION), height, bankY };
+}
 
 /**
  * The scene, drawn at `boxH` and hung at `top` so the crop lands where we want.
@@ -121,8 +136,11 @@ function pondBackdrop(appearance, { w, boxH, top, height }) {
   const dark = appearance.startsWith('dark');
   // Inline rather than an `<img>` for the same reason `10-hops-pond` is: the
   // scene's stable ids are what the motion layer animates.
+  // `slice`: Home shows a *crop* of a taller drawing, so the scene must fill the
+  // band and let the rest fall outside it. Fitting instead would letterbox the
+  // pond into a column with flat colour either side.
   const scene = artOrInline(['Art/pond/pond-scene.svg', 'Art/scenes/pond.svg'],
-    { width: w, height: boxH }, scenes.pond(w, boxH, HOME_DECOR));
+    { width: w, height: boxH, fit: 'slice' }, scenes.pond(w, boxH, HOME_DECOR));
   // The crop can start above the drawing and end below it; these are the two
   // colours its own gradients start and end on, so the seams are invisible.
   const skyTop = mix(T.palette.pondBlueSoft, T.palette.pondBlueLight, 0.34);
@@ -139,9 +157,9 @@ function pondBackdrop(appearance, { w, boxH, top, height }) {
 }
 
 /** Hop, squatting on the big lily pad. Drawn after any dusk scrim, never under it. */
-function hopOnPad(appearance, { w, boxH, top, size }) {
+function hopOnPad(appearance, { w, size, bankY }) {
   const padX = w * PAD_X;
-  const padY = boxH * PAD_Y + top;
+  const padY = bankY;
   return `<div data-hop style="position:absolute;left:${padX}px;top:${padY - 5 - size * SIT_FEET}px;
     width:${size}px;transform:translateX(-50%)">${svg('Art/character/hop-sit.svg', { width: size })}</div>`;
 }
@@ -284,7 +302,9 @@ const CARD_BOTTOM = SHEET_Y - 14;
 // The pond is drawn short and wide and hung 36px down: that crop puts the sky
 // behind the pills, the far bank behind Hop's head, and the fish, the small pad
 // and the lily flower in the strip of water the timer card leaves open.
-const POND = { boxH: 400, top: 36, height: SHEET_Y + 48 };
+// The bank sits just clear of the timer card, so Hop stands on it with water
+// visible between his feet and the card's top edge.
+const POND = pondCrop(W, 239, SHEET_Y + 48);
 const HOP_W = Math.round(W * 0.34);      // 134
 
 function parentHome(appearance = 'light') {
@@ -297,7 +317,7 @@ function parentHome(appearance = 'light') {
   <div style="position:relative;width:${W}px;height:${H}px;overflow:hidden;background:${col.backgroundPrimary}">
 
     ${pondBackdrop(appearance, { w: W, ...POND })}
-    ${hopOnPad(appearance, { w: W, boxH: POND.boxH, top: POND.top, size: HOP_W })}
+    ${hopOnPad(appearance, { w: W, size: HOP_W, bankY: POND.bankY })}
 
     <!-- the sheet: everything that is not the pond or the countdown -->
     <div style="position:absolute;left:0;right:0;top:${sheetTop}px;bottom:${H - tabTop}px;
@@ -371,7 +391,7 @@ function parentHomePad(appearance = 'light') {
   const w = PAD.w - PAD.rail;              // 780
   const sheetY = 430;                      // 56% — the pond runs across the top
   const cardBottom = sheetY - 18;
-  const pond = { boxH: 470, top: -26, height: sheetY + 44 };
+  const pond = pondCrop(w, 236, sheetY + 44);
   const hopW = Math.round(w * 0.20);
   const gap = 20, gutter = 28;
   const colW = Math.round((w - gutter * 2 - gap) / 2);
@@ -382,7 +402,7 @@ function parentHomePad(appearance = 'light') {
     <div style="position:absolute;left:${PAD.rail}px;top:0;width:${w}px;height:${PAD.h}px;overflow:hidden">
 
       ${pondBackdrop(appearance, { w, ...pond })}
-      ${hopOnPad(appearance, { w, boxH: pond.boxH, top: pond.top, size: hopW })}
+      ${hopOnPad(appearance, { w, size: hopW, bankY: pond.bankY })}
 
       <div style="position:absolute;left:0;right:0;top:${sheetY}px;bottom:0;background:${col.backgroundPrimary};
         border-radius:${T.radius.hero}px ${T.radius.hero}px 0 0;

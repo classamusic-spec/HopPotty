@@ -41,7 +41,7 @@ function svg(relPath, { width, height, opacity } = {}) {
  * exposes — so the pond asks for its scene inline. Everything else stays an
  * `<img>`, which is cheaper and cannot leak ids into the page.
  */
-function svgInline(relPath, { width, height } = {}) {
+function svgInline(relPath, { width, height, fit = 'meet' } = {}) {
   const abs = path.join(ROOT, relPath);
   if (!fs.existsSync(abs)) return '';
   const src = fs.readFileSync(abs, 'utf8')
@@ -61,7 +61,14 @@ function svgInline(relPath, { width, height } = {}) {
   // exactly as it was when this art arrived through an `<img>`. Resizing the
   // root instead lets the overspill escape, which is a real drawing (the pond
   // basin) landing in the middle of a screen.
+  // `fit` is the difference between `object-fit: contain` and `cover`. A caller
+  // asking for a box that is not the drawing's own aspect gets letterboxed
+  // under the default `meet` — which is right for a picture and wrong for a
+  // backdrop, where the bands read as the art having shrunk. `slice` fills the
+  // box and crops the overflow, which is what a caller cropping deliberately
+  // (and relying on its own `overflow: hidden`) means.
   const box = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size[0]} ${size[1]}"` +
+    ` preserveAspectRatio="xMidYMid ${fit}"` +
     `${width ? ` width="${width}"` : ''}${height ? ` height="${height}"` : ''} style="display:block">`;
   return `${box}${src}</svg>`;
 }
