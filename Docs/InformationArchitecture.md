@@ -36,13 +36,15 @@ as a lock on individual buttons.
 HopPotty
 ├─ Onboarding  (modal, full screen, first launch only)
 │
-├─ Parent Space  — TabView, 3 tabs
+├─ Parent Space  — TabView, 4 tabs: Today · Progress · Hop · Settings
 │   ├─ Today          parent home: next pause, today's counts, timeline
 │   │   ├─ Log a visit                 (sheet)
 │   │   ├─ Event detail / edit         (sheet)
 │   │   └─ Start a pause now           (inline action)
 │   ├─ Patterns       insights for the selected window
 │   │   └─ Window picker: today · this week · last 7/30 days
+│   ├─ Hop            **a door, not a pane** — presents Child Space and puts
+│   │                 the tab selection straight back
 │   └─ Settings
 │       ├─ Potty Pause  (mode, basis, interval, warning, duration, cooldown,
 │       │                active hours/days, quiet times, enable/disable)
@@ -57,13 +59,40 @@ HopPotty
 │       └─ About                  (version, privacy policy, support)
 │
 └─ Child Space  — full-screen cover, no tab bar, no navigation chrome
-    ├─ Potty Pause screen      (Hop, one invitation, one big button)
-    ├─ Guided routine          (try → wipe → flush → wash → high five)
-    ├─ Celebration             (star lands, ≤3.5s)
-    ├─ Hop's Pond              (the scene, next unlock and its price)
-    ├─ Play                    (three mini-games)
-    └─ Hop's questions         (quiz round of 3)
+    └─ Hop's screen            the child's home: the pond as ground, Hop large
+        │                      and idle, a star count, four doors, and one
+        │                      grown-up control in a corner
+        ├─ Guided routine      (try → wipe → flush → wash → high five)
+        │   ├─ Celebration     (star lands, ≤3.5s)
+        │   └─ Hop's Pond      (raised *over* the celebration, never instead of it)
+        ├─ Hop's Pond          (the scene, next unlock and its price)
+        ├─ Games               (eight mini-games; Fly Snack ends at the routine)
+        └─ Hop's questions     (quiz round of 3)
 ```
+
+**The Hop tab is a door.** Selecting it — on the phone's tab bar, or the iPad
+sidebar row that carries Hop's own face — presents `HopHubView` as a full-screen
+cover over the whole shell and restores the previous tab selection in the same
+update, so nothing of Parent Space is drawn or reachable behind it. Hop's screen
+is the child's home rather than a menu: the pond they have earned is the ground
+it stands on, Hop is on it at his idle pose, the star total is shown as a count
+with no target beside it, and the four doors are pictures first and words second
+because the audience cannot read. Games and questions are omitted entirely when
+a caregiver has turned them off, rather than drawn and refused. The only exit is
+a small, adult-shaped "Grown-ups" pill in the corner, which raises the parent
+gate (`openParentArea`); the routine's "I need a grown-up" button raises the same
+gate, so a child asking for help is never a dead end.
+
+**The routine can open itself, and only ever reads the pause.** Below iOS 26.5
+the shield cannot bring HopPotty forward, so the child taps the shield, lands on
+the Home Screen and opens the app themselves. Whenever the app becomes active,
+the shell reads the App Group pause record once: if a shield may be standing and
+the pause has not passed `plannedEndAt`, Child Space is presented with the
+routine already on screen, once per `sessionID`. Leaving the routine returns the
+child to Hop's screen, not to the caregiver's dashboard, and coming back to the
+app during the same pause does not re-open it. Nothing on this path writes: the
+pause ends on its own timer, on completion, or on a caregiver override, and the
+child's side of the app is not a fourth way (`ChildSafety.md` §8, Contract §4.1).
 
 The child-switcher lives in the Today tab's header, not in a tab. Switching child
 is a Parent Space action; Child Space runs as exactly one child
@@ -151,7 +180,7 @@ what will be removed, with counts (`CONTRACTS.md` §4.6, `DeletionPlan`).
 
 | Transition | Why |
 | --- | --- |
-| Parent Space → Child Space ("Hand it to your child") | Handing the device over must be instant. |
+| Parent Space → Child Space (the Hop tab) | Handing the device over must be instant. |
 | Anything inside Child Space: routine steps, pond, games, quizzes, replaying a line | A gate mid-routine is a wall in front of a three-year-old. |
 | Dismissing the shield's own primary button | It is the child's button. |
 | Ending a pause by any of the five paths | Access is never gated on anything. |
@@ -169,9 +198,10 @@ their child their apps back.
 
 ## 6. Entry points into Child Space
 
-1. **"Hand it to your child"** on the parent home — deliberate handover.
-2. **A Potty Pause fires** while HopPotty is foregrounded — the pause screen
-   presents itself over whatever was on screen.
+1. **The Hop tab**, on the phone's tab bar or the iPad sidebar — deliberate
+   handover, never gated, one tap.
+2. **A Potty Pause is running when the app becomes active** — Child Space
+   presents itself with the routine already showing, once per pause.
 3. **The child taps the shield's primary button** on iOS 26.5+, where
    `.openParentalControlsApp` brings HopPotty forward. Below 26.5 the shield
    clears and the child lands on the Home Screen; the star is drained and shown
