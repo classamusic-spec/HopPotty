@@ -80,8 +80,17 @@ Scripts/bootstrap.sh
 ```
 
 This one command does a lot: it checks your tools, creates your private signing
-file, runs the configuration checks, generates `HopPotty.xcodeproj`, and then
-prints the manual steps. **Read what it prints.**
+file, runs the configuration checks, builds the illustration assets from `Art/`,
+generates `HopPotty.xcodeproj`, and then prints the manual steps. **Read what it
+prints.**
+
+> **Why the art needs a build step.** The drawings live in `Art/` as SVGs, and
+> an asset catalog is the only thing `Image("routine-try")` can find. Bootstrap
+> copies every drawing a content key names into
+> `HopPotty/Resources/Assets.xcassets/Illustrations/`, which is git-ignored for
+> the same reason the project file is — `Art/` is the source of truth. Skip
+> bootstrap and the app still builds and runs; it just draws a coloured
+> placeholder in place of every picture.
 
 Run it again any time — after pulling changes, after switching branches, or if
 anything looks wrong. It never overwrites your settings and it always rebuilds
@@ -246,6 +255,7 @@ xcodebuild test -scheme HopPotty-Mock -destination 'platform=iOS Simulator,name=
 | The app builds but never pauses anything | Almost always the App Group (9c) or a missing capability on an *extension's* App ID (9b). |
 | Lots of red errors on the very first build | Expected. See `Docs/FirstBuild.md`. |
 | Xcode acts strangely after you pull changes | Run `Scripts/bootstrap.sh` again. The project file goes stale whenever files are added or renamed. |
+| Every picture is a coloured blob | The illustration catalog was not built. Run `Scripts/bootstrap.sh`, or `Scripts/build-assets.sh` on its own. |
 
 ---
 
@@ -259,6 +269,8 @@ HopPottyKit/                                     domain logic — builds and tes
 HopPotty/                                        the SwiftUI app — needs Xcode
 Extensions/                                      Screen Time + widgets — need Xcode
 Scripts/bootstrap.sh                             run this after any change
+Art/                                             the drawings — source of truth
+  └─(build-assets.sh)─> Assets.xcassets/Illustrations   generated, git-ignored
 ```
 
 **Never edit `HopPotty.xcodeproj`.** It is regenerated from `project.yml` every

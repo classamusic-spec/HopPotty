@@ -141,6 +141,22 @@ if [ -n "$XCODEGEN_VERSION" ] && [ -n "$REQUIRED" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+step "Building the illustration assets"
+# ---------------------------------------------------------------------------
+
+# `Art/` is the source; the asset catalog is what `Image(_:)` can actually find.
+# Generated rather than committed for the same reason the project file is — a
+# hundred hand-maintained Contents.json files are a hundred chances for a
+# drawing to be renamed and its entry not to be. Skipping this step is not
+# cosmetic: without it every illustration in the app draws a placeholder, and
+# nothing errors to say so.
+if ! "$(dirname "$0")/build-assets.sh"; then
+    die "Could not build the illustration assets from Art/." \
+        "The error above says which drawing it objected to."
+fi
+ok "illustration assets built from Art/"
+
+# ---------------------------------------------------------------------------
 step "Generating HopPotty.xcodeproj"
 # ---------------------------------------------------------------------------
 

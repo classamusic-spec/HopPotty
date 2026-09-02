@@ -89,6 +89,13 @@ jobs:
       - name: Verify configuration
         run: Scripts/verify-config.sh
 
+      # Every illustration the content layer names has to have a drawing behind
+      # it. A missing one is not a build error — `HopArtwork` falls back to a
+      # placeholder — so without this the app ships coloured blobs and says
+      # nothing about it.
+      - name: Verify the art
+        run: Scripts/check-art.sh
+
   app:
     name: App and extensions (Xcode)
     runs-on: macos-15
@@ -124,6 +131,12 @@ jobs:
       # the same command a person runs, so if it breaks for them it breaks here.
       - name: Generate the Xcode project
         run: Scripts/bootstrap.sh
+
+      # Bootstrap builds the illustration catalog from Art/. This asserts it
+      # actually did: a bootstrap that silently skipped the step would still
+      # produce a project that builds, and an app that draws placeholders.
+      - name: Verify the illustration assets
+        run: Scripts/build-assets.sh --check
 
       # CODE_SIGNING_ALLOWED=NO because a CI runner has no signing identity and
       # no provisioning profile, and a Simulator build needs neither. This is

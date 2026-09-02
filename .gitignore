@@ -19,6 +19,12 @@ Secrets.xcconfig
 # Generated art rasters (source of truth is the SVG)
 Art/render/
 
+# Generated illustration assets. Scripts/build-assets.sh copies every drawing in
+# Art/ into the catalog Image(_:) reads from; Art/ is the source of truth and
+# the three hand-authored entries beside it (AccentColor, AppIcon,
+# LaunchBackground) are committed as normal.
+HopPotty/Resources/Assets.xcassets/Illustrations/
+
 # Generated Xcode project — HopPotty.xcodeproj is a build artefact produced from
 # project.yml by Scripts/bootstrap.sh. Committing it would give the repository
 # two sources of truth for the target graph, and the .pbxproj is the one nobody
