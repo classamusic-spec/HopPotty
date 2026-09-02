@@ -101,6 +101,45 @@ SWIFT_EMIT_LOC_STRINGS = YES
 ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES
 
 // ---------------------------------------------------------------------------
+// Opt-in: the shield that can open HopPotty
+// ---------------------------------------------------------------------------
+//
+// Uncomment the line below — and nothing else — to build
+// `ShieldActionResponse.openParentalControlsApp` into HopPottyShieldAction, so
+// that a child who finishes the routine on the shield lands back in HopPotty
+// and sees their star arrive, instead of collecting it the next time the app is
+// opened. `Extensions/HopPottyShieldAction/HopPottyShieldActionExtension.swift`
+// is the only file that reads it.
+//
+// It is off because the first real compile said so. The iOS 26.2 SDK in
+// Xcode 26.3 does not have that case:
+//
+//     HopPottyShieldActionExtension.swift:222:21: error: type
+//     'ShieldActionResponse' has no member 'openParentalControlsApp'
+//
+// which is the answer to the "UNVERIFIED — confirm that this case exists under
+// this spelling" note that has sat above that line since it was written. It
+// does not exist in the SDK this project builds against today, and whether it
+// exists under this spelling in a later one is still unverified.
+//
+// It is a flag rather than a deletion because the behaviour it buys is real and
+// the design already accounts for both halves of it: `.close` is the shipping
+// path, the reward ledger is append-only and idempotent, and no copy anywhere
+// promises the child an immediate star. Turning this on is an improvement, not
+// a requirement, which is exactly the shape of thing that belongs behind a flag
+// whose default is off.
+//
+// Before turning it on: build for a device with the SDK that claims the case,
+// and confirm on hardware that it opens HopPotty rather than a Settings pane.
+//
+// HOPPOTTY_SHIELD_CAN_OPEN_APP is deliberately NOT set here by an
+// `[sdk=iphoneos26.5*]` condition. That would silently switch behaviour on
+// whoever happens to have a newer Xcode, which is how a shield starts
+// launching an app in front of a child on one machine and not another.
+//
+// SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) HOPPOTTY_SHIELD_CAN_OPEN_APP
+
+// ---------------------------------------------------------------------------
 // Diagnostics that are on in every configuration
 // ---------------------------------------------------------------------------
 

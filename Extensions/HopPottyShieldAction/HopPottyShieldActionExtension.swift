@@ -41,8 +41,14 @@ import HopPottyCore
 /// child-facing copy must never promise an immediate reward — no "tap here to get
 /// your star". The ledger is append-only and idempotent (Contract §4.2), so a
 /// drain that runs twice cannot double-award and a drain that never runs cannot
-/// un-award. On iOS 26.5+ the response is upgraded at runtime and the child does
-/// see it land immediately.
+/// un-award.
+///
+/// The iOS 26.5 escape hatch is **not compiled in.** The first real build of
+/// this project reported that `ShieldActionResponse` has no member
+/// `openParentalControlsApp` in the iOS 26.2 SDK, so the compromise above is
+/// not a fallback -- it is the behaviour. The code for it survives at the end of
+/// `respond(to:)` behind `HOPPOTTY_SHIELD_CAN_OPEN_APP`, and
+/// Config/Base.xcconfig records what has to be true before anyone turns it on.
 ///
 /// UNVERIFIED — confirm on device: where `.close` actually leaves the child (Home
 /// Screen, or the previously frontmost app), and whether the shield visibly
@@ -202,22 +208,35 @@ final class HopPottyShieldActionExtension: ShieldActionDelegate {
         )
 
         // iOS 26.5+ can bring HopPotty forward so the star lands while the child
-        // is still looking. Runtime-gated, never required: everything above has
-        // already happened, and this only changes where the child ends up.
+        // is still looking. Off by default, and never required: everything above
+        // has already happened, and this only changes where the child ends up.
         //
-        // UNVERIFIED — confirm on device: that `.openParentalControlsApp` exists
-        // under this spelling and does open the containing app rather than a
-        // system settings pane. If the case name is wrong, delete this block —
-        // `.close` below is the shipping behaviour and the one every other part
-        // of the design assumes.
+        // STILL UNVERIFIED, and now known to be unbuildable here. The first real
+        // compile answered half of the question this block used to ask:
         //
-        // The `#if compiler` gate is not belt and braces, it is required.
-        // `#available` is a RUNTIME check: the case still has to exist in the
-        // SDK being compiled against, and `.openParentalControlsApp` is not in
-        // the iOS 18 SDK that Xcode 16 ships. Without the gate this file does
-        // not compile there at all. Swift 6.2 is the compiler that arrives with
-        // the iOS 26 SDK, which is the first one that could have the case.
-        #if compiler(>=6.2)
+        //     error: type 'ShieldActionResponse' has no member
+        //            'openParentalControlsApp'
+        //
+        // against the iOS 26.2 SDK in Xcode 26.3. So the case does not exist in
+        // the SDK this project builds against, and whether it exists under this
+        // spelling in a later one is unknown.
+        //
+        // The gate is a build flag rather than `#if compiler(>=6.2)`, which was
+        // the original and was measuring the wrong thing. `#available` is a
+        // RUNTIME check — the case still has to exist in the SDK at compile
+        // time — so the gate has to track the SDK. Compiler version does not:
+        // Xcode 26.3 ships a Swift 6.2 compiler with a 26.2 SDK, satisfies
+        // `compiler(>=6.2)`, and then fails on the missing case. There is no
+        // Swift conditional for "the SDK has this symbol", so it is a flag a
+        // person sets once, deliberately, in Config/Base.xcconfig, where the
+        // reasoning and the re-verification steps are written down.
+        //
+        // Nothing is lost while it is off. Everything above has already
+        // happened: the store is cleared, the report is filed, the star is
+        // banked in an append-only idempotent ledger. This only decides where
+        // the child ends up, and `.close` is what every other part of the design
+        // assumes and what all the child-facing copy is worded for.
+        #if HOPPOTTY_SHIELD_CAN_OPEN_APP
         if #available(iOS 26.5, *) {
             return .openParentalControlsApp
         }
