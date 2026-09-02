@@ -58,13 +58,49 @@ const CAPTION = {
   'quiz': ['Hop’s question', 'Pictures first, three answers, read aloud on demand.'],
   'insights': ['Progress', 'Descriptive statistics, never advice.'],
   'parent-home-dark': ['Parent home (dark)', 'The same screen in the dark appearance.'],
+  'parent-home-ipad': ['Parent home (iPad)', 'The dashboard with the pond and the day side by side.'],
+  'routine-step-wipe': ['Routine — wipe', 'Step two. Hop shows, the child follows.'],
+  'routine-step-flush': ['Routine — flush', 'Step three. The flush is the fun part.'],
+  'routine-step-wash': ['Routine — wash hands', 'Step four. Twenty seconds, sung not counted.'],
+  'routine-step-highfive': ['Routine — high five', 'Step five. The attempt is what earns the high five.'],
+  'routine-try-timer': ['Routine — sitting a while', 'A calm ring, no countdown. Nothing is owed at the end.'],
+  'games-hub': ['Hop’s games', 'Eight short games. Nothing is locked, nothing is scored.'],
+  'games-hub-dark': ['Hop’s games (dark)', 'The games hub in the dark appearance.'],
+  'game-potty-path': ['Potty Path', 'Trace Hop’s way to the potty. Any route works.'],
+  'game-bathroom-match': ['Bathroom Match', 'Pair the things that belong together.'],
+  'game-fly-snack': ['Fly Snack', 'Tap the flies; Hop’s tongue does the rest. A full belly means potty time.'],
+  'game-fly-snack-handoff': ['Fly Snack — hand-off', 'Hop is full and needs the potty. The game hands into the routine.'],
+  'game-mud-off': ['Mud Off', 'Swipe the mud from Hop’s hands. Sparkles where it was.'],
+  'game-body-signal': ['Body Signal', 'Notice the wiggle, the hold, the dance. Naming the feeling, not judging it.'],
+  'game-flush-wave': ['Flush Wave', 'Time the flush with the wave. There is no wrong moment.'],
+  'game-potty-order': ['Potty Order', 'Put the routine pictures in order. A wobble, never a wrong.'],
+  'onboarding-screen-time-ask': ['Before we ask', 'What the Screen Time permission does, in plain words, before Apple asks.'],
+  'onboarding-child-profile': ['Your child', 'A name and an age band. Nothing else is needed.'],
+  'onboarding-first-pause-set': ['First pause set', 'Setup is finished. Hop cheers for the grown-up, too.'],
+  'settings-hub': ['Settings', 'Everything a caregiver can change, in one list.'],
+  'child-profiles': ['Children', 'One routine per child; stars are never shared or compared.'],
+  'paywall-family': ['HopPotty Family', 'One purchase, no subscription, no urgency. Restore is always visible.'],
+  'parent-gate': ['Grown-up check', 'A small challenge between the child and the settings.'],
+  'delete-data-confirm': ['Delete everything', 'Immediate, local, and honest about what goes.'],
+  'error-access-restored': ['Screen Time access changed', 'What happened, what still works, and the one button that fixes it.'],
+  'progress-empty': ['Progress, day one', 'No data yet. Descriptive tone, no advice.'],
+  'quick-reminder-sheet': ['Quick Reminder', 'A one-off nudge a parent sets: in 15, 30, 60 minutes, or at a time.'],
+  'widgets': ['Home-screen widgets', 'Hop and the next pause on the home and lock screens.'],
+  'live-activity': ['Live Activity', 'The pause and the routine step on the lock screen and Dynamic Island.'],
+  'insights-ipad': ['Progress (iPad)', 'Insights laid out for the wider screen.'],
 };
 
 /** Order of the walkthrough, used by the ◀ ▶ chrome and the screen list. */
-const FLOW = [
-  'onboarding-meet-hop', 'onboarding-idea', 'timer-settings', 'choose-apps',
-  'parent-home', 'potty-pause-shield', 'routine-step1', 'routine-step3',
-  'routine-complete', 'hops-pond', 'game-bubble-wash', 'quiz', 'insights',
+const FLOW_ALL = [
+  'onboarding-meet-hop', 'onboarding-idea', 'onboarding-screen-time-ask', 'onboarding-child-profile',
+  'timer-settings', 'choose-apps', 'onboarding-first-pause-set',
+  'parent-home', 'quick-reminder-sheet', 'potty-pause-shield',
+  'routine-step1', 'routine-try-timer', 'routine-step3', 'routine-step-wipe', 'routine-step-flush',
+  'routine-step-wash', 'routine-step-highfive', 'routine-complete', 'hops-pond',
+  'games-hub', 'game-bubble-wash', 'game-fly-snack', 'game-fly-snack-handoff', 'game-mud-off',
+  'game-potty-path', 'game-bathroom-match', 'game-body-signal', 'game-flush-wave', 'game-potty-order',
+  'quiz', 'insights', 'progress-empty', 'settings-hub', 'child-profiles', 'parent-gate',
+  'paywall-family', 'error-access-restored', 'delete-data-confirm', 'widgets', 'live-activity',
 ];
 
 // ---------------------------------------------------------------------------
@@ -666,6 +702,8 @@ const RUNTIME = String.raw`
 `;
 
 function prototypePage(screens) {
+  // Only screens that exist at build time take part in the walkthrough.
+  const FLOW = FLOW_ALL.filter((slug) => screens.some((s) => s.slug === slug));
   const layers = [];
   for (const s of screens) {
     if (!FLOW.includes(s.slug)) continue;   // the dark duplicate lives in the gallery
@@ -759,8 +797,8 @@ const HOP_STATES = [
   ['land', 'The beat after a jump.'],
   ['cheer', 'Celebration. The attempt, never the result.'],
   ['scrub', 'Washing hands, for the hand-washing step and game.'],
-  ['catch', 'Reaching for a bubble.'],
-  ['full', 'Full-length reference pose.'],
+  ['catch', 'Tongue out. Fly Snack, and reaching for a bubble.'],
+  ['full', 'A full belly after Fly Snack — Hop needs the potty.'],
   ['sleep', 'Quiet hours. Nap and bedtime, when HopPotty says nothing.'],
   ['face', 'Head only. Avatars, the tab bar, and question prompts.'],
 ];
@@ -1059,6 +1097,17 @@ function build() {
 
   fs.writeFileSync(path.join(DIST, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
 
+  // A second, build-less config inside dist so the folder can be deployed as-is
+  // (`vercel deploy --cwd web/dist`): static files only, same URL and header rules.
+  fs.writeFileSync(path.join(DIST, 'vercel.json'), JSON.stringify({
+    cleanUrls: true,
+    trailingSlash: false,
+    headers: [
+      { source: '/assets/(.*)', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
+      { source: '/(.*)', headers: [{ key: 'X-Content-Type-Options', value: 'nosniff' }] },
+    ],
+  }, null, 2) + '\n');
+
   // web/ configuration — committed dist means a static deploy needs no build step,
   // but Vercel can still rebuild from source if it wants to.
   fs.writeFileSync(path.join(WEB, 'vercel.json'), JSON.stringify({
@@ -1145,4 +1194,4 @@ if (require.main === module) {
   if (process.argv.includes('--verify')) verify().catch((e) => { console.error(e); process.exit(1); });
 }
 
-module.exports = { build, mdToHtml, HOTSPOTS, FLOW };
+module.exports = { build, mdToHtml, HOTSPOTS, FLOW: FLOW_ALL };

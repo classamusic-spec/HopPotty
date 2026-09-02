@@ -1,0 +1,9 @@
+{
+  "name": "hoppotty-prototype",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Static design prototype of HopPotty, built from the repository design tokens and art.",
+  "scripts": {
+    "build": "node ../Scripts/web/build-prototype.js"
+  }
+}

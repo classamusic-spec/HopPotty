@@ -26,3 +26,7 @@ Art/render/
 *.xcodeproj
 *.xcworkspace
 !*.xcworkspace/contents.xcworkspacedata
+
+# Web prototype build output and Vercel project link
+web/dist/
+.vercel/
