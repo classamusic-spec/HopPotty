@@ -354,7 +354,7 @@ const STEP_DOTS = { now: P.hopGreenDeep, done: P.hopGreenDeep, todo: alpha(P.san
 
 /** The row every routine screen opens with: where you are, and the way out. */
 function routineTopRow(index) {
-  return `<div style="flex:0 0 auto;display:flex;align-items:center;gap:10px;height:40px">
+  return `<div style="flex:0 0 auto;display:flex;align-items:center;gap:10px;height:${T.hitTarget.parentMinimum}px">
     <div style="flex:1"></div>
     ${stepDots(5, index, STEP_DOTS)}
     <div style="flex:1;display:flex;justify-content:flex-end">${grownUpChip('Grown-up')}</div>
@@ -378,12 +378,12 @@ function routineHead(title, instruction) {
  * own illustration sits in the middle with Hop standing in front of it.
  */
 function routineStep(appearance, {
-  index, art, pose, hopWidth = 152, title, instruction, primary, skip, extra = '',
+  index, art, pose, hopWidth = 175, title, instruction, primary, skip, extra = '',
 }) {
   const col = c(appearance);
   const cardW = 349;
   const cardH = Math.round((cardW * 3) / 4);
-  const overhang = 58;
+  const overhang = 20;
 
   return stage(ambient(art, appearance, { veil: 0.3, glow: [196, 440, 210] }), `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
@@ -415,7 +415,7 @@ function routineWipe(appearance = 'light') {
     index: 1,
     art: 'Art/scenes/routine-wipe.svg',
     pose: 'sit',
-    hopWidth: 148,
+    hopWidth: 170,
     title: 'Wipe',
     instruction: 'Wipe from front to back.',
     primary: 'Next',
@@ -429,7 +429,7 @@ function routineFlush(appearance = 'light') {
     index: 2,
     art: 'Art/scenes/routine-flush.svg',
     pose: 'wave',
-    hopWidth: 152,
+    hopWidth: 175,
     title: 'Flush',
     instruction: 'Flush it away.',
     primary: 'Next',
@@ -443,7 +443,7 @@ function routineWash(appearance = 'light') {
     index: 3,
     art: 'Art/scenes/routine-wash.svg',
     pose: 'scrub',
-    hopWidth: 148,
+    hopWidth: 170,
     title: 'Wash',
     instruction: 'Soap, scrub, rinse.',
     primary: 'Next',
@@ -465,7 +465,7 @@ function routineHighFive(appearance = 'light') {
     index: 4,
     art: 'Art/scenes/routine-highFive.svg',
     pose: 'cheer',
-    hopWidth: 156,
+    hopWidth: 180,
     title: 'High five',
     instruction: 'High five with Hop!',
     primary: 'All done!',
@@ -496,8 +496,8 @@ function routineTryTimer(appearance = 'light') {
           <div style="position:absolute;inset:18px;border-radius:50%;background:${alpha('#FFFFFF', .9)};
             box-shadow:0 6px 22px ${alpha(P.midnight, .07)}"></div>
           ${calmRing(size, 0.36, { track: P.hopGreenSoft, fill: P.hopGreen })}
-          <div data-hop style="position:absolute;left:50%;bottom:44px;transform:translateX(-50%);width:164px;height:164px">
-            ${svg('Art/character/hop-sit.svg', { width: 164 })}
+          <div data-hop style="position:absolute;left:50%;bottom:44px;transform:translateX(-50%);width:200px;height:200px">
+            ${svg('Art/character/hop-sit.svg', { width: 200 })}
           </div>
         </div>
       </div>
@@ -665,7 +665,7 @@ function gamePottyPath(appearance = 'light') {
     title: 'Potty Path',
     line: 'Hop along the lily pads all the way to the potty!',
     svgLayer: layer,
-    htmlLayer: hopAt('jump', 108, `left:${f.x(306) - 54}px;top:${f.y(366) + 8 - 108}px`),
+    htmlLayer: hopAt('jump', 128, `left:${f.x(306) - 64}px;top:${f.y(366) + 8 - 128}px`),
     trayH: 150,
     tray: marks(5, done, {
       tint: P.hopGreenDeep,
@@ -697,7 +697,7 @@ function gameBathroomMatch(appearance = 'light') {
     art: 'Art/scenes/games-bathroomMatch.svg',
     title: 'Bathroom Match',
     line: 'Find the two that go together.',
-    htmlLayer: hopAt('talk', 118, `left:${f.x(470) - 59}px;top:${f.y(430) - 118}px`),
+    htmlLayer: hopAt('talk', 136, `left:${f.x(470) - 68}px;top:${f.y(430) - 136}px`),
     trayH: 192,
     tray: `<div style="display:flex;gap:9px">
         ${tile(PICT.soap, P.lavenderDeep, { matched: true })}
@@ -724,7 +724,7 @@ function gameFlySnack(appearance = 'light') {
       ${tapHint(f.x(430), f.y(150), 30, P.pondBlue, { rings: 2 })}
       ${fly(f.x(430), f.y(150), 31, P.hopGreenDeep, { rot: 10 })}
       ${sparkle(f.x(226), f.y(198), 7, P.sunshine, 0.9)}`,
-    htmlLayer: `${hopAt('catch', 148, `left:${f.x(320) - 74}px;top:${f.y(412) - 142}px`)}
+    htmlLayer: `${hopAt('catch', 160, `left:${f.x(320) - 80}px;top:${f.y(412) - 154}px`)}
       <svg width="369" height="277" viewBox="0 0 369 277" style="position:absolute;left:0;top:0;display:block">
         ${fly(f.x(456), f.y(244), 28, P.sunshineBright, { rot: -18 })}
         ${sparkle(f.x(486), f.y(214), 6.4, '#FFFFFF', .9)}
@@ -777,7 +777,7 @@ function gameBodySignal(appearance = 'light') {
     titleSize: 29,
     line: 'Hop is bouncing his ball. Watch for his bubble!',
     svgLayer: `${ball(f.x(404), f.y(398), f.x(34), P.peachPop, P.sunshine)}`,
-    htmlLayer: `${hopAt('full', 130, `left:${f.x(270) - 65}px;top:${f.y(366) - 130}px`)}
+    htmlLayer: `${hopAt('full', 148, `left:${f.x(270) - 74}px;top:${f.y(366) - 148}px`)}
       <svg width="369" height="277" viewBox="0 0 369 277" style="position:absolute;left:0;top:0;display:block">
         ${tapHint(f.x(486), f.y(150), f.x(132), P.pondBlue, { rings: 1 })}
         ${thoughtBubble(f.x(486), f.y(150), f.x(190), P.pondBlueDeep, `<g transform="scale(0.8)">${PICT.sit(P.pondBlueDeep)}</g>`)}
@@ -806,7 +806,7 @@ function gameFlushWave(appearance = 'light') {
       ${swirl(f.x(452), f.y(332), f.x(40), '#FFFFFF', 0.95)}
       ${swirl(f.x(452), f.y(332), f.x(22), P.pondBlueSoft, 0.9)}
       ${sparkle(f.x(536), f.y(288), 8, '#FFFFFF', .9)}${sparkle(f.x(372), f.y(296), 6, '#FFFFFF', .7)}`,
-    htmlLayer: hopAt('wave', 122, `left:${f.x(250) - 61}px;top:${f.y(425) - 122}px`),
+    htmlLayer: hopAt('wave', 140, `left:${f.x(250) - 70}px;top:${f.y(425) - 140}px`),
     trayH: 160,
     tray: `${marks(3, 2, {
       tint: P.pondBlueDeep,
@@ -904,7 +904,7 @@ function gameFlySnackHandoff(appearance = 'light') {
       </div>
       <div style="height:12px"></div>
       <div style="flex:0 0 auto;display:flex;justify-content:center">
-        <div data-hop style="width:238px;height:238px">${svg('Art/character/hop-full.svg', { width: 238 })}</div>
+        <div data-hop style="width:257px;height:257px">${svg('Art/character/hop-full.svg', { width: 257 })}</div>
       </div>
 
       <div style="flex:1"></div>

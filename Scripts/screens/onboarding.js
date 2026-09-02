@@ -55,7 +55,7 @@ function meetHop(appearance = 'light') {
           </div>
 
           <div data-hop style="position:absolute;left:50%;top:50%;transform:translate(-50%,-48%)">
-            ${svg('Art/character/hop-wave.svg', { width: 258 })}
+            ${svg('Art/character/hop-wave.svg', { width: 276 })}
           </div>
 
           ${speck(6, 52, MARK.star(P.sunshine, 22))}

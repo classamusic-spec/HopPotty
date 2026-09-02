@@ -47,7 +47,7 @@ function stage(sceneHtml, body, { tint = INK } = {}) {
 
 /** The quiet way out of a routine screen. Never styled as an escape hatch. */
 function grownUpChip(label) {
-  return `<div style="height:36px;padding:0 14px;border-radius:18px;background:${alpha('#FFFFFF', .7)};
+  return `<div style="height:${T.hitTarget.parentMinimum}px;padding:0 15px;border-radius:22px;background:${alpha('#FFFFFF', .7)};
     display:flex;align-items:center;gap:6px">
     ${MARK.hand(P.sand500, 14)}
     <span style="${type('parentCallout', { color: P.sand600, weight: 'medium' })};font-size:13px">${label}</span>
@@ -190,18 +190,18 @@ function routineStepOne(appearance = 'light') {
   return stage(scene, `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
 
-      <div style="flex:0 0 auto;display:flex;align-items:center;gap:10px;height:40px">
+      <div style="flex:0 0 auto;display:flex;align-items:center;gap:10px;height:${T.hitTarget.parentMinimum}px">
         <div style="flex:1"></div>
         ${stepDots(5, 0, { now: P.hopGreenDeep, done: P.hopGreenDeep, todo: alpha(P.sand500, .32) })}
         <div style="flex:1;display:flex;justify-content:flex-end">${grownUpChip('Grown-up')}</div>
       </div>
 
       <div style="height:96px"></div>
-      ${hop('walk', 250)}
+      ${hop('walk', 272)}
 
-      <div style="flex:0 0 auto;text-align:center;margin-top:22px">
+      <div style="flex:0 0 auto;text-align:center;margin-top:${T.spacing.m}px">
         <div style="${type('childTitle', { color: INK })}">Let's hop to the potty!</div>
-        <div style="${type('childInstruction', { color: INK })};font-size:19px;margin-top:9px;opacity:.72">
+        <div style="${type('childInstruction', { color: INK })};font-size:19px;margin-top:${T.spacing.s}px;opacity:.72">
           Hop is coming too. Take your time.</div>
       </div>
 
@@ -246,14 +246,14 @@ function routineOutcome(appearance = 'light') {
       ${statusBar(INK)}
       <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
 
-        <div style="flex:0 0 auto;display:flex;align-items:center;gap:10px;height:38px">
+        <div style="flex:0 0 auto;display:flex;align-items:center;gap:10px;height:${T.hitTarget.parentMinimum}px">
           <div style="flex:1"></div>
           ${stepDots(5, 0, { now: P.hopGreenDeep, done: P.hopGreenDeep, todo: alpha(P.sand500, .3) })}
           <div style="flex:1;display:flex;justify-content:flex-end">${grownUpChip('Grown-up')}</div>
         </div>
 
         <div style="height:8px"></div>
-        ${hop('wait', 170)}
+        ${hop('wait', 196)}
 
         <div style="flex:0 0 auto;text-align:center;margin-top:4px">
           <div style="${type('childTitle', { color: INK })}">All done trying?</div>
@@ -308,7 +308,7 @@ function routineComplete(appearance = 'light') {
       <div style="height:26px"></div>
 
       <div style="flex:0 0 auto;position:relative">
-        ${hop('cheer', 246)}
+        ${hop('cheer', 266)}
         ${sparkle(6, 26, 24, .95)}${sparkle(300, 10, 18, .8)}${sparkle(38, 148, 14, .7)}
         ${sparkle(316, 132, 22, .85)}
       </div>
@@ -381,8 +381,8 @@ function bubbleWash(appearance = 'light') {
         ${bubble(112, 186, 88)}
         ${bubble(96, 300, 96, { popped: true })}
         ${bubble(212, 250, 124)}
-        <div data-hop style="position:absolute;left:50%;bottom:-4px;transform:translateX(-50%)">
-          ${svg('Art/character/hop-jump.svg', { width: 208 })}
+        <div data-hop style="position:absolute;left:50%;bottom:${T.spacing.m}px;transform:translateX(-50%)">
+          ${svg('Art/character/hop-jump.svg', { width: 220 })}
         </div>
       </div>
 
@@ -461,7 +461,7 @@ function quiz(appearance = 'light') {
         <div style="flex:0 0 auto;display:flex;align-items:flex-start;gap:14px;padding-top:12px">
           <div style="width:62px;height:62px;border-radius:31px;background:#FFFFFF;overflow:hidden;flex:0 0 auto;
             display:grid;place-items:center;box-shadow:${elevation(appearance, 'resting')}">
-            <div data-hop style="transform:translateY(4px)">${svg('Art/character/hop-face.svg', { width: 76 })}</div>
+            <div data-hop style="width:62px;height:62px">${svg('Art/character/hop-face.svg', { width: 62 })}</div>
           </div>
           <div style="flex:1;${type('childInstruction', { color: INK })};font-size:23px;line-height:1.3;padding-top:2px">
             What do we do after using the potty?</div>

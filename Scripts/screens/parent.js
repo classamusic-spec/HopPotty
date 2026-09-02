@@ -38,7 +38,7 @@ function metricChip(col, { glyph, value, label, tint, tintSoft }) {
       ${GLYPH[glyph](tint)}
     </div>
     <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'bold' })};font-size:17.5px">${value}</div>
-    <div style="${type('parentCaption', { color: col.textTertiary })};font-size:11.5px">${label}</div>
+    <div style="${type('parentCaption', { color: col.textSecondary })};font-size:12px">${label}</div>
   </div>`;
 }
 
@@ -69,11 +69,11 @@ function tabBar(col, active) {
             box-shadow:0 4px 12px ${col.shadow}">
             <div style="transform:translateY(4px)">${svg('Art/character/hop-face.svg', { width: 58 })}</div>
           </div>
-          <div style="${type('parentFootnote', { color: T.palette.hopGreenDeep, weight: 'semibold' })};font-size:10.5px">Hop</div>
+          <div style="${type('parentFootnote', { color: col.brandAction, weight: 'semibold' })};font-size:11px">Hop</div>
         </div>`;
       }
       const on = name === active;
-      const tint = on ? col.brandAction : col.textTertiary;
+      const tint = on ? col.brandAction : col.textSecondary;
       return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:${tint}">
         ${icon}<div style="${type('parentFootnote', { weight: on ? 'semibold' : 'medium' })};font-size:10.5px;color:${tint}">${name}</div>
       </div>`;
@@ -196,7 +196,7 @@ function sceneTopBar(col, appearance, { pageX }) {
       <div style="transform:translateY(3px)">${svg('Art/character/hop-face.svg', { width: 40 })}</div>
     </div>
     <div style="display:flex;flex-direction:column;justify-content:center">
-      <div style="${type('parentFootnote', { color: col.textTertiary })};font-size:10.5px;line-height:1.1">Good morning,</div>
+      <div style="${type('parentFootnote', { color: col.textSecondary })};font-size:11px;line-height:1.1">Good morning,</div>
       <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'bold' })};font-size:15.5px;line-height:1.2">Maya</div>
     </div>
     ${chevronDown}`, { pad: '0 10px 0 6px', gap: 8 });
@@ -391,9 +391,9 @@ function insightBlock(col, appearance) {
     </div>
     <div style="flex:1">
       <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15px">A pattern is forming</div>
-      <div style="${type('parentCallout', { color: col.textSecondary })};font-size:13.5px;margin-top:3px">Most successful tries this week happened about 45–55 minutes apart.</div>
+      <div style="${type('parentCallout', { color: col.textSecondary })};font-size:13px;margin-top:3px">Half of the recorded gaps between potty visits fell within 45–55 minutes.</div>
       <div style="display:inline-block;margin-top:8px;padding:3px 9px;border-radius:8px;background:${col.surfaceSunken};
-        ${type('parentFootnote', { color: col.textTertiary, weight: 'medium' })};font-size:10.5px">Pattern, not medical advice</div>
+        ${type('parentFootnote', { color: col.textSecondary, weight: 'medium' })};font-size:12px">Pattern, not medical advice</div>
     </div>
   </div>`, { pad: 13, appearance });
 }
@@ -481,7 +481,7 @@ function sidebar(col, appearance) {
     ["Hop's pond", `<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><ellipse cx="12" cy="13" rx="9" ry="6"/><path d="M12 13 L21 9.4 A9 6 0 0 0 18 7.4Z" fill="${col.backgroundSecondary}"/></svg>`, false],
     ['Settings', `<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><path d="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2zm8.4 3.6c0 .5 0 1-.1 1.5l2 1.6-2 3.4-2.4-1a7.6 7.6 0 0 1-2.5 1.5l-.4 2.5h-4l-.4-2.5a7.6 7.6 0 0 1-2.5-1.5l-2.4 1-2-3.4 2-1.6a8.6 8.6 0 0 1 0-3l-2-1.6 2-3.4 2.4 1a7.6 7.6 0 0 1 2.5-1.5L10 2h4l.4 2.5a7.6 7.6 0 0 1 2.5 1.5l2.4-1 2 3.4-2 1.6c.1.5.1 1 .1 1.5z"/></svg>`, false],
   ];
-  return `<div style="position:absolute;left:0;top:0;bottom:0;width:${PAD.rail}px;background:${col.backgroundSecondary};
+  return `<div style="position:absolute;left:0;top:0;bottom:0;width:${PAD.rail}px;background:${col.surfaceSunken};
     border-right:1px solid ${col.divider};display:flex;flex-direction:column">
     ${statusBarPad(col.textSecondary)}
     <div style="padding:14px 18px 10px;display:flex;align-items:center;gap:11px">

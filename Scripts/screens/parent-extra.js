@@ -299,7 +299,7 @@ function firstPauseSet(appearance = 'light') {
 
   return phone(appearance, `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 24px 8px;overflow:hidden">
-      <div style="height:20px"></div>
+      <div style="height:${T.spacing.xxxl}px"></div>
 
       <div style="flex:0 0 auto;position:relative;display:flex;justify-content:center">
         <div style="position:absolute;left:50%;top:22px;width:214px;height:214px;margin-left:-107px;border-radius:107px;
@@ -369,7 +369,7 @@ function settingsHub(appearance = 'light') {
   const soft = (hex) => (dark ? alpha(hex, 0.24) : mix(hex, '#FFFFFF', 0.72));
 
   return `
-  <div style="display:flex;flex-direction:column;height:${H}px;background:${col.backgroundSecondary}">
+  <div style="display:flex;flex-direction:column;height:${H}px;background:${col.surfaceSunken}">
     ${statusBar(col.textPrimary)}
     <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:10px;padding:0 ${PAGE}px 6px;overflow:hidden">
 
@@ -507,7 +507,7 @@ function childProfiles(appearance = 'light') {
     </div>`;
 
   return `
-  <div style="display:flex;flex-direction:column;height:${H}px;background:${col.backgroundSecondary}">
+  <div style="display:flex;flex-direction:column;height:${H}px;background:${col.surfaceSunken}">
     ${statusBar(col.textPrimary)}
     ${navBar(col, 'Children', { large: true })}
     <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:12px;padding:4px ${PAGE}px 6px;overflow:hidden">
@@ -761,8 +761,8 @@ function deleteDataConfirm(appearance = 'light') {
       <div style="flex:0 0 auto;padding-bottom:4px">
         <div style="height:52px;border-radius:26px;background:${col.eventPoop};display:grid;place-items:center;
           box-shadow:${elevation(appearance, 'raised')};
-          ${type('parentHeadline', { color: '#FFFFFF', weight: 'semibold' })};font-size:17px">Delete</div>
-        <div style="height:10px"></div>
+          ${type('parentHeadline', { color: col.textOnBrand, weight: 'semibold' })};font-size:17px">Delete</div>
+        <div style="height:${T.spacing.s}px"></div>
         ${secondaryButton(col, 'Cancel')}
       </div>
     </div>
@@ -805,7 +805,7 @@ function accessRestored(appearance = 'light') {
         <div style="position:relative;width:150px;height:150px">
           <div style="position:absolute;inset:0;border-radius:75px;background:${dark ? alpha(P.sunshine, .1) : mix(P.sunshineSoft, P.cloud, .3)}"></div>
           <div data-hop style="position:absolute;left:50%;top:6px;transform:translateX(-50%)">
-            ${svg('Art/character/hop-wait.svg', { width: 150 })}
+            ${svg('Art/character/hop-wait.svg', { width: 162 })}
           </div>
           <div style="position:absolute;right:-2px;top:6px;width:38px;height:38px;border-radius:19px;
             background:${warnSoft};border:2px solid ${col.backgroundPrimary};display:grid;place-items:center">
@@ -871,7 +871,7 @@ function progressEmpty(appearance = 'light') {
   return `
   <div style="display:flex;flex-direction:column;height:${H}px;background:${col.backgroundPrimary}">
     ${statusBar(col.textPrimary)}
-    <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:9px;padding:0 ${PAGE}px 8px;overflow:hidden">
+    <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:${T.spacing.s}px;padding:0 ${PAGE}px 8px;overflow:hidden">
 
       <div style="flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between">
         <div style="${type('parentLargeTitle', { color: col.textPrimary })};font-size:30px">Progress</div>
@@ -884,20 +884,20 @@ function progressEmpty(appearance = 'light') {
 
       <div style="flex:0 0 auto">${segmented(col, appearance, ['Day', 'Week', 'Month'], 0)}</div>
 
-      <div style="flex:0 0 auto;background:${col.surface};border-radius:${T.radius.xl}px;padding:16px 18px 16px;
+      <div style="flex:0 0 auto;background:${col.surface};border-radius:${T.radius.xl}px;padding:${T.spacing.m}px 18px;
         box-shadow:${elevation(appearance, 'resting')};text-align:center">
-        <div data-hop style="display:flex;justify-content:center">${svg('Art/character/hop-wait.svg', { width: 100 })}</div>
+        <div data-hop style="display:flex;justify-content:center">${svg('Art/character/hop-wait.svg', { width: 118 })}</div>
         <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:17px;margin-top:6px">
           Nothing logged in this period</div>
         <div style="${type('parentCallout', { color: col.textSecondary })};font-size:14px;margin-top:6px;line-height:1.42;padding:0 6px">
           Entries appear here as you and your child log them. Nothing is missing — the period simply has no entries.</div>
-        <div style="margin-top:14px;height:44px;border-radius:22px;background:${col.brandAction};display:grid;place-items:center;
+        <div style="margin-top:${T.spacing.m}px;height:${T.hitTarget.parentMinimum}px;border-radius:22px;background:${col.brandAction};display:grid;place-items:center;
           ${type('parentHeadline', { color: col.textOnBrand, weight: 'semibold' })};font-size:16px">Log a visit</div>
       </div>
 
       <div style="flex:0 0 auto;background:${col.surface};border-radius:${T.radius.xl}px;padding:14px 16px 13px;
         box-shadow:${elevation(appearance, 'resting')}">
-        <div style="${type('parentHeadline', { color: col.textSecondary, weight: 'semibold' })};font-size:14.5px">Today so far</div>
+        <div style="${type('parentCallout', { color: col.textSecondary, weight: 'semibold' })}">Today so far</div>
         <div style="margin-top:4px">
           ${zeroRow(MARK.ring, TINT.tried.tint, TINT.tried.soft, 'No potty visits logged yet', 'Visits')}
           ${zeroRow(MARK.star, TINT.star.tint, TINT.star.soft, 'None yet today', 'Stars', true)}
@@ -908,11 +908,11 @@ function progressEmpty(appearance = 'light') {
         box-shadow:${elevation(appearance, 'resting')}">
         <div style="display:flex;align-items:center;gap:10px">
           <div style="width:28px;height:28px;border-radius:9px;background:${TINT.pee.soft};display:grid;place-items:center;flex:0 0 auto">${MARK.chart(TINT.pee.tint, 16)}</div>
-          <span style="${type('parentHeadline', { color: col.textSecondary, weight: 'semibold' })};font-size:14.5px">Patterns</span>
+          <span style="${type('parentCallout', { color: col.textSecondary, weight: 'semibold' })}">Patterns</span>
         </div>
-        <div style="${type('parentCallout', { color: col.textSecondary })};font-size:14px;margin-top:9px;line-height:1.42">
+        <div style="${type('parentCallout', { color: col.textSecondary })};font-size:14px;margin-top:${T.spacing.s}px;line-height:1.42">
           A few more days of logging will fill this in. Patterns need several days before they describe anything.</div>
-        <div style="margin-top:10px">${patternLabel(col)}</div>
+        <div style="margin-top:${T.spacing.s}px">${patternLabel(col)}</div>
       </div>
 
       <div style="flex:1"></div>
@@ -1336,7 +1336,7 @@ function sidebar(col, appearance, active) {
     ["Hop's pond", `<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><ellipse cx="12" cy="13" rx="9" ry="6"/><path d="M12 13 L21 9.4 A9 6 0 0 0 18 7.4Z" fill="${col.backgroundSecondary}"/></svg>`],
     ['Settings', `<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><path d="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2zm8.4 3.6c0 .5 0 1-.1 1.5l2 1.6-2 3.4-2.4-1a7.6 7.6 0 0 1-2.5 1.5l-.4 2.5h-4l-.4-2.5a7.6 7.6 0 0 1-2.5-1.5l-2.4 1-2-3.4 2-1.6a8.6 8.6 0 0 1 0-3l-2-1.6 2-3.4 2.4 1a7.6 7.6 0 0 1 2.5-1.5L10 2h4l.4 2.5a7.6 7.6 0 0 1 2.5 1.5l2.4-1 2 3.4-2 1.6c.1.5.1 1 .1 1.5z"/></svg>`],
   ];
-  return `<div style="position:absolute;left:0;top:0;bottom:0;width:${PAD.rail}px;background:${col.backgroundSecondary};
+  return `<div style="position:absolute;left:0;top:0;bottom:0;width:${PAD.rail}px;background:${col.surfaceSunken};
     border-right:1px solid ${col.divider};display:flex;flex-direction:column">
     ${statusBarPad(col.textSecondary)}
     <div style="padding:14px 18px 10px;display:flex;align-items:center;gap:11px">
@@ -1508,7 +1508,7 @@ function insightsPad(appearance = 'light') {
                 <div style="width:34px;height:34px;border-radius:11px;background:${col.surfaceSunken};display:grid;place-items:center;flex:0 0 auto">
                   ${EXTRA.info(col.textSecondary, 18)}
                 </div>
-                <div style="flex:1;${type('parentCallout', { color: col.textSecondary })};font-size:13.5px;line-height:1.4">
+                <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.4">
                   These are patterns in what you logged. They describe your child's week and nothing else.</div>
               </div>`, { pad: '16px 20px' })}
           </div>

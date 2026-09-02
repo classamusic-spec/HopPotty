@@ -61,9 +61,9 @@ function hopsPond(appearance = 'light') {
   return `
   <div style="position:relative;width:100%;height:100%;overflow:hidden">
     <div style="position:absolute;inset:0">${scene}</div>
-    <div data-hop style="position:absolute;left:${393 * 0.56}px;top:${852 * 0.508 - 6 - 166 * FEET}px;
+    <div data-hop style="position:absolute;left:${393 * 0.56}px;top:${852 * 0.508 - 6 - 180 * FEET}px;
       transform:translateX(-50%)">
-      ${svg('Art/character/hop-idle.svg', { width: 166 })}
+      ${svg('Art/character/hop-idle.svg', { width: 180 })}
     </div>
 
     <div style="position:relative;display:flex;flex-direction:column;height:100%">

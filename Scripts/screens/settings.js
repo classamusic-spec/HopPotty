@@ -35,7 +35,7 @@ function timerSettings(appearance = 'light') {
   });
 
   return `
-  <div style="display:flex;flex-direction:column;height:100%;background:${col.backgroundSecondary}">
+  <div style="display:flex;flex-direction:column;height:100%;background:${col.surfaceSunken}">
     ${statusBar(col.textPrimary)}
     ${navBar(col, 'Potty Pause', { large: true })}
     <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:${T.spacing.s}px;padding:2px 20px 6px;overflow:hidden">
@@ -141,7 +141,7 @@ function chooseApps(appearance = 'light') {
 
     <!-- HopPotty's own screen, scaled back the way iOS scales a sheet's presenter -->
     <div style="position:absolute;left:0;right:0;top:10px;height:${sheetTop + 40}px;overflow:hidden;
-      border-radius:14px;background:${col.backgroundSecondary}">
+      border-radius:14px;background:${col.surfaceSunken}">
       <div style="display:flex;flex-direction:column;height:100%">
         ${statusBar(col.textPrimary)}
         ${navBar(col, 'Apps that pause', { large: true })}
