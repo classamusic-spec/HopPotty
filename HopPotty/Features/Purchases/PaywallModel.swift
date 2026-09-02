@@ -64,11 +64,12 @@ final class PaywallModel {
             return
         }
         phase = .purchasing
-        switch await environment.purchases.purchase() {
-        case .purchased: phase = .purchased
+        switch await environment.purchases.purchase(authorization: authorization) {
+        case .purchased, .alreadyOwned: phase = .purchased
         case .pending: phase = .pending
         case .cancelled: phase = .ready
-        case .failed: phase = .failed(.purchaseFailed)
+        case .productUnavailable: phase = .unavailable
+        case .verificationFailed, .failed: phase = .failed(.purchaseFailed)
         }
     }
 
@@ -78,10 +79,9 @@ final class PaywallModel {
             return
         }
         phase = .restoring
-        switch await environment.purchases.restore() {
-        case .purchased: phase = .purchased
-        case .pending: phase = .pending
-        case .cancelled, .failed:
+        switch await environment.purchases.restore(authorization: authorization) {
+        case .restored: phase = .purchased
+        case .nothingToRestore, .failed:
             // Nothing to restore is not an error worth an alert; the screen
             // simply returns to offering the purchase.
             phase = product == nil ? .unavailable : .ready
