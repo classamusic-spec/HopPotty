@@ -18,6 +18,18 @@ import Observation
 // MARK: - Product identity
 
 /// The App Store products HopPotty sells. There is one.
+///
+/// The identifier is **read from `Info.plist`**, not written here. It used to be
+/// the literal `com.hoppotty.family.unlock`, which disagreed with the
+/// `com.hoppotty.family` that `Config/Base.xcconfig`, `HopPotty.storekit`,
+/// `Info.plist` and `Docs/ProductRequirements.md` all carry. That single extra
+/// word meant `Product.products(for:)` returned nothing, the paywall sat in its
+/// unavailable state forever, and a family who had paid stayed locked — which
+/// reads in review as "the in-app purchase does not work" (Guideline 2.1).
+///
+/// The `Info.plist` key was always documented as the one place this is
+/// configured; it simply had no reader. Now it has one, so the build settings
+/// are the single source of truth and a literal cannot drift from them again.
 enum HopProductID: String, CaseIterable, Sendable {
     /// Non-consumable, one-time, family-shareable. Configured in App Store
     /// Connect; **its price appears nowhere in this codebase**. Every price the
@@ -25,7 +37,39 @@ enum HopProductID: String, CaseIterable, Sendable {
     /// already carries the right currency, and is already correct after a
     /// storefront change or a price adjustment we did not ship an update for.
     /// A hard-coded "$19.99" would be wrong for most of the world on day one.
-    case familyUnlock = "com.hoppotty.family.unlock"
+    case familyUnlock
+
+    /// The `Info.plist` key holding the identifier, populated from
+    /// `HOPPOTTY_IAP_FAMILY_PRODUCT_ID` at build time.
+    static let plistKey = "HPFamilyUnlockProductIdentifier"
+
+    /// Derived, never written down. `Config/Base.xcconfig` builds the identifier
+    /// as `$(HOPPOTTY_APP_BUNDLE_ID).family`, so the same rule applied to the
+    /// running bundle reproduces it exactly — and a fork that changes its bundle
+    /// prefix gets its own correct identifier instead of ours. Spelling the
+    /// fallback out as a literal would reintroduce the drift this whole change
+    /// exists to remove.
+    static var derived: String {
+        (Bundle.main.bundleIdentifier ?? "com.hoppotty").appending(".family")
+    }
+
+    var rawValue: String {
+        switch self {
+        case .familyUnlock:
+            let configured = Bundle.main.object(forInfoDictionaryKey: Self.plistKey) as? String
+            // An unsubstituted `$(...)` means the xcconfig did not reach the
+            // plist — treat it as absent rather than shipping it as a product id.
+            guard let configured, !configured.isEmpty, !configured.hasPrefix("$(") else {
+                return Self.derived
+            }
+            return configured
+        }
+    }
+
+    init?(rawValue: String) {
+        guard rawValue == HopProductID.familyUnlock.rawValue else { return nil }
+        self = .familyUnlock
+    }
 }
 
 /// A product as the UI shows it. No StoreKit types cross this line, so a feature

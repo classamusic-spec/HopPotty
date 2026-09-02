@@ -445,6 +445,27 @@ else
     fail "product id: xcconfig says '$IAP', HopPotty.storekit says '$STOREKIT_ID'"
 fi
 
+# The Swift source, which this check used to stop short of. A literal product id
+# in PurchaseService.swift once said `com.hoppotty.family.unlock` while every
+# other file said `com.hoppotty.family`; the extra word made StoreKit return no
+# products, so the paywall could never load and a family who had paid stayed
+# locked. Nothing failed at build time and this script passed. It now refuses any
+# hard-coded product id in Swift: the identifier comes from Info.plist, which the
+# xcconfig fills, so there is exactly one place to change it.
+SWIFT_IAP_LITERALS="$(grep -rn '"com\.[A-Za-z0-9._-]*\.family[A-Za-z0-9._-]*"' HopPotty --include='*.swift' || true)"
+if [ -z "$SWIFT_IAP_LITERALS" ]; then
+    pass "no hard-coded product id in Swift (it is read from Info.plist)"
+else
+    fail "hard-coded product id in Swift — it must come from \$HPFamilyUnlockProductIdentifier:
+$SWIFT_IAP_LITERALS"
+fi
+
+if grep -q 'HPFamilyUnlockProductIdentifier' HopPotty/Services/Purchases/PurchaseService.swift; then
+    pass "PurchaseService reads HPFamilyUnlockProductIdentifier"
+else
+    fail "PurchaseService does not read HPFamilyUnlockProductIdentifier — the Info.plist key documented as the single source of the product id has no reader"
+fi
+
 if grep -q '"type"[[:space:]]*:[[:space:]]*"NonConsumable"' HopPotty/Resources/HopPotty.storekit; then
     pass "HopPotty Family is a NonConsumable"
 else
