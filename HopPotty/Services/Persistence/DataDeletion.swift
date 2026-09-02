@@ -185,10 +185,19 @@ struct DeletionReceipt: Sendable {
 final class DataDeletionService {
     private let repositories: RepositorySet
     private let clock: any HopClock
+    /// Pending Quick Reminders are not rows in the store, so deleting a child
+    /// or resetting the app also has to withdraw them from the notification
+    /// centre; otherwise a nudge could fire for a child that no longer exists.
+    private let reminders: (any QuickReminderProviding)?
 
-    init(repositories: RepositorySet, clock: any HopClock = SystemClock()) {
+    init(
+        repositories: RepositorySet,
+        clock: any HopClock = SystemClock(),
+        reminders: (any QuickReminderProviding)? = nil
+    ) {
         self.repositories = repositories
         self.clock = clock
+        self.reminders = reminders
     }
 
     // MARK: Planning
@@ -429,12 +438,16 @@ extension DataDeletionService: DataDeletionProviding {
     ) async throws -> DeletionReceipt {
         // The plan is rebuilt here rather than passed in, so this entry point
         // cannot act on numbers older than the tap that triggered it.
-        try await perform(plan(for: .childProfile(childID: childID)), authorization: authorization)
+        let receipt = try await perform(plan(for: .childProfile(childID: childID)), authorization: authorization)
+        await reminders?.cancelAll(for: childID)
+        return receipt
     }
 
     @discardableResult
     func deleteEverything(authorization: ParentAuthorization) async throws -> DeletionReceipt {
-        try await perform(plan(for: .entireApp), authorization: authorization)
+        let receipt = try await perform(plan(for: .entireApp), authorization: authorization)
+        await reminders?.cancelEverything()
+        return receipt
     }
 
     /// Clearing the timeline while keeping every star. Its own method because
