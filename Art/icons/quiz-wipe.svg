@@ -1,15 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
 <defs><linearGradient id="handGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFDCC9"/><stop offset="1" stop-color="#F5C4A9"/></linearGradient><linearGradient id="handGradDeep" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#F5C4A9"/><stop offset="1" stop-color="#DCA084"/></linearGradient><linearGradient id="paperSheet" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F7F1E9"/></linearGradient></defs>
 <g id="quiz-wipe"><circle cx="60" cy="60" r="58" fill="#E3F5EA"/>
-    <ellipse cx="60" cy="108" rx="30" ry="5.1" fill="#1B5E39" opacity="0.12"/>
-    <path d="M 24 60 q -7 11 0 22" stroke="#2F8C57" stroke-width="4.5" fill="none" stroke-linecap="round" opacity="0.35"/>
-    <path d="M 14 55 q -9 15 0 32" stroke="#2F8C57" stroke-width="4.5" fill="none" stroke-linecap="round" opacity="0.18"/>
-    <g transform="translate(62 102) scale(0.85)">
-    <rect x="-33" y="-78" width="66" height="50" rx="8" fill="#EBE3D8"/>
-    <rect x="-33" y="-82" width="66" height="50" rx="8" fill="url(#paperSheet)"/>
-    <path d="M -33 -57 h 66" stroke="#EBE3D8" stroke-width="3" opacity="0.75" fill="none"/>
-    <rect x="-26" y="-44" width="52" height="52" rx="18" fill="url(#handGrad)"/>
-    <g transform="rotate(-16 -30 -18)"><rect x="-40" y="-32" width="15" height="30" rx="7.5" fill="url(#handGradDeep)"/></g>
-    <rect x="-24" y="-60" width="12" height="30" rx="6" fill="url(#handGrad)"/><rect x="-11" y="-65" width="12" height="35" rx="6" fill="url(#handGrad)"/><rect x="2" y="-63" width="12" height="33" rx="6" fill="url(#handGrad)"/><rect x="15" y="-56" width="12" height="26" rx="6" fill="url(#handGrad)"/>
-    <path d="M -20 -34 q 22 8 42 -2" stroke="#DCA084" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.32"/></g></g>
+    <ellipse cx="60" cy="106" rx="28" ry="4.76" fill="#1B5E39" opacity="0.12"/>
+    <path d="M 20 40 q -8 14 0 28" stroke="#63C88A" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.4"/>
+    <path d="M 10 36 q -10 18 0 36" stroke="#63C88A" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.2"/>
+    <g transform="translate(62 100) scale(0.85)">
+    <g transform="rotate(-7 0 -60)">
+      <rect x="-40" y="-92" width="80" height="66" rx="9" fill="#D8CEC1" opacity="0.5"/>
+      <rect x="-40" y="-96" width="80" height="66" rx="9" fill="url(#paperSheet)"/>
+      <rect x="-40" y="-96" width="80" height="66" rx="9" fill="none" stroke="#EBE3D8" stroke-width="2"/>
+      <path d="M -40 -63 h 80" stroke="#EBE3D8" stroke-width="3" fill="none"/>
+      <path d="M 40 -96 h -19 l 19 19 Z" fill="#EBE3D8"/>
+    </g>
+    <rect x="-28" y="-48" width="56" height="58" rx="19" fill="url(#handGrad)"/>
+    <rect x="-27" y="-68" width="13" height="36" rx="6.5" fill="url(#handGrad)"/><rect x="-13" y="-73" width="13" height="41" rx="6.5" fill="url(#handGrad)"/><rect x="1" y="-71" width="13" height="39" rx="6.5" fill="url(#handGrad)"/><rect x="15" y="-64" width="13" height="32" rx="6.5" fill="url(#handGrad)"/>
+    <g transform="rotate(30 -30 -40)"><rect x="-39" y="-62" width="17" height="36" rx="8.5" fill="url(#handGradDeep)"/></g>
+    <path d="M -22 -36 q 24 8 46 -2" stroke="#DCA084" stroke-width="3.6" fill="none" stroke-linecap="round" opacity="0.3"/></g></g>
 </svg>

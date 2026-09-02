@@ -1,10 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
 <defs><linearGradient id="paperSheet" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F7F1E9"/></linearGradient></defs>
 <g id="quiz-sock"><circle cx="60" cy="60" r="58" fill="#FFE8E3"/>
-    <ellipse cx="64" cy="106" rx="26" ry="4.42" fill="#8A3F30" opacity="0.12"/>
+    <ellipse cx="66" cy="108" rx="26" ry="4.42" fill="#8A3F30" opacity="0.13"/>
     <g transform="translate(56 58)">
-      <path d="M -22 -34 h 28 q 8 0 8 8 v 30 q 0 8 8 12 l 13 6 q 10 5 5 15 q -6 9 -17 4 l -20 -9 q -25 -12 -25 -35 v -23 q 0 -8 8 -8 Z" fill="#EBE3D8"/>
+      <path d="M -22 -32 h 28 q 8 0 8 8 v 30 q 0 8 8 12 l 13 6 q 10 5 5 15 q -6 9 -17 4 l -20 -9 q -25 -12 -25 -35 v -23 q 0 -8 8 -8 Z" fill="#D8CEC1"/>
       <path d="M -22 -36 h 28 q 8 0 8 8 v 30 q 0 8 8 12 l 13 6 q 10 5 5 15 q -6 9 -17 4 l -20 -9 q -25 -12 -25 -35 v -23 q 0 -8 8 -8 Z" fill="url(#paperSheet)"/>
-      <rect x="-22" y="-31" width="36" height="5" rx="2.5" fill="#6FC7E8"/><rect x="-22" y="-23" width="36" height="5" rx="2.5" fill="#6FC7E8"/><rect x="-22" y="-15" width="36" height="5" rx="2.5" fill="#6FC7E8"/>
-      <path d="M -14 6 q 0 16 16 24" stroke="#9BDCF1" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.55"/></g></g>
+      <path d="M -22 -36 h 28 q 8 0 8 8 v 30 q 0 8 8 12 l 13 6 q 10 5 5 15 q -6 9 -17 4 l -20 -9 q -25 -12 -25 -35 v -23 q 0 -8 8 -8 Z" fill="none" stroke="#D8CEC1" stroke-width="2.2"/>
+      <rect x="-22" y="-32" width="36" height="6" rx="3" fill="#6FC7E8"/>
+      <rect x="-22" y="-22" width="36" height="6" rx="3" fill="#AFA5EF"/>
+      <rect x="-22" y="-12" width="36" height="6" rx="3" fill="#6FC7E8"/>
+      <path d="M -13 10 q 0 16 15 24" stroke="#9BDCF1" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.55"/>
+      <path d="M 24 32 q 10 5 15 11" stroke="#9BDCF1" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.55"/></g></g>
 </svg>

@@ -1,11 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
 <defs><radialGradient id="glowWarm" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.75"/><stop offset="0.5" stop-color="#FFD769" stop-opacity="0.28"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient><linearGradient id="porcelainGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.6" stop-color="#F4F1EC"/><stop offset="1" stop-color="#E4DFD8"/></linearGradient></defs>
 <g id="quiz-lightSwitch"><circle cx="60" cy="60" r="58" fill="#FFF3D4"/>
-    <circle cx="60" cy="50" r="40" fill="url(#glowWarm)"/>
-    <ellipse cx="60" cy="100" rx="26" ry="4.42" fill="#A87A0C" opacity="0.12"/>
-    <rect x="34" y="26" width="52" height="70" rx="11" fill="#D8CEC1"/>
-    <rect x="34" y="23" width="52" height="70" rx="11" fill="url(#porcelainGrad)"/>
-    <rect x="48" y="37" width="24" height="42" rx="8" fill="#EBE3D8"/>
-    <path d="M 48 58 v -13 q 0 -8 8 -8 h 8 q 8 0 8 8 v 13 Z" fill="#FFFCF8"/>
-    <path d="M 41 30 v 56" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.6"/></g>
+    <circle cx="60" cy="50" r="44" fill="url(#glowWarm)"/>
+    <ellipse cx="60" cy="100" rx="28" ry="4.76" fill="#A87A0C" opacity="0.14"/>
+    <rect x="33" y="26" width="54" height="70" rx="10" fill="#AFA69B"/>
+    <rect x="33" y="23" width="54" height="70" rx="10" fill="url(#porcelainGrad)"/>
+    <rect x="45" y="34" width="30" height="48" rx="7" fill="#D8CEC1"/>
+    <path d="M 47 58 v -14 q 0 -8 8 -8 h 10 q 8 0 8 8 v 14 Z" fill="#FFFFFF"/>
+    <path d="M 47 60 v 12 q 0 8 8 8 h 10 q 8 0 8 -8 v -12 Z" fill="#EBE3D8"/>
+    <path d="M 40 30 v 58" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.7"/></g>
 </svg>

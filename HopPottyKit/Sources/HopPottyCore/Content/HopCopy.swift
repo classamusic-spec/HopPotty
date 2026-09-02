@@ -634,6 +634,14 @@ public struct GamesChromeCopy: HopCopySection {
         placeholders: [.text(1, "duration", "Formatted target duration.", example: "45 seconds")]
     )
     public let endsOnItsOwn = HopCopyEntry.parent("games.endsOnItsOwn", "Ends on its own")
+    /// Fly Snack's ending. Worth its own label on the caregiver's list: a game
+    /// that walks a child into the routine is a different promise from one that
+    /// hands the tablet back.
+    public let endsAtThePotty = HopCopyEntry.parent(
+        "games.endsAtThePotty",
+        "Ends by hopping to the potty",
+        comment: "Shown on the caregiver's game list for a game that finishes by starting the guided routine."
+    )
     public let endsWhenChildIsDone = HopCopyEntry.parent("games.endsWhenChildIsDone", "Ends when your child taps Done")
 }
 

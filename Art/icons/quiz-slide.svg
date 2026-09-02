@@ -8,7 +8,8 @@
     <rect x="92" y="50" width="8" height="46" rx="4" fill="#6F63C0"/>
     <rect x="72" y="58" width="26" height="6" rx="3" fill="#AFA5EF"/><rect x="72" y="70" width="26" height="6" rx="3" fill="#AFA5EF"/><rect x="72" y="82" width="26" height="6" rx="3" fill="#AFA5EF"/>
     <rect x="63" y="42" width="40" height="9" rx="4.5" fill="#AFA5EF"/>
-    <path d="M 66 46 C 46 54 32 72 28 94" stroke="#C96755" stroke-width="17" stroke-linecap="round" fill="none"/>
-    <path d="M 66 46 C 46 54 32 72 28 94" stroke="url(#chuteGrad)" stroke-width="11" stroke-linecap="round" fill="none"/>
-    <path d="M 62 40 C 44 48 30 66 25 88" stroke="#C96755" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.7"/></g>
+    <path d="M 67 47 C 47 55 33 73 29 95" stroke="#C96755" stroke-width="19" stroke-linecap="round" fill="none"/>
+    <path d="M 68 42 C 48 50 34 69 30 91" stroke="url(#chuteGrad)" stroke-width="13" stroke-linecap="round" fill="none"/>
+    <path d="M 70 37 C 50 45 36 65 32 87" stroke="#FFE8E3" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.85"/>
+    <path d="M 22 92 q 8 -8 18 -4" stroke="#C96755" stroke-width="8" stroke-linecap="round" fill="none"/></g>
 </svg>

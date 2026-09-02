@@ -27,7 +27,9 @@ while IFS= read -r key; do
     echo "MISSING: $key  ->  Art/$dir/$asset.svg"
     missing=$((missing + 1))
   fi
-done < <(grep -rhoE '"(scene|icon|character)\.[A-Za-z]+\.[A-Za-z]+"' "$CONTENT" | tr -d '"' | sort -u)
+# Two or more segments after the family, so a sprite key like
+# "icon.games.fly.blue" is checked rather than silently skipped.
+done < <(grep -rhoE '"(scene|icon|character)(\.[A-Za-z0-9]+){2,}"' "$CONTENT" | tr -d '"' | sort -u)
 
 echo "----"
 echo "art keys resolved: $found   missing: $missing"

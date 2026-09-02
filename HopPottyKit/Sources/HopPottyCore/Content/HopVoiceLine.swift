@@ -207,6 +207,7 @@ public enum HopVoiceCatalog {
     public static var allLines: [HopVoiceLine] {
         PottyRoutineContent.voiceLines
             + QuizContent.voiceLines
+            + MiniGameCatalog.voiceLines
             + HopVoice.shared.allLines
     }
 

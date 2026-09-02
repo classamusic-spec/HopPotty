@@ -3,7 +3,8 @@
 <g id="quiz-paperFewSquares"><circle cx="60" cy="60" r="58" fill="#FFF3D4"/>
     <ellipse cx="60" cy="88" rx="34" ry="5.78" fill="#A87A0C" opacity="0.14"/>
     <g transform="rotate(-5 60 60)">
-    <rect x="24" y="51" width="72" height="24" rx="4" fill="#EBE3D8"/>
-    <rect x="24" y="48" width="72" height="24" rx="4" fill="url(#paperSheet)"/>
-    <path d="M 48 52 V 68" stroke="#D8CEC1" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 4"/><path d="M 72 52 V 68" stroke="#D8CEC1" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 4"/></g></g>
+    <rect x="15" y="49" width="90" height="30" rx="5" fill="#D8CEC1" opacity="0.5"/>
+    <rect x="15" y="45" width="90" height="30" rx="5" fill="url(#paperSheet)"/>
+    <rect x="15" y="45" width="90" height="30" rx="5" fill="none" stroke="#EBE3D8" stroke-width="2.2"/>
+    <path d="M 45 49 V 71" stroke="#D8CEC1" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="3 5"/><path d="M 75 49 V 71" stroke="#D8CEC1" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="3 5"/></g></g>
 </svg>
