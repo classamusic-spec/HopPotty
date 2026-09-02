@@ -1077,7 +1077,7 @@ const ICON_TINTS = [P.pondBlueSoft, P.sunshineSoft, P.lavenderSoft, P.peachSoft,
  */
 function widgets(appearance = 'light') {
   const col = c(appearance);
-  const BAND_A = 526;
+  const BAND_A = 548;
   const BAND_B = H - BAND_A - 10;
   const M = 24;
   const smallW = 158, mediumW = W - M * 2;
@@ -1170,7 +1170,7 @@ function widgets(appearance = 'light') {
       ${bandLabel('Home Screen', { top: 62 })}
       <div style="position:relative;display:flex;flex-direction:column;height:100%">
         ${statusBar(P.midnight)}
-        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:16px;padding:14px ${M}px 0">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:16px;padding:36px ${M}px 0">
           ${mediumWidget}
           <div style="display:flex;gap:16px;width:100%">
             ${smallWidget}
@@ -1257,7 +1257,7 @@ function liveActivity(appearance = 'light') {
       </div>
       <div style="display:flex;gap:4px;margin-top:14px">
         ${stepChip('Try', MARK.ring, false)}
-        ${stepChip('Wipe', EXTRA.roll, true)}
+        ${stepChip('Wipe', MARK.hand, true)}
         ${stepChip('Flush', flush, false)}
         ${stepChip('Wash', MARK.droplets, false)}
         ${stepChip('High five', MARK.star, false)}
@@ -1305,17 +1305,17 @@ function liveActivity(appearance = 'light') {
       <div style="position:absolute;inset:0">${wallpaper(W, BAND_B, { night: true })}</div>
       ${bandLabel('Lock Screen', { dark: true })}
       <div style="position:relative;display:flex;flex-direction:column;height:100%;align-items:center;padding:0 ${M}px">
-        <div style="height:46px;flex:0 0 auto"></div>
+        <div style="height:40px;flex:0 0 auto"></div>
         <div style="flex:0 0 auto;text-align:center">
           <div style="${type('parentCallout', { color: alpha('#FFFFFF', .82) })};font-size:14px">Tuesday, 8 September</div>
           <div style="${type('timerHero', { color: '#FFFFFF' })};font-size:66px;line-height:1.05;font-variant-numeric:tabular-nums">1:42</div>
         </div>
-        <div style="flex:1"></div>
+        <div style="flex:1.1"></div>
         ${activityCard}
         <div style="${type('parentCaption', { color: alpha('#FFFFFF', .62) })};font-size:12px;text-align:center;
           margin-top:16px;padding:0 10px;line-height:1.4">
           No countdown, on purpose. A visible clock reads as pressure to a small child, and the pause ends whether or not anyone is watching it.</div>
-        <div style="height:26px;flex:0 0 auto"></div>
+        <div style="flex:0.75"></div>
         ${homeIndicator('#FFFFFF')}
       </div>
     </div>
@@ -1355,10 +1355,6 @@ function sidebar(col, appearance, active) {
       }).join('')}
     </div>
     <div style="flex:1"></div>
-    <div style="padding:0 16px 18px">
-      <div style="${type('parentCaption', { color: col.textTertiary })};font-size:12px;line-height:1.4">
-        Patterns describe the week you logged. They are not advice.</div>
-    </div>
   </div>`;
 }
 
@@ -1509,6 +1505,17 @@ function insightsPad(appearance = 'light') {
                     The average gap between logged visits was 1 hour 10 minutes.</div>
                 </div>
               </div>`)}
+
+            <div style="height:${gap}px"></div>
+
+            ${cardBox(`
+              <div style="display:flex;gap:13px;align-items:flex-start">
+                <div style="width:34px;height:34px;border-radius:11px;background:${col.surfaceSunken};display:grid;place-items:center;flex:0 0 auto">
+                  ${EXTRA.info(col.textTertiary, 18)}
+                </div>
+                <div style="flex:1;${type('parentCallout', { color: col.textSecondary })};font-size:13.5px;line-height:1.4">
+                  These are patterns in what you logged. They describe your child's week and nothing else.</div>
+              </div>`, { pad: '16px 20px' })}
           </div>
         </div>
 

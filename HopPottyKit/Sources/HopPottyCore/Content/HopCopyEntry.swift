@@ -41,6 +41,11 @@ public enum HopCopySurface: String, CaseIterable, Sendable {
     case shield
     /// Local notification titles and bodies.
     case notification
+    /// Hop's own screen — the child's home, and the four doors it opens.
+    /// Separate from `routine`, `pond`, `games` and `quizzes` because it is the
+    /// one child surface that is only ever a choice: nothing on it instructs,
+    /// counts or ends, so its strings are names for places rather than steps.
+    case childHub
     /// The guided potty routine. Populated by `PottyRoutineContent`.
     case routine
     case celebration

@@ -22,17 +22,30 @@
  * out of `games-mudOff.svg`: a sprite sitting on that scene has to be the same
  * mud as the puddles already drawn in it.
  */
-const { T, c, type, svg, statusBar, homeIndicator, alpha, mix, elevation, artOr } = require('./ui');
+const fs = require('fs');
+const path = require('path');
+const { T, c, type, svg, statusBar, homeIndicator, alpha, mix, elevation, artOr, ROOT } = require('./ui');
 const { childButton, stepDots, MARK } = require('./kit');
 const { stepStrip, grownUpChip, stage } = require('./child');
 const scenes = require('./scenes');
 
 const P = T.palette;
-const W = 393;
-const H = 852;
 
 /** Ink for body copy, resolved per appearance. */
 const ink = (appearance) => (appearance.startsWith('dark') ? c(appearance).textPrimary : P.midnight);
+
+/**
+ * A vector as a CSS background value.
+ *
+ * Full-bleed art is a background rather than an `<img>` on purpose: `cover` does
+ * the cropping arithmetic, and a layer that is meant to bleed past the viewport
+ * is not something the overflow check has to treat as content.
+ */
+function bgImage(rel) {
+  const abs = path.join(ROOT, rel);
+  if (!fs.existsSync(abs)) return null;
+  return `url("data:image/svg+xml;base64,${Buffer.from(fs.readFileSync(abs, 'utf8')).toString('base64')}")`;
+}
 
 // ---------------------------------------------------------------------------
 // Ground
@@ -41,21 +54,21 @@ const ink = (appearance) => (appearance.startsWith('dark') ? c(appearance).textP
 /**
  * The room a card is a picture of.
  *
- * The scene is scaled to cover the whole phone and blurred, then veiled back to
- * the page colour. It reads as light and wall rather than as a picture, which is
- * the point: the crisp copy of the same drawing is the only thing to look at.
+ * The scene fills the whole phone, blurred until it reads as light and wall
+ * rather than as a second picture, then veiled back towards the page colour so
+ * the type over it keeps its contrast.
  */
-function ambient(art, appearance, { veil = 0.46, blur = 46, glow = null } = {}) {
+function ambient(art, appearance, { veil = 0.34, blur = 42, glow = null } = {}) {
   const col = c(appearance);
-  const aw = Math.round((H * 4) / 3);
+  const url = bgImage(art);
+  const dark = appearance.startsWith('dark');
   return `<div style="position:absolute;inset:0;overflow:hidden;background:${col.backgroundPrimary}">
-    <div style="position:absolute;left:${Math.round((W - aw) / 2)}px;top:0;filter:blur(${blur}px);transform:scale(1.2)">
-      ${artOr([art], { width: aw, height: H }, '')}
-    </div>
+    ${url ? `<div style="position:absolute;inset:-96px;background-image:${url};background-size:cover;
+      background-position:center;background-repeat:no-repeat;filter:blur(${blur}px)"></div>` : ''}
     <div style="position:absolute;inset:0;background:${alpha(col.backgroundPrimary, veil)}"></div>
-    ${glow ? `<div style="position:absolute;left:${glow[0]}px;top:${glow[1]}px;width:${glow[2] * 2}px;
-      height:${glow[2] * 2}px;margin:-${glow[2]}px 0 0 -${glow[2]}px;border-radius:50%;
-      background:radial-gradient(circle, ${alpha('#FFFFFF', appearance.startsWith('dark') ? 0.1 : 0.8)} 0%, ${alpha('#FFFFFF', 0)} 70%)"></div>` : ''}
+    ${glow ? `<div style="position:absolute;left:${glow[0] - glow[2]}px;top:${glow[1] - glow[2]}px;
+      width:${glow[2] * 2}px;height:${glow[2] * 2}px;border-radius:50%;
+      background:radial-gradient(circle, ${alpha('#FFFFFF', dark ? 0.08 : 0.62)} 0%, ${alpha('#FFFFFF', 0)} 70%)"></div>` : ''}
   </div>`;
 }
 
@@ -70,10 +83,10 @@ function hopAt(pose, width, style) {
 // ---------------------------------------------------------------------------
 
 /**
- * Scene band plus optional tray.
+ * Picture band plus optional tray.
  *
- * `svgLayer` is drawn in the picture band's own coordinates, so a sprite can be
- * placed against a feature of the scene by scaling the scene's 640×480 frame.
+ * `svgLayer` is drawn in the picture band's own coordinates, so `frame()` can
+ * put a sprite exactly on a feature of the scene it is sitting on.
  */
 function boardCard(appearance, {
   art, w = 369, svgLayer = '', htmlLayer = '', tray = '', trayH = 0, radius = T.radius.xxl,
@@ -89,12 +102,12 @@ function boardCard(appearance, {
       ${htmlLayer}
     </div>
     ${tray ? `<div style="height:${trayH}px;display:flex;flex-direction:column;align-items:center;
-      justify-content:center;gap:11px;padding:0 16px;
-      box-shadow:inset 0 1px 0 ${alpha(P.midnight, 0.06)}">${tray}</div>` : ''}
+      justify-content:center;gap:13px;padding:0 16px;
+      box-shadow:inset 0 1px 0 ${alpha(P.midnight, 0.07)}">${tray}</div>` : ''}
   </div>`;
 }
 
-/** Scene coordinates → card coordinates, for a card `w` wide. */
+/** Scene coordinates (the art's own 640×480) → card coordinates. */
 const frame = (w) => {
   const s = w / 640;
   return { s, x: (v) => +(v * s).toFixed(1), y: (v) => +(v * s).toFixed(1) };
@@ -112,6 +125,10 @@ const sparkPath = (r) => `M 0 ${-r} q ${(r * 0.28).toFixed(2)} ${(r * 0.72).toFi
 
 const sparkle = (x, y, r, fill, o = 1) =>
   `<g transform="translate(${x} ${y})" opacity="${o}"><path d="${sparkPath(r)}" fill="${fill}"/></g>`;
+
+/** Three sparkles where a patch of mud used to be. */
+const sparkleBurst = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})">
+  ${sparkle(0, 0, 13, P.pondBlueLight)}${sparkle(17, 17, 8, '#FFFFFF')}${sparkle(-16, 15, 6.4, P.sunshine, 0.95)}</g>`;
 
 /** A fly: two soft wings, a round body, two friendly eyes. */
 function fly(x, y, s, body, { rot = 0, trail = false } = {}) {
@@ -131,11 +148,16 @@ function fly(x, y, s, body, { rot = 0, trail = false } = {}) {
 /**
  * Hop's hand, exactly as `routine-highFive.svg` draws it.
  *
- * Copied rather than re-invented so the hand a child wipes in Mud Off is the
- * same hand they high-five at the end of the routine.
+ * Copied rather than re-invented, so the hand a child wipes clean in Mud Off is
+ * the same hand they high-five at the end of the routine.
  */
 function hopHand(x, y, s, { rot = 0, flip = false, fill = P.hopGreen } = {}) {
   return `<g transform="translate(${x} ${y}) ${flip ? 'scale(-1 1) ' : ''}rotate(${rot}) scale(${s})">
+    <g opacity=".16" transform="translate(4 8)" fill="${P.hopGreenInk}">
+      <path d="M 0 0 q -10 -60 26 -80 q 38 -20 68 4 q 30 24 22 66 q -8 42 -58 44 q -48 2 -58 -34 Z"/>
+      <rect x="-6" y="-94" width="25" height="52" rx="12.5"/><rect x="23" y="-110" width="25" height="68" rx="12.5"/>
+      <rect x="52" y="-106" width="25" height="64" rx="12.5"/><rect x="80" y="-84" width="23" height="46" rx="11.5"/>
+    </g>
     <path d="M 0 0 q -10 -60 26 -80 q 38 -20 68 4 q 30 24 22 66 q -8 42 -58 44 q -48 2 -58 -34 Z" fill="${fill}"/>
     <rect x="-6" y="-94" width="25" height="52" rx="12.5" fill="${fill}"/>
     <rect x="23" y="-110" width="25" height="68" rx="12.5" fill="${fill}"/>
@@ -155,18 +177,17 @@ function mudPatch(x, y, r, tone, { rot = 0 } = {}) {
   return `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${k})">
     <path d="M -3 -19 q 13 -5 18 5 q 9 8 2 17 q 2 12 -10 14 q -9 6 -17 -2 q -13 -2 -12 -14 q -6 -11 4 -16 q 5 -6 15 -4 Z"
       fill="${tone}"/>
-    <path d="M -8 -9 q 8 -4 12 3 q -6 6 -12 -3 Z" fill="#FFFFFF" opacity=".2"/>
-    <circle cx="15" cy="14" r="4.2" fill="${tone}"/>
-    <circle cx="-17" cy="11" r="3" fill="${tone}"/>
+    <path d="M -8 -9 q 8 -4 12 3 q -6 6 -12 -3 Z" fill="#FFFFFF" opacity=".22"/>
+    <circle cx="16" cy="15" r="4.6" fill="${tone}"/>
+    <circle cx="-18" cy="12" r="3.2" fill="${tone}"/>
   </g>`;
 }
 
-/** The concentric ring that says "a finger goes here". Never a countdown. */
-function tapHint(x, y, r, tint) {
+/** The rings that say "a finger goes here". A pulse, never a countdown. */
+function tapHint(x, y, r, tint, { rings = 3 } = {}) {
+  const ring = (k, sw, o) => `<circle r="${(r * k).toFixed(1)}" stroke-width="${sw}" opacity="${o}"/>`;
   return `<g transform="translate(${x} ${y})" fill="none" stroke="${tint}" stroke-linecap="round">
-    <circle r="${r}" stroke-width="4" opacity=".85"/>
-    <circle r="${r * 1.45}" stroke-width="3" opacity=".4"/>
-    <circle r="${r * 1.95}" stroke-width="2.4" opacity=".2"/>
+    ${ring(1, 4, 0.85)}${rings > 1 ? ring(1.4, 3, 0.36) : ''}${rings > 2 ? ring(1.86, 2.4, 0.17) : ''}
   </g>`;
 }
 
@@ -174,9 +195,11 @@ function tapHint(x, y, r, tint) {
 function swipeHint(x, y, len, tint) {
   return `<g transform="translate(${x} ${y})">
     <path d="M ${-len / 2} 8 q ${len / 4} -22 ${len / 2} -4 q ${len / 4} 18 ${len / 2} -6" fill="none"
-      stroke="${tint}" stroke-width="4.4" stroke-linecap="round" stroke-dasharray="2 12" opacity=".55"/>
-    <circle cx="${len / 2}" cy="-2" r="12" fill="${alpha('#FFFFFF', 0.9)}"/>
-    <circle cx="${len / 2}" cy="-2" r="12" fill="none" stroke="${tint}" stroke-width="3.4"/>
+      stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 12" opacity=".55"/>
+    <path d="M ${-len / 2} 8 q ${len / 4} -22 ${len / 2} -4 q ${len / 4} 18 ${len / 2} -6" fill="none"
+      stroke="${tint}" stroke-width="4.4" stroke-linecap="round" stroke-dasharray="2 12" opacity=".75"/>
+    <circle cx="${len / 2}" cy="-2" r="13" fill="${alpha('#FFFFFF', 0.92)}"/>
+    <circle cx="${len / 2}" cy="-2" r="13" fill="none" stroke="${tint}" stroke-width="3.6"/>
   </g>`;
 }
 
@@ -184,10 +207,10 @@ function swipeHint(x, y, len, tint) {
 function thoughtBubble(x, y, s, tint, glyph) {
   const k = s / 100;
   return `<g transform="translate(${x} ${y}) scale(${k})">
-    <circle cx="-30" cy="52" r="7" fill="#FFFFFF" opacity=".95"/>
-    <circle cx="-16" cy="38" r="11" fill="#FFFFFF" opacity=".95"/>
-    <ellipse cx="0" cy="0" rx="50" ry="38" fill="#FFFFFF"/>
-    <ellipse cx="0" cy="0" rx="50" ry="38" fill="none" stroke="${tint}" stroke-width="4" stroke-opacity=".45"/>
+    <circle cx="-46" cy="54" r="7" fill="#FFFFFF"/>
+    <circle cx="-30" cy="40" r="11.5" fill="#FFFFFF"/>
+    <ellipse cx="0" cy="0" rx="50" ry="39" fill="#FFFFFF"/>
+    <ellipse cx="0" cy="0" rx="50" ry="39" fill="none" stroke="${tint}" stroke-width="4" stroke-opacity=".4"/>
     <g transform="translate(0 2)">${glyph}</g>
   </g>`;
 }
@@ -203,12 +226,19 @@ function ball(x, y, r, tint, light) {
   </g>`;
 }
 
-/** A swirl of water going round. Flush and Wave's whole vocabulary. */
+/** Water going round: two arcs and an arrow head. Flush and Wave's vocabulary. */
 function swirl(x, y, r, tint, o = 1) {
-  return `<g transform="translate(${x} ${y})" opacity="${o}" fill="none" stroke="${tint}"
-    stroke-linecap="round" stroke-width="${(r * 0.24).toFixed(1)}">
-    <path d="M ${-r} 0 a ${r} ${r * 0.7} 0 1 1 ${r * 0.9} ${r * 0.66}"/>
-    <path d="M ${-r * 0.5} ${r * 0.16} a ${r * 0.5} ${r * 0.36} 0 1 1 ${r * 0.46} ${r * 0.32}" opacity=".7"/>
+  const sw = Math.max(2.2, r * 0.19).toFixed(1);
+  return `<g transform="translate(${x} ${y})" opacity="${o}">
+    <g fill="none" stroke="${tint}" stroke-linecap="round" stroke-width="${sw}">
+      <path d="M ${(r * 0.96).toFixed(1)} ${(-r * 0.12).toFixed(1)}
+               a ${r} ${(r * 0.62).toFixed(1)} 0 1 1 ${(-r * 0.7).toFixed(1)} ${(-r * 0.44).toFixed(1)}"/>
+      <path d="M ${(r * 0.5).toFixed(1)} ${(r * 0.2).toFixed(1)}
+               a ${(r * 0.5).toFixed(1)} ${(r * 0.32).toFixed(1)} 0 1 1 ${(-r * 0.36).toFixed(1)} ${(-r * 0.22).toFixed(1)}"
+        opacity=".75"/>
+    </g>
+    <path d="M ${(r * 0.96).toFixed(1)} ${(-r * 0.46).toFixed(1)} l ${(r * 0.3).toFixed(1)} ${(r * 0.34).toFixed(1)}
+             l ${(-r * 0.34).toFixed(1)} ${(r * 0.26).toFixed(1)} Z" fill="${tint}"/>
   </g>`;
 }
 
@@ -218,35 +248,37 @@ function swirl(x, y, r, tint, o = 1) {
 
 /** Pictographs for Potty Order's four cards and Bathroom Match's tiles. */
 const PICT = {
-  pants: (f) => `<g fill="${f}"><path d="M -19 -22 h 38 l 5 44 h -16 l -8 -26 l -8 26 h -16 Z"/>
-    <rect x="-20" y="-26" width="40" height="8" rx="4"/></g>`,
-  sit: (f) => `<g><path d="M -21 -8 q 0 24 21 24 q 21 0 21 -24 Z" fill="${f}"/>
-    <ellipse cx="0" cy="-9" rx="24" ry="9" fill="${f}"/>
-    <ellipse cx="0" cy="-10" rx="13" ry="4.4" fill="#FFFFFF" opacity=".9"/>
-    <rect x="-6" y="16" width="12" height="7" rx="3.5" fill="${f}"/></g>`,
-  wipe: (f) => `<g><circle r="21" fill="${f}"/><circle r="7.6" fill="#FFFFFF"/>
-    <path d="M 19 6 q 12 2 12 16 h -13 Z" fill="${f}" opacity=".7"/></g>`,
-  wash: (f) => `<g fill="${f}"><circle cx="-9" cy="-6" r="10"/><circle cx="8" cy="4" r="13"/>
-    <circle cx="-8" cy="12" r="6.4" opacity=".75"/></g>`,
+  pants: (f) => `<g fill="${f}"><path d="M -19 -20 h 38 l 5 42 h -15 l -9 -25 l -9 25 h -15 Z"/>
+    <rect x="-21" y="-26" width="42" height="9" rx="4.5"/></g>`,
+  sit: (f) => `<g><path d="M -21 -7 q 0 25 21 25 q 21 0 21 -25 Z" fill="${f}"/>
+    <ellipse cx="0" cy="-8" rx="25" ry="9.5" fill="${f}"/>
+    <ellipse cx="0" cy="-9" rx="13.5" ry="4.6" fill="#FFFFFF" opacity=".92"/>
+    <rect x="-6" y="17" width="12" height="7" rx="3.5" fill="${f}"/></g>`,
+  wipe: (f) => `<g><circle r="21" fill="${f}"/><circle r="8" fill="#FFFFFF"/>
+    <circle r="14" fill="none" stroke="#FFFFFF" stroke-width="2" opacity=".38"/>
+    <path d="M 19 6 q 13 3 13 17 h -14 Z" fill="${f}" opacity=".72"/></g>`,
+  wash: (f) => `<g fill="${f}"><circle cx="-9" cy="-6" r="10.5"/><circle cx="8" cy="5" r="13.5"/>
+    <circle cx="-9" cy="13" r="6.4" opacity=".72"/></g>`,
   soap: (f) => `<g><path d="M -14 16 q -5 -32 14 -32 q 19 0 14 32 Z" fill="${f}"/>
     <rect x="-11" y="-2" width="22" height="7" rx="3.5" fill="#FFFFFF" opacity=".6"/>
     <rect x="-6" y="-25" width="12" height="11" rx="4" fill="${f}" opacity=".7"/>
     <path d="M 0 -28 h 11 q 5 0 5 5 v 4" stroke="${f}" stroke-width="5.5" fill="none" stroke-linecap="round" opacity=".7"/></g>`,
-  towel: (f) => `<g><rect x="-19" y="-18" width="38" height="36" rx="9" fill="${f}"/>
-    <rect x="-19" y="-4" width="38" height="7" rx="3.5" fill="#FFFFFF" opacity=".8"/>
-    <rect x="-19" y="-22" width="38" height="7" rx="3.5" fill="${f}" opacity=".55"/></g>`,
+  towel: (f) => `<g><rect x="-19" y="-17" width="38" height="35" rx="9" fill="${f}"/>
+    <rect x="-19" y="-3" width="38" height="7" rx="3.5" fill="#FFFFFF" opacity=".85"/>
+    <rect x="-21" y="-24" width="42" height="9" rx="4.5" fill="${f}" opacity=".5"/></g>`,
+  /** A tile still face down: the same quiet target the scene's empty slots use. */
+  back: (f) => `<g fill="none" stroke="${f}" stroke-width="3.4"><circle r="14"/>
+    <circle r="4.6" fill="${f}" stroke="none"/></g>`,
 };
 
 /** One picture card from the routine: a white tile with a pictograph on it. */
-function pictureCard(x, y, w, h, tint, glyph, {
-  rot = 0, lifted = false, radius = 15,
-} = {}) {
+function pictureCard(x, y, w, h, tint, glyph, { rot = 0, lifted = false, radius = 15 } = {}) {
   return `<g transform="translate(${x} ${y}) rotate(${rot})">
-    ${lifted ? `<ellipse cx="4" cy="${h / 2 + 16}" rx="${w * 0.44}" ry="7" fill="${P.midnight}" opacity=".16"/>` : ''}
+    ${lifted ? `<ellipse cx="4" cy="${h / 2 + 18}" rx="${w * 0.44}" ry="7" fill="${P.midnight}" opacity=".18"/>` : ''}
     <rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="${radius}" fill="#FFFFFF"/>
     <rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="${radius}" fill="none"
-      stroke="${alpha(tint, lifted ? 0.55 : 0.32)}" stroke-width="${lifted ? 3.4 : 2.6}"/>
-    <g transform="translate(0 0) scale(${Math.min(w, h) / 78})">${glyph(tint)}</g>
+      stroke="${alpha(tint, lifted ? 0.6 : 0.34)}" stroke-width="${lifted ? 3.4 : 2.6}"/>
+    <g transform="scale(${(Math.min(w, h) / 78).toFixed(3)})">${glyph(tint)}</g>
   </g>`;
 }
 
@@ -258,14 +290,14 @@ function pictureCard(x, y, w, h, tint, glyph, {
  * A row of marks. Filled ones are things that have happened; the rest are
  * waiting, drawn as an open outline rather than a gap, so nothing looks lost.
  */
-function marks(total, done, { tint, soft, size = 34, glyph = null, restGlyph = null }) {
-  return `<div style="display:flex;gap:11px;align-items:center;justify-content:center">
+function marks(total, done, { tint, soft, size = 42, glyph = null, restGlyph = null }) {
+  return `<div style="display:flex;gap:12px;align-items:center;justify-content:center">
     ${Array.from({ length: total }, (_, i) => {
       const on = i < done;
       return `<div style="width:${size}px;height:${size}px;border-radius:${size / 2}px;display:grid;place-items:center;
-        ${on ? `background:${tint};box-shadow:0 2px 6px ${alpha(tint, .3)}`
-        : `background:${alpha(soft || '#FFFFFF', .9)};border:2.4px solid ${alpha(tint, .26)}`}">
-        ${on ? (glyph ? glyph('#FFFFFF') : '') : (restGlyph ? restGlyph(alpha(tint, .34)) : '')}
+        ${on ? `background:${tint};box-shadow:0 2px 7px ${alpha(tint, .32)}`
+        : `background:${alpha(soft || '#FFFFFF', .92)};border:2.6px solid ${alpha(tint, .24)}`}">
+        ${on ? (glyph ? glyph('#FFFFFF') : '') : (restGlyph ? restGlyph(alpha(tint, .3)) : '')}
       </div>`;
     }).join('')}
   </div>`;
@@ -280,42 +312,39 @@ function trayCaption(text, { color = P.sand600, size = 15 } = {}) {
  * Hop's tummy, filling up.
  *
  * Six beads that fill from the left. There is no total on screen and no number:
- * a tummy that is "getting full" is a friendly thing, and a bar that could look
- * like it is running out would say the opposite.
+ * a tummy that is getting full is a friendly thing, and a bar that could look
+ * like it was running out would say the opposite.
  */
 function tummyMeter(filled, total = 6) {
   const bead = (i) => {
     const on = i < filled;
-    return `<div style="width:31px;height:26px;border-radius:13px;
+    return `<div style="width:31px;height:27px;border-radius:13.5px;
       ${on ? `background:linear-gradient(180deg, ${P.peachPop}, ${P.peachDeep});box-shadow:0 2px 5px ${alpha(P.peachDeep, .28)}`
-      : `background:${alpha('#FFFFFF', .8)};border:2.4px solid ${alpha(P.peachDeep, .22)}`}">
+      : `background:${alpha('#FFFFFF', .82)};border:2.4px solid ${alpha(P.peachDeep, .2)}`}">
       ${on ? `<div style="height:8px;margin:4px 6px 0;border-radius:4px;background:#FFFFFF;opacity:.34"></div>` : ''}
     </div>`;
   };
-  return `<div style="display:flex;align-items:center;gap:11px;padding:9px 14px;border-radius:26px;
-    background:${alpha('#FFFFFF', .92)};box-shadow:0 1px 3px ${alpha(P.midnight, .08)}">
-    <div style="width:34px;height:34px;border-radius:17px;background:${P.sunshineSoft};display:grid;place-items:center;flex:0 0 auto">
-      <svg viewBox="0 0 24 24" width="22" height="22"><ellipse cx="12" cy="13" rx="9" ry="8.4" fill="${P.hopGreen}"/>
-        <ellipse cx="12" cy="14" rx="6" ry="5.6" fill="${P.sunshineSoft}"/></svg>
+  return `<div style="display:flex;align-items:center;gap:12px;padding:9px 15px 9px 9px;border-radius:27px;
+    background:${alpha('#FFFFFF', .94)};box-shadow:0 1px 4px ${alpha(P.midnight, .1)}">
+    <div style="width:38px;height:38px;border-radius:19px;background:${P.sunshineSoft};overflow:hidden;flex:0 0 auto;
+      display:grid;place-items:center">
+      <div style="transform:translateY(2px)">${svg('Art/character/hop-face.svg', { width: 44 })}</div>
     </div>
     <div style="display:flex;gap:6px">${Array.from({ length: total }, (_, i) => bead(i)).join('')}</div>
   </div>`;
 }
 
-/** The sit timer. It fills up; it never counts down and it never runs out. */
-function calmRing(size, progress, { track, fill, inner = '' }) {
-  const sw = 16;
+/** The sit timer, drawn the one way it is allowed to be drawn: filling up. */
+function calmRing(size, progress, { track, fill, sw = 18 }) {
   const r = (size - sw) / 2;
-  const cCirc = 2 * Math.PI * r;
-  return `<div style="position:relative;width:${size}px;height:${size}px">
-    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;transform:rotate(-90deg)">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${track}" stroke-width="${sw}"/>
-      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${fill}" stroke-width="${sw}"
-        stroke-linecap="round" stroke-dasharray="${cCirc.toFixed(1)}"
-        stroke-dashoffset="${(cCirc * (1 - progress)).toFixed(1)}"/>
-    </svg>
-    <div style="position:absolute;inset:${sw}px;border-radius:50%;overflow:hidden;display:grid;place-items:end center">${inner}</div>
-  </div>`;
+  const circ = 2 * Math.PI * r;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"
+    style="position:absolute;left:0;top:0;display:block;transform:rotate(-90deg)">
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${track}" stroke-width="${sw}"/>
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${fill}" stroke-width="${sw}"
+      stroke-linecap="round" stroke-dasharray="${circ.toFixed(1)}"
+      stroke-dashoffset="${(circ * (1 - progress)).toFixed(1)}"/>
+  </svg>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -340,12 +369,21 @@ function skipRow(label) {
   </div>`;
 }
 
+/** Title and instruction, in the one arrangement every routine screen uses. */
+function routineHead(title, instruction) {
+  return `<div style="flex:0 0 auto;text-align:center;margin-top:8px">
+    <div style="${type('childTitle', { color: P.midnight })};font-size:36px">${title}</div>
+    <div style="${type('childInstruction', { color: P.midnight })};font-size:19px;margin-top:7px;opacity:.72">${instruction}</div>
+  </div>`;
+}
+
 /**
  * One step of the guided routine.
  *
  * Same chrome as the first step: dots, a grown-up chip, one large title, one
  * instruction, one primary target at `hitTarget.childPrimary`, and the labelled
- * strip along the bottom so a child can see the whole trip at once.
+ * strip along the bottom so a child can see the whole trip at once. The step's
+ * own illustration sits in the middle with Hop standing in front of it.
  */
 function routineStep(appearance, {
   index, art, pose, hopWidth = 152, title, instruction, primary, skip, extra = '',
@@ -355,20 +393,16 @@ function routineStep(appearance, {
   const cardH = Math.round((cardW * 3) / 4);
   const overhang = 58;
 
-  return stage(ambient(art, appearance, { veil: 0.5, glow: [196, 430, 210] }), `
+  return stage(ambient(art, appearance, { veil: 0.36, glow: [196, 440, 210] }), `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
       ${routineTopRow(index)}
-
-      <div style="flex:0 0 auto;text-align:center;margin-top:8px">
-        <div style="${type('childTitle', { color: P.midnight })};font-size:36px">${title}</div>
-        <div style="${type('childInstruction', { color: P.midnight })};font-size:19px;margin-top:7px;opacity:.72">${instruction}</div>
-      </div>
+      ${routineHead(title, instruction)}
 
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto;position:relative;width:${cardW}px;height:${cardH + overhang}px;margin:0 auto">
         ${boardCard(appearance, { art, w: cardW })}
-        ${hopAt(pose, hopWidth, `left:-14px;bottom:0`)}
+        ${hopAt(pose, hopWidth, 'left:-16px;bottom:0')}
       </div>
       ${extra}
 
@@ -388,7 +422,7 @@ function routineWipe(appearance = 'light') {
     index: 1,
     art: 'Art/scenes/routine-wipe.svg',
     pose: 'sit',
-    hopWidth: 150,
+    hopWidth: 148,
     title: 'Wipe',
     instruction: 'Wipe from front to back.',
     primary: 'Next',
@@ -402,7 +436,7 @@ function routineFlush(appearance = 'light') {
     index: 2,
     art: 'Art/scenes/routine-flush.svg',
     pose: 'wave',
-    hopWidth: 154,
+    hopWidth: 152,
     title: 'Flush',
     instruction: 'Flush it away.',
     primary: 'Next',
@@ -416,7 +450,7 @@ function routineWash(appearance = 'light') {
     index: 3,
     art: 'Art/scenes/routine-wash.svg',
     pose: 'scrub',
-    hopWidth: 150,
+    hopWidth: 148,
     title: 'Wash',
     instruction: 'Soap, scrub, rinse.',
     primary: 'Next',
@@ -425,9 +459,9 @@ function routineWash(appearance = 'light') {
       ${marks(5, 3, {
         tint: P.pondBlueDeep,
         soft: '#FFFFFF',
-        size: 32,
-        glyph: (f) => MARK.droplets(f, 17),
-        restGlyph: (f) => MARK.droplets(f, 17),
+        size: 36,
+        glyph: (f) => MARK.droplets(f, 19),
+        restGlyph: (f) => MARK.droplets(f, 19),
       })}</div>`,
   });
 }
@@ -449,38 +483,33 @@ function routineHighFive(appearance = 'light') {
 /**
  * 20 — the sit timer.
  *
- * The ring fills. There is no number in it, no ticking, and nothing happens when
- * it comes round: the caption is `routine.sitTimer.caption`, and the child
- * leaves whenever they want by tapping Next or Skip this.
+ * The ring fills. There is no number inside it, nothing ticks, and nothing
+ * happens when it comes round: `routine.sitTimer.caption` sits under it and the
+ * child leaves whenever they like, by Next or by Skip this.
  */
 function routineTryTimer(appearance = 'light') {
   const col = c(appearance);
-  const art = 'Art/scenes/routine-try.svg';
-  const size = 268;
+  const size = 262;
 
-  return stage(ambient(art, appearance, { veil: 0.5, glow: [196, 400, 220] }), `
+  return stage(ambient('Art/scenes/routine-try.svg', appearance, { veil: 0.34, blur: 36, glow: [196, 410, 220] }), `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
       ${routineTopRow(0)}
-
-      <div style="flex:0 0 auto;text-align:center;margin-top:8px">
-        <div style="${type('childTitle', { color: P.midnight })};font-size:36px">Try</div>
-        <div style="${type('childInstruction', { color: P.midnight })};font-size:19px;margin-top:7px;opacity:.72">
-          Sit down and give it a try.</div>
-      </div>
+      ${routineHead('Try', 'Sit down and give it a try.')}
 
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto;display:flex;justify-content:center">
         <div style="position:relative;width:${size}px;height:${size}px">
-          <div style="position:absolute;inset:14px;border-radius:50%;background:${alpha('#FFFFFF', .72)}"></div>
-          ${calmRing(size, 0.36, { track: alpha('#FFFFFF', 0.78), fill: P.hopGreen })}
-          <div data-hop style="position:absolute;left:50%;bottom:26px;transform:translateX(-50%);width:186px;height:186px">
-            ${svg('Art/character/hop-sit.svg', { width: 186 })}
+          <div style="position:absolute;inset:18px;border-radius:50%;background:${alpha('#FFFFFF', .9)};
+            box-shadow:0 6px 22px ${alpha(P.midnight, .07)}"></div>
+          ${calmRing(size, 0.36, { track: P.hopGreenSoft, fill: P.hopGreen })}
+          <div data-hop style="position:absolute;left:50%;bottom:44px;transform:translateX(-50%);width:164px;height:164px">
+            ${svg('Art/character/hop-sit.svg', { width: 164 })}
           </div>
         </div>
       </div>
 
-      <div style="flex:0 0 auto;text-align:center;margin-top:18px">
+      <div style="flex:0 0 auto;text-align:center;margin-top:20px">
         <div style="${type('childInstruction', { color: P.sand600 })};font-size:19px">Take all the time you need.</div>
       </div>
 
@@ -502,8 +531,10 @@ function routineTryTimer(appearance = 'light') {
  * Every game in `MiniGameCatalog.all`, in catalogue order, with its scene and
  * the line a child hears before it starts.
  *
- * Nothing here is locked and nothing is ranked: there is no "new", no "best" and
- * no progress ring on a tile. Eight games, all available, always.
+ * Nothing here is locked and nothing is ranked: no "new" flag, no "best", no
+ * progress ring on a tile. Eight games, all available, always. `focus` is where
+ * in the scene the thumbnail's band is taken from, so each crop keeps the thing
+ * the game is about.
  */
 const GAMES = [
   { key: 'bubbleWash', title: 'Bubble Wash', desc: 'Pop every bubble to get your hands sparkly clean!', focus: 0.55 },
@@ -518,28 +549,24 @@ const GAMES = [
 
 /** A thumbnail: the game's own scene, cropped to a band around its subject. */
 function thumb(key, w, h, focus) {
-  const artH = Math.round((w * 3) / 4);
-  const shift = Math.round((artH - h) * focus);
-  return `<div style="position:relative;width:${w}px;height:${h}px;overflow:hidden;background:${P.sand100}">
-    <div style="position:absolute;left:0;top:${-shift}px">
-      ${artOr([`Art/scenes/games-${key}.svg`], { width: w, height: artH }, '')}
-    </div>
-  </div>`;
+  const url = bgImage(`Art/scenes/games-${key}.svg`);
+  return `<div style="width:${w}px;height:${h}px;background-color:${P.sand100};
+    ${url ? `background-image:${url};background-size:cover;background-position:center ${(focus * 100).toFixed(0)}%;
+    background-repeat:no-repeat;` : ''}"></div>`;
 }
 
 function gamesHub(appearance = 'light') {
   const col = c(appearance);
   const dark = appearance.startsWith('dark');
-  const H_ = ink(appearance);
+  const H = ink(appearance);
   const cardW = 175.5;
-  const thumbH = 80;
 
   const card = (g) => `
     <div style="border-radius:${T.radius.l}px;overflow:hidden;background:${col.surface};
       box-shadow:${elevation(appearance, 'resting')}">
-      ${thumb(g.key, Math.ceil(cardW), thumbH, g.focus)}
+      ${thumb(g.key, Math.ceil(cardW), 92, g.focus)}
       <div style="padding:8px 11px 10px">
-        <div style="${type('childInstruction', { color: H_ })};font-size:14.5px;line-height:1.18;height:34px;overflow:hidden">${g.title}</div>
+        <div style="${type('childInstruction', { color: H })};font-size:14.5px;line-height:1.18;height:21px;overflow:hidden">${g.title}</div>
         <div style="${type('parentCallout', { color: col.textTertiary })};font-size:11px;line-height:1.3;
           height:29px;overflow:hidden;margin-top:2px">${g.desc}</div>
       </div>
@@ -548,10 +575,10 @@ function gamesHub(appearance = 'light') {
   return `
   <div style="position:relative;width:100%;height:100%;overflow:hidden;background:${col.backgroundPrimary}">
     <div style="position:absolute;left:0;top:0">
-      ${scenes.dome(W, 216, dark ? alpha(P.hopGreen, 0.13) : P.hopGreenSoft)}
+      ${scenes.dome(393, 216, dark ? alpha(P.hopGreen, 0.13) : P.hopGreenSoft)}
     </div>
     <div style="position:relative;display:flex;flex-direction:column;height:100%">
-      ${statusBar(H_)}
+      ${statusBar(H)}
       <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 16px 6px;overflow:hidden">
 
         <div style="flex:0 0 auto;display:flex;align-items:center;gap:10px;height:56px">
@@ -560,7 +587,7 @@ function gamesHub(appearance = 'light') {
             <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="${dark ? col.textSecondary : P.sand600}"
               stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
           </div>
-          <div style="flex:1;text-align:center;${type('childTitle', { color: H_ })};font-size:28px">Play</div>
+          <div style="flex:1;text-align:center;${type('childTitle', { color: H })};font-size:28px">Play</div>
           <div style="height:44px;padding:0 15px 0 11px;border-radius:22px;flex:0 0 auto;display:flex;align-items:center;gap:6px;
             background:${dark ? col.surfaceElevated : alpha('#FFFFFF', .88)}">
             ${MARK.star(P.sunshineBright, 21)}
@@ -574,7 +601,7 @@ function gamesHub(appearance = 'light') {
 
         <div style="flex:1"></div>
       </div>
-      ${homeIndicator(H_)}
+      ${homeIndicator(H)}
     </div>
   </div>`;
 }
@@ -592,10 +619,10 @@ function gamesHub(appearance = 'light') {
  */
 function gameScreen(appearance, {
   art, title, line, svgLayer = '', htmlLayer = '', tray = '', trayH = 0,
-  primary = null, secondary = 'All done', secondaryTint = P.hopGreenDeep, titleSize = 32,
+  primary = null, secondary = 'All done', tint = P.hopGreenDeep, titleSize = 32,
 }) {
   const col = c(appearance);
-  return stage(ambient(art, appearance, { veil: 0.52, glow: [196, 430, 230] }), `
+  return stage(ambient(art, appearance, { veil: 0.4, glow: [196, 430, 230] }), `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 12px 6px;overflow:hidden">
 
       <div style="flex:0 0 auto;text-align:center;padding:2px 12px 0">
@@ -616,8 +643,8 @@ function gameScreen(appearance, {
         ${primary && secondary ? '<div style="height:12px"></div>' : ''}
         ${secondary ? childButton(col, appearance, secondary, {
           kind: 'secondary', height: 76, radius: 38,
-          fill: '#FFFFFF', textColor: secondaryTint, fontSize: 21,
-          border: `1.5px solid ${alpha(secondaryTint, .2)}`,
+          fill: '#FFFFFF', textColor: tint, fontSize: 21,
+          border: `1.5px solid ${alpha(tint, .2)}`,
         }) : ''}
       </div>
     </div>`);
@@ -627,11 +654,16 @@ function gameScreen(appearance, {
 function gamePottyPath(appearance = 'light') {
   const f = frame(369);
   const pads = [[92, 448], [206, 390], [306, 366], [396, 344], [472, 330]];
+  const scale = [0.95, 0.85, 0.78, 0.7, 0.62];
   const done = 3;
+  const padMark = (fc, pale) => `<svg viewBox="0 0 40 40" width="27" height="27">
+    <ellipse cx="20" cy="21" rx="15" ry="7.4" fill="${fc}"/>
+    <path d="M20 21 L31.5 16.4 A15 7.4 0 0 0 27.4 15.2Z" fill="${pale}"/></svg>`;
+
   const layer = pads.map(([x, y], i) => {
-    const tone = i < done ? mix(P.hopGreen, P.hopGreenDeep, 0.42) : mix(P.hopGreenLight, P.hopGreen, 0.3);
-    return `${scenes.lilyPad(f.x(x), f.y(y), 0.62 - i * 0.05, tone)}
-      ${i < done ? sparkle(f.x(x), f.y(y) - 10, 5.4, P.sunshine, 0.85) : ''}`;
+    const tone = i < done ? mix(P.hopGreen, P.hopGreenDeep, 0.5) : mix(P.hopGreenLight, P.hopGreen, 0.35);
+    return `${scenes.lilyPad(f.x(x), f.y(y), scale[i], tone)}
+      ${i < done ? sparkle(f.x(x) + 4, f.y(y) - 13, 6, P.sunshine, 0.9) : ''}`;
   }).join('');
 
   return gameScreen(appearance, {
@@ -639,50 +671,49 @@ function gamePottyPath(appearance = 'light') {
     title: 'Potty Path',
     line: 'Hop along the lily pads all the way to the potty!',
     svgLayer: layer,
-    htmlLayer: hopAt('jump', 96, `left:${f.x(306) - 48}px;top:${f.y(366) - 96}px`),
-    trayH: 148,
+    htmlLayer: hopAt('jump', 108, `left:${f.x(306) - 54}px;top:${f.y(366) - 14 - 108}px`),
+    trayH: 150,
     tray: marks(5, done, {
       tint: P.hopGreenDeep,
       soft: P.hopGreenSoft,
-      size: 40,
-      glyph: (fc) => `<svg viewBox="0 0 40 40" width="26" height="26"><ellipse cx="20" cy="21" rx="15" ry="7.4" fill="${fc}"/>
-        <path d="M20 21 L31 16.6 A15 7.4 0 0 0 27.6 15.3Z" fill="${P.hopGreenDeep}"/></svg>`,
-      restGlyph: (fc) => `<svg viewBox="0 0 40 40" width="26" height="26"><ellipse cx="20" cy="21" rx="15" ry="7.4" fill="${fc}"/></svg>`,
+      size: 44,
+      glyph: (fc) => padMark(fc, P.hopGreenDeep),
+      restGlyph: (fc) => padMark(fc, 'none'),
     }),
-    secondaryTint: P.hopGreenDeep,
+    tint: P.hopGreenDeep,
   });
 }
 
 /** 23 — Bathroom Match. The only game with no ending of its own. */
 function gameBathroomMatch(appearance = 'light') {
   const f = frame(369);
-  const tile = (glyph, tint, matched) => `
-    <div style="width:88px;height:74px;border-radius:${T.radius.m}px;display:grid;place-items:center;
-      background:#FFFFFF;box-shadow:0 2px 8px ${alpha(P.midnight, .1)};
-      border:${matched ? `3px solid ${P.hopGreenDeep}` : `2px solid ${alpha(tint, .22)}`};position:relative">
-      <svg viewBox="-30 -30 60 60" width="46" height="46">${glyph(tint)}</svg>
-      ${matched ? `<div style="position:absolute;right:-7px;top:-7px;width:23px;height:23px;border-radius:12px;
-        background:${P.hopGreenDeep};display:grid;place-items:center">${MARK.check('#FFFFFF', 14)}</div>` : ''}
-    </div>`;
-
-  const backTile = (tint) => `
-    <div style="width:88px;height:74px;border-radius:${T.radius.m}px;display:grid;place-items:center;
-      background:${alpha(tint, .16)};border:2px dashed ${alpha(tint, .4)}">
-      ${MARK.droplets(alpha(tint, .45), 26)}
+  const tile = (glyph, hue, { matched = false, faceDown = false, hint = false } = {}) => `
+    <div style="width:88px;height:74px;border-radius:${T.radius.m}px;display:grid;place-items:center;position:relative;
+      background:${faceDown ? alpha(hue, .13) : '#FFFFFF'};
+      box-shadow:${faceDown ? 'none' : `0 2px 8px ${alpha(P.midnight, .1)}`};
+      border:${matched ? `3px solid ${P.hopGreenDeep}` : faceDown ? `2.4px dashed ${alpha(hue, .42)}` : `2px solid ${alpha(hue, .22)}`};
+      ${hint ? `outline:3px solid ${alpha(hue, .3)};outline-offset:5px;` : ''}">
+      <svg viewBox="-30 -30 60 60" width="46" height="46">${glyph(faceDown ? alpha(hue, .5) : hue)}</svg>
+      ${matched ? `<div style="position:absolute;right:-8px;top:-8px;width:24px;height:24px;border-radius:12px;
+        background:${P.hopGreenDeep};display:grid;place-items:center;box-shadow:0 1px 4px ${alpha(P.midnight, .2)}">
+        ${MARK.check('#FFFFFF', 14)}</div>` : ''}
     </div>`;
 
   return gameScreen(appearance, {
     art: 'Art/scenes/games-bathroomMatch.svg',
     title: 'Bathroom Match',
     line: 'Find the two that go together.',
-    svgLayer: `${tapHint(f.x(300), f.y(250), 22, P.lavenderDeep)}`,
-    htmlLayer: hopAt('talk', 128, `right:8px;bottom:${Math.round(f.y(480) - f.y(392)) - 6}px`),
-    trayH: 184,
+    htmlLayer: hopAt('talk', 118, `left:${f.x(470) - 59}px;top:${f.y(430) - 118}px`),
+    trayH: 192,
     tray: `<div style="display:flex;gap:9px">
-        ${tile(PICT.soap, P.lavenderDeep, true)}${tile(PICT.towel, P.peachDeep, false)}${backTile(P.lavenderDeep)}
+        ${tile(PICT.soap, P.lavenderDeep, { matched: true })}
+        ${tile(PICT.towel, P.peachPop)}
+        ${tile(PICT.back, P.lavenderDeep, { faceDown: true })}
       </div>
       <div style="display:flex;gap:9px">
-        ${backTile(P.pondBlueDeep)}${tile(PICT.soap, P.lavenderDeep, true)}${tile(PICT.wipe, P.pondBlueDeep, false)}
+        ${tile(PICT.back, P.pondBlueDeep, { faceDown: true, hint: true })}
+        ${tile(PICT.soap, P.lavenderDeep, { matched: true })}
+        ${tile(PICT.wipe, P.pondBlueDeep)}
       </div>`,
     primary: 'All done',
     secondary: null,
@@ -697,71 +728,80 @@ function gameFlySnack(appearance = 'light') {
     title: 'Fly Snack',
     line: 'Hop is on his lily pad. Tap the flies for a snack!',
     svgLayer: `
-      ${fly(f.x(150), f.y(150), 34, P.pondBlue, { rot: -8, trail: true })}
-      ${fly(f.x(470), f.y(112), 30, P.hopGreenDeep, { rot: 10 })}
-      ${fly(f.x(392), f.y(232), 27, P.sunshineBright, { rot: -14, trail: true })}
-      ${tapHint(f.x(392), f.y(232), 26, P.sunshineDeep)}
-      ${sparkle(f.x(250), f.y(196), 7, P.sunshine, 0.9)}`,
-    htmlLayer: hopAt('catch', 148, `left:${f.x(320) - 74}px;top:${f.y(412) - 142}px`),
-    trayH: 156,
+      ${fly(f.x(140), f.y(152), 34, P.pondBlue, { rot: -8, trail: true })}
+      ${tapHint(f.x(470), f.y(112), 24, P.hopGreenInk, { rings: 2 })}
+      ${fly(f.x(470), f.y(112), 31, P.hopGreenDeep, { rot: 10 })}
+      ${sparkle(f.x(228), f.y(196), 7, P.sunshine, 0.9)}`,
+    htmlLayer: `${hopAt('catch', 148, `left:${f.x(320) - 74}px;top:${f.y(412) - 142}px`)}
+      <svg width="369" height="277" viewBox="0 0 369 277" style="position:absolute;left:0;top:0;display:block">
+        ${fly(f.x(456), f.y(244), 28, P.sunshineBright, { rot: -18 })}
+        ${sparkle(f.x(486), f.y(214), 6.4, '#FFFFFF', .9)}
+      </svg>`,
+    trayH: 160,
     tray: `${tummyMeter(4)}${trayCaption("Yum! Hop's tummy is filling up.")}`,
-    secondaryTint: P.hopGreenDeep,
+    tint: P.hopGreenDeep,
   });
 }
 
 /** 25 — Mud Off. */
 function gameMudOff(appearance = 'light') {
   const f = frame(369);
-  const handY = f.y(410);
+  const glowBlob = (x, y, rx, ry) =>
+    `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#FFFFFF" opacity=".34"/>`;
+
   return gameScreen(appearance, {
     art: 'Art/scenes/games-mudOff.svg',
     title: 'Mud Off',
     line: 'Hop played by the pond! Swipe each patch away.',
     svgLayer: `
-      ${hopHand(f.x(232), handY, 0.5, { rot: -16 })}
-      ${hopHand(f.x(438), handY, 0.5, { rot: -16, flip: true })}
-      ${mudPatch(f.x(268), f.y(352), 17, MUD.brown, { rot: 14 })}
-      ${mudPatch(f.x(216), f.y(300), 13, MUD.green, { rot: -22 })}
-      ${mudPatch(f.x(452), f.y(340), 15, MUD.brownLight, { rot: 30 })}
-      <g>${sparkle(f.x(396), f.y(300), 10, P.pondBlueLight)}${sparkle(f.x(414), f.y(326), 6.4, '#FFFFFF')}
-         ${sparkle(f.x(374), f.y(326), 5.2, P.sunshine, .9)}</g>
-      ${swipeHint(f.x(330), f.y(392), 96, P.pondBlueDeep)}`,
-    trayH: 156,
+      ${glowBlob(f.x(240), f.y(400), f.x(96), f.y(84))}
+      ${glowBlob(f.x(400), f.y(400), f.x(96), f.y(84))}
+      ${hopHand(f.x(186), f.y(452), f.s * 1.02, { rot: -12 })}
+      ${hopHand(f.x(454), f.y(452), f.s * 1.02, { rot: -12, flip: true })}
+      ${mudPatch(f.x(224), f.y(401), f.x(23), MUD.brown, { rot: 16 })}
+      ${mudPatch(f.x(416), f.y(401), f.x(19), MUD.green, { rot: -24 })}
+      ${sparkleBurst(f.x(247), f.y(372), f.s * 1.1)}
+      ${sparkleBurst(f.x(393), f.y(370), f.s * 0.9)}
+      ${swipeHint(f.x(238), f.y(424), f.x(120), P.pondBlueDeep)}`,
+    trayH: 160,
     tray: `${marks(4, 2, {
       tint: P.pondBlueDeep,
       soft: '#FFFFFF',
-      size: 40,
-      glyph: (fc) => `<svg viewBox="-14 -14 28 28" width="24" height="24"><path d="${sparkPath(11)}" fill="${fc}"/></svg>`,
-      restGlyph: () => `<svg viewBox="-22 -22 44 44" width="24" height="24">${mudPatch(0, 0, 15, MUD.brown)}</svg>`,
+      size: 42,
+      glyph: (fc) => `<svg viewBox="-15 -15 30 30" width="25" height="25"><path d="${sparkPath(12)}" fill="${fc}"/></svg>`,
+      restGlyph: () => `<svg viewBox="-24 -24 48 48" width="25" height="25">${mudPatch(0, 0, 17, MUD.brown)}</svg>`,
     })}${trayCaption('One patch gone!')}`,
-    secondaryTint: P.pondBlueDeep,
+    tint: P.pondBlueDeep,
   });
 }
 
 /** 26 — Listen to Your Body. */
 function gameBodySignal(appearance = 'light') {
   const f = frame(369);
-  const floor = f.y(366);
+  const bubbleMark = (fc, filled) => `<svg viewBox="-17 -17 34 34" width="27" height="27">
+    <ellipse rx="13" ry="10" ${filled ? `fill="${fc}"` : `fill="none" stroke="${fc}" stroke-width="3"`}/>
+    <circle cx="-11.5" cy="12.5" r="3.4" ${filled ? `fill="${fc}"` : `fill="none" stroke="${fc}" stroke-width="2.6"`}/></svg>`;
+
   return gameScreen(appearance, {
     art: 'Art/scenes/games-bodySignal.svg',
     title: 'Listen to Your Body',
     titleSize: 29,
     line: 'Hop is bouncing his ball. Watch for his bubble!',
-    svgLayer: `
-      ${ball(f.x(196), f.y(316), 26, P.peachPop, P.sunshine)}
-      ${thoughtBubble(f.x(392), f.y(126), 116, P.pondBlueDeep, `<g transform="scale(0.72)">${PICT.sit(P.pondBlueDeep)}</g>`)}
-      ${tapHint(f.x(392), f.y(126), 46, P.pondBlueDeep)}`,
-    htmlLayer: hopAt('full', 138, `left:${f.x(300) - 69}px;top:${floor - 132}px`),
-    trayH: 148,
+    svgLayer: `${ball(f.x(168), f.y(404), f.x(30), P.peachPop, P.sunshine)}`,
+    htmlLayer: `${hopAt('full', 130, `left:${f.x(270) - 65}px;top:${f.y(366) - 130}px`)}
+      <svg width="369" height="277" viewBox="0 0 369 277" style="position:absolute;left:0;top:0;display:block">
+        ${tapHint(f.x(492), f.y(122), f.x(118), P.pondBlueDeep, { rings: 2 })}
+        ${thoughtBubble(f.x(492), f.y(122), f.x(118), P.pondBlueDeep, `<g transform="scale(0.74)">${PICT.sit(P.pondBlueDeep)}</g>`)}
+      </svg>`,
+    trayH: 150,
     tray: marks(3, 1, {
       tint: P.pondBlueDeep,
       soft: '#FFFFFF',
-      size: 42,
-      glyph: (fc) => `<svg viewBox="-16 -16 32 32" width="26" height="26"><ellipse rx="13" ry="10" fill="${fc}"/>
-        <circle cx="-11" cy="12" r="3.4" fill="${fc}"/></svg>`,
-      restGlyph: (fc) => `<svg viewBox="-16 -16 32 32" width="26" height="26"><ellipse rx="13" ry="10" fill="none" stroke="${fc}" stroke-width="3"/></svg>`,
+      size: 44,
+      glyph: (fc) => bubbleMark(fc, true),
+      restGlyph: (fc) => bubbleMark(fc, false),
     }),
-    secondaryTint: P.pondBlueDeep,
+    tint: P.pondBlueDeep,
   });
 }
 
@@ -771,27 +811,34 @@ function gameFlushWave(appearance = 'light') {
   return gameScreen(appearance, {
     art: 'Art/scenes/games-flushWave.svg',
     title: 'Flush and Wave',
-    line: 'Tap the handle and watch the water swirl!',
+    line: 'Tap the flusher and watch the water swirl!',
     svgLayer: `
-      ${tapHint(f.x(452), f.y(254), 30, P.pondBlueDeep)}
-      ${swirl(f.x(452), f.y(336), 34, '#FFFFFF', 0.9)}
-      ${swirl(f.x(452), f.y(336), 21, P.pondBlueSoft, 0.85)}
-      ${sparkle(f.x(524), f.y(292), 8, '#FFFFFF', .9)}${sparkle(f.x(384), f.y(300), 6, '#FFFFFF', .7)}`,
-    htmlLayer: hopAt('wave', 132, `left:${f.x(210) - 66}px;top:${f.y(372) - 126}px`),
-    trayH: 156,
+      ${tapHint(f.x(452), f.y(254), f.x(46), P.pondBlueDeep, { rings: 2 })}
+      ${swirl(f.x(452), f.y(330), f.x(46), '#FFFFFF', 0.95)}
+      ${swirl(f.x(452), f.y(330), f.x(26), P.pondBlueSoft, 0.9)}
+      ${sparkle(f.x(536), f.y(288), 8, '#FFFFFF', .9)}${sparkle(f.x(372), f.y(296), 6, '#FFFFFF', .7)}`,
+    htmlLayer: hopAt('wave', 122, `left:${f.x(175) - 61}px;top:${f.y(372) - 122}px`),
+    trayH: 160,
     tray: `${marks(3, 2, {
       tint: P.pondBlueDeep,
       soft: '#FFFFFF',
-      size: 40,
-      glyph: (fc) => `<svg viewBox="-16 -16 32 32" width="26" height="26">${swirl(0, 0, 12, fc)}</svg>`,
-      restGlyph: (fc) => `<svg viewBox="-16 -16 32 32" width="26" height="26">${swirl(0, 0, 12, fc)}</svg>`,
+      size: 42,
+      glyph: (fc) => `<svg viewBox="-17 -14 34 28" width="26" height="26">${swirl(0, 0, 13, fc)}</svg>`,
+      restGlyph: (fc) => `<svg viewBox="-17 -14 34 28" width="26" height="26">${swirl(0, 0, 13, fc)}</svg>`,
     })}${trayCaption('Whoosh! Around it goes.')}`,
     primary: 'Again!',
-    secondaryTint: P.pondBlueDeep,
+    tint: P.pondBlueDeep,
   });
 }
 
-/** 28 — Potty Order. The scene already carries four dashed slots; fill two. */
+/**
+ * 28 — Potty Order.
+ *
+ * The scene already carries the four dashed slots and the arrows between them,
+ * so the sprites here are only the cards: two placed, one on its way down, and
+ * the rest waiting in the tray. A card in the wrong slot bounces back, which is
+ * why nothing on this board is marked wrong.
+ */
 function gamePottyOrder(appearance = 'light') {
   const f = frame(369);
   const slot = (i) => ({ cx: f.x(93 + i * 146), cy: f.y(220) });
@@ -803,22 +850,22 @@ function gamePottyOrder(appearance = 'light') {
     title: 'Potty Order',
     line: 'Four cards, one path. Which one comes first?',
     svgLayer: `
-      ${pictureCard(slot(0).cx, slot(0).cy, cw, ch, P.hopGreenDeep, PICT.pants)}
+      ${pictureCard(slot(0).cx, slot(0).cy, cw, ch, P.lavenderDeep, PICT.pants)}
       ${pictureCard(slot(1).cx, slot(1).cy, cw, ch, P.hopGreenDeep, PICT.sit)}
-      ${pictureCard(slot(2).cx, slot(2).cy - f.y(52), cw, ch, P.sunshineDeep, PICT.wipe, { rot: -6, lifted: true })}
-      ${sparkle(slot(1).cx + cw * 0.5, slot(1).cy - ch * 0.44, 8, P.sunshine, .95)}`,
+      ${pictureCard(slot(2).cx, slot(2).cy - f.y(56), cw, ch, P.peachDeep, PICT.wipe, { rot: -6, lifted: true })}
+      ${sparkle(slot(1).cx + cw * 0.52, slot(1).cy - ch * 0.46, 8, P.sunshine, .95)}`,
     trayH: 168,
     tray: `<div style="display:flex;gap:14px;align-items:center">
-      ${[[PICT.wipe, P.sunshineDeep, true], [PICT.wash, P.pondBlueDeep, false]].map(([g, tint, taken]) => `
+      ${[[PICT.wipe, P.peachDeep, true], [PICT.wash, P.pondBlueDeep, false]].map(([g, hue, taken]) => `
         <div style="width:74px;height:88px;border-radius:16px;display:grid;place-items:center;
           background:${taken ? alpha(P.sand100, .7) : '#FFFFFF'};
-          border:${taken ? `2.6px dashed ${alpha(tint, .45)}` : `2.6px solid ${alpha(tint, .3)}`};
+          border:${taken ? `2.6px dashed ${alpha(hue, .42)}` : `2.6px solid ${alpha(hue, .3)}`};
           ${taken ? '' : `box-shadow:0 3px 10px ${alpha(P.midnight, .12)}`}">
-          <svg viewBox="-30 -30 60 60" width="44" height="44" style="${taken ? 'opacity:.32' : ''}">${g(tint)}</svg>
+          <svg viewBox="-30 -30 60 60" width="44" height="44" style="${taken ? 'opacity:.3' : ''}">${g(hue)}</svg>
         </div>`).join('')}
       </div>
       ${trayCaption('That one fits!')}`,
-    secondaryTint: P.hopGreenDeep,
+    tint: P.hopGreenDeep,
   });
 }
 
@@ -826,20 +873,33 @@ function gamePottyOrder(appearance = 'light') {
 // 29 — the hand-off
 // ---------------------------------------------------------------------------
 
+/** What Hop is saying, drawn the way a picture book draws it. */
+function speechBubble(text, { maxWidth = 268 } = {}) {
+  return `<div style="position:relative;padding:14px 22px;border-radius:24px;background:#FFFFFF;
+    box-shadow:0 4px 16px ${alpha(P.midnight, .12)};max-width:${maxWidth}px;text-align:center">
+    <span style="${type('childInstruction', { color: P.midnight })};font-size:19px">${text}</span>
+    <svg width="30" height="20" viewBox="0 0 30 20" style="position:absolute;left:50%;margin-left:-15px;bottom:-14px;display:block">
+      <path d="M4 0 C 10 12, 18 17, 27 19 C 15 16, 9 9, 6 0 Z" fill="#FFFFFF"/>
+    </svg>
+  </div>`;
+}
+
 /**
- * Fly Snack's ending, which is the lesson: Hop ate, Hop's tummy filled, and now
- * Hop needs the potty. The one game whose round finishes by walking the child
- * into the routine (`MiniGameCompletion.handOffToRoutine`), so the button is the
- * canonical shield button and there is no way to "fail" to take it.
+ * 29 — Fly Snack's ending, which is the lesson: Hop ate, Hop's tummy filled, and
+ * now Hop needs the potty.
+ *
+ * The one game whose round finishes by walking the child into the routine
+ * (`MiniGameCompletion.handOffToRoutine`), so the primary is the canonical
+ * "Let's Go!" and the way out is still offered beside it. Neither choice is a
+ * failure and neither takes anything away.
  */
 function gameFlySnackHandoff(appearance = 'light') {
   const col = c(appearance);
-  const art = 'Art/scenes/games-flySnack.svg';
 
-  return stage(ambient(art, appearance, { veil: 0.5, glow: [196, 392, 230] }), `
+  return stage(ambient('Art/scenes/games-flySnack.svg', appearance, { veil: 0.4, glow: [196, 400, 236] }), `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
 
-      <div style="height:22px"></div>
+      <div style="height:20px"></div>
 
       <div style="flex:0 0 auto;text-align:center">
         <div style="${type('celebration', { color: P.midnight })};font-size:35px;line-height:1.14">
@@ -850,13 +910,12 @@ function gameFlySnackHandoff(appearance = 'light') {
 
       <div style="flex:1"></div>
 
-      <div style="flex:0 0 auto;position:relative;display:flex;justify-content:center">
-        <div data-hop style="width:250px;height:250px">${svg('Art/character/hop-full.svg', { width: 250 })}</div>
-        <div style="position:absolute;left:8px;top:2px">${speechBubble("I need the potty!")}</div>
+      <div style="flex:0 0 auto;display:flex;justify-content:center">
+        ${speechBubble("Let's hop to the potty together.")}
       </div>
-
-      <div style="flex:0 0 auto;text-align:center;margin-top:10px">
-        <div style="${type('childInstruction', { color: P.sand600 })};font-size:19px">Let's hop to the potty together.</div>
+      <div style="height:12px"></div>
+      <div style="flex:0 0 auto;display:flex;justify-content:center">
+        <div data-hop style="width:238px;height:238px">${svg('Art/character/hop-full.svg', { width: 238 })}</div>
       </div>
 
       <div style="flex:1"></div>
@@ -866,21 +925,10 @@ function gameFlySnackHandoff(appearance = 'light') {
         <div style="height:14px"></div>
         ${childButton(col, appearance, 'All done', {
           kind: 'secondary', height: 76, radius: 38,
-          fill: alpha('#FFFFFF', .8), textColor: P.sand600, fontSize: 21,
+          fill: alpha('#FFFFFF', .82), textColor: P.sand600, fontSize: 21,
         })}
       </div>
     </div>`);
-}
-
-/** What Hop is saying, drawn the way a picture book draws it. */
-function speechBubble(text) {
-  return `<div style="position:relative;padding:12px 18px;border-radius:22px;background:#FFFFFF;
-    box-shadow:0 3px 12px ${alpha(P.midnight, .12)};max-width:190px">
-    <span style="${type('childInstruction', { color: P.midnight })};font-size:19px">${text}</span>
-    <svg width="26" height="18" viewBox="0 0 26 18" style="position:absolute;left:24px;bottom:-13px;display:block">
-      <path d="M2 0 C 8 12, 16 15, 25 17 C 14 15, 8 8, 4 0 Z" fill="#FFFFFF"/>
-    </svg>
-  </div>`;
 }
 
 module.exports = {
