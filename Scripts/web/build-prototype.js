@@ -32,6 +32,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { T, c, baseCSS, ROOT } = require('../screens/ui');
 const registry = require('../screens/registry');
 const splashScreen = require('../screens/splash');
@@ -41,6 +42,22 @@ const P = T.palette;
 const WEB = path.join(ROOT, 'web');
 const DIST = path.join(WEB, 'dist');
 const ASSETS = path.join(DIST, 'assets');
+
+/**
+ * URL prefix for everything under `assets/`, versioned by content at build time.
+ *
+ * This exists because of a real bug. These files were served
+ * `Cache-Control: immutable, max-age=1y` under *stable* names, which is a
+ * promise the build cannot keep: a rebuild changed `app.css` and every drawing
+ * behind the same URLs, and a browser that had visited before was entitled to
+ * never ask for them again. It then rendered new markup against a year-old
+ * stylesheet — no animation anywhere, and, because `.screen{display:none}` was
+ * part of what went missing, all 46 screens stacked down the page at once.
+ *
+ * `immutable` is only ever true of a URL that changes when its content does, so
+ * the content hash below is what makes the header honest.
+ */
+let ASSET_BASE = '/assets';
 const DEVICE = { w: 393, h: 852 };
 
 // ---------------------------------------------------------------------------
@@ -1058,9 +1075,9 @@ function prototypePage(screens) {
 <meta name="robots" content="noindex">
 <meta name="description" content="HopPotty design prototype — a tappable walkthrough rendered from the app's design tokens and vector art.">
 <title>HopPotty — Prototype</title>
-<link rel="icon" href="/assets/art/appicon-1024.svg">
-<link rel="apple-touch-icon" href="/assets/art/appicon-1024.svg">
-<link rel="stylesheet" href="/assets/app.css">
+<link rel="icon" href="${ASSET_BASE}/art/appicon-1024.svg">
+<link rel="apple-touch-icon" href="${ASSET_BASE}/art/appicon-1024.svg">
+<link rel="stylesheet" href="${ASSET_BASE}/app.css">
 </head>
 <body class="proto">
 <div class="stage">
@@ -1157,12 +1174,12 @@ function galleryPage(screens, icons, pondFile) {
     const want = frames.filter((v) => v === 'blink' || v === 'talkShut' ||
       (demo.gaze && v === 'gaze' + demo.gaze));
     const overlays = want.map((v) =>
-      `<img class="hop-ov" data-v="${v}" src="/assets/art/hop-${name}.${v}.svg" alt="" aria-hidden="true" loading="lazy">`).join('');
+      `<img class="hop-ov" data-v="${v}" src="${ASSET_BASE}/art/hop-${name}.${v}.svg" alt="" aria-hidden="true" loading="lazy">`).join('');
     const cls = ['hop', demo.cls || motion.POSE_ANIM[name] || ''].filter(Boolean).join(' ');
     return `
     <figure class="state hopcell"${demo.gaze ? ` data-gaze="${demo.gaze}"` : ''}${demo.talk ? ' data-talk="1"' : ''}>
       <div class="box"><div class="${cls}" data-pose="${name}">
-        <img src="/assets/art/hop-${name}.svg" alt="Hop, ${name}" loading="lazy">${overlays}
+        <img src="${ASSET_BASE}/art/hop-${name}.svg" alt="Hop, ${name}" loading="lazy">${overlays}
       </div></div>
       <b>hop-${name}</b><span>${blurb}</span>
     </figure>`;
@@ -1170,7 +1187,7 @@ function galleryPage(screens, icons, pondFile) {
 
   const iconTiles = icons.map((f) => `
     <figure class="icon">
-      <img src="/assets/art/icons/${f}" alt="${f.replace(/\.svg$/, '')}" loading="lazy">
+      <img src="${ASSET_BASE}/art/icons/${f}" alt="${f.replace(/\.svg$/, '')}" loading="lazy">
       <span>${f.replace(/\.svg$/, '')}</span>
     </figure>`).join('');
 
@@ -1182,13 +1199,13 @@ function galleryPage(screens, icons, pondFile) {
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <title>HopPotty — Gallery</title>
-<link rel="icon" href="/assets/art/appicon-1024.svg">
-<link rel="stylesheet" href="/assets/app.css">
+<link rel="icon" href="${ASSET_BASE}/art/appicon-1024.svg">
+<link rel="stylesheet" href="${ASSET_BASE}/app.css">
 </head>
 <body class="page">
 <div class="wrap">
   <header class="masthead">
-    <img src="/assets/art/appicon-1024.svg" alt="HopPotty app icon">
+    <img src="${ASSET_BASE}/art/appicon-1024.svg" alt="HopPotty app icon">
     <div>
       <h1>HopPotty — Gallery</h1>
       <p>Every screen, every state of Hop, and the art the app ships with.</p>
@@ -1215,8 +1232,8 @@ function galleryPage(screens, icons, pondFile) {
 
   <div class="loop">
     <div class="stack">
-      <img class="a" src="/assets/art/hop-idle.svg" alt="Hop, idle">
-      <img class="b" src="/assets/art/hop-blink.svg" alt="Hop, blinking">
+      <img class="a" src="${ASSET_BASE}/art/hop-idle.svg" alt="Hop, idle">
+      <img class="b" src="${ASSET_BASE}/art/hop-blink.svg" alt="Hop, blinking">
     </div>
     <div class="copy">
       <h3>The ambient loop</h3>
@@ -1238,7 +1255,7 @@ function galleryPage(screens, icons, pondFile) {
   <h2 class="sec">The pond</h2>
   <p class="secsub">Where stars are spent. The scene is assembled from individually unlockable pieces,
     in a fixed catalogue order with fixed prices.</p>
-  <div class="pondshot"><img src="/assets/art/${pondFile}" alt="Hop’s pond"></div>
+  <div class="pondshot"><img src="${ASSET_BASE}/art/${pondFile}" alt="Hop’s pond"></div>
 
   <h2 class="sec">Icon set</h2>
   <p class="secsub">${icons.length} vectors: the four event marks a caregiver logs with, each with a
@@ -1248,13 +1265,13 @@ function galleryPage(screens, icons, pondFile) {
   <h2 class="sec">App icon</h2>
   <p class="secsub">One mark, drawn as a vector and rasterised at build time by the app’s own pipeline.</p>
   <div class="appicons">
-    <figure><img src="/assets/art/appicon-1024.svg" width="180" height="180" alt="App icon, 180pt">
+    <figure><img src="${ASSET_BASE}/art/appicon-1024.svg" width="180" height="180" alt="App icon, 180pt">
       <figcaption>180×180</figcaption></figure>
-    <figure><img src="/assets/art/appicon-1024.svg" width="120" height="120" alt="App icon, 120pt">
+    <figure><img src="${ASSET_BASE}/art/appicon-1024.svg" width="120" height="120" alt="App icon, 120pt">
       <figcaption>120×120</figcaption></figure>
-    <figure><img src="/assets/art/appicon-1024.svg" width="60" height="60" alt="App icon, 60pt">
+    <figure><img src="${ASSET_BASE}/art/appicon-1024.svg" width="60" height="60" alt="App icon, 60pt">
       <figcaption>60×60</figcaption></figure>
-    <figure><img src="/assets/art/appicon-1024.svg" width="29" height="29" alt="App icon, 29pt">
+    <figure><img src="${ASSET_BASE}/art/appicon-1024.svg" width="29" height="29" alt="App icon, 29pt">
       <figcaption>29×29</figcaption></figure>
   </div>
 
@@ -1290,13 +1307,13 @@ function shell({ title, current, body }) {
 <meta name="color-scheme" content="light dark">
 <meta name="robots" content="noindex">
 <title>${title}</title>
-<link rel="icon" href="/assets/art/appicon-1024.svg">
-<link rel="stylesheet" href="/assets/app.css">
+<link rel="icon" href="${ASSET_BASE}/art/appicon-1024.svg">
+<link rel="stylesheet" href="${ASSET_BASE}/app.css">
 </head>
 <body class="page">
 <div class="wrap">
   <header class="masthead">
-    <img src="/assets/art/appicon-1024.svg" alt="HopPotty app icon">
+    <img src="${ASSET_BASE}/art/appicon-1024.svg" alt="HopPotty app icon">
     <div>
       <h1>HopPotty</h1>
       <p>Design prototype</p>
@@ -1477,6 +1494,26 @@ function assertNoGlobalStyles(html, where) {
   return problems.length;
 }
 
+/**
+ * A short content hash of everything under `assets/`.
+ *
+ * Content, not a timestamp or a counter: an unchanged build keeps its URLs, so
+ * a redeploy that changed nothing does not throw away every viewer's cache.
+ */
+function assetsHash(dir) {
+  const hash = crypto.createHash('sha256');
+  const walk = (d) => {
+    for (const entry of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : 1)) {
+      const p = path.join(d, entry.name);
+      if (entry.isDirectory()) { walk(p); continue; }
+      hash.update(path.relative(dir, p));
+      hash.update(fs.readFileSync(p));
+    }
+  };
+  walk(dir);
+  return hash.digest('hex').slice(0, 10);
+}
+
 function dirSize(dir) {
   let total = 0;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -1505,6 +1542,17 @@ function build() {
   for (const cls of ['hp-in-fade', 'hp-out-fade']) {
     if (css.indexOf(`.screen.${cls}{`) < 0) console.warn(`  ! no CSS for transition class ${cls}`);
   }
+
+  // Seal the asset version before a single page is written: every URL a page
+  // emits has to point at the directory these bytes actually live in.
+  const version = assetsHash(ASSETS);
+  const versioned = path.join(ASSETS, version);
+  fs.mkdirSync(versioned, { recursive: true });
+  for (const entry of fs.readdirSync(ASSETS)) {
+    if (entry === version) continue;
+    fs.renameSync(path.join(ASSETS, entry), path.join(versioned, entry));
+  }
+  ASSET_BASE = `/assets/${version}`;
 
   const screens = renderAll();
 
@@ -1544,6 +1592,26 @@ function build() {
     const dir = path.join(DIST, 'about', docSlug(name));
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'index.html'), docPage(title, fs.readFileSync(abs, 'utf8'), rel));
+  }
+
+  // An asset URL that is not under the versioned directory is a URL served
+  // `immutable` under a name that can change its content — the exact bug this
+  // whole mechanism exists to stop. Fail the build rather than ship it.
+  {
+    let unversioned = 0;
+    for (const page of ['index.html', 'gallery/index.html', 'about/index.html', 'app/index.html']) {
+      const abs = path.join(DIST, page);
+      if (!fs.existsSync(abs)) continue;
+      for (const url of fs.readFileSync(abs, 'utf8').match(/\/assets\/[A-Za-z0-9._/-]+/g) || []) {
+        if (url.startsWith(`/assets/${version}/`)) continue;
+        console.error(`  ! unversioned asset URL in ${page}: ${url}`);
+        unversioned += 1;
+      }
+    }
+    if (unversioned) {
+      throw new Error(`${unversioned} asset URL(s) outside /assets/${version}/ — they would be cached immutable under a reusable name.`);
+    }
+    console.log(`   assets: versioned at /assets/${version}/, no unversioned URLs`);
   }
 
   fs.writeFileSync(path.join(DIST, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
