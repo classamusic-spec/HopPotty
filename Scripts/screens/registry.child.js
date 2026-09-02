@@ -6,6 +6,7 @@
  * finds here.
  */
 const childExtra = require('./child-extra');
+const hub = require('./hub');
 
 module.exports = {
   '16-routine-step-wipe': { render: childExtra.routineWipe, appearance: 'light' },
@@ -23,4 +24,5 @@ module.exports = {
   '28-game-potty-order': { render: childExtra.gamePottyOrder, appearance: 'light' },
   '29-game-fly-snack-handoff': { render: childExtra.gameFlySnackHandoff, appearance: 'light' },
   '30-games-hub-dark': { render: childExtra.gamesHub, appearance: 'dark' },
+  '45-hop-hub': { render: hub.hopHub, appearance: 'light' },
 };

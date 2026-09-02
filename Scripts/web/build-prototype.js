@@ -88,13 +88,14 @@ const CAPTION = {
   'widgets': ['Home-screen widgets', 'Hop and the next pause on the home and lock screens.'],
   'live-activity': ['Live Activity', 'The pause and the routine step on the lock screen and Dynamic Island.'],
   'insights-ipad': ['Progress (iPad)', 'Insights laid out for the wider screen.'],
+  'hop-hub': ['Hop’s hub', 'The child’s side of the app behind the Hop tab: four big doors, one small way back for grown-ups.'],
 };
 
 /** Order of the walkthrough, used by the ◀ ▶ chrome and the screen list. */
 const FLOW_ALL = [
   'onboarding-meet-hop', 'onboarding-idea', 'onboarding-screen-time-ask', 'onboarding-child-profile',
   'timer-settings', 'choose-apps', 'onboarding-first-pause-set',
-  'parent-home', 'quick-reminder-sheet', 'potty-pause-shield',
+  'parent-home', 'quick-reminder-sheet', 'hop-hub', 'potty-pause-shield',
   'routine-step1', 'routine-try-timer', 'routine-step3', 'routine-step-wipe', 'routine-step-flush',
   'routine-step-wash', 'routine-step-highfive', 'routine-complete', 'hops-pond',
   'games-hub', 'game-bubble-wash', 'game-fly-snack', 'game-fly-snack-handoff', 'game-mud-off',
