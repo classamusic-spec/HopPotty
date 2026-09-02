@@ -115,6 +115,27 @@ const frame = (w) => {
   return { s, x: (v) => +(v * s).toFixed(1), y: (v) => +(v * s).toFixed(1) };
 };
 
+
+/**
+ * The scene, bled edge to edge.
+ *
+ * The picture used to sit inside a rounded white card floating on a blurred
+ * copy of itself, which is the single change that made every one of these
+ * screens read as an app rather than as a place. It is now the same picture at
+ * full width with its top and bottom masked away, over the same blurred copy —
+ * so the sharp middle melts into a soft continuation of itself and the screen
+ * has no frame anywhere on it.
+ */
+function worldBand(art, { top, height = 295 }) {
+  const url = bgImage(art);
+  if (!url) return '';
+  const fade = 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 17%, ' +
+    'rgba(0,0,0,1) 83%, rgba(0,0,0,0) 100%)';
+  return `<div style="position:absolute;left:0;top:${top}px;width:393px;height:${height}px;
+    background-image:${url};background-size:cover;background-position:center;background-repeat:no-repeat;
+    -webkit-mask-image:${fade};mask-image:${fade}"></div>`;
+}
+
 // ---------------------------------------------------------------------------
 // Sprites — the small pieces a board moves around
 // ---------------------------------------------------------------------------
@@ -370,19 +391,9 @@ function routineStep(appearance, {
   const col = c(appearance);
   const BAND_H = 295; // 393 wide at the scenes' own 4:3
 
-  // The scene is bled full width and dissolved into the room at both edges. A
-  // band is not a card: it has no corner radius, no border, no shadow and no
-  // background of its own, and the wall above it and the floor below it are the
-  // same wall and floor.
-  const url = bgImage(art);
   const ground = `<div style="position:absolute;inset:0;overflow:hidden">
-    ${room(appearance, { floorY: bandTop + BAND_H - 26 })}
-    ${url ? `<div style="position:absolute;left:0;top:${bandTop}px;width:393px;height:${BAND_H}px;
-      background-image:${url};background-size:cover;background-position:center;background-repeat:no-repeat"></div>
-      <div style="position:absolute;left:0;top:${bandTop}px;width:393px;height:64px;
-        background:linear-gradient(180deg, ${alpha(P.pondBlueSoft, .95)}, ${alpha(P.pondBlueSoft, 0)})"></div>
-      <div style="position:absolute;left:0;top:${bandTop + BAND_H - 78}px;width:393px;height:78px;
-        background:linear-gradient(180deg, ${alpha(P.cloud, 0)}, ${alpha(P.cloud, .96)})"></div>` : ''}
+    ${ambient(art, appearance, { veil: 0.24, blur: 46 })}
+    ${worldBand(art, { top: bandTop, height: BAND_H })}
   </div>`;
 
   return stage(`${ground}${veil(appearance, { from: 468, height: 384, strength: 0.74 })}`, `
@@ -415,7 +426,7 @@ function routineWipe(appearance = 'light') {
     pose: 'sit',
     hopWidth: 236,
     title: 'Wipe',
-    instruction: 'Front to back.',
+    instruction: 'Wipe from front to back.',
     primary: 'Next',
     skip: 'Skip this',
   });
@@ -428,7 +439,7 @@ function routineFlush(appearance = 'light') {
     pose: 'wave',
     hopWidth: 250,
     title: 'Flush',
-    instruction: 'Bye-bye!',
+    instruction: 'Flush it away.',
     primary: 'Next',
     // Skippable on purpose: the noise frightens a real share of two- and
     // three-year-olds, and a routine that traps a scared child at the flush is
@@ -460,33 +471,27 @@ function routineWash(appearance = 'light') {
 function routineHighFive(appearance = 'light') {
   const col = c(appearance);
   const scene = `<div style="position:absolute;inset:0;overflow:hidden">
-    ${room(appearance, { floorY: 560 })}
+    ${room(appearance, { floorY: 648 })}
     <div style="position:absolute;left:0;top:0;width:393px;height:852px;
       background:radial-gradient(circle at 50% 40%, ${alpha(P.sunshineSoft, .95)} 0%, ${alpha(P.sunshineSoft, 0)} 60%)"></div>
   </div>`;
 
-  return stage(`${scene}${veil(appearance, { from: 520, height: 332, strength: 0.7 })}`, `
+  return stage(`${scene}${veil(appearance, { from: 596, height: 256, strength: 0.66 })}`, `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
       ${grownUpRow()}
 
       <div style="flex:1"></div>
 
-      <div style="flex:0 0 auto;position:relative;height:330px">
-        <div data-hop style="position:absolute;left:50%;top:0;transform:translateX(-50%);width:300px">
-          ${svg('Art/character/hop-cheer.svg', { width: 300 })}
-        </div>
-        <svg width="349" height="330" viewBox="0 0 349 330" style="position:absolute;left:0;top:0;display:block">
-          ${[0, 1, 2].map((i) => `<circle cx="266" cy="96" r="${44 + i * 26}" fill="none"
-            stroke="${P.sunshineBright}" stroke-width="${4 - i}" opacity="${0.6 - i * 0.18}"/>`).join('')}
-        </svg>
+      <div data-hop style="flex:0 0 auto;display:flex;justify-content:center">
+        ${svg('Art/character/hop-cheer.svg', { width: 306 })}
       </div>
 
-      ${words('High five!', 'Give Hop a big one.')}
+      ${words('High five', 'High five with Hop!')}
 
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto">
-        ${childButton(col, appearance, 'All Done', { kind: 'primary', height: 104, radius: T.radius.hero })}
+        ${childButton(col, appearance, 'All done!', { kind: 'primary', height: 104, radius: T.radius.hero })}
       </div>
     </div>`);
 }
@@ -506,12 +511,12 @@ function routineTryTimer(appearance = 'light') {
   const size = 300;
 
   const scene = `<div style="position:absolute;inset:0;overflow:hidden">
-    ${room(appearance, { floorY: 566 })}
+    ${room(appearance, { floorY: 654 })}
     <div style="position:absolute;left:0;top:0;width:393px;height:852px;
       background:radial-gradient(circle at 50% 44%, ${alpha(P.cloud, .85)} 0%, ${alpha(P.cloud, 0)} 56%)"></div>
   </div>`;
 
-  return stage(`${scene}${veil(appearance, { from: 520, height: 332, strength: 0.74 })}`, `
+  return stage(`${scene}${veil(appearance, { from: 600, height: 252, strength: 0.7 })}`, `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
       ${grownUpRow()}
 
@@ -527,7 +532,7 @@ function routineTryTimer(appearance = 'light') {
       </div>
 
       <div style="height:${T.spacing.s}px"></div>
-      ${words('Give it a try.', null, { small: 'Take all the time you need.' })}
+      ${words('Try', 'Give it a try.', { small: 'Take all the time you need.' })}
 
       <div style="flex:1"></div>
 
@@ -574,44 +579,42 @@ function gamesHub(appearance = 'light') {
   const col = c(appearance);
   const dark = appearance.startsWith('dark');
   const H = ink(appearance);
-  const cardW = 175.5;
 
-  const card = (g) => `
-    <div style="border-radius:${T.radius.l}px;overflow:hidden;background:${col.surface};
+  // A door, not a card: the whole tile is the picture of the place the game
+  // happens in, with its name laid on the picture. The sentence a child cannot
+  // read is gone — `MiniGame.childDescription` is what Hop says out loud when
+  // the game opens, which is where a pre-reader actually receives it.
+  const door = (g) => `
+    <div style="position:relative;height:158px;border-radius:${T.radius.xxl}px;overflow:hidden;
       box-shadow:${elevation(appearance, 'resting')}">
-      ${thumb(g.key, 90, g.focus)}
-      <div style="padding:8px 11px 10px">
-        <div style="${type('childInstruction', { color: H })};font-size:14.5px;line-height:1.18;height:21px;overflow:hidden">${g.title}</div>
-        <div style="${type('parentCaption', { color: col.textSecondary })};line-height:1.3;
-          height:34px;overflow:hidden;margin-top:3px">${g.desc}</div>
-      </div>
+      ${thumb(g.key, 158, g.focus)}
+      <div style="position:absolute;left:0;right:0;bottom:0;height:76px;
+        background:linear-gradient(180deg, ${alpha(P.midnight, 0)} 0%, ${alpha(P.midnight, .62)} 100%)"></div>
+      <div style="position:absolute;left:12px;right:12px;bottom:11px;
+        ${type('childInstruction', { color: P.cloud })};font-size:17px;line-height:1.15">${g.title}</div>
     </div>`;
 
   return `
   <div style="position:relative;width:100%;height:100%;overflow:hidden;background:${col.backgroundPrimary}">
     <div style="position:absolute;left:0;top:0">
-      ${scenes.dome(393, 216, dark ? alpha(P.hopGreen, 0.13) : P.hopGreenSoft)}
+      ${scenes.dome(393, 178, dark ? alpha(P.hopGreen, 0.13) : P.hopGreenSoft)}
     </div>
     <div style="position:relative;display:flex;flex-direction:column;height:100%">
       ${statusBar(H)}
       <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 16px 6px;overflow:hidden">
 
-        <div style="flex:0 0 auto;display:flex;align-items:center;gap:10px;height:56px">
-          <div style="width:52px;height:52px;border-radius:26px;flex:0 0 auto;display:grid;place-items:center;
-            background:${dark ? col.surfaceElevated : alpha('#FFFFFF', .86)};box-shadow:${elevation(appearance, 'resting')}">
-            <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="${dark ? col.textSecondary : P.sand600}"
-              stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+        <div style="flex:0 0 auto;display:flex;align-items:center;gap:10px;height:${T.hitTarget.childMinimum}px">
+          <div style="width:56px;height:56px;border-radius:28px;flex:0 0 auto;display:grid;place-items:center;
+            background:${dark ? col.surfaceElevated : alpha(P.cloud, .88)};box-shadow:${elevation(appearance, 'resting')}">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="${dark ? col.textSecondary : P.sand600}"
+              stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
           </div>
-          <div style="flex:1;text-align:center;${type('childTitle', { color: H })};font-size:28px">Play</div>
-          <div style="height:44px;padding:0 15px 0 11px;border-radius:22px;flex:0 0 auto;display:flex;align-items:center;gap:6px;
-            background:${dark ? col.surfaceElevated : alpha('#FFFFFF', .88)}">
-            ${MARK.star(P.sunshineBright, 21)}
-            <span style="${type('buttonLarge', { color: dark ? P.sunshine : P.sunshineDeep })};font-size:19px">13</span>
-          </div>
+          <div style="flex:1;text-align:center;${type('childTitle', { color: H })};font-size:30px">Play</div>
+          <div style="width:56px"></div>
         </div>
 
-        <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
-          ${GAMES.map(card).join('')}
+        <div style="flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:8px">
+          ${GAMES.map(door).join('')}
         </div>
 
         <div style="flex:1"></div>
@@ -633,41 +636,53 @@ function gamesHub(appearance = 'light') {
  * cross in a corner.
  */
 function gameScreen(appearance, {
-  art, title, line, svgLayer = '', htmlLayer = '', tray = '', trayH = 0,
-  primary = null, secondary = 'All done', tint = P.hopGreenDeep, titleSize = 32,
+  art, title, line, svgLayer = '', htmlLayer = '', tray = '',
+  primary = null, secondary = 'All done', tint = P.hopGreenDeep, titleSize = 32, bandTop = 250,
 }) {
   const col = c(appearance);
-  return stage(ambient(art, appearance, { veil: 0.32, glow: [196, 430, 230] }), `
-    <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 12px 6px;overflow:hidden">
+  const BAND_H = 295;
+  const ground = `<div style="position:absolute;inset:0;overflow:hidden">
+    ${ambient(art, appearance, { veil: 0.26, blur: 48 })}
+    ${worldBand(art, { top: bandTop, height: BAND_H })}
+  </div>`;
 
-      <div style="flex:0 0 auto;text-align:center;padding:2px 12px 0">
+  // Sprites are positioned in the band's own coordinates, which are the scene's
+  // 640×480 scaled to the full 393 — `frame(393)`.
+  const board = `<div style="position:absolute;left:0;top:${bandTop}px;width:393px;height:${BAND_H}px">
+    ${svgLayer ? `<svg width="393" height="${BAND_H}" viewBox="0 0 393 ${BAND_H}"
+      style="position:absolute;left:0;top:0;display:block">${svgLayer}</svg>` : ''}
+    ${htmlLayer}
+  </div>`;
+
+  return stage(`${ground}${veil(appearance, { from: 500, height: 352, strength: 0.6 })}`, `
+    <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
+      ${grownUpRow()}
+
+      <div style="flex:0 0 auto;text-align:center;margin-top:2px">
         <div style="${type('childTitle', { color: P.midnight })};font-size:${titleSize}px">${title}</div>
-        <div style="${type('childInstruction', { color: P.midnight })};font-size:18px;margin-top:8px;opacity:.72">${line}</div>
+        <div style="${type('childInstruction', { color: P.midnight })};font-size:18px;margin-top:6px;opacity:.74">${line}</div>
       </div>
 
       <div style="flex:1"></div>
 
-      <div style="flex:0 0 auto;display:flex;justify-content:center">
-        ${boardCard(appearance, { art, w: 369, svgLayer, htmlLayer, tray, trayH })}
-      </div>
+      ${tray ? `<div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:12px">${tray}</div>
+        <div style="height:${T.spacing.xl}px"></div>` : ''}
 
-      <div style="flex:1"></div>
-
-      <div style="flex:0 0 auto;padding:0 4px">
+      <div style="flex:0 0 auto">
         ${primary ? childButton(col, appearance, primary, { kind: 'primary', height: 96, radius: T.radius.hero }) : ''}
         ${primary && secondary ? '<div style="height:12px"></div>' : ''}
         ${secondary ? childButton(col, appearance, secondary, {
           kind: 'secondary',
-          fill: '#FFFFFF', textColor: tint, fontSize: 21,
-          border: `1.5px solid ${alpha(tint, .2)}`,
+          fill: alpha(col.surface, .86), textColor: tint, fontSize: 21,
         }) : ''}
       </div>
-    </div>`);
+    </div>
+    <div style="position:absolute;left:0;top:0;width:393px;height:852px;pointer-events:none">${board}</div>`);
 }
 
 /** 22 — Potty Path. */
 function gamePottyPath(appearance = 'light') {
-  const f = frame(369);
+  const f = frame(393);
   const pads = [[92, 448], [206, 390], [306, 366], [396, 344], [472, 330]];
   const scale = [0.95, 0.85, 0.78, 0.7, 0.62];
   const done = 3;
@@ -687,7 +702,6 @@ function gamePottyPath(appearance = 'light') {
     line: 'Hop along the lily pads all the way to the potty!',
     svgLayer: layer,
     htmlLayer: hopAt('jump', 128, `left:${f.x(306) - 64}px;top:${f.y(366) + 8 - 128}px`),
-    trayH: 150,
     tray: marks(5, done, {
       tint: P.hopGreenDeep,
       soft: P.hopGreenSoft,
@@ -701,7 +715,7 @@ function gamePottyPath(appearance = 'light') {
 
 /** 23 — Bathroom Match. The only game with no ending of its own. */
 function gameBathroomMatch(appearance = 'light') {
-  const f = frame(369);
+  const f = frame(393);
   const tile = (glyph, hue, { matched = false, faceDown = false, hint = false } = {}) => `
     <div style="width:88px;height:74px;border-radius:${T.radius.m}px;display:grid;place-items:center;position:relative;
       background:${faceDown ? alpha(hue, .13) : '#FFFFFF'};
@@ -719,7 +733,6 @@ function gameBathroomMatch(appearance = 'light') {
     title: 'Bathroom Match',
     line: 'Find the two that go together.',
     htmlLayer: hopAt('talk', 136, `left:${f.x(470) - 68}px;top:${f.y(430) - 136}px`),
-    trayH: 192,
     tray: `<div style="display:flex;gap:9px">
         ${tile(PICT.soap, P.lavenderDeep, { matched: true })}
         ${tile(PICT.towel, P.peachPop)}
@@ -735,7 +748,7 @@ function gameBathroomMatch(appearance = 'light') {
 
 /** 24 — Fly Snack. */
 function gameFlySnack(appearance = 'light') {
-  const f = frame(369);
+  const f = frame(393);
   return gameScreen(appearance, {
     art: 'Art/scenes/games-flySnack.svg',
     title: 'Fly Snack',
@@ -746,11 +759,10 @@ function gameFlySnack(appearance = 'light') {
       ${fly(f.x(430), f.y(150), 31, P.hopGreenDeep, { rot: 10 })}
       ${sparkle(f.x(226), f.y(198), 7, P.sunshine, 0.9)}`,
     htmlLayer: `${hopAt('catch', 160, `left:${f.x(320) - 80}px;top:${f.y(412) - 154}px`)}
-      <svg width="369" height="277" viewBox="0 0 369 277" style="position:absolute;left:0;top:0;display:block">
+      <svg width="393" height="295" viewBox="0 0 393 295" style="position:absolute;left:0;top:0;display:block">
         ${fly(f.x(456), f.y(244), 28, P.sunshineBright, { rot: -18 })}
         ${sparkle(f.x(486), f.y(214), 6.4, '#FFFFFF', .9)}
       </svg>`,
-    trayH: 160,
     tray: `${tummyMeter(4)}${trayCaption("Yum! Hop's tummy is filling up.")}`,
     tint: P.hopGreenDeep,
   });
@@ -758,7 +770,7 @@ function gameFlySnack(appearance = 'light') {
 
 /** 25 — Mud Off. */
 function gameMudOff(appearance = 'light') {
-  const f = frame(369);
+  const f = frame(393);
   return gameScreen(appearance, {
     art: 'Art/scenes/games-mudOff.svg',
     title: 'Mud Off',
@@ -771,7 +783,6 @@ function gameMudOff(appearance = 'light') {
       ${sparkleBurst(f.x(235), f.y(350), f.s * 1.3)}
       ${sparkleBurst(f.x(405), f.y(350), f.s * 1.05)}
       ${swipeHint(f.x(200), f.y(430), f.x(150), P.pondBlueDeep)}`,
-    trayH: 160,
     tray: `${marks(4, 2, {
       tint: P.pondBlueDeep,
       soft: '#FFFFFF',
@@ -787,7 +798,7 @@ function gameMudOff(appearance = 'light') {
 
 /** 26 — Listen to Your Body. */
 function gameBodySignal(appearance = 'light') {
-  const f = frame(369);
+  const f = frame(393);
   const bubbleMark = (fc, filled) => `<svg viewBox="-17 -17 34 34" width="27" height="27">
     <ellipse rx="13" ry="10" ${filled ? `fill="${fc}"` : `fill="none" stroke="${fc}" stroke-width="3"`}/>
     <circle cx="-11.5" cy="12.5" r="3.4" ${filled ? `fill="${fc}"` : `fill="none" stroke="${fc}" stroke-width="2.6"`}/></svg>`;
@@ -799,11 +810,10 @@ function gameBodySignal(appearance = 'light') {
     line: 'Hop is bouncing his ball. Watch for his bubble!',
     svgLayer: `${ball(f.x(404), f.y(398), f.x(34), P.peachPop, P.sunshine)}`,
     htmlLayer: `${hopAt('full', 148, `left:${f.x(270) - 74}px;top:${f.y(366) - 148}px`)}
-      <svg width="369" height="277" viewBox="0 0 369 277" style="position:absolute;left:0;top:0;display:block">
+      <svg width="393" height="295" viewBox="0 0 393 295" style="position:absolute;left:0;top:0;display:block">
         ${tapHint(f.x(486), f.y(150), f.x(132), P.pondBlue, { rings: 1 })}
         ${thoughtBubble(f.x(486), f.y(150), f.x(190), P.pondBlueDeep, `<g transform="scale(0.8)">${PICT.sit(P.pondBlueDeep)}</g>`)}
       </svg>`,
-    trayH: 150,
     tray: marks(3, 1, {
       tint: P.pondBlueDeep,
       soft: '#FFFFFF',
@@ -817,7 +827,7 @@ function gameBodySignal(appearance = 'light') {
 
 /** 27 — Flush and Wave. One cause, one effect, as often as a child likes. */
 function gameFlushWave(appearance = 'light') {
-  const f = frame(369);
+  const f = frame(393);
   return gameScreen(appearance, {
     art: 'Art/scenes/games-flushWave.svg',
     title: 'Flush and Wave',
@@ -828,7 +838,6 @@ function gameFlushWave(appearance = 'light') {
       ${swirl(f.x(452), f.y(332), f.x(22), P.pondBlueSoft, 0.9)}
       ${sparkle(f.x(536), f.y(288), 8, '#FFFFFF', .9)}${sparkle(f.x(372), f.y(296), 6, '#FFFFFF', .7)}`,
     htmlLayer: hopAt('wave', 140, `left:${f.x(250) - 70}px;top:${f.y(425) - 140}px`),
-    trayH: 160,
     tray: `${marks(3, 2, {
       tint: P.pondBlueDeep,
       soft: '#FFFFFF',
@@ -850,7 +859,7 @@ function gameFlushWave(appearance = 'light') {
  * why nothing on this board is marked wrong.
  */
 function gamePottyOrder(appearance = 'light') {
-  const f = frame(369);
+  const f = frame(393);
   const slot = (i) => ({ cx: f.x(93 + i * 146), cy: f.y(220) });
   const cw = f.x(104);
   const ch = f.y(124);
@@ -864,7 +873,6 @@ function gamePottyOrder(appearance = 'light') {
       ${pictureCard(slot(1).cx, slot(1).cy, cw, ch, P.hopGreenDeep, PICT.sit)}
       ${pictureCard(slot(2).cx, slot(2).cy - f.y(56), cw, ch, P.peachDeep, PICT.wipe, { rot: -6, lifted: true })}
       ${sparkle(slot(1).cx + cw * 0.52, slot(1).cy - ch * 0.46, 8, P.sunshine, .95)}`,
-    trayH: 168,
     tray: `<div style="display:flex;gap:14px;align-items:center">
       ${[[PICT.wipe, P.peachDeep, true], [PICT.wash, P.pondBlueDeep, false]].map(([g, hue, taken]) => `
         <div style="width:74px;height:88px;border-radius:16px;display:grid;place-items:center;

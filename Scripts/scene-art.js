@@ -16,6 +16,9 @@
  *                                   `foreground` exactly as PondLayer orders it
  *   Art/pond/<PondItemID>.svg       one file per decoration, transparent, all on
  *                                   the same 200x200 unit box
+ *   Art/pond/pond-stage.svg         the composition at PondGeometry.referenceAspect,
+ *                                   which is what the app and the render both place
+ *                                   PondCatalog's unit anchors against
  *   Art/pond/pond-preview.svg       every item composited at its PondCatalog
  *                                   anchor — a proof the set works as a scene
  *   Art/scenes/routine-*.svg        the five routine step illustrations
@@ -215,6 +218,7 @@ const DEFS = {
   // rather than each one being hand-fitted to an ellipse.
   pondWaterClip: '<clipPath id="pondWaterClip"><ellipse cx="600" cy="558" rx="470" ry="232"/></clipPath>',
   pondSceneClip: '<clipPath id="pondSceneClip"><ellipse cx="393" cy="1290" rx="600" ry="330"/></clipPath>',
+  pondStageClip: '<clipPath id="pondStageClip"><ellipse cx="550" cy="620" rx="429" ry="230"/></clipPath>',
   tvScreenClip: '<clipPath id="tvScreenClip"><rect x="23" y="35" width="74" height="36" rx="7"/></clipPath>',
   mirrorGlassClip: '<clipPath id="mirrorGlassClip"><ellipse cx="60" cy="58" rx="28" ry="36"/></clipPath>',
   paperSheet: lin('paperSheet', [[0, '#FFFFFF'], [1, P.sand100]], { x1: 0.2, x2: 0.9 }),
@@ -1396,6 +1400,140 @@ function pondScene() {
   return svg({ viewBox: `0 0 ${W} ${H}`, width: W, height: H, body });
 }
 
+// ---------------------------------------------------------------------------
+// The pond *stage*: the composition every screen actually places against.
+//
+// `PondCatalog` puts its forty-one anchors in unit coordinates, and those
+// coordinates only describe a pond at one aspect: the water is 0.78 of the
+// width and 0.46 of the height, which is a properly foreshortened pond at
+// around 1.1 and a circular puddle on a 0.46-aspect phone. So the drawing keeps
+// its own shape — `PondGeometry.referenceAspect` in the app, and this box here —
+// and the *frame* is what varies: a taller screen continues the sky above the
+// stage and the meadow below it rather than stretching the world.
+//
+// Every band matches `PondSceneView` exactly. Change one and change both, or a
+// duckling ends up on the grass in one of them and in the water in the other.
+//
+//   horizon    0.30      water centre (0.50, 0.62)   rx 0.39w   ry 0.23h
+//   foreground 0.93
+// ---------------------------------------------------------------------------
+const ST = { W: 1100, H: 1000, cx: 550, cy: 620, rx: 429, ry: 230 };
+
+function pondStage() {
+  const { W, H, cx, cy, rx, ry } = ST;
+  const HORIZON = H * 0.30;
+  const FORE = H * 0.93;
+  const body = `
+<g id="pond-sky">
+  <rect x="0" y="0" width="${W}" height="${H}" fill="url(#skyPond)"/>
+  <!-- The key light: an off-frame sun, high and to the left. Kept wholly inside
+       the stage so that a screen taller than the drawing can continue the sky
+       above it without the glow ending in a straight line. -->
+  <ellipse id="pond-sunglow" cx="${R(W * 0.18)}" cy="${R(H * 0.30)}" rx="${R(H * 0.33)}" ry="${R(H * 0.30)}" fill="url(#skyGlow)"/>
+  <g id="pond-clouds">
+    <g id="pond-cloud-1">${cloud(W * 0.72, H * 0.085, 330, { opacity: 0.92 })}</g>
+    <g id="pond-cloud-2">${cloud(W * 0.26, H * 0.145, 220, { opacity: 0.48 })}</g>
+  </g>
+  <g id="pond-birds" fill="none" stroke="${P.pondBlueDeep}" stroke-width="4.4" stroke-linecap="round" opacity="0.2">
+    <path d="M 420 244 q 15 -13 28 0 q 13 -13 28 0"/>
+    <path d="M 508 208 q 11 -10 21 0 q 10 -10 21 0"/>
+  </g>
+</g>
+<g id="pond-backdrop">
+  <!-- Far and pale. The half of the greens ramp Hop is not standing in: every
+       band back here is pulled toward hopGreenSoft, so nothing behind him is
+       his own value and saturation. -->
+  <path d="M -20 ${R(HORIZON + 6)} C ${R(W * 0.18)} ${R(HORIZON - 34)}, ${R(W * 0.44)} ${R(HORIZON - 26)}, ${R(W * 0.62)} ${R(HORIZON + 2)}
+           C ${R(W * 0.80)} ${R(HORIZON + 22)}, ${R(W * 0.92)} ${R(HORIZON - 20)}, ${W + 20} ${R(HORIZON - 4)}
+           L ${W + 20} ${H} L -20 ${H} Z" fill="url(#hillHaze)"/>
+  ${treeline(-30, W * 0.34, HORIZON - 2, 5, '#C4E5D8', { h: 46, w: 92, opacity: 0.9 })}
+  ${treeline(W * 0.62, W + 30, HORIZON + 3, 5, '#C4E5D8', { h: 48, w: 96, opacity: 0.9 })}
+  <path d="M -20 ${R(HORIZON + 30)} C ${R(W * 0.16)} ${R(HORIZON + 2)}, ${R(W * 0.34)} ${R(HORIZON + 6)}, ${R(W * 0.52)} ${R(HORIZON + 24)}
+           C ${R(W * 0.74)} ${R(HORIZON + 44)}, ${R(W * 0.90)} ${R(HORIZON + 14)}, ${W + 20} ${R(HORIZON + 32)}
+           L ${W + 20} ${H} L -20 ${H} Z" fill="url(#hillFar)"/>
+  ${canopy(W * 0.10, HORIZON + 32, 132, 92, '#A2D8BB')}
+  ${canopy(W * 0.21, HORIZON + 36, 86, 56, '#A2D8BB')}
+  ${canopy(W * 0.91, HORIZON + 34, 140, 96, '#A2D8BB')}
+  ${canopy(W * 0.79, HORIZON + 38, 80, 52, '#A2D8BB')}
+  <path d="M -20 ${R(HORIZON + 58)} C ${R(W * 0.30)} ${R(HORIZON + 34)}, ${R(W * 0.70)} ${R(HORIZON + 38)}, ${W + 20} ${R(HORIZON + 52)}
+           L ${W + 20} ${H} L -20 ${H} Z" fill="url(#hillMid)"/>
+  <rect x="0" y="${R(HORIZON + 50)}" width="${W}" height="300" fill="url(#meadowLight)"/>
+  ${tuft(W * 0.34, HORIZON + 76, 26, mix2('#7DC9A0', '#4FA97E', 0.4), { opacity: 0.4 })}
+  ${tuft(W * 0.66, HORIZON + 80, 24, mix2('#7DC9A0', '#4FA97E', 0.4), { opacity: 0.4 })}
+</g>
+<g id="pond-water">
+  <ellipse id="pond-basin" cx="${cx}" cy="${cy + 14}" rx="${rx + 84}" ry="${ry + 52}" fill="url(#pondBank)"/>
+  <path d="${wobbleEllipse(cx, cy + 22, rx + 34, ry + 20, { amp: 0.06, seed: 5 })} ${ellipsePath(cx, cy, rx, ry)}" fill-rule="evenodd" fill="url(#shoreSand)"/>
+  <path d="${ellipsePath(cx, cy + 8, rx + 16, ry + 9)} ${ellipsePath(cx, cy, rx, ry)}" fill-rule="evenodd" fill="url(#shoreWet)"/>
+  <ellipse id="pond-surface" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#water)"/>
+  <g clip-path="url(#pondStageClip)">
+    <rect x="${cx - rx}" y="${R(cy - ry)}" width="${rx * 2}" height="${R(ry * 0.44)}" fill="url(#waterFarBank)"/>
+    <!-- The sky patch: the brightest water in the scene, placed behind Hop on
+         purpose. It is the negative space his silhouette reads against. -->
+    <ellipse cx="${cx}" cy="${R(H * 0.62 - 40)}" rx="${R(W * 0.34)}" ry="${R(H * 0.10)}" fill="url(#waterSkyPatch)"/>
+    <rect x="${cx - rx}" y="${R(cy + ry * 0.4)}" width="${rx * 2}" height="${R(ry * 0.6)}" fill="url(#waterNearShade)"/>
+    <g id="pond-fish">
+      <g id="pond-fish-1">${shadowFish(cx - rx * 0.42, cy - ry * 0.18, 0.95, 0.17)}</g>
+      <g id="pond-fish-2">${shadowFish(cx + rx * 0.48, cy + ry * 0.42, 0.74, 0.13)}</g>
+    </g>
+    <g id="pond-shimmer">
+      ${Array.from({ length: 15 }, (_, i) => {
+        const t = i / 14;
+        const x = cx - rx * 0.7 + t * rx * 1.4 + (nz(i * 1.7) - 0.5) * 150;
+        const y = cy - ry * 0.5 + t * ry * 0.9 + (nz(i * 4.9) - 0.5) * 140;
+        return glint(x, y, 12 + nz(i * 9.1) * 32, R(0.12 + nz(i * 6.3) * 0.24));
+      }).join('')}
+    </g>
+  </g>
+  <g id="pond-ripples">
+    <g id="pond-ripple-1">${ripple(W * 0.24, H * 0.545, 72, { o: 0.3, w: 8 })}</g>
+    <g id="pond-ripple-2">${ripple(W * 0.66, H * 0.615, 60, { o: 0.22, w: 7 })}</g>
+    <g id="pond-ripple-3">${ripple(W * 0.36, H * 0.760, 82, { o: 0.17, w: 9 })}</g>
+  </g>
+  <g id="pond-lilies">
+    <g id="pond-lily-1">${farPad(W * 0.20, H * 0.700, 62, 0.62)}</g>
+    <g id="pond-lily-2">${farPad(W * 0.82, H * 0.660, 48, 0.54)}</g>
+    <g id="pond-lily-3">${farPad(W * 0.30, H * 0.790, 41, 0.5)}</g>
+  </g>
+</g>
+<g id="pond-shore">
+  ${[[0.17, 0.845, 30], [0.24, 0.870, 21], [0.80, 0.850, 26], [0.87, 0.826, 17]]
+    .map(([x, y, r]) => pebble(W * x, H * y, r, r * 0.44, { fill: 'url(#stoneGrad)', light: 0.7 })).join('')}
+  <g id="pond-reeds">
+    <g id="pond-reed-1">${tuft(W * 0.055, H * 0.800, 62, P.hopGreenDeep, { opacity: 0.62 })}</g>
+    <g id="pond-reed-2">${tuft(W * 0.945, H * 0.812, 56, P.hopGreenDeep, { opacity: 0.62 })}</g>
+    <g id="pond-reed-3">${tuft(W * 0.135, H * 0.870, 44, P.hopGreenDeep, { n: 4, opacity: 0.52 })}</g>
+  </g>
+  <g id="pond-bank-flowers">
+    ${flower(W * 0.865, H * 0.880, 17, { fill: '#FFFFFF', core: P.sunshine, stemH: 30 })}
+    ${flower(W * 0.075, H * 0.905, 15, { fill: '#FFFFFF', core: P.sunshine, stemH: 26 })}
+  </g>
+  <g id="pond-dragonfly" transform="translate(${R(W * 0.70)} ${R(H * 0.48)}) scale(0.34)">
+    ${g('translate(-100 -100)', ITEMS.dragonfly())}
+  </g>
+</g>
+<g id="pond-foreground">
+  <path d="M -20 ${R(FORE + 8)} C ${R(W * 0.28)} ${R(FORE - 18)}, ${R(W * 0.70)} ${R(FORE + 12)}, ${W + 20} ${R(FORE)}
+           L ${W + 20} ${H + 40} L -20 ${H + 40} Z" fill="${P.hopGreenInk}" opacity="0.34"/>
+  <g id="pond-grass-near">
+    ${tuft(W * 0.06, FORE + 12, 30, P.hopGreenInk, { opacity: 0.3 })}
+    ${tuft(W * 0.15, FORE + 14, 21, P.hopGreenInk, { n: 4, opacity: 0.26 })}
+    ${tuft(W * 0.86, FORE + 12, 32, P.hopGreenInk, { opacity: 0.3 })}
+    ${tuft(W * 0.94, FORE + 15, 22, P.hopGreenInk, { n: 4, opacity: 0.26 })}
+    ${tuft(W * 0.46, FORE + 16, 18, P.hopGreenInk, { n: 4, opacity: 0.24 })}
+  </g>
+</g>`;
+  return svg({ viewBox: `0 0 ${W} ${H}`, width: W, height: H, body });
+}
+
+/** A two-colour mix, for the one place the stage needs a step the ramp lacks. */
+function mix2(a, b, t) {
+  const v = (x) => [1, 3, 5].map((i) => parseInt(x.slice(i, i + 2), 16));
+  const [r1, g1, b1] = v(a), [r2, g2, b2] = v(b);
+  const m = (p, q) => Math.round(p + (q - p) * t).toString(16).padStart(2, '0');
+  return `#${m(r1, r2)}${m(g1, g2)}${m(b1, b2)}`;
+}
+
 /** Mirrors PondCatalog.placement — used only to composite the review preview. */
 const PLACEMENT = {
   lilyPadSmall: [0.46, 0.640, 1.00], reedsLeft: [0.13, 0.600, 1.00], fishOrange: [0.66, 0.710, 0.90],
@@ -1693,6 +1831,39 @@ function friendlyDoor(cx, baseY, s = 1) {
     </g>`);
 }
 
+/** A toy chest with a few toys spilling over the lid.
+ *
+ *  Copied verbatim from `game-art.js`, as this file's header describes: the two
+ *  generators share a vocabulary by copying it rather than by importing, so a
+ *  change to the house style has to be made in both and can be seen in both. */
+function toyBox(cx, baseY, s = 1) {
+  return g(`translate(${cx} ${baseY}) scale(${s})`, `
+    ${contactShadow(0, 6, 108, 20)}
+    <path d="M -92 -108 h 184 q 12 0 12 12 v 84 q 0 12 -12 12 h -184 q -12 0 -12 -12 v -84 q 0 -12 12 -12 Z" fill="url(#woodGradV)"/>
+    <path d="M -92 -108 h 60 v 108 h -60 q -12 0 -12 -12 v -84 q 0 -12 12 -12 Z" fill="#FFFFFF" opacity="0.2"/>
+    <rect x="-108" y="-124" width="216" height="24" rx="12" fill="${P.wood}"/>
+    <rect x="-108" y="-128" width="216" height="24" rx="12" fill="url(#woodGrad)"/>
+    <circle cx="-46" cy="-150" r="26" fill="url(#peachBall)"/>
+    <circle cx="6" cy="-158" r="32" fill="url(#blueBall)"/>
+    <path d="M -22 -160 q 28 -14 56 4" stroke="#FFFFFF" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.55"/>
+    <rect x="46" y="-172" width="46" height="46" rx="10" fill="url(#yellowBall)" transform="rotate(-12 69 -149)"/>
+    <path d="M 56 -150 h 26 M 69 -163 v 26" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity="0.6" transform="rotate(-12 69 -149)"/>`);
+}
+
+/** A window with a warm sky in it. Also copied from `game-art.js`. */
+function window(cx, cy, w, h) {
+  const x = cx - w / 2, y = cy - h / 2;
+  return `
+    <rect x="${x - 10}" y="${y - 10}" width="${w + 20}" height="${h + 20}" rx="26" fill="${P.sand200}"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="url(#skyWarm)"/>
+    <circle cx="${R(x + w * 0.72)}" cy="${R(y + h * 0.28)}" r="${R(h * 0.14)}" fill="url(#sunDisc)"/>
+    ${cloud(x + w * 0.34, y + h * 0.36, w * 0.34, { opacity: 0.9 })}
+    <path d="M ${x} ${R(y + h * 0.72)} q ${R(w * 0.3)} ${R(-h * 0.16)} ${R(w * 0.58)} ${R(h * 0.04)} q ${R(w * 0.24)} ${R(h * 0.08)} ${R(w * 0.42)} ${R(-h * 0.04)} V ${y + h} H ${x} Z" fill="url(#hillFar)"/>
+    <rect x="${R(cx - 6)}" y="${y}" width="12" height="${h}" fill="${P.sand200}"/>
+    <rect x="${x}" y="${R(cy - 6)}" width="${w}" height="12" fill="${P.sand200}"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="none" stroke="${P.sand300}" stroke-width="7"/>`;
+}
+
 /** A counter-top basin: a rim, a well you can see into, and a wall-mounted
  *  gooseneck tap running into it. */
 function basinAndTap(cx, rimY, s = 1, { stream = true } = {}) {
@@ -1874,51 +2045,110 @@ const scenes = {
       <circle cx="592" cy="238" r="14" fill="url(#bubbleFill)"/>
     </g>`,
 
-  /** Potty Path: the world the lily-pad grid is laid over. The middle of the
-   *  frame is lawn and sky on purpose — the pads land there. */
-  'games-pottyPath': () => `
-    <rect x="0" y="0" width="${SW}" height="${SH}" fill="url(#skyWarm)"/>
-    <circle cx="84" cy="68" r="78" fill="url(#sunGlow)" opacity="0.8"/>
-    <circle cx="84" cy="68" r="34" fill="url(#sunDisc)"/>
-    ${cloud(272, 62, 112, { opacity: 0.7 })}
-    ${cloud(524, 40, 86, { opacity: 0.5 })}
-    <path d="M -20 196 Q 120 138 292 180 Q 452 218 660 172 L 660 500 L -20 500 Z" fill="url(#hillHaze)"/>
-    ${treeline(-30, 210, 178, 4, '#BADFD0', { h: 46, w: 92, opacity: 0.8 })}
-    ${treeline(452, 680, 172, 4, '#BADFD0', { h: 48, w: 96, opacity: 0.8 })}
-    <path d="M -20 218 Q 130 162 300 202 Q 460 240 660 196 L 660 500 L -20 500 Z" fill="url(#hillFar)"/>
-    ${treeline(-30, 168, 232, 3, '#A2D8BB', { h: 60, w: 112 })}
-    ${canopy(624, 254, 132, 82, '#8CD1A9')}
-    <path d="M -20 270 Q 170 218 360 264 Q 520 302 660 256 L 660 500 L -20 500 Z" fill="url(#hillMid)"/>
-    <rect x="0" y="266" width="${SW}" height="180" fill="url(#meadowLight)"/>
-    <path d="M -20 316 Q 200 286 420 320 Q 550 340 660 316 L 660 500 L -20 500 Z" fill="url(#ground)"/>
-    ${friendlyDoor(496, 322, 0.46)}
-    <path d="M 20 496 Q 92 424 210 382 Q 338 338 452 322 L 500 316 L 500 346 Q 372 366 260 406 Q 154 448 126 496 Z" fill="${P.sand300}" opacity="0.55"/>
-    <path d="M 26 492 Q 96 424 214 384 Q 340 342 452 326 L 496 320 L 496 342 Q 370 362 258 402 Q 152 444 122 492 Z" fill="url(#pathSand)"/>
-    ${pebble(206, 390, 21, 8)}
-    ${pebble(306, 366, 17, 7)}
-    ${pebble(396, 344, 14, 6)}
-    ${g('translate(80 424)', `
-      ${contactShadow(0, 4, 34, 8)}
-      <rect x="-6" y="-66" width="12" height="68" rx="6" fill="url(#woodGradV)"/>
-      <path d="M -40 -100 h 60 l 18 15 l -18 15 h -60 q -9 0 -9 -9 v -12 q 0 -9 9 -9 Z" fill="url(#greenBall)"/>
-      <path d="M -40 -100 h 28 v 30 h -28 q -9 0 -9 -9 v -12 q 0 -9 9 -9 Z" fill="#FFFFFF" opacity="0.22"/>
-      <path d="M -26 -85 h 26 M -8 -95 l 11 10 l -11 10" stroke="${P.cloud}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`)}
-    ${pebble(26, 462, 16, 8)}
-    ${pebble(150, 470, 13, 6.5)}
-    <g fill="${P.hopGreenInk}" opacity="0.2">
-      <path d="${blade(24, 424, 62, 16, 10)}"/><path d="${blade(52, 430, 44, -12, 8)}"/>
-      <path d="${blade(624, 452, 68, -18, 11)}"/><path d="${blade(596, 458, 48, 14, 9)}"/>
-      <path d="${blade(470, 470, 42, -12, 8)}"/><path d="${blade(556, 400, 38, 12, 8)}"/>
-      <path d="${blade(228, 470, 46, 14, 9)}"/><path d="${blade(198, 476, 32, -10, 7)}"/>
+  /** Potty Path: the *home* the walk happens in.
+   *
+   *  An earlier version of this drew a meadow with a garden path, because the
+   *  game it served was a grid of lily pads. §30 asks for an illustrated home
+   *  environment with one clear route to a bathroom, so this is a hallway: a
+   *  play corner at the near left, a floor runner rising to the right, and an
+   *  open bathroom door at the far end with the potty visible through it.
+   *
+   *  STAGE. `PottyPathSession.route` walks unit (0.13, 0.86) → (0.86, 0.50),
+   *  which is (83, 413) → (550, 240) here. The runner below is drawn along
+   *  exactly that line and the doorway is centred on its far end, so the app's
+   *  footprints land on the floor and the last one lands in the bathroom. Move
+   *  one and move the other.
+   *
+   *  Hop is never drawn in: the app composites the live character on the route. */
+  'games-pottyPath': () => {
+    const FLOOR = 236;
+    // The route, in this file's coordinates. One table, so the runner, the rug
+    // and the doorway cannot drift apart from the stops the app draws.
+    const ROUTE = [[83, 413], [192, 384], [301, 346], [403, 307], [486, 274], [550, 240]];
+    // The hall runner, along the route but stopping short of the threshold so
+    // the potty is never under it. Deliberately quiet: the app draws its own
+    // trail and its own footprints on top, and two paths competing for the same
+    // line is how a floor turns into a board game.
+    const RUG = ROUTE.slice(0, 5).concat([[512, 260]]);
+    const runner = (w, fill, o) => `<path d="${RUG.map(([x, y], i) =>
+      `${i ? 'L' : 'M'} ${x} ${y}`).join(' ')}" fill="none" stroke="${fill}" stroke-width="${w}"
+      stroke-linecap="round" stroke-linejoin="round" opacity="${o}"/>`;
+    // Floorboards, converging on a vanishing point behind the doorway. Two
+    // cheap rules and the floor stops being a beige rectangle.
+    const vx = 550, vy = FLOOR - 30;
+    const boards = [];
+    for (let j = -7; j <= 7; j++) {
+      const bx = vx + j * 128;
+      const t = (FLOOR - vy) / (SH - vy);
+      boards.push(`M ${R(vx + (bx - vx) * t)} ${FLOOR} L ${R(bx)} ${SH}`);
+    }
+    for (let k = 1; k < 5; k++) {
+      boards.push(`M 0 ${R(FLOOR + (SH - FLOOR) * Math.pow(k / 5, 1.7))} H ${SW}`);
+    }
+    return `
+    <rect x="0" y="0" width="${SW}" height="${SH}" fill="${P.sand100}"/>
+    <rect x="0" y="0" width="${SW}" height="${FLOOR}" fill="url(#wallFall)"/>
+    <rect id="key-light" x="0" y="0" width="${SW}" height="${FLOOR}" fill="url(#wallLight)"/>
+    <!-- a picture rail, so the wall has a height a child can read -->
+    <rect x="0" y="96" width="${SW}" height="9" rx="4.5" fill="${P.sand200}"/>
+    <rect x="0" y="96" width="${SW}" height="3.5" rx="1.75" fill="#FFFFFF" opacity="0.7"/>
+    ${window(96, 62, 132, 104)}
+    <!-- the floor -->
+    <rect x="0" y="${FLOOR}" width="${SW}" height="${SH - FLOOR}" fill="url(#woodGradV)"/>
+    <rect x="0" y="${FLOOR}" width="${SW}" height="${SH - FLOOR}" fill="url(#floorGlow)"/>
+    <g id="floorboards" stroke="${P.woodDeep}" stroke-width="2.2" opacity="0.28" fill="none" stroke-linecap="round">
+      <path d="${boards.join(' ')}"/>
     </g>
-    ${g('translate(546 462) scale(0.34)', `${frond(150, -48)}${frond(160, 44)}${frond(148, -2)}`)}
-    ${flower(30, 398, 19, { fill: 'url(#yellowBall)', core: P.sunshineSoft, stemH: 34 })}
-    ${flower(580, 396, 18, { fill: 'url(#peachBall)', core: P.peachSoft, petals: 6, stemH: 32 })}
-    ${g('translate(404 206) scale(0.46)', `
-      ${butterflyHalf(P.lavender, P.lavenderSoft, '#FFFFFF')}
-      ${g('scale(-1 1)', butterflyHalf(P.lavender, P.lavenderSoft, '#FFFFFF'))}
-      <ellipse cx="0" cy="4" rx="5" ry="28" fill="${P.night600}" opacity="0.8"/>
-      <circle cx="0" cy="-26" r="7.4" fill="${P.night600}" opacity="0.8"/>`)}`,
+    <rect x="0" y="${FLOOR}" width="${SW}" height="${SH - FLOOR}" fill="url(#floorFall)"/>
+    <g id="skirting">
+      <rect x="0" y="${FLOOR}" width="${SW}" height="15" fill="${P.sand200}"/>
+      <rect x="0" y="${FLOOR}" width="${SW}" height="5" rx="2.5" fill="#FFFFFF" opacity="0.75"/>
+    </g>
+    <!-- the bathroom, seen through an open door at the end of the hall -->
+    <g id="bathroom-door">
+      ${wallShadow(560, 150, 118, 130, 0.5)}
+      <rect x="${482}" y="${58}" width="${146}" height="${FLOOR - 58 + 2}" rx="10" fill="${P.woodDeep}"/>
+      <rect x="${492}" y="${68}" width="${126}" height="${FLOOR - 68 + 2}" fill="${P.pondBlueSoft}"/>
+      <rect x="${492}" y="${68}" width="${126}" height="${FLOOR - 68 + 2}" fill="url(#tileSheen)"/>
+      <g opacity="0.5" stroke="#FFFFFF" stroke-width="2.4" fill="none">
+        <path d="M 492 118 H 618 M 492 168 H 618 M 534 68 V ${FLOOR} M 576 68 V ${FLOOR}"/>
+      </g>
+      <rect x="${492}" y="${FLOOR - 52}" width="${126}" height="54" fill="${P.sand50}"/>
+      <!-- The potty, which is the last stop on the route: unit (0.86, 0.50) is
+           (550, 240) here, so it stands exactly where the app's final footprint
+           lands. -->
+      ${g('translate(552 244) scale(0.38)', pottyChair(0, 0, 1))}
+      ${towelOnRail(520, 100, 0.4)}
+      <!-- the open leaf, hinged at the left of the frame -->
+      <path d="M 482 58 L 452 74 V ${FLOOR - 6} L 482 ${FLOOR} Z" fill="url(#woodGrad)"/>
+      <path d="M 470 82 L 466 86 V ${FLOOR - 26} L 470 ${FLOOR - 22} Z" fill="#FFFFFF" opacity="0.2"/>
+      <circle cx="476" cy="160" r="6" fill="${P.sunshineBright}"/>
+      <!-- warm light spilling out of it onto the hall floor -->
+      <path d="M 492 ${FLOOR} L 640 ${FLOOR} L 640 330 L 470 ${FLOOR + 10} Z" fill="${P.sunshineSoft}" opacity="0.4"/>
+    </g>
+    <!-- the runner the child walks along -->
+    ${runner(44, P.sand400, 0.22)}
+    ${runner(38, P.sand100, 0.95)}
+    ${runner(30, P.peachSoft, 0.8)}
+    ${runner(3, P.peach, 0.35)}
+    <!-- the play corner the walk starts from -->
+    <g id="play-corner">
+      ${contactShadow(96, 452, 118, 22)}
+      <ellipse cx="96" cy="440" rx="122" ry="40" fill="${P.peachSoft}"/>
+      <ellipse cx="96" cy="436" rx="98" ry="31" fill="url(#matWeave)"/>
+      <ellipse cx="96" cy="436" rx="60" ry="19" fill="${P.peachSoft}" opacity="0.8"/>
+      ${toyBox(40, 388, 0.62)}
+      <circle cx="150" cy="424" r="17" fill="url(#blueBall)"/>
+      ${specular(144, 417, 6, 3.4, -24, 0.7)}
+      <circle cx="182" cy="440" r="12" fill="url(#yellowBall)"/>
+      ${g('translate(206 404) scale(0.5)', `
+        <rect x="-18" y="-14" width="36" height="28" rx="6" fill="url(#lavenderBall)"/>
+        <rect x="-18" y="-14" width="36" height="9" rx="4" fill="#FFFFFF" opacity="0.3"/>`)}
+    </g>
+    ${pottedPlant(604, 452, 0.62)}
+    ${stepStool(300, 466, 0.42)}
+    <rect x="0" y="0" width="${SW}" height="${SH}" fill="url(#iconVignette)" opacity="0.55"/>`;
+  },
 
   /** Bathroom Match: a quiet room. Everything sits on the two side walls or on
    *  the floor, so the two columns of picture cards have the whole middle. */
@@ -2660,6 +2890,9 @@ for (const [id, build] of Object.entries(ITEMS)) {
 
 // --- the portrait backdrop the phone screens ask for ---
 write('Art/pond/pond-scene.svg', pondScene());
+
+// --- the stage: the composition every screen places PondCatalog against ---
+write('Art/pond/pond-stage.svg', pondStage());
 
 // --- the whole pond, composited exactly as PondCatalog places it ---
 const previewBody = [

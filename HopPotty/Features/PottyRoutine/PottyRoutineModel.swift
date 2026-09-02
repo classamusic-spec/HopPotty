@@ -34,13 +34,37 @@ struct PottyRoutineResult: Equatable, Sendable {
 @Observable
 final class PottyRoutineModel {
 
+    /// Where in the run the child is.
+    ///
+    /// ``arriving`` is the Potty Pause itself, in the app's own voice: Hop
+    /// walking up the path to the bathroom door, "Potty time!", and one button.
+    /// It is a stage rather than a sixth `PottyRoutineStep` on purpose — it
+    /// teaches nothing, times nothing and earns nothing, so putting it in
+    /// `PottyRoutineContent` would add a step to a routine whose whole design
+    /// rule is that there are five and no more, and would move every step index
+    /// the Live Activity reports.
     enum Stage: Equatable {
+        case arriving
         case step(PottyRoutineStepID)
         case celebration
         case finished
     }
 
-    private(set) var stage: Stage = .step(.tryIt)
+    /// The two beats of the try step.
+    ///
+    /// Sitting and being asked what happened are one `PottyRoutineStep` and two
+    /// screens. They were one screen, and one screen was wrong: three answers
+    /// already on the rail while a child is still trying is a question being
+    /// asked before there is anything to answer, which is pressure. So Hop waits
+    /// through ``settling`` — with the caregiver's calm ring, if they turned one
+    /// on — and only ``asking`` puts the three answers up.
+    enum TryBeat: Equatable {
+        case settling
+        case asking
+    }
+
+    private(set) var stage: Stage = .arriving
+    private(set) var tryBeat: TryBeat = .settling
     /// What the child tapped at the try step. Set once; the three answers are
     /// peers, so nothing here ranks them.
     private(set) var outcome: PottyEventKind?
@@ -66,7 +90,9 @@ final class PottyRoutineModel {
         // A routine with no steps is not representable in content, but a caller
         // could hand one in; starting at the celebration is the graceful answer.
         self.steps = steps
-        self.stage = steps.first.map { .step($0.id) } ?? .celebration
+        // Even a routine with no steps has an arrival: the pause happened, and
+        // the child is owed the screen that says so.
+        self.stage = steps.isEmpty ? .celebration : .arriving
     }
 
     // MARK: - Reading the current position
@@ -76,35 +102,46 @@ final class PottyRoutineModel {
         return steps.first { $0.id == id }
     }
 
+    /// Whether the child is still on the Potty Pause screen.
+    var isArriving: Bool { stage == .arriving }
+
     var stepCount: Int { steps.count }
 
     /// 1-based index of the current step, for the indicator and its VoiceOver
     /// label. Clamped rather than optional so the indicator can stay on screen
     /// through the celebration without flickering to zero.
     var currentStepNumber: Int {
+        // Arriving reports the first step. The Live Activity's "1 of 5" is about
+        // where the *routine* is, and a child standing at the bathroom door has
+        // not started a different step — they have not started this one yet.
+        if stage == .arriving { return steps.isEmpty ? 0 : 1 }
         guard case .step(let id) = stage, let index = steps.firstIndex(where: { $0.id == id }) else {
             return steps.count
         }
         return index + 1
     }
 
-    /// Whether the current step wants the calm filling ring.
+    /// Whether the calm filling ring is on screen.
     ///
-    /// The try step's ring is a caregiver preference and off by default — a
-    /// visible clock makes some children tense, and nothing about the routine
-    /// needs one. The wash step's ring is not a preference: twenty seconds of
-    /// scrubbing is the whole point of the step, and the ring is how a
-    /// pre-reader knows how much is left.
+    /// Exactly one step can show one — the try step, while the child is settling
+    /// — and only when a caregiver switched it on. It is off by default: a
+    /// visible clock makes some children tense and nothing about sitting down
+    /// needs one.
+    ///
+    /// The wash step used to show a ring too, for its twenty seconds of
+    /// scrubbing. It does not any more, because the wash step is now Bubble
+    /// Wash: the foam spreading across Hop's hands *is* the readout, it is on
+    /// the thing the child is touching, and a second clock beside it would be
+    /// the countdown this product exists to remove from a bathroom.
     var showsTimerRing: Bool {
-        guard let step = currentStep, step.duration != nil else { return false }
-        return step.id == .tryIt ? settings.routineSitTimerEnabled : true
+        currentStep?.id == .tryIt && tryBeat == .settling
+            && settings.routineSitTimerEnabled && timerDuration != nil
     }
 
-    /// Length of the current step's ring. The try step follows the caregiver's
-    /// chosen length; every other timed step follows its content.
+    /// Length of the try step's ring, as the caregiver set it.
     var timerDuration: TimeInterval? {
-        guard let step = currentStep, let authored = step.duration else { return nil }
-        return step.id == .tryIt ? settings.routineSitTimerDuration : authored
+        guard let step = currentStep, step.id == .tryIt, step.duration != nil else { return nil }
+        return settings.routineSitTimerDuration
     }
 
     /// 0...1 fill. The ring *fills up*; it never drains. A shape that empties
@@ -115,10 +152,19 @@ final class PottyRoutineModel {
         return min(1, max(0, elapsedOnStep / duration))
     }
 
-    /// Whether the try step is waiting on the child's answer. True the whole
-    /// time they are on it: the answer is available immediately and the ring,
-    /// when shown, never gates it.
-    var isAwaitingOutcome: Bool { currentStep?.id == .tryIt }
+    /// Whether the three answers are on screen.
+    ///
+    /// Only on the try step's second beat. Nothing gates reaching that beat — a
+    /// child taps "Next" whenever they like, at any fraction of the ring, and
+    /// the ring reaching the end does not move them on by itself.
+    var isAwaitingOutcome: Bool { currentStep?.id == .tryIt && tryBeat == .asking }
+
+    /// Whether the wash step should hand the screen to Bubble Wash.
+    ///
+    /// The wash step has no illustration-and-Next screen of its own any more:
+    /// the child arrives directly in the close-up of Hop's hands, rubs them
+    /// clean, and the routine moves on when the hands are clean.
+    var isWashing: Bool { currentStep?.id == .wash }
 
     // MARK: - Moving through it
 
@@ -143,8 +189,22 @@ final class PottyRoutineModel {
     }
 
     /// Marks the current step done and moves to the next one.
+    ///
+    /// On the arrival screen this is "Let's Go", which starts the routine. On
+    /// the try step's first beat it is "Next", which moves to the question
+    /// rather than off the step — the two beats are one step, so nothing is
+    /// earned and no index moves in between.
     func advance() {
+        if stage == .arriving {
+            stage = steps.first.map { .step($0.id) } ?? .celebration
+            return
+        }
         guard case .step(let id) = stage, let index = steps.firstIndex(where: { $0.id == id }) else { return }
+        if id == .tryIt, tryBeat == .settling {
+            tryBeat = .asking
+            elapsedOnStep = 0
+            return
+        }
         if let reason = steps[index].rewardReason, !earnedReasons.contains(reason) {
             earnedReasons.append(reason)
         }
@@ -164,6 +224,7 @@ final class PottyRoutineModel {
 
     private func moveOn(from index: Int) {
         elapsedOnStep = 0
+        tryBeat = .settling
         isAcknowledgingOutcome = false
         let next = index + 1
         stage = next < steps.count ? .step(steps[next].id) : .celebration

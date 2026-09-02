@@ -116,6 +116,32 @@ public struct OnboardingCopy: HopCopySection {
     )
     public let screenTimeGrant = HopCopyEntry.parent("onboarding.screenTime.grant", "Allow Screen Time")
 
+    // The three things a caregiver has to know before a system prompt, and
+    // nothing else. Everything longer — how iOS does the pausing, what a sealed
+    // token is, what persists — is behind `screenTimeHowTitle`. Short is the
+    // requirement here, not a style: a paragraph in front of a permission
+    // dialog is a paragraph nobody reads and a permission nobody grants.
+    public let screenTimePromiseApps = HopCopyEntry.parent(
+        "onboarding.screenTime.promise.apps",
+        "You choose the apps."
+    )
+    public let screenTimePromisePrivate = HopCopyEntry.parent(
+        "onboarding.screenTime.promise.private",
+        "HopPotty can't see inside them."
+    )
+    public let screenTimePromiseReversible = HopCopyEntry.parent(
+        "onboarding.screenTime.promise.reversible",
+        "You can turn this off anytime."
+    )
+    public let screenTimeHowTitle = HopCopyEntry.parent(
+        "onboarding.screenTime.how.title",
+        "How this works"
+    )
+    public let screenTimeHowBody = HopCopyEntry.parent(
+        "onboarding.screenTime.how.body",
+        "iOS does the pausing, not HopPotty. When you pick apps, Apple hands over a sealed token for each one: HopPotty can count them and pause them, and cannot read a name or an icon. The next screen is Apple's, and HopPotty cannot see or change what it asks. Without permission, apps are never paused — Hop still checks in on your schedule, and you can turn pausing on later in Settings."
+    )
+
     public let appsTitle = HopCopyEntry.parent("onboarding.apps.title", "Pick the apps that pause")
     public let appsBody = HopCopyEntry.parent(
         "onboarding.apps.body",
@@ -203,6 +229,13 @@ public struct ParentHomeCopy: HopCopySection {
     )
     public let summaryTriesLabel = HopCopyEntry.parent("parentHome.summary.triesLabel", "Tries")
     public let summaryStarsLabel = HopCopyEntry.parent("parentHome.summary.starsLabel", "Stars")
+    /// The day's total of everything the child took part in. "Check-ins" rather
+    /// than "visits" or "attempts": the preferred vocabulary for this product is
+    /// participation, never performance.
+    public let summaryChecksLabel = HopCopyEntry.parent("parentHome.summary.checksLabel", "Checks")
+    /// Accidents are counted and named plainly, on a line of their own rather
+    /// than as one of the period's headline figures. Recorded, never ranked.
+    public let summaryAccidentsRecorded = HopCopyEntry.parent("parentHome.summary.accidentsRecorded", "Accidents recorded")
 
     public let timelineTitle = HopCopyEntry.parent("parentHome.timeline.title", "Timeline")
     public let timelineEmpty = HopCopyEntry.parent("parentHome.timeline.empty", "Nothing logged yet today.")
@@ -693,13 +726,29 @@ public struct RoutineChromeCopy: HopCopySection {
     public let skipButton = HopCopyEntry.child("routine.skip", "Skip this")
     public let helpButton = HopCopyEntry.child("routine.help", "I need a grown-up")
     public let repeatButton = HopCopyEntry.child("routine.repeat", "Say it again")
-    public let outcomeQuestion = HopCopyEntry.child("routine.outcome.question", "How did it go?")
-    public let outcomePee = HopCopyEntry.child("routine.outcome.pee", "Pee!")
-    public let outcomePoop = HopCopyEntry.child("routine.outcome.poop", "Poop!")
+    public let outcomeQuestion = HopCopyEntry.child(
+        "routine.outcome.question",
+        "All done trying?",
+        comment: """
+            Asked on its own screen, after the child has finished sitting. \
+            "All done trying?" rather than "How did it go?": the question is \
+            whether they have finished, not how well it went.
+            """
+    )
+    // The three answers are the child's own sentence about what happened —
+    // "I peed", not "Pee!" — so the same grammar carries all three and the
+    // third one cannot end up phrased as an absence. See `outcomeNothing`.
+    public let outcomePee = HopCopyEntry.child("routine.outcome.pee", "I peed")
+    public let outcomePoop = HopCopyEntry.child("routine.outcome.poop", "I pooped")
     public let outcomeNothing = HopCopyEntry.child(
         "routine.outcome.nothing",
-        "Nothing yet",
-        comment: "The third option, drawn exactly as large and as cheerfully as the other two."
+        "I tried",
+        comment: """
+            The option the product is about, drawn exactly as large and as \
+            cheerfully as the other two and offered first. "I tried" and not \
+            "Nothing yet": a child who sat down and nothing happened did the \
+            whole skill, and the word for that is trying, not nothing.
+            """
     )
     public let sitTimerCaption = HopCopyEntry.child(
         "routine.sitTimer.caption",

@@ -1,14 +1,36 @@
 import SwiftUI
 import HopPottyCore
 
-/// The guided routine, end to end: five steps and a celebration.
+/// The guided routine, end to end: the pause, five steps and a celebration.
 ///
-/// Navigation is one level deep on purpose. There is no stack, no tab bar and
-/// no back button — a two-year-old holding a tablet in a bathroom gets one
-/// screen at a time, one thing to do, and a way out that is always in the same
-/// corner. The whole run is short by construction:
+/// ## One screen at a time, and nothing around it
+///
+/// Navigation is one level deep on purpose. There is no stack, no tab bar and no
+/// back button — a two-year-old holding a tablet in a bathroom gets one screen
+/// at a time, one thing to do, and a grown-up always in the same corner. The
+/// whole run is short by construction:
 /// `PottyRoutineContent.estimatedDuration` fits inside the default pause with
 /// room to spare.
+///
+/// This view used to draw a chrome row above every step: a help button, a
+/// five-dot step indicator and a close button. All three are gone, and the
+/// reasons are different for each:
+///
+///  * **the dots** were half of a checklist — the other half was the named strip
+///    along the bottom of each step — and a guided routine is one focused step
+///    at a time. A child shown four more steps is being shown a queue;
+///  * **the close button** was an adult's affordance wearing a child's clothes.
+///    An `xmark` means nothing to a pre-reader, and the real way out of a
+///    bathroom is a grown-up. `HopHubView.askForAGrownUp()` already closes the
+///    routine and raises the parent gate, so the hand *is* the exit, and it is
+///    an exit into adult hands rather than a shrug back to a menu;
+///  * **the help button** stayed, and it is now the only chrome on the screen.
+///
+/// ## Where the wash step went
+///
+/// The wash step no longer has an illustration-and-Next screen. It opens
+/// ``BubbleWashScreen`` directly — the child arrives in the close-up of Hop's
+/// hands, rubs them clean, and the routine moves on by itself when they are.
 struct PottyRoutineView: View {
     @Environment(\.hopTheme) private var theme
     @Environment(\.childContext) private var context
@@ -20,7 +42,8 @@ struct PottyRoutineView: View {
     /// Opens Hop's Pond. Separate from `onFinish` so the caller can decide
     /// whether the pond replaces the routine or sits on top of it.
     let onOpenPond: () -> Void
-    /// Called when the child asks for a grown-up. Never a dead end.
+    /// Called when the child asks for a grown-up. Never a dead end, and now the
+    /// routine's only way out that is not finishing it.
     let onAskForHelp: () -> Void
     /// Reports where in the routine the child is, whenever that changes.
     ///
@@ -49,29 +72,26 @@ struct PottyRoutineView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            chrome
-            // `PottyRoutineModel.Stage` is Equatable but not Hashable, so the
-            // stage cannot go through `HopPageSwitch` — the transition and the
-            // spring are wired by hand instead, and they are the same two the
-            // switch would have paired.
-            stage
-                .hopScreenChange(.childPage, value: model.stage)
-        }
-        .hopBackground(.secondary)
-        .routineTicker(isRunning: model.showsTimerRing) { model.tick($0) }
-        // The opening step, reported once. A routine that is opened and never
-        // advanced still has a position, and a lock screen that says "1 of 5"
-        // because nothing told it otherwise is only right by luck.
-        .onAppear { reportStep() }
-        .onChange(of: model.stage) { _, stage in
-            if stage == .finished { onFinish(model.result) }
-            reportStep()
-        }
+        // `PottyRoutineModel.Stage` is Equatable but not Hashable, so the stage
+        // cannot go through `HopPageSwitch` — the transition and the spring are
+        // wired by hand instead, and they are the same two the switch would have
+        // paired.
+        stage
+            .hopScreenChange(.childPage, value: model.stage)
+            .hopBackground(.secondary)
+            .routineTicker(isRunning: model.showsTimerRing) { model.tick($0) }
+            // The opening step, reported once. A routine that is opened and
+            // never advanced still has a position, and a lock screen that says
+            // "1 of 5" because nothing told it otherwise is only right by luck.
+            .onAppear { reportStep() }
+            .onChange(of: model.stage) { _, stage in
+                if stage == .finished { onFinish(model.result) }
+                reportStep()
+            }
     }
 
-    /// `currentStepNumber` is 1-based, for the indicator and its VoiceOver
-    /// label; the activity's index is 0-based. Converted in exactly one place.
+    /// `currentStepNumber` is 1-based, for the VoiceOver label and the Live
+    /// Activity; the activity's index is 0-based. Converted in exactly one place.
     ///
     /// Through the celebration and after it the model clamps to the last step
     /// rather than running past the end, so this never reports a sixth step of
@@ -83,65 +103,76 @@ struct PottyRoutineView: View {
         onStepChange(model.currentStepNumber - 1, model.stepCount)
     }
 
-    // MARK: - Chrome
-
-    /// The step indicator and the two escapes, in the same place on every step.
-    private var chrome: some View {
-        HStack(spacing: theme.spacing.m) {
-            HopIconButton(
-                systemImage: "hand.raised.fill",
-                accessibilityLabel: HopCopy.routine.helpButton.localized,
-                action: onAskForHelp
-            )
-
-            Spacer(minLength: theme.spacing.s)
-
-            HopStepIndicator(total: model.stepCount, current: model.currentStepNumber)
-                .accessibilityLabel(
-                    HopCopy.a11y.progressDots.localized(filling: [
-                        1: .count(model.currentStepNumber),
-                        2: .count(model.stepCount),
-                    ])
-                )
-
-            Spacer(minLength: theme.spacing.s)
-
-            HopIconButton(
-                systemImage: "xmark",
-                accessibilityLabel: HopCopy.routine.leaveButton.localized,
-                action: { model.leave() }
-            )
-        }
-        .hopPageMargins()
-        .padding(.vertical, theme.spacing.m)
-    }
-
     // MARK: - Stage
 
     @ViewBuilder
     private var stage: some View {
         switch model.stage {
+        case .arriving:
+            RoutinePauseView(onGo: { model.advance() }, onAskForHelp: onAskForHelp)
+                .hopScreenTransition(.childPage)
+
         case .step:
             if let step = model.currentStep {
-                stepStage(step)
-                    .id(step.id)
-                    .hopScreenTransition(.childPage)
+                Group {
+                    if model.isWashing {
+                        // The wash step *is* Bubble Wash. It brings its own line
+                        // and its own way to a grown-up, and it finishes itself.
+                        BubbleWashScreen(
+                            onFinish: { model.advance() },
+                            onAskForHelp: onAskForHelp,
+                            title: step.instruction.localized
+                        )
+                    } else {
+                        stepStage(step)
+                            .overlay(alignment: .topTrailing) { grownUpButton }
+                    }
+                }
+                .id(stageIdentity(step))
+                .hopScreenTransition(.childPage)
             }
+
         case .celebration:
             RoutineCelebrationView(
                 outcome: model.outcome,
                 starsEarned: starsEarned,
-                totalStars: context.totalStars + starsEarned,
                 unlocked: newlyUnlocked,
                 onSeeThePond: onOpenPond,
                 onFinish: { model.finishCelebration() }
             )
             .hopScreenTransition(.celebration)
+
         case .finished:
             // The caller has been told; hold the ground colour for the one frame
             // before it dismisses us rather than flashing an empty screen.
             Color.clear
         }
+    }
+
+    /// The identity a screen change is keyed on.
+    ///
+    /// The try step is two screens — sitting, then the question — so its two
+    /// beats have to be two identities or the answers would appear under the
+    /// child without the page ever changing.
+    private func stageIdentity(_ step: PottyRoutineStep) -> String {
+        step.id.rawValue + (step.id == .tryIt ? "-\(model.tryBeat)" : "")
+    }
+
+    /// The only chrome on a routine step, in the same corner every time.
+    ///
+    /// Framed to `hitTarget.childMinimum` rather than drawn at it — a 72pt
+    /// filled disc in the corner of an illustrated screen reads as a button
+    /// demanding attention, and the target is what has to be 72, not the ink.
+    private var grownUpButton: some View {
+        HopIconButton(
+            systemImage: "hand.raised.fill",
+            accessibilityLabel: HopCopy.routine.helpButton.localized,
+            tint: theme.color.textSecondary,
+            minimumTarget: theme.hitTarget.child,
+            action: onAskForHelp
+        )
+        .hopPageMargins()
+        .padding(.top, theme.spacing.xs)
     }
 
     @ViewBuilder
@@ -165,15 +196,15 @@ struct PottyRoutineView: View {
                     RoutineOutcomeChoices { model.recordOutcome($0) }
                 } else {
                     HopPrimaryButton(
-                        HopCopy.routine.nextButton.localized,
-                        icon: "arrow.right",
+                        primaryTitle(for: step),
+                        icon: primaryIcon(for: step),
                         size: .childPrimary
                     ) {
                         model.advance()
                     }
                 }
 
-                if step.isSkippable {
+                if step.isSkippable, !model.isAwaitingOutcome {
                     // Secondary and parent-sized: skipping is a real, blameless
                     // option, but it is not one of the answers, so it must not
                     // compete with the three that are.
@@ -183,6 +214,22 @@ struct PottyRoutineView: View {
                 }
             }
         }
+    }
+
+    /// The word on the big button.
+    ///
+    /// "Next" everywhere except the last step, which leaves the steps behind and
+    /// says so. Plain verbs, one or two words — a pre-reader learns the button
+    /// by its shape and its place, and the word is for whoever is reading it to
+    /// them.
+    private func primaryTitle(for step: PottyRoutineStep) -> String {
+        step.id == .highFive
+            ? HopCopy.routine.leaveButton.localized
+            : HopCopy.routine.nextButton.localized
+    }
+
+    private func primaryIcon(for step: PottyRoutineStep) -> String {
+        step.id == .highFive ? "checkmark" : "arrow.right"
     }
 
     // MARK: - Derived reward preview
@@ -205,7 +252,7 @@ struct PottyRoutineView: View {
     }
 }
 
-#Preview("Routine · default, from the top") {
+#Preview("Routine · from the Potty Pause") {
     PottyRoutineView(onFinish: { _ in })
         .childContext(ChildContext(child: ChildProfile(nickname: "Maya"), totalStars: 7))
         .hopThemedRoot()

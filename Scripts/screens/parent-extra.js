@@ -16,9 +16,9 @@
 const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation } = require('./ui');
 const {
   listRow, listGroup, navBar, iosSwitch, iconTile, segmented, pageDots,
-  MARK, sparkline, columnChart, patternLabel, tints, statusBarPad,
+  MARK, columnChart, tints,
 } = require('./kit');
-const { metricChip, tabBar, parentHome, pageGround, sectionHeader, sidebar, PAD } = require('./parent');
+const { tabBar, parentHome, pageGround, sectionHeader, sidebar, PAD } = require('./parent');
 const { childChip, observationRows, weekTotals } = require('./insights');
 const { ctaButton } = require('./onboarding');
 
@@ -380,12 +380,32 @@ function firstPauseSet(appearance = 'light') {
 // 34 — Settings
 // ---------------------------------------------------------------------------
 
-/** The grouped list every caregiver already knows how to read. */
+/**
+ * The grouped list every caregiver already knows how to read.
+ *
+ * ## The rounded coloured tiles are gone
+ *
+ * Every row used to carry a 29pt tinted rounded square with a white glyph in it
+ * — six hues down one screen. Two reasons they went.
+ *
+ * 1. **The app does not draw them.** `SettingsRootView` is a plain SwiftUI
+ *    `Form` of `Label(_:systemImage:)` rows, which is as native as this screen
+ *    can be and is exactly what §8 asks for. The tiles were a render invention,
+ *    so the render and the app disagreed about what Settings looks like — and
+ *    the render was the one that was wrong.
+ * 2. **§34's colour budget.** Six saturated tiles is most of a screen's 15%
+ *    non-neutral allowance spent on decoration for rows whose labels already say
+ *    what they are.
+ *
+ * What is left is the mark itself, at symbol weight, in the brand ink — the
+ * quiet green a system list tints its glyphs with. The child avatars stay
+ * coloured, because those identify a person rather than label a setting.
+ */
 function settingsHub(appearance = 'light') {
   const col = c(appearance);
   const dark = appearance.startsWith('dark');
-  const tile = (hue, glyph) => iconTile(hue, glyph, { size: 29, radius: 8 });
-  const soft = (hex) => (dark ? alpha(hex, 0.24) : mix(hex, '#FFFFFF', 0.72));
+  /** A row's leading mark: no tile, no fill, symbol weight, brand ink. */
+  const tile = (glyph, tint) => `<div style="width:29px;display:grid;place-items:center;flex:0 0 auto">${glyph(tint || col.brandAction, 19)}</div>`;
 
   return `
   <div style="display:flex;flex-direction:column;height:${H}px;background:${col.surfaceSunken}">
@@ -406,7 +426,7 @@ function settingsHub(appearance = 'light') {
             label: 'Sam', chevron: true, minHeight: 48,
           }),
           listRow(col, {
-            icon: tile(soft(P.hopGreen), EXTRA.plus(col.brandAction, 16)),
+            icon: tile(EXTRA.plus),
             label: `<span style="color:${col.brandAction}">Add a child</span>`, accessory: '', last: true,
           }),
         ],
@@ -415,15 +435,15 @@ function settingsHub(appearance = 'light') {
       ${listGroup(col, appearance, {
         rows: [
           listRow(col, {
-            icon: tile(soft(P.hopGreen), MARK.clock('#FFFFFF', 17)),
+            icon: tile(MARK.clock),
             label: 'Potty Pause', value: 'Guided routine', chevron: true,
           }),
           listRow(col, {
-            icon: tile(soft(P.pondBlue), EXTRA.apps('#FFFFFF', 16)),
+            icon: tile(EXTRA.apps),
             label: 'Apps that pause', value: '4 apps, 1 category', chevron: true,
           }),
           listRow(col, {
-            icon: tile(soft(P.lavender), MARK.bell('#FFFFFF', 16)),
+            icon: tile(MARK.bell),
             label: 'Warning before a pause', accessory: iosSwitch(col, true), last: true,
           }),
         ],
@@ -433,7 +453,7 @@ function settingsHub(appearance = 'light') {
       ${listGroup(col, appearance, {
         rows: [
           listRow(col, {
-            icon: tile(soft(P.sunshine), MARK.star('#FFFFFF', 16)),
+            icon: tile(MARK.star),
             label: 'HopPotty Family', chevron: true, last: true,
           }),
         ],
@@ -443,11 +463,11 @@ function settingsHub(appearance = 'light') {
       ${listGroup(col, appearance, {
         rows: [
           listRow(col, {
-            icon: tile(soft(P.pondBlue), EXTRA.export('#FFFFFF', 15)),
+            icon: tile(EXTRA.export),
             label: 'Export my data', chevron: true,
           }),
           listRow(col, {
-            icon: tile(soft(P.peachPop), EXTRA.trash('#FFFFFF', 15)),
+            icon: tile(EXTRA.trash, col.eventPoop),
             label: `<span style="color:${col.eventPoop}">Delete everything</span>`, accessory: '', last: true,
           }),
         ],
@@ -1143,8 +1163,14 @@ function widgets(appearance = 'light') {
     </div>`, { pad: 18 });
 
   // The three accessory families, drawn the way the vibrant layer renders them.
+  //
+  // The backing is a *scrim*, not a white wash. A 22%-white disc over a
+  // mid-tone wallpaper raises the ground under white type instead of lowering
+  // it, and the 13pt countdown inside the circular accessory measured 4.48:1 —
+  // just under the floor — because of it. iOS dims the wallpaper behind Lock
+  // Screen accessories for the same reason; this draws that dimming.
   const accessoryCircular = `
-    <div style="width:72px;height:72px;border-radius:36px;background:${alpha('#FFFFFF', .22)};
+    <div style="width:72px;height:72px;border-radius:36px;background:${alpha(P.midnight, .38)};
       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex:0 0 auto">
       ${widgetFace(22, { mono: true })}
       <div style="${type('parentFootnote', { color: '#FFFFFF', weight: 'semibold' })};
@@ -1152,7 +1178,7 @@ function widgets(appearance = 'light') {
     </div>`;
 
   const accessoryRectangular = `
-    <div style="width:176px;height:72px;border-radius:${T.radius.m}px;background:${alpha('#FFFFFF', .16)};
+    <div style="width:176px;height:72px;border-radius:${T.radius.m}px;background:${alpha(P.midnight, .34)};
       padding:0 12px;display:flex;align-items:center;gap:9px;flex:0 0 auto">
       ${widgetFace(26, { mono: true })}
       <div>

@@ -9,7 +9,7 @@
  * Where finished vector art exists in `Art/`, `artOr` in `ui.js` lets a screen
  * prefer it; these are the drawings the screens use until it does.
  */
-const { T, mix, alpha, svg, hasArt } = require('./ui');
+const { T, mix, alpha, svg, svgInline, hasArt } = require('./ui');
 
 const P = T.palette;
 const INK_ = P.midnight;
@@ -105,6 +105,72 @@ const POND_LAYERS = {
 };
 
 /**
+ * The pond stage: the composition every screen places `PondCatalog` against.
+ *
+ * `PondGeometry.referenceAspect` in the app, and `Art/pond/pond-stage.svg`
+ * here. The stage is as wide as the frame and as tall as that width makes it,
+ * hung below centre so the extra height on a tall phone reads as sky above the
+ * horizon rather than as an empty field below the pond. One function, so the
+ * render and the app cannot disagree about where the water is.
+ */
+const POND_ASPECT = 1.10;
+const POND_BIAS = 0.55;
+
+/** `fg` at `a` over `bg`, as an opaque colour. Both may be `#rgb`/`#rrggbb`. */
+function composite(fg, a, bg) {
+  const v = (x) => {
+    const m = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(x);
+    if (m) return [+m[1], +m[2], +m[3]];
+    const hh = x.replace('#', '');
+    const n = parseInt(hh.length === 3 ? hh.split('').map((y) => y + y).join('') : hh, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const f = v(fg), b = v(bg);
+  return `rgb(${f.map((ch, i) => Math.round(ch * a + b[i] * (1 - a))).join(',')})`;
+}
+
+function pondStageBox(w, h) {
+  const stageH = w / POND_ASPECT;
+  const slack = h - stageH;
+  return { x: 0, y: slack >= 0 ? slack * POND_BIAS : slack * 0.5, w, h: stageH };
+}
+
+/** A unit coordinate in the frame's own pixels. */
+function pondPoint(ux, uy, w, h) {
+  const box = pondStageBox(w, h);
+  return [box.x + ux * box.w, box.y + uy * box.h];
+}
+
+/**
+ * The stage drawing, plus the sky and grass that continue above and below it.
+ *
+ * The extensions are what let the composition keep its shape on a 0.46-aspect
+ * phone instead of being stretched into a circular puddle with a duckling on
+ * the grass beside it.
+ */
+function pondStage(w, h) {
+  const box = pondStageBox(w, h);
+  // The stage's own first gradient stop, so the sky above it has no seam, with a
+  // deeper zenith over it: a tall phone should read as more air, not as a band.
+  const skyTop = P.pondBlueLight;
+  const zenith = mix(P.pondBlue, P.pondBlueLight, 0.42);
+  // The colour the stage's own bottom edge already is: its near-ground band with
+  // the foreground's ink composited over it. Matching it exactly is what stops a
+  // hard line appearing across the grass where the drawing ends.
+  const meadow = composite(P.hopGreenInk, 0.34, mix(P.hopGreenLight, P.hopGreen, 0.45));
+  return `
+    <div style="position:absolute;left:0;right:0;top:0;height:${(box.y + 1).toFixed(1)}px;overflow:hidden;
+      background:linear-gradient(180deg, ${zenith}, ${skyTop})">
+      ${box.y > 40 ? `<svg width="${w}" height="${box.y.toFixed(1)}" viewBox="0 0 ${w} ${box.y.toFixed(1)}" style="display:block">
+        ${cloud(w * 0.62, box.y * 0.42, (box.w * 0.24) / 104, '#FFFFFF', 0.55)}</svg>` : ''}
+    </div>
+    <div style="position:absolute;left:0;right:0;top:${(box.y + box.h - 1).toFixed(1)}px;bottom:0;background:${meadow}"></div>
+    <div style="position:absolute;left:0;top:${box.y.toFixed(1)}px;width:${box.w.toFixed(1)}px;height:${box.h.toFixed(1)}px">
+      ${svgInline('Art/pond/pond-stage.svg', { width: Math.round(box.w), height: Math.round(box.h) })}
+    </div>`;
+}
+
+/**
  * The child's own decorations, composited into the scene at their anchors.
  *
  * This is the whole difference between a pond and a trophy cabinet. The app
@@ -117,13 +183,15 @@ const POND_LAYERS = {
  */
 function pondDecorations(w, h, unlocked = [], { before = [], after = [] } = {}) {
   const has = (k) => unlocked.includes(k);
+  const box = pondStageBox(w, h);
   const one = (id) => {
     const [x, y, s] = POND_ANCHORS[id];
-    const side = w * 0.155 * s;
+    const side = box.w * 0.155 * s;
+    const [px, py] = pondPoint(x, y, w, h);
     const rel = `Art/pond/${id}.svg`;
     if (!hasArt(rel)) return '';
-    return `<div style="position:absolute;left:${(x * w - side / 2).toFixed(1)}px;
-      top:${(y * h - side / 2).toFixed(1)}px;width:${side.toFixed(1)}px;height:${side.toFixed(1)}px">
+    return `<div style="position:absolute;left:${(px - side / 2).toFixed(1)}px;
+      top:${(py - side / 2).toFixed(1)}px;width:${side.toFixed(1)}px;height:${side.toFixed(1)}px">
       ${svg(rel, { width: Math.round(side), height: Math.round(side) })}</div>`;
   };
   const layer = (name) => POND_LAYERS[name].filter(has).map(one).join('');
@@ -458,5 +526,6 @@ function dome(w, height, fill) {
 
 module.exports = {
   meadow, pond, washroom, soap, dome, cloud, reeds, flower, lilyPad, tuft,
-  pondDecorations, POND_ANCHORS, POND_ORDER, POND_LAYERS,
+  pondDecorations, pondStage, pondStageBox, pondPoint,
+  POND_ANCHORS, POND_ORDER, POND_LAYERS, POND_ASPECT,
 };

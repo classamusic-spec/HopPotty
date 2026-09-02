@@ -41,6 +41,7 @@ public extension HopTextStyle {
     static var parentCallout: HopTextStyle { HopTypography.parentCallout }
     static var parentCaption: HopTextStyle { HopTypography.parentCaption }
     static var parentFootnote: HopTextStyle { HopTypography.parentFootnote }
+    static var parentMetric: HopTextStyle { HopTypography.parentMetric }
     static var metric: HopTextStyle { HopTypography.metric }
     static var timer: HopTextStyle { HopTypography.timer }
     static var timerHero: HopTextStyle { HopTypography.timerHero }
@@ -52,7 +53,8 @@ public extension HopTextStyle {
     /// are not a preference here; they are the reason the timer stops twitching.
     var usesMonospacedDigits: Bool {
         switch name {
-        case HopTypography.metric.name, HopTypography.timer.name, HopTypography.timerHero.name:
+        case HopTypography.parentMetric.name, HopTypography.metric.name,
+             HopTypography.timer.name, HopTypography.timerHero.name:
             true
         default:
             false

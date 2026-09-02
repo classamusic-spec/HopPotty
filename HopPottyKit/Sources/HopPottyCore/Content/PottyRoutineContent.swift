@@ -78,7 +78,7 @@ public enum PottyRoutineContent {
     public static let tryStep = PottyRoutineStep(
         id: .tryIt,
         title: .child("routine.step.try.title", "Try", comment: "Step name. A verb: give it a try. Not a noun."),
-        instruction: .child("routine.step.try.instruction", "Sit down and give it a try."),
+        instruction: .child("routine.step.try.instruction", "Give it a try."),
         voice: HopVoiceLine(
             id: "routine.step.try.voice",
             text: "Let's give it a try. Take your time.",
@@ -131,7 +131,9 @@ public enum PottyRoutineContent {
     public static let washStep = PottyRoutineStep(
         id: .wash,
         title: .child("routine.step.wash.title", "Wash"),
-        instruction: .child("routine.step.wash.instruction", "Soap, scrub, rinse."),
+        // The wash step opens Bubble Wash rather than a picture with a Next
+        // under it, so this line is what the child sees over the basin.
+        instruction: .child("routine.step.wash.instruction", "Wash those hands!"),
         voice: HopVoiceLine(
             id: "routine.step.wash.voice",
             text: "Soap, scrub, rinse. Keep scrubbing while we sing!",

@@ -3,53 +3,67 @@ import HopPottyCore
 
 /// Today's numbers.
 ///
-/// Three tiles, and the accident tile is one of them — drawn identically to the
-/// others, with no red, no warning glyph and no percentage. It is a count of
-/// something that happened, which is the only thing HopPotty ever claims it is
-/// (`Docs/CONTRACTS.md` §4.3). There is deliberately no "success rate" tile,
-/// because the denominator that would make one is the thing this product
-/// refuses to compute.
+/// Four counts on one line — check-ins, and the three kinds that make them up —
+/// in `HopMetricRow`, which is one card with hairlines between the columns.
+///
+/// ## What changed
+///
+/// This was a three-column grid of ``HopMetricCard``: Tries, Stars and
+/// Accidents, each its own card with a 32pt tinted disc at the top of it. Three
+/// problems, in order of how much they mattered.
+///
+/// 1. **Accidents had a headline of their own.** A third of the day's summary,
+///    at the same weight as everything else a caregiver came to read. It is a
+///    count of something that happened and it stays counted — it is on the
+///    timeline below, and on Progress as a row — but it is not one of the three
+///    biggest numbers on the screen. §7.
+/// 2. **Stars are not a parent metric.** They are the child's currency and they
+///    are already at the top of this screen, on the pond, where they are earned.
+/// 3. **Three cards with three coloured discs** is what the brief calls giant
+///    colourful tiles, directly under a painted pond.
+///
+/// There is still deliberately no "success rate" figure, because the
+/// denominator that would make one is the thing this product refuses to compute
+/// (`Docs/CONTRACTS.md` §4.3).
 struct TodayMetricsRow: View {
     @Environment(\.hopTheme) private var theme
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     let snapshot: ParentHomeModel.Snapshot
 
-    /// Three across at every width. The tiles are short, and a caregiver
-    /// comparing today's three numbers wants them on one line, not reflowed.
-    private var columns: [GridItem] {
-        Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
+    private func count(_ kind: PottyEventKind) -> Int {
+        snapshot.todayEvents.filter { $0.kind == kind }.count
     }
 
     var body: some View {
-        // The three tiles lift into place left to right, once, when the day
-        // first draws. The stagger is what makes them read as one row arriving
-        // rather than three tiles appearing at once — and the accident tile is
-        // in it on exactly the same terms as the other two.
-        LazyVGrid(columns: columns, spacing: theme.spacing.s) {
-            HopMetricCard(
-                value: ParentFormat.count(snapshot.participationToday),
-                label: HopCopy.parentHome.summaryTriesLabel.localized,
-                glyph: .tried,
-                tint: theme.color.eventTried,
-                arrivalIndex: 0
-            )
-            HopMetricCard(
-                value: ParentFormat.count(snapshot.starsToday),
-                label: HopCopy.parentHome.summaryStarsLabel.localized,
-                glyph: .star,
-                tint: theme.color.celebration,
-                arrivalIndex: 1
-            )
-            HopMetricCard(
-                value: ParentFormat.count(snapshot.accidentsToday),
-                label: PottyEventKind.accident.parentLabel,
-                glyph: .accident,
-                tint: theme.color.eventAccident,
-                arrivalIndex: 2
-            )
-        }
-        .accessibilityElement(children: .contain)
+        HopMetricRow(
+            [
+                HopMetricColumn(
+                    value: ParentFormat.count(snapshot.participationToday),
+                    label: HopCopy.parentHome.summaryChecksLabel.localized,
+                    glyph: .check,
+                    tint: theme.color.success
+                ),
+                HopMetricColumn(
+                    value: ParentFormat.count(count(.tried)),
+                    label: PottyEventKind.tried.parentLabel,
+                    glyph: .tried,
+                    tint: theme.color.eventTried
+                ),
+                HopMetricColumn(
+                    value: ParentFormat.count(count(.pee)),
+                    label: PottyEventKind.pee.parentLabel,
+                    glyph: .pee,
+                    tint: theme.color.eventPee
+                ),
+                HopMetricColumn(
+                    value: ParentFormat.count(count(.poop)),
+                    label: PottyEventKind.poop.parentLabel,
+                    glyph: .poop,
+                    tint: theme.color.eventPoop
+                ),
+            ],
+            arrivalIndex: 0
+        )
     }
 }
 
@@ -88,6 +102,7 @@ struct TodayTimelineSection: View {
                         )
                     }
                 }
+                .padding(.horizontal, theme.spacing.l)
                 .background(
                     RoundedRectangle(cornerRadius: theme.radius.l, style: .continuous)
                         .fill(theme.color.surface)
@@ -114,10 +129,11 @@ struct HomeInsightSection: View {
             HopSectionHeader(HopCopy.parentHome.insightsTitle.localized)
 
             if let insight {
+                // The card renders `insight.disclaimer` itself and cannot be
+                // constructed without it (`Docs/CONTRACTS.md` §4.5), so the
+                // second copy that used to sit under it said the same sentence
+                // twice in eight points of each other. Said once (§49).
                 HopInsightCard(insight: insight, onAction: onAction, arrivalIndex: 0)
-                // Attached here as well as inside the card: no surface showing
-                // an observation may omit it.
-                InsightDisclaimerLabel()
             } else {
                 Text(hop: HopCopy.parentHome.insightsNotEnoughData)
                     .font(theme.font(.parentCallout))

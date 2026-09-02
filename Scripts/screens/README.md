@@ -19,6 +19,20 @@ NODE_PATH=/opt/node22/lib/node_modules node Scripts/screens/render-screens.js
 # → Art/render/screens/*.png
 ```
 
+## Checking a render
+
+```bash
+NODE_PATH=/opt/node22/lib/node_modules node Scripts/screens/check-fit.js
+NODE_PATH=/opt/node22/lib/node_modules node Scripts/screens/check-contrast.js
+```
+
+`check-fit` catches the thing a fixed viewport hides: a card 30px too tall does
+not scroll, it silently loses its bottom edge. `check-contrast` catches the other
+one: it composites each screen, hides the ink, and scores every run of text
+against the worst pixel of the ground actually painted underneath its glyphs — so
+a countdown standing on a pond is measured on the ripple, not on a token pair.
+Both exit non-zero on a failure.
+
 ## What these are and are not
 
 These are **design renders, not simulator screenshots.** No Xcode or iOS

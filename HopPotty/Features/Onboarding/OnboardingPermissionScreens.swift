@@ -13,15 +13,34 @@ import HopPottyCore
 // that a declined request is not retryable in the way a caregiver expects.
 
 /// 6. Why Screen Time — shown before the system prompt, never after.
+///
+/// ## Three things, then a disclosure
+///
+/// This screen used to make its case in three paragraphs of `parentCallout`,
+/// one of which opened "Apple hands over a sealed token for each app you pick".
+/// Every word of it was true and none of it is what a caregiver needs in the
+/// four seconds before a system dialog. §9 names exactly what has to be
+/// front-loaded and nothing else:
+///
+/// > You choose the apps. HopPotty can't see inside them. You can turn this off
+/// > anytime.
+///
+/// So the three promises are three short lines, and the framework vocabulary,
+/// what persists, what the next screen is and what happens if the answer is no
+/// all moved behind **How this works** — a `DisclosureGroup` a caregiver opens
+/// if they want it. Trust is not built by saying more at the moment of the ask;
+/// it is built by making the short version true and the long version reachable.
 struct WhyScreenTimeScreen: View {
     @Environment(\.hopTheme) private var theme
     let model: OnboardingModel
 
+    @State private var isDetailExpanded = false
+
     private var promises: [(HopGlyph, String)] {
         [
-            (.shield, HopCopy.onboarding.screenTimeBody.localized),
-            (.pause, HopCopy.timerSettings.durationFooter.localized),
-            (.check, HopCopy.onboarding.privacyBody.localized),
+            (.check, HopCopy.onboarding.screenTimePromiseApps.localized),
+            (.shield, HopCopy.onboarding.screenTimePromisePrivate.localized),
+            (.pause, HopCopy.onboarding.screenTimePromiseReversible.localized),
         ]
     }
 
@@ -34,21 +53,47 @@ struct WhyScreenTimeScreen: View {
             onPrimary: model.advance,
             onBack: model.goBack
         ) {
-            VStack(alignment: .leading, spacing: theme.spacing.m) {
+            VStack(alignment: .leading, spacing: theme.spacing.xl) {
+                // No card per line. Three cards holding one sentence each is
+                // three containers doing the work one list does (§35).
                 ForEach(Array(promises.enumerated()), id: \.offset) { _, promise in
                     HStack(alignment: .top, spacing: theme.spacing.m) {
-                        HopGlyphView(promise.0, size: 24)
-                            .foregroundStyle(theme.color.brandPrimary)
-                            .frame(width: 32)
+                        HopGlyphView(promise.0, size: 20)
+                            .foregroundStyle(theme.color.brandAction)
+                            .frame(width: 24)
                         Text(verbatim: promise.1)
-                            .font(theme.font(.parentCallout))
-                            .foregroundStyle(theme.color.textSecondary)
+                            .font(theme.font(.parentBody))
+                            .foregroundStyle(theme.color.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .accessibilityElement(children: .combine)
                 }
+
+                howThisWorks
             }
         }
+    }
+
+    /// Everything the three lines left out, one tap away and closed by default.
+    private var howThisWorks: some View {
+        DisclosureGroup(isExpanded: $isDetailExpanded) {
+            Text(hop: HopCopy.onboarding.screenTimeHowBody)
+                .font(theme.font(.parentCallout))
+                .foregroundStyle(theme.color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, theme.spacing.s)
+        } label: {
+            Text(hop: HopCopy.onboarding.screenTimeHowTitle)
+                .font(theme.font(.parentBody))
+                .foregroundStyle(theme.color.textPrimary)
+        }
+        .tint(theme.color.brandAction)
+        .padding(theme.spacing.l)
+        .frame(minHeight: theme.hitTarget.parent)
+        .background(
+            RoundedRectangle(cornerRadius: theme.radius.l, style: .continuous)
+                .fill(theme.color.surface)
+        )
     }
 }
 

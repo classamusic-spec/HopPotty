@@ -115,12 +115,20 @@ status (4), event accents (4), structure (4).
 | `textPrimary` | `#243047` | `#F3F1ED` | `#14192A` | `#FFFFFF` |
 | `textSecondary` | `#5A544D` | `#B4BCCB` | `#413B34` | `#D7DDE8` |
 | `brandPrimary` | `#63C88A` | `#8FDCAC` | `#2F8C57` | `#A8E8C2` |
-| `brandAction` | `#2A7F4E` | `#8FDCAC` | `#1B5E39` | `#A8E8C2` |
+| `brandAction` | `#256F46` | `#8FDCAC` | `#1B5E39` | `#A8E8C2` |
 | `warning` / `celebration` | `#A87A0C` | `#FFD769` | `#7A5A08` | `#FFE49A` |
 | `focusRing` | `#1C6FA8` | `#7CC4F0` | `#0B4E7C` | `#A5D8F7` |
 
 `brandAction` is separate from `brandPrimary` for one reason: `#63C88A` is a
 decorative hue that cannot legally carry white text. The action fill is deeper.
+
+The light value moved from `#2A7F4E` to `#256F46` in the parent-mode pass.
+`DesignReview.md` §5.2 had found that a *tinted label* — "Settings" in a nav bar,
+"Show all", "Add a quiet time" — measured **4.41:1** on `surfaceSunken`, the
+grouped ground every settings screen stands on, and white on the old fill was
+4.95:1. One step deeper fixes both directions: **5.44:1** as text on the sunken
+ground, **6.10:1** as text on `surface`, and **6.10:1** for `textOnBrand` on the
+filled button. Dark and both increased-contrast values are unchanged.
 
 High contrast darkens text and strengthens dividers while leaving decorative
 tints in place, so the brand does not visually collapse.

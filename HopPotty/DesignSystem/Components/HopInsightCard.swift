@@ -56,7 +56,15 @@ public struct HopInsightCard: View {
         HopCard(arrivalIndex: arrivalIndex) {
             VStack(alignment: .leading, spacing: theme.spacing.m) {
                 HStack(alignment: .top, spacing: theme.spacing.m) {
-                    HopGlyphBadge(insight.glyph, tint: tint, diameter: 36)
+                    // A mark, not a badge. The 36pt tinted disc that used to be
+                    // here was a coloured circle on every observation, on a
+                    // dashboard that already carries four of them in its
+                    // timeline — §35, and §34's colour budget.
+                    HopGlyphView(insight.glyph, size: 18)
+                        .foregroundStyle(tint)
+                        .frame(width: 22)
+                        .padding(.top, 2)
+                        .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: theme.spacing.xs) {
                         // The insights engine re-runs whenever an entry is
@@ -89,15 +97,24 @@ public struct HopInsightCard: View {
         .accessibilityElement(children: .contain)
     }
 
+    /// Where the numbers came from, and the sentence that qualifies them.
+    ///
+    /// Was a filled ``HopPill`` naming the window, a caption in `textTertiary`
+    /// counting the sample, and the disclaimer under both. Two changes:
+    ///
+    /// - the pill became text. A capsule is a control's shape, and this is not a
+    ///   control; on a screen with several observations it was several more
+    ///   coloured objects saying "This week" over and over.
+    /// - `textTertiary` became `textSecondary`. `#7D766D` on `surface` measures
+    ///   **4.49:1** — a hair under the 4.5:1 floor — and the role it was carrying
+    ///   here is real prose, not decoration. `textSecondary` is 6.9:1.
     private var provenance: some View {
         VStack(alignment: .leading, spacing: theme.spacing.xs) {
-            HStack(spacing: theme.spacing.s) {
-                HopPill(insight.window.displayName, tint: theme.color.neutral, glyph: .timer)
-                Text(HopStrings.insightSample(insight.sampleSize, days: insight.observedDays))
-                    .hopTextStyle(.parentCaption)
-                    .foregroundStyle(theme.color.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            Text(verbatim: "\(insight.window.displayName) · "
+                + HopStrings.insightSample(insight.sampleSize, days: insight.observedDays))
+                .hopTextStyle(.parentCaption)
+                .foregroundStyle(theme.color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
 
             Text(insight.disclaimer)
                 .hopTextStyle(.parentFootnote)

@@ -53,65 +53,112 @@ enum GameCopy {
 
     // MARK: - Bathroom Match
 
-    /// One pair to find. Three of them, and they are the three the routine
-    /// already taught: soap goes with hands, paper goes with wiping, towel goes
-    /// with drying.
+    /// One thing, and the place it belongs.
+    ///
+    /// The board is a drag, not a memory game: a child picks up the soap and
+    /// puts it by the sink. So the two halves are not two equal cards — one is
+    /// an *object* a hand carries and the other is a *destination* that stays
+    /// put — and the words say which is which.
+    ///
+    /// Every object and every destination is one of the six §31 names, and every
+    /// one already has a drawing: soap, sink, toilet paper, toilet, towel,
+    /// hands. No placeholder art anywhere on this board.
     struct MatchPair: Identifiable, Hashable {
         let id: String
-        let toolIllustration: HopIllustrationKey
-        let useIllustration: HopIllustrationKey
-        let toolLabel: HopCopyEntry
-        let useLabel: HopCopyEntry
+        let objectIllustration: HopIllustrationKey
+        let destinationIllustration: HopIllustrationKey
+        let objectLabel: HopCopyEntry
+        let destinationLabel: HopCopyEntry
     }
 
-    /// The state of a card whose partner has been found. Announced by
-    /// VoiceOver and drawn as a check mark, so the state never rests on the
-    /// border colour alone.
-    static let matched = HopCopyEntry.child("games.bathroomMatch.matched", "Found!")
+    /// What Hop says when something lands where it belongs. Warm, and about the
+    /// *thing* rather than about the child being right.
+    static let matched = HopCopyEntry.child("games.bathroomMatch.matched", "That's where it goes!")
 
+    /// What Hop says when something is put somewhere else.
+    ///
+    /// The same sentence the quizzes use, for the same reason: a three-year-old
+    /// exploring a board is not making mistakes. There is no "wrong", no cross,
+    /// no sound, no count and nothing is taken away — the object simply floats
+    /// back to the shelf and can be tried again immediately.
+    static let matchAlmost = HopCopyEntry.child("games.bathroomMatch.almost", "Almost! Try another spot.")
+
+    /// The resting line on the shelf.
+    ///
+    /// Deliberately *not* the game's `childDescription`, which `GameHostView`
+    /// already prints two inches above it: two identical sentences on one screen
+    /// is how a board starts nagging.
+    static let matchNudge = HopCopyEntry.child("games.bathroomMatch.nudge", "Pick something up!")
+
+    /// Where an object goes, for VoiceOver: "Soap. Put it by the sink."
+    static let matchHint = HopCopyEntry.child(
+        "games.bathroomMatch.hint",
+        "Drag it to where it belongs.",
+        comment: "Spoken hint on a draggable bathroom object."
+    )
+
+    /// Four pairs, three dealt to a board.
+    ///
+    /// Four rather than three so that a reshuffle produces a genuinely different
+    /// board rather than the same three things in a new order — the game has no
+    /// ending of its own and a child may clear it several times.
     static let matchPairs: [MatchPair] = [
         MatchPair(
             id: "soap",
-            toolIllustration: "icon.quiz.soap",
-            useIllustration: "icon.quiz.washHands",
-            toolLabel: .child("games.bathroomMatch.pair.soap.tool", "Soap"),
-            useLabel: .child("games.bathroomMatch.pair.soap.use", "Washing hands")
+            objectIllustration: "icon.quiz.soap",
+            destinationIllustration: "icon.quiz.sink",
+            objectLabel: .child("games.bathroomMatch.pair.soap.object", "Soap"),
+            destinationLabel: .child("games.bathroomMatch.pair.soap.place", "The sink")
         ),
         MatchPair(
             id: "paper",
-            toolIllustration: "icon.quiz.toiletPaper",
-            useIllustration: "icon.quiz.wipe",
-            toolLabel: .child("games.bathroomMatch.pair.paper.tool", "Toilet paper"),
-            useLabel: .child("games.bathroomMatch.pair.paper.use", "Wiping")
+            objectIllustration: "icon.quiz.toiletPaper",
+            destinationIllustration: "icon.quiz.toilet",
+            objectLabel: .child("games.bathroomMatch.pair.paper.object", "Toilet paper"),
+            destinationLabel: .child("games.bathroomMatch.pair.paper.place", "The toilet")
         ),
         MatchPair(
             id: "towel",
-            toolIllustration: "icon.quiz.towel",
-            // The only key here Core has not already declared for a quiz
-            // picture: there is no existing drawing of hands being dried, and
-            // reusing the wiping-direction picture for it would teach the wrong
-            // thing. Until the art lands, `HopArtwork` draws its placeholder.
-            useIllustration: "icon.games.dryHands",
-            toolLabel: .child("games.bathroomMatch.pair.towel.tool", "Towel"),
-            useLabel: .child("games.bathroomMatch.pair.towel.use", "Drying hands")
+            objectIllustration: "icon.quiz.towel",
+            destinationIllustration: "icon.quiz.hands",
+            objectLabel: .child("games.bathroomMatch.pair.towel.object", "Towel"),
+            destinationLabel: .child("games.bathroomMatch.pair.towel.place", "Wet hands")
+        ),
+        MatchPair(
+            id: "brush",
+            objectIllustration: "icon.quiz.toothbrush",
+            destinationIllustration: "icon.quiz.mirror",
+            objectLabel: .child("games.bathroomMatch.pair.brush.object", "Toothbrush"),
+            destinationLabel: .child("games.bathroomMatch.pair.brush.place", "The mirror")
         ),
     ]
 
     // MARK: - Potty Path
 
-    /// What is at the end of the path. Named so VoiceOver can say where Hop is
-    /// heading and so the goal is not "the unlabelled square".
-    static let pathGoal = HopCopyEntry.child("games.pottyPath.goal.bathroom", "The bathroom")
+    /// The places on the walk, so VoiceOver can say where Hop is and where he is
+    /// going, and so no stop on the route is "the unlabelled square".
+    ///
+    /// They are the rooms of an ordinary home, in the order a child crosses
+    /// them. Naming them is most of what makes this a rehearsal of a real trip
+    /// rather than a puzzle about dots.
+    static let pathStart = HopCopyEntry.child("games.pottyPath.stop.toys", "The toy corner")
+    static let pathRug = HopCopyEntry.child("games.pottyPath.stop.rug", "The rug")
+    static let pathHall = HopCopyEntry.child("games.pottyPath.stop.hall", "The hallway")
+    static let pathDoor = HopCopyEntry.child("games.pottyPath.stop.door", "The bathroom door")
+    static let pathGoal = HopCopyEntry.child("games.pottyPath.goal.bathroom", "The potty")
     static let pathHop = HopCopyEntry.child("games.pottyPath.hopHere", "Hop is here")
-    static let pathStep = HopCopyEntry.child("games.pottyPath.lilyPad", "A lily pad")
+    /// The one instruction on the board, and the only sentence a child hears
+    /// about what to do with a finger.
+    static let pathNudge = HopCopyEntry.child("games.pottyPath.nudge", "Take Hop to the potty!")
+    static let pathArrived = HopCopyEntry.child("games.pottyPath.arrived", "Hop made it!")
 
     /// Every entry here, so the copy-safety tests sweep them once they move.
     static var allEntries: [HopCopyEntry] {
         WashStage.allCases.map(\.label)
             + [bubble]
-            + [matched]
-            + matchPairs.flatMap { [$0.toolLabel, $0.useLabel] }
-            + [pathGoal, pathHop, pathStep]
+            + [matched, matchAlmost, matchNudge, matchHint]
+            + matchPairs.flatMap { [$0.objectLabel, $0.destinationLabel] }
+            + [pathStart, pathRug, pathHall, pathDoor, pathGoal, pathHop, pathNudge, pathArrived]
             + boardEntries
     }
 }

@@ -28,6 +28,13 @@ function thumb(rel, w, h, focus = 0.5) {
 
 function hopHub(appearance = 'light') {
   const col = c(appearance);
+  // The hub uses `pond-scene.svg` — the pond recomposed for a tall phone —
+  // rather than `pond-stage.svg`, which is the composition `PondCatalog`'s
+  // anchors are placed against. The difference matters exactly once: the pond
+  // *screen* has to put a duckling in the water, and the hub only has to stand a
+  // frog and four doors on a pond-coloured ground. Decorations are deliberately
+  // absent for the same reason — this is the ground the hub stands on, and a
+  // child's collection belongs on the screen that is about their collection.
   const scene = artOr(['Art/pond/pond-scene.svg', 'Art/scenes/pond.svg'], { width: 393, height: 852 },
     scenes.pond(393, 852, UNLOCKED));
 

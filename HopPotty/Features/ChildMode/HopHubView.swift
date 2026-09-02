@@ -119,6 +119,11 @@ struct HopHubView: View {
             nextUp: nil,
             showsHop: false,
             isFullBleed: true,
+            // Inert, and said twice on purpose: the `allowsHitTesting` below
+            // stops a finger reaching it, and this stops the scene installing a
+            // tap gesture at all — a pond that answered a touch here would be
+            // competing with the four doors standing on it.
+            isInteractive: false,
             onTapItem: { _ in }
         )
         .ignoresSafeArea()

@@ -33,17 +33,23 @@ struct RoutineOutcomeChoices: View {
 
     let onChoose: (PottyEventKind) -> Void
 
-    /// The three answers, left to right. The row on screen is built from this,
-    /// and so is the only thing that varies between the three anywhere in the
-    /// app — see ``hopDrift(for:)``.
-    static let order: [PottyEventKind] = [.pee, .poop, .tried]
+    /// The three answers, in the order they are drawn. The row on screen is
+    /// built from this, and so is the only thing that varies between the three
+    /// anywhere in the app — see ``hopDrift(for:)``.
+    ///
+    /// **"I tried" is first.** Every card is the same size, the same shape, the
+    /// same type and the same elevation, so first is not bigger — but it is
+    /// where a two-year-old's hand lands, and the option this product is *about*
+    /// should not be the one they have to read past. `Docs/ChildSafety.md` asks
+    /// for equal; the brief asks for equal or primary; this is both.
+    static let order: [PottyEventKind] = [.tried, .pee, .poop]
 
     /// The answers, in reading order. Peers in a list, not a ranking.
     private var choices: [Choice] {
         [
+            Choice(kind: .tried, copy: HopCopy.routine.outcomeNothing, tint: theme.color.eventTried),
             Choice(kind: .pee, copy: HopCopy.routine.outcomePee, tint: theme.color.eventPee),
             Choice(kind: .poop, copy: HopCopy.routine.outcomePoop, tint: theme.color.eventPoop),
-            Choice(kind: .tried, copy: HopCopy.routine.outcomeNothing, tint: theme.color.eventTried),
         ]
     }
 
@@ -92,10 +98,14 @@ struct RoutineOutcomeChoices: View {
         celebrationBase.drifting(hopDrift(for: kind))
     }
 
-    /// At accessibility text sizes three cards side by side stop holding their
-    /// words, so they stack. They stay identical to each other in either axis —
-    /// the layout changes, the equality does not.
-    private var isStacked: Bool { dynamicTypeSize >= .accessibility2 }
+    /// Three side by side on a phone was a row of narrow cards with the words
+    /// wrapped inside them. On the question's own screen there is room to make
+    /// each answer a full-width object with its picture and its word on one
+    /// line, which is easier to hit and easier to read aloud — so a phone
+    /// stacks, and only a regular-width screen puts them in a row.
+    private var isStacked: Bool {
+        horizontalSizeClass != .regular || dynamicTypeSize >= .accessibility2
+    }
 
     var body: some View {
         VStack(spacing: theme.spacing.l) {
@@ -157,12 +167,15 @@ private struct RoutineOutcomeChoice: View {
     /// Well above `HopHitTarget.childPrimary` (96pt): these are the primary
     /// actions of the whole routine and a two-year-old aims with a whole hand.
     private var minimumHeight: CGFloat {
-        let base: CGFloat = horizontalSizeClass == .regular ? 168 : 132
-        return isStacked ? theme.hitTarget.childPrimary : base
+        isStacked ? 112 : 168
     }
 
     private var glyphDiameter: CGFloat {
-        horizontalSizeClass == .regular ? 76 : 60
+        isStacked ? 70 : 76
+    }
+
+    private var cornerRadius: CGFloat {
+        isStacked ? theme.radius.hero : theme.radius.xl
     }
 
     var body: some View {
@@ -173,11 +186,11 @@ private struct RoutineOutcomeChoice: View {
         .frame(maxWidth: .infinity)
         .frame(minHeight: minimumHeight)
         .background {
-            RoundedRectangle(cornerRadius: theme.radius.xl, style: .continuous)
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(HopColors.wash(choice.tint, isDark: theme.isDark))
         }
         .overlay {
-            RoundedRectangle(cornerRadius: theme.radius.xl, style: .continuous)
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 // A visible edge in every appearance: the wash alone is not a
                 // boundary at increased contrast, and the three cards have to
                 // read as three equal objects rather than one tinted band.
@@ -187,8 +200,8 @@ private struct RoutineOutcomeChoice: View {
         .scaleEffect(isPressed ? 0.955 : 1)
         .hopAnimation(.childTap, value: isPressed)
         .focused($isFocused)
-        .hopFocusRing(isFocused, cornerRadius: theme.radius.xl)
-        .contentShape(RoundedRectangle(cornerRadius: theme.radius.xl, style: .continuous))
+        .hopFocusRing(isFocused, cornerRadius: cornerRadius)
+        .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in isPressed = true }
@@ -199,19 +212,35 @@ private struct RoutineOutcomeChoice: View {
         .accessibilityAddTraits(.isButton)
     }
 
+    @ViewBuilder
     private var content: some View {
-        VStack(spacing: theme.spacing.s) {
-            HopGlyphBadge(choice.glyph, tint: choice.tint, diameter: glyphDiameter)
-            Text(choice.copy.localized)
-                .hopTextStyle(.buttonLarge)
-                .foregroundStyle(theme.color.textPrimary)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+        if isStacked {
+            HStack(spacing: theme.spacing.xl) {
+                HopGlyphBadge(choice.glyph, tint: choice.tint, diameter: glyphDiameter)
+                Text(choice.copy.localized)
+                    .hopTextStyle(.buttonLarge)
+                    .foregroundStyle(theme.color.textPrimary)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, theme.spacing.l)
+            .padding(.horizontal, theme.spacing.xl)
+            .frame(maxWidth: .infinity)
+        } else {
+            VStack(spacing: theme.spacing.s) {
+                HopGlyphBadge(choice.glyph, tint: choice.tint, diameter: glyphDiameter)
+                Text(choice.copy.localized)
+                    .hopTextStyle(.buttonLarge)
+                    .foregroundStyle(theme.color.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.vertical, theme.spacing.l)
+            .padding(.horizontal, theme.spacing.s)
+            .frame(maxWidth: .infinity)
         }
-        .padding(.vertical, theme.spacing.l)
-        .padding(.horizontal, theme.spacing.s)
-        .frame(maxWidth: .infinity)
     }
 }
 

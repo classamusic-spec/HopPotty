@@ -98,7 +98,7 @@ final class ProgressModel {
                     report: report,
                     events: periodEvents,
                     timeline: TimelineDay.group(periodEvents, calendar: calendar),
-                    insights: InsightPresentation.cards(from: report),
+                    insights: ParentInsightPolicy.shown(InsightPresentation.cards(from: report)),
                     intervalQuestion: InsightPresentation.intervalCard(from: report)
                 )
             )
@@ -123,5 +123,37 @@ final class ProgressModel {
         schedule.interval = suggestion.suggestedInterval
         _ = await environment.saveSchedule(schedule)
         await load(childID: childID)
+    }
+}
+
+
+/// Observations the caregiver surfaces refuse to draw, whatever the engine
+/// returned.
+///
+/// `dryStretch` is "the longest stretch with no accident recorded". It is a
+/// *record*: a record invites beating it, and the thing being scored is a
+/// child's body. §7 and §13 bar dry streaks, best days, longest streaks and
+/// every other ranking, and this is the one the engine still produces — it used
+/// to be the third card on Progress, with a week-on-week bar pair under it
+/// framing the child's week as a contest with last week's.
+///
+/// Filtering here rather than in the engine is deliberate and temporary.
+/// `InsightsEngine.longestDryStretch` and `InsightPresentation` both live
+/// outside this feature; deleting the metric at its source is the correct fix
+/// and belongs to whoever owns `HopPottyCore/Insights`. Until then, no parent
+/// surface draws it: this is the only path Progress has to a card, and
+/// `ParentHomeModel` applies the same policy to the dashboard's single
+/// headline.
+enum ParentInsightPolicy {
+    /// Insight ids that never reach a caregiver.
+    static let suppressed: Set<String> = ["dryStretch"]
+
+    static func shown(_ insights: [Insight]) -> [Insight] {
+        insights.filter { !suppressed.contains($0.id) }
+    }
+
+    static func shown(_ insight: Insight?) -> Insight? {
+        guard let insight, !suppressed.contains(insight.id) else { return nil }
+        return insight
     }
 }

@@ -69,4 +69,46 @@ public enum HopPalette {
 
     public static let white = HopColorValue(hex: 0xFFFFFF)
     public static let black = HopColorValue(hex: 0x000000)
+
+    // MARK: Hop
+    //
+    // Hop is the brand's most important visual asset, and the thing that decides
+    // whether he reads is not his hue — it is whether one part of him can be
+    // told from another. These are the tokens that answer that, and they are the
+    // *same* values `Scripts/hop-art.js` emits, under the same names, so the
+    // shipped SVGs and the live SwiftUI drawing cannot describe different frogs.
+    //
+    // They are separation tokens, not decoration. Three levels do the work
+    // together and no one of them is allowed to carry it alone:
+    //
+    //  1. the exterior silhouette, in ``hopOutline``, so Hop holds his shape on
+    //     cream, pond blue, vegetation green, white and night;
+    //  2. internal overlap separation, the same colour at ``hopOutlineSoft`` or
+    //     ``hopOutlineSubtle``, only where similarly coloured parts cross;
+    //  3. tonal separation, the four fills below, assigned by depth — which is
+    //     what keeps the character readable when the outline is turned down.
+    //
+    // ``hopOutline`` is deliberately a dark *green*, not black or grey: a black
+    // keyline turns a soft storybook character into a sticker.
+
+    /// Front surfaces — Hop's head and torso. The same value as ``hopGreen``,
+    /// named for its role in the drawing rather than for the brand hue.
+    public static let hopFill = hopGreen
+    /// A limb crossing in front of the body. One step up, so the nearer thing is
+    /// the lit one; the old `hopGreenLight` was so far up that a hand in front of
+    /// the tummy read as a reflection rather than as a hand.
+    public static let hopFillHighlight = HopColorValue(hex: 0x71D397)
+    /// Arms and hands at rest, and the top of a foot. One step back from the head.
+    public static let hopFillShadow = HopColorValue(hex: 0x52B77A)
+    /// Legs, and the forehead spots and toe creases. The deepest body value.
+    public static let hopFillDeep = HopColorValue(hex: 0x45A971)
+
+    /// Hop's structural outline.
+    public static let hopOutline = HopColorValue(hex: 0x356B50)
+    /// The outline where two similarly coloured parts overlap: lighter and
+    /// thinner than the exterior edge, because an internal boundary as strong as
+    /// the outside one reads as a cut-out rather than as an arm in front.
+    public static let hopOutlineSoft = hopOutline.opacity(0.62)
+    /// The faintest separation the system uses.
+    public static let hopOutlineSubtle = hopOutline.opacity(0.38)
 }

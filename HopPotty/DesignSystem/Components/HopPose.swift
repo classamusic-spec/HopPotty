@@ -294,6 +294,14 @@ struct HopPoseGeometry: Equatable {
     var armL: CGPoint
     /// Where the right hand is.
     var armR: CGPoint
+    /// 0 the arms hang at Hop's sides, 1 they cross in front of the body.
+    ///
+    /// A number rather than a `Bool` because it decides which green the arms are
+    /// painted — ``HopCharacterPalette/armRest`` behind, ``HopCharacterPalette/armForward``
+    /// in front — and a colour that changed in one frame while the arm was still
+    /// travelling would read as a flicker. It rides in ``animationVector`` with
+    /// everything else, so the tone arrives as the arm does.
+    var armsForward: Double
     var legL: HopLegGeometry
     var legR: HopLegGeometry
     var eyes: HopEyeGeometry
@@ -331,8 +339,9 @@ struct HopPoseGeometry: Equatable {
         squash: Double = 0,
         tilt: Double = 0,
         lean: Double = 0,
-        armL: CGPoint = CGPoint(x: 8, y: 90),
-        armR: CGPoint = CGPoint(x: 142, y: 90),
+        armL: CGPoint = CGPoint(x: 22, y: 103),
+        armR: CGPoint = CGPoint(x: 128, y: 103),
+        armsForward: Double = 0,
         legL: HopLegGeometry = HopLegGeometry(hip: CGPoint(x: 56, y: 124), ankle: CGPoint(x: 52, y: 146)),
         legR: HopLegGeometry = HopLegGeometry(hip: CGPoint(x: 94, y: 124), ankle: CGPoint(x: 98, y: 146)),
         eyes: HopEyeGeometry = HopEyeGeometry(),
@@ -351,6 +360,7 @@ struct HopPoseGeometry: Equatable {
         self.lean = lean
         self.armL = armL
         self.armR = armR
+        self.armsForward = armsForward
         self.legL = legL
         self.legR = legR
         self.eyes = eyes
@@ -379,11 +389,13 @@ struct HopPoseGeometry: Equatable {
             HopPoseGeometry()
 
         case .blink:
-            HopPoseGeometry(eyes: HopEyeGeometry(blink: 1, mood: .rest))
+            HopPoseGeometry(
+                eyes: HopEyeGeometry(blink: 1, mood: .rest)
+            )
 
         case .talk:
             HopPoseGeometry(
-                armR: CGPoint(x: 136, y: 84),
+                armR: CGPoint(x: 131, y: 84),
                 eyes: HopEyeGeometry(gaze: CGSize(width: 0, height: 1)),
                 mouth: .talk
             )
@@ -391,18 +403,18 @@ struct HopPoseGeometry: Equatable {
         case .wave:
             HopPoseGeometry(
                 tilt: -3,
-                armL: CGPoint(x: 12, y: 100),
-                armR: CGPoint(x: 143, y: 38),
+                armL: CGPoint(x: 24, y: 108),
+                armR: CGPoint(x: 134, y: 38),
                 eyes: HopEyeGeometry(gaze: CGSize(width: 1, height: 0))
             )
 
         case .walk:
             HopPoseGeometry(
                 lean: 4,
-                armL: CGPoint(x: 24, y: 112),
-                armR: CGPoint(x: 122, y: 78),
-                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 122), ankle: CGPoint(x: 44, y: 146), toeSpread: 1),
-                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 122), ankle: CGPoint(x: 104, y: 140), toeSpread: 0.8),
+                armL: CGPoint(x: 26, y: 114),
+                armR: CGPoint(x: 128, y: 76),
+                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 122), ankle: CGPoint(x: 38, y: 146), toeSpread: 1),
+                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 122), ankle: CGPoint(x: 120, y: 134), toeSpread: 1.1),
                 eyes: HopEyeGeometry(gaze: CGSize(width: 2, height: 0)),
                 mouth: .talk,
                 withPack: true
@@ -412,22 +424,22 @@ struct HopPoseGeometry: Equatable {
             HopPoseGeometry(
                 lift: -6,
                 squash: 0.3,
-                armL: CGPoint(x: 32, y: 124),
-                armR: CGPoint(x: 118, y: 124),
-                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 122), ankle: CGPoint(x: 42, y: 138), toeSpread: 1.1),
-                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 122), ankle: CGPoint(x: 108, y: 138), toeSpread: 1.1),
+                armL: CGPoint(x: 26, y: 122),
+                armR: CGPoint(x: 124, y: 122),
+                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 122), ankle: CGPoint(x: 38, y: 140), toeSpread: 1.1),
+                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 122), ankle: CGPoint(x: 112, y: 140), toeSpread: 1.1),
                 eyes: HopEyeGeometry(gaze: CGSize(width: 0, height: 3), lidDrop: 0.35),
                 mouth: .small
             )
 
         case .jump:
             HopPoseGeometry(
-                lift: 10,
+                lift: 8,
                 squash: -0.15,
-                armL: CGPoint(x: 14, y: 58),
-                armR: CGPoint(x: 136, y: 58),
-                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 122), ankle: CGPoint(x: 48, y: 136), toeSpread: 0.9),
-                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 122), ankle: CGPoint(x: 102, y: 136), toeSpread: 0.9),
+                armL: CGPoint(x: 14, y: 74),
+                armR: CGPoint(x: 136, y: 74),
+                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 122), ankle: CGPoint(x: 28, y: 128), toeSpread: 1.15),
+                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 122), ankle: CGPoint(x: 118, y: 140), toeSpread: 1.15),
                 eyes: HopEyeGeometry(blink: 1, mood: .happy),
                 mouth: .open
             )
@@ -435,8 +447,8 @@ struct HopPoseGeometry: Equatable {
         case .cheer:
             HopPoseGeometry(
                 lift: 2,
-                armL: CGPoint(x: 30, y: 30),
-                armR: CGPoint(x: 120, y: 30),
+                armL: CGPoint(x: 15, y: 30),
+                armR: CGPoint(x: 135, y: 30),
                 eyes: HopEyeGeometry(gaze: CGSize(width: 0, height: -2)),
                 mouth: .open
             )
@@ -446,8 +458,10 @@ struct HopPoseGeometry: Equatable {
                 lift: -4,
                 squash: 0.2,
                 tilt: 4,
-                armL: CGPoint(x: 34, y: 122),
-                armR: CGPoint(x: 116, y: 122),
+                armL: CGPoint(x: 26, y: 120),
+                armR: CGPoint(x: 124, y: 120),
+                legL: HopLegGeometry(hip: CGPoint(x: 56, y: 124), ankle: CGPoint(x: 50, y: 142), toeSpread: 1),
+                legR: HopLegGeometry(hip: CGPoint(x: 94, y: 124), ankle: CGPoint(x: 100, y: 142), toeSpread: 1),
                 eyes: HopEyeGeometry(blink: 1, mood: .rest),
                 mouth: .small,
                 sleeping: true
@@ -456,10 +470,10 @@ struct HopPoseGeometry: Equatable {
         case .land:
             HopPoseGeometry(
                 squash: 0.5,
-                armL: CGPoint(x: 14, y: 108),
-                armR: CGPoint(x: 136, y: 108),
-                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 120), ankle: CGPoint(x: 46, y: 146), toeSpread: 1.2),
-                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 120), ankle: CGPoint(x: 104, y: 146), toeSpread: 1.2),
+                armL: CGPoint(x: 18, y: 122),
+                armR: CGPoint(x: 132, y: 122),
+                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 120), ankle: CGPoint(x: 42, y: 146), toeSpread: 1.2),
+                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 120), ankle: CGPoint(x: 108, y: 146), toeSpread: 1.2),
                 eyes: HopEyeGeometry(gaze: CGSize(width: 0, height: 2)),
                 mouth: .open
             )
@@ -468,10 +482,11 @@ struct HopPoseGeometry: Equatable {
             HopPoseGeometry(
                 lift: -10,
                 squash: 0.35,
-                armL: CGPoint(x: 50, y: 134),
+                armL: CGPoint(x: 54, y: 130),
                 armR: CGPoint(x: 100, y: 134),
-                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 120), ankle: CGPoint(x: 30, y: 134), toeSpread: 1.2),
-                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 120), ankle: CGPoint(x: 120, y: 134), toeSpread: 1.2),
+                armsForward: 1,
+                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 120), ankle: CGPoint(x: 30, y: 136), toeSpread: 1.2),
+                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 120), ankle: CGPoint(x: 120, y: 136), toeSpread: 1.2),
                 eyes: HopEyeGeometry(gaze: CGSize(width: 0, height: -3)),
                 mouth: .small
             )
@@ -483,22 +498,24 @@ struct HopPoseGeometry: Equatable {
             HopPoseGeometry(
                 lift: -10,
                 squash: 0.35,
-                armL: CGPoint(x: 50, y: 134),
+                armL: CGPoint(x: 54, y: 130),
                 armR: CGPoint(x: 100, y: 134),
-                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 120), ankle: CGPoint(x: 30, y: 134), toeSpread: 1.2),
-                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 120), ankle: CGPoint(x: 120, y: 134), toeSpread: 1.2),
+                armsForward: 1,
+                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 120), ankle: CGPoint(x: 30, y: 136), toeSpread: 1.2),
+                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 120), ankle: CGPoint(x: 120, y: 136), toeSpread: 1.2),
                 eyes: HopEyeGeometry(gaze: CGSize(width: 3, height: -4)),
                 mouth: .open,
-                tongueTo: CGPoint(x: 142, y: 34)
+                tongueTo: CGPoint(x: 138, y: 53)
             )
 
         case .full:
             HopPoseGeometry(
                 squash: 0.1,
-                armL: CGPoint(x: 20, y: 104),
-                armR: CGPoint(x: 88, y: 112),
-                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 124), ankle: CGPoint(x: 66, y: 150), toeSpread: 0.9),
-                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 124), ankle: CGPoint(x: 84, y: 150), toeSpread: 0.9),
+                armL: CGPoint(x: 42, y: 120),
+                armR: CGPoint(x: 112, y: 126),
+                armsForward: 1,
+                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 124), ankle: CGPoint(x: 58, y: 146), toeSpread: 1.1),
+                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 124), ankle: CGPoint(x: 92, y: 146), toeSpread: 1.1),
                 eyes: HopEyeGeometry(gaze: CGSize(width: 0, height: 3), lidDrop: 0.15),
                 mouth: .small,
                 bellyScale: 1.28,
@@ -508,8 +525,9 @@ struct HopPoseGeometry: Equatable {
 
         case .scrub:
             HopPoseGeometry(
-                armL: CGPoint(x: 50, y: 118),
-                armR: CGPoint(x: 100, y: 118),
+                armL: CGPoint(x: 38, y: 118),
+                armR: CGPoint(x: 112, y: 108),
+                armsForward: 1,
                 eyes: HopEyeGeometry(gaze: CGSize(width: 0, height: 4)),
                 mouth: .talk
             )
@@ -591,7 +609,7 @@ extension HopPoseGeometry {
         get {
             HopAnimatableVector([
                 lift, squash, tilt, lean,
-                armL.x, armL.y, armR.x, armR.y,
+                armL.x, armL.y, armR.x, armR.y, armsForward,
                 legL.hip.x, legL.hip.y, legL.ankle.x, legL.ankle.y, legL.toeSpread,
                 legR.hip.x, legR.hip.y, legR.ankle.x, legR.ankle.y, legR.toeSpread,
                 eyes.gaze.width, eyes.gaze.height, eyes.blink, eyes.lidDrop, eyes.closedArcDirection,
@@ -607,36 +625,37 @@ extension HopPoseGeometry {
             lean = newValue.value(3)
             armL = CGPoint(x: newValue.value(4), y: newValue.value(5))
             armR = CGPoint(x: newValue.value(6), y: newValue.value(7))
+            armsForward = newValue.value(8)
             legL = HopLegGeometry(
-                hip: CGPoint(x: newValue.value(8), y: newValue.value(9)),
-                ankle: CGPoint(x: newValue.value(10), y: newValue.value(11)),
-                toeSpread: newValue.value(12, default: 1)
+                hip: CGPoint(x: newValue.value(9), y: newValue.value(10)),
+                ankle: CGPoint(x: newValue.value(11), y: newValue.value(12)),
+                toeSpread: newValue.value(13, default: 1)
             )
             legR = HopLegGeometry(
-                hip: CGPoint(x: newValue.value(13), y: newValue.value(14)),
-                ankle: CGPoint(x: newValue.value(15), y: newValue.value(16)),
-                toeSpread: newValue.value(17, default: 1)
+                hip: CGPoint(x: newValue.value(14), y: newValue.value(15)),
+                ankle: CGPoint(x: newValue.value(16), y: newValue.value(17)),
+                toeSpread: newValue.value(18, default: 1)
             )
-            eyes.gaze = CGSize(width: newValue.value(18), height: newValue.value(19))
-            eyes.blink = newValue.value(20)
-            eyes.lidDrop = newValue.value(21)
-            eyes.closedArcDirection = newValue.value(22, default: HopEyeMood.happy.closedArcDirection)
-            mouthOpenScale = newValue.value(23)
-            mouthSmileDepth = newValue.value(24, default: 12)
-            bellyScale = newValue.value(25, default: 1)
-            torsoWidth = newValue.value(26, default: 58)
+            eyes.gaze = CGSize(width: newValue.value(19), height: newValue.value(20))
+            eyes.blink = newValue.value(21)
+            eyes.lidDrop = newValue.value(22)
+            eyes.closedArcDirection = newValue.value(23, default: HopEyeMood.happy.closedArcDirection)
+            mouthOpenScale = newValue.value(24)
+            mouthSmileDepth = newValue.value(25, default: 12)
+            bellyScale = newValue.value(26, default: 1)
+            torsoWidth = newValue.value(27, default: 58)
             tongueTip = CGPoint(
-                x: newValue.value(27, default: HopPoseGeometry.tongueOrigin.x),
-                y: newValue.value(28, default: HopPoseGeometry.tongueOrigin.y)
+                x: newValue.value(28, default: HopPoseGeometry.tongueOrigin.x),
+                y: newValue.value(29, default: HopPoseGeometry.tongueOrigin.y)
             )
-            tongueExtension = newValue.value(29)
+            tongueExtension = newValue.value(30)
         }
     }
 }
 
 // MARK: - Palette
 
-/// Hop's own palette, matching the `C` table at the top of `Scripts/hop-art.js`.
+/// Hop's own palette, matching the `T` table at the top of `Scripts/hop-art.js`.
 ///
 /// These are illustration colours, not semantic tokens: Hop is the same green
 /// frog in light mode, dark mode and increased contrast, the way a character in
@@ -645,16 +664,43 @@ extension HopPoseGeometry {
 /// ``HopPalette`` directly rather than through `HopSemanticPalette` — there is
 /// no appearance to resolve.
 ///
-/// Four colours have no brand token and are declared here as raw values,
-/// exactly as the generator does: the mid-green that spots and toe creases step
-/// down to, the tongue, and the pack's two browns. None of them appears in UI.
+/// ## The green is a depth ramp, not a colour
+///
+/// Hop used to be one flat `hopGreen` everywhere, and that single fact is what
+/// produced every complaint about him: arms disappeared into the head, hands
+/// disappeared into the torso, and two legs mid-jump were one leg. Four values
+/// now carry depth — front surfaces, a limb in front, a limb at rest, and the
+/// legs — and they are assigned by *where a part sits*, never by what it is
+/// called. Turn the outline off and Hop is still legible; that is the test, and
+/// `node Scripts/hop-lab.js` is where it is run.
+///
+/// Four colours still have no brand token and are declared here as raw values,
+/// exactly as the generator does: the tongue, the pack's two browns, and the
+/// mouth interior's partner. None of them appears in UI.
 enum HopCharacterPalette {
-    /// `HopPalette.hopGreen` — the body, everywhere.
-    static let body = Color(HopPalette.hopGreen)
-    /// One value step down, for spots, toe creases and wiggle marks.
-    /// Character-only: the brand ramp jumps straight to `hopGreenDeep`, which is
-    /// dark enough to read as an outline, and this character has no outlines.
-    static let bodyDeep = Color(HopColorValue(hex: 0x45A971))
+    /// `HopPalette.hopFill` — the head and the torso, the front surfaces.
+    static let body = Color(HopPalette.hopFill)
+    /// `HopPalette.hopFillShadow` — an arm or a hand hanging at Hop's side.
+    static let armRest = Color(HopPalette.hopFillShadow)
+    /// `HopPalette.hopFillHighlight` — an arm or a hand crossing in front of the
+    /// body. Lighter, because the nearer thing is the lit one.
+    static let armForward = Color(HopPalette.hopFillHighlight)
+    /// `HopPalette.hopFillDeep` — the legs, furthest back in the figure.
+    static let leg = Color(HopPalette.hopFillDeep)
+    /// `HopPalette.hopFillShadow` — the top of a foot, which faces up and so
+    /// comes forward again from the leg above it.
+    static let foot = Color(HopPalette.hopFillShadow)
+    /// One value step down, for spots, toe creases and wiggle marks. The same
+    /// value as ``leg``: the deepest green in the character, wherever it lands.
+    static let bodyDeep = Color(HopPalette.hopFillDeep)
+
+    /// `HopPalette.hopOutline` — the exterior silhouette.
+    static let outline = Color(HopPalette.hopOutline)
+    /// The same colour, used where two similarly coloured parts overlap. The
+    /// opacity comes from ``HopOutlineStyle`` rather than from here, because it
+    /// changes with the size Hop is drawn at.
+    static let outlineHue = HopPalette.hopOutline
+
     /// `HopPalette.hopGreenInk` — nostrils, closed-eye lines, closed mouths.
     static let ink = Color(HopPalette.hopGreenInk)
     /// `HopPalette.sunshineSoft` — the warm cream belly.
@@ -673,4 +719,17 @@ enum HopCharacterPalette {
     static let bagBody = Color(HopColorValue(hex: 0xC98A5B))
     static let bagStrap = Color(HopColorValue(hex: 0xA76F46))
     static let groundShadow = Color(HopPalette.midnight)
+
+    /// An arm's green at a given ``HopPoseGeometry/armsForward``, so the tone
+    /// travels with the arm instead of switching under it.
+    static func arm(forward: Double) -> Color {
+        let t = min(1, max(0, forward))
+        let back = HopPalette.hopFillShadow
+        let front = HopPalette.hopFillHighlight
+        return Color(HopColorValue(
+            red: back.red + (front.red - back.red) * t,
+            green: back.green + (front.green - back.green) * t,
+            blue: back.blue + (front.blue - back.blue) * t
+        ))
+    }
 }

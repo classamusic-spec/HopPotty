@@ -9,11 +9,20 @@ import HopPottyDesignTokens
 /// separate export, and the geometry stays in step with `Scripts/hop-art.js`,
 /// which generates the same character for the app icon and the marketing art.
 ///
-/// The style is the reference's: **flat**. No gradients, no outlines, no sheen.
-/// Depth is value steps in the green ramp alone — the body green, one step down
-/// for spots and toe creases, and the ink green for the three lines (nostrils,
-/// shut eyes, closed mouth). Anything softer than that stops reading at 28pt,
-/// which is the size Hop appears at most often.
+/// The style is soft storybook, not comic book: no gradients and no sheen, and a
+/// **subtle dark-green structural outline** rather than a black keyline. Three
+/// levels of separation hold him together and none of them is allowed to carry
+/// it alone — the exterior silhouette (``silhouette``), the internal overlap
+/// rims (``part(_:_:)``), and the four-step green ramp in
+/// ``HopCharacterPalette``. Hop was one flat green for everything before this,
+/// and that single fact produced every complaint about him: arms disappearing
+/// into the head, hands into the torso, two legs mid-jump reading as one.
+///
+/// The outline is **anatomical** — head, body, each arm, each hand, each leg,
+/// each foot — and never per sub-path: outlining a cheek or an eye fragments him
+/// into a sticker sheet. Its weight comes from ``HopOutlineStyle`` and is chosen
+/// from what Hop has to survive (his size, his ground, the accessibility
+/// appearance), not from the screen he is on.
 ///
 /// ## Two layers, and why they are separate
 ///
@@ -62,6 +71,7 @@ public struct HopCharacterView: View {
     private let ambient: Bool
     private let castsShadow: Bool
     private let gaze: HopGaze
+    private let ground: HopGround
 
     /// Hop holding a pose, optionally hopping.
     ///
@@ -75,14 +85,16 @@ public struct HopCharacterView: View {
         ambient: Bool = true,
         castsShadow: Bool = true,
         jumping jump: HopJump? = nil,
-        gaze: HopGaze = .forward
+        gaze: HopGaze = .forward,
+        ground: HopGround = .surface
     ) {
         self.init(
             act: jump.map { HopAct(pose: pose, beat: .hop($0)) } ?? HopAct(pose: pose),
             size: size,
             ambient: ambient,
             castsShadow: castsShadow,
-            gaze: gaze
+            gaze: gaze,
+            ground: ground
         )
     }
 
@@ -93,13 +105,15 @@ public struct HopCharacterView: View {
         size: CGFloat,
         ambient: Bool = true,
         castsShadow: Bool = true,
-        gaze: HopGaze = .forward
+        gaze: HopGaze = .forward,
+        ground: HopGround = .surface
     ) {
         self.act = act
         self.size = size
         self.ambient = ambient
         self.castsShadow = castsShadow
         self.gaze = gaze
+        self.ground = ground
     }
 
     // MARK: - What is being drawn right now
@@ -183,6 +197,21 @@ public struct HopCharacterView: View {
     /// Points per reference unit — the conversion every stroke width needs.
     private var unit: CGFloat { HopCanvas.unit(for: size) }
 
+    /// How strongly Hop is separated from his background and from himself.
+    ///
+    /// Resolved from three semantic facts and nothing else — how big he is, what
+    /// kind of ground he is on, and whether the OS has asked for more contrast.
+    /// No screen passes a stroke width, which is the whole point of §18: a state
+    /// that means something, not a per-screen override that means whatever the
+    /// last person to look at that screen thought.
+    private var outline: HopOutlineStyle {
+        HopOutlineStyle.resolved(
+            forSize: size,
+            onScenery: ground == .scenery,
+            highContrast: theme.appearance.isHighContrast
+        )
+    }
+
     /// How far a full-height hop lifts Hop, in points.
     private var riseUnit: CGFloat { HopJump.headroom(for: size) }
     /// One unit of sideways drift — Hop's own height — in points.
@@ -255,18 +284,26 @@ public struct HopCharacterView: View {
 
     // MARK: - Layers, in the order `figure()` stacks them
     //
-    // shadow, pack, legs, torso, belly, arms, head, face, tongue, wiggle, zzz.
-    // The order is what makes limbs read as attached rather than stacked: the
-    // belly sits over the torso, the arms over the belly, the head over both.
+    // shadow, silhouette, pack, legs, torso, belly, arms, head, face, tongue,
+    // wiggle, zzz.
+    //
+    // The order is not stacking, it is depth, and depth is what the separation
+    // system runs on. Every part is drawn as a *rim then a fill*, so a part's
+    // rim lands exactly where it crosses something already drawn and nowhere
+    // else: the torso's rim over the legs, an arm's rim over the torso, the
+    // head's rim over the arms. The three failures this replaced — arms into the
+    // head, hands into the torso, legs into each other — are all boundaries that
+    // did not exist, and this is where they exist now.
 
     private var character: some View {
         ZStack {
+            silhouette
             pack
             legs
-            fill(.torso, HopCharacterPalette.body)
+            part(.torso, HopCharacterPalette.body)
             fill(.belly, HopCharacterPalette.belly)
-            fill(.arms, HopCharacterPalette.body)
-            fill(.head, HopCharacterPalette.body)
+            arms
+            part(.head, HopCharacterPalette.body)
             face
             wiggleMarks
             sleepMarks
@@ -274,16 +311,58 @@ public struct HopCharacterView: View {
         .frame(width: size, height: size)
     }
 
-    /// One whole leg, then the other — shin, sole and toes in body green, then
-    /// that foot's two darker creases — because that is the order `figure()`
-    /// draws them in, and it is the order that keeps a crease under the far
-    /// foot when a pose brings the feet together.
+    /// The exterior edge: every body shape at once, stroked and filled in the
+    /// same opaque `hop-outline`, underneath everything.
+    ///
+    /// One flat colour is what makes it work — the union has no interior seams
+    /// to show, so all that survives is the outside of Hop. This is the layer
+    /// that keeps him legible on pond blue, on vegetation green and on a night
+    /// sky, where his own hue is the background.
+    private var silhouette: some View {
+        ZStack {
+            shape(.silhouette)
+                .stroke(
+                    HopCharacterPalette.outline,
+                    style: StrokeStyle(lineWidth: 2 * outline.exterior * unit, lineCap: .round, lineJoin: .round)
+                )
+            shape(.silhouette).fill(HopCharacterPalette.outline)
+        }
+        .frame(width: size, height: size)
+        .opacity(outline.exterior > 0 ? 1 : 0)
+    }
+
+    /// One whole leg, then the other — shin, then that foot, then that foot's
+    /// two darker creases — because that is the order `figure()` draws them in,
+    /// and it is the order that keeps a crease under the far foot when a pose
+    /// brings the feet together.
+    ///
+    /// The legs are the deepest green in the character and the feet come back up
+    /// a step, which is the tonal half of "the legs did not merge with the body,
+    /// or with each other, mid-jump".
     private var legs: some View {
         ZStack {
-            fill(.legLeft, HopCharacterPalette.body)
+            part(.shinLeft, HopCharacterPalette.leg)
+            part(.footLeft, HopCharacterPalette.foot)
             stroke(.toeCreasesLeft, HopCharacterPalette.bodyDeep.opacity(0.8), width: HopAnatomy.creaseStroke)
-            fill(.legRight, HopCharacterPalette.body)
+            part(.shinRight, HopCharacterPalette.leg)
+            part(.footRight, HopCharacterPalette.foot)
             stroke(.toeCreasesRight, HopCharacterPalette.bodyDeep.opacity(0.8), width: HopAnatomy.creaseStroke)
+        }
+    }
+
+    /// One whole arm, then the other, each with its hand drawn after it so the
+    /// hand has a boundary against its own forearm and against the other hand.
+    ///
+    /// The green comes from ``HopPoseGeometry/armsForward``, which travels in the
+    /// animation vector: an arm that moves in front of the tummy brightens as it
+    /// arrives rather than switching colour under itself.
+    private var arms: some View {
+        let tone = HopCharacterPalette.arm(forward: geometry.armsForward)
+        return ZStack {
+            part(.armLeft, tone)
+            part(.handLeft, tone)
+            part(.armRight, tone)
+            part(.handRight, tone)
         }
     }
 
@@ -345,7 +424,7 @@ public struct HopCharacterView: View {
 
     private var pack: some View {
         ZStack {
-            fill(.pack, HopCharacterPalette.bagBody)
+            part(.pack, HopCharacterPalette.bagBody)
             stroke(.packStrap, HopCharacterPalette.bagStrap, width: HopAnatomy.strapStroke)
         }
         .opacity(geometry.withPack ? 1 : 0)
@@ -413,6 +492,27 @@ public struct HopCharacterView: View {
         shape(part)
             .fill(color)
             .frame(width: size, height: size)
+    }
+
+    /// One anatomical part: its own rim, then its fill.
+    ///
+    /// The rim is a stroke centred on the part's edge, so the fill drawn over it
+    /// covers the inner half and leaves exactly ``HopOutlineStyle/inner`` units
+    /// showing on the outside — the same construction the generator uses, where
+    /// a shape is grown by stroking it at twice the amount it should grow by.
+    /// Being underneath is what makes it *internal* separation: on Hop's outside
+    /// edge it disappears into the darker silhouette and costs nothing, and it
+    /// only becomes visible where this part crosses something already drawn.
+    private func part(_ part: HopFigureShape.Part, _ color: Color) -> some View {
+        ZStack {
+            shape(part)
+                .stroke(
+                    HopCharacterPalette.outline.opacity(outline.innerOpacity),
+                    style: StrokeStyle(lineWidth: 2 * outline.inner * unit, lineCap: .round, lineJoin: .round)
+                )
+            shape(part).fill(color)
+        }
+        .frame(width: size, height: size)
     }
 
     /// Stroke widths are authored in reference units, like everything else, and

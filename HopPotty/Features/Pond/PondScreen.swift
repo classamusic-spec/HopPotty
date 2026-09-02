@@ -40,13 +40,17 @@ struct PondScreen: View {
     private var progress: PondUnlockProgress { PondCatalog.progressTowardNext(stars: stars) }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            scene
-            chrome
-        }
-        .hopBackground(.secondary)
-        .task(id: arrivingItem) { await greetArrival() }
-        .overlay(alignment: .bottom) { selectionCallout }
+        scene
+            // The tray sizes itself to what it holds and hangs off the bottom;
+            // the header sits on top of everything. Layered rather than stacked
+            // in a `VStack` on purpose: at an accessibility type size the tray
+            // grows *upward over the water*, which is the right thing to lose,
+            // instead of pushing the way out off the top of the screen or being
+            // clipped at the bottom.
+            .overlay(alignment: .bottom) { tray }
+            .overlay(alignment: .top) { header }
+            .hopBackground(.secondary)
+            .task(id: arrivingItem) { await greetArrival() }
     }
 
     // MARK: - The pond itself
@@ -63,14 +67,6 @@ struct PondScreen: View {
     }
 
     // MARK: - What floats over it
-
-    private var chrome: some View {
-        VStack(spacing: 0) {
-            header
-            Spacer(minLength: theme.spacing.l)
-            tray
-        }
-    }
 
     /// The child's name for the pond, their star count, and the way out.
     ///
@@ -114,10 +110,10 @@ struct PondScreen: View {
     /// The tray: what is coming next, then the collection.
     ///
     /// Anchored to the bottom and deliberately shallow — it is the *edge* of the
-    /// screen, not the content of it. Its own scroll view means an accessibility
-    /// type size grows the tray rather than pushing the pond off the top.
+    /// screen, not the content of it.
     private var tray: some View {
         VStack(alignment: .leading, spacing: theme.spacing.l) {
+            selectionCallout
             progressLine
             PondCollectionStrip(unlocked: unlocked, stars: stars) { selectedItem = $0 }
         }
@@ -157,18 +153,21 @@ struct PondScreen: View {
 
     /// The one thing tapping a decoration does: it says its name.
     ///
-    /// The decoration itself has already answered in the scene — the flower
-    /// opened, the fish darted — and this is the word for what just moved.
+    /// The decoration itself has already answered *in the scene* — the flower
+    /// opened, the fish darted, the pad dipped — and this is only the word for
+    /// what just moved. It appears at the top of the tray rather than floating
+    /// over the water, because a capsule that hovers somewhere in the middle of
+    /// a pond is a capsule that lands on a lily pad half the time.
     @ViewBuilder
     private var selectionCallout: some View {
         if let selectedItem {
             Text(PondItemNaming.name(for: selectedItem).localized)
                 .hopTextStyle(.childInstruction)
                 .foregroundStyle(theme.color.textOnBrand)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, theme.spacing.xl)
-                .padding(.vertical, theme.spacing.m)
+                .padding(.vertical, theme.spacing.s)
                 .background(Capsule().fill(theme.color.brandAction))
-                .padding(.bottom, theme.spacing.huge)
                 .hopTransition(.childArrive)
                 .task(id: selectedItem) {
                     try? await Task.sleep(for: .seconds(2))

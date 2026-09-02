@@ -133,7 +133,16 @@ public extension HopSemanticPalette {
         textOnBrand: HopPalette.white,
         brandPrimary: HopPalette.hopGreen,
         brandSecondary: HopPalette.pondBlue,
-        brandAction: HopColorValue(hex: 0x2A7F4E),
+        // #2A7F4E measured 4.41:1 against `surfaceSunken` — the grouped
+        // background every settings screen stands on — and 4.95:1 against
+        // `surface`. Every green link in the app ("Settings" in a nav bar,
+        // "Show all", "Add a quiet time", "Test Potty Pause") was therefore
+        // *below* the 4.5:1 floor on the ground it is most often drawn on, and
+        // white on it was a hair above. Darkening by one step fixes both
+        // directions at once and cannot hurt anything: 5.44:1 on the sunken
+        // ground, 6.10:1 on white, and 6.10:1 for white text on the filled
+        // primary button. Dark appearance is unchanged.
+        brandAction: HopColorValue(hex: 0x256F46),
         success: HopPalette.hopGreenDeep,
         warning: HopPalette.sunshineDeep,
         neutral: HopPalette.sand500,

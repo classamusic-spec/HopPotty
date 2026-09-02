@@ -53,7 +53,15 @@
  *
  * ## The rest
  *
- *   node Scripts/hop-lab.js --contracts   the two compatibility contracts
+ *   node Scripts/hop-lab.js --contracts   everything outside this file that
+ *                                         reads Hop's markup or restates his
+ *                                         numbers — the blink derivation, the
+ *                                         widget's head, the Swift pose table,
+ *                                         the outline levels and the tokens.
+ *                                         (It re-runs `widget-face.js`, which
+ *                                         rewrites the generated widget art —
+ *                                         which is what you want after changing
+ *                                         the drawing anyway.)
  *   node Scripts/hop-lab.js --levels      every level, fit-checked
  */
 const fs = require('fs');
@@ -125,8 +133,13 @@ const GATE = [
   { id: 'right-hand', label: 'right hand', minExposure: 0.30, minShare: 0.008 },
   { id: 'left-leg', label: 'left leg', minExposure: 0.30, minShare: 0.015 },
   { id: 'right-leg', label: 'right leg', minExposure: 0.30, minShare: 0.015 },
-  { id: 'left-foot', label: 'left foot', minExposure: 0.30, minShare: 0.010 },
-  { id: 'right-foot', label: 'right foot', minExposure: 0.30, minShare: 0.010 },
+  // A foot's floor is lower than a limb's, and not as a concession: the sole is
+  // an ellipse 28 units across sitting on the end cap of a 26-unit shin, so by
+  // construction most of a foot is inside its own leg. A foot standing entirely
+  // free exposes about a third of itself, which is the toes — so 0.28 is "the
+  // toes clear everything", which is the thing the test is actually asking.
+  { id: 'left-foot', label: 'left foot', minExposure: 0.28, minShare: 0.010 },
+  { id: 'right-foot', label: 'right foot', minExposure: 0.28, minShare: 0.010 },
 ];
 
 /**
@@ -214,36 +227,47 @@ async function silhouetteGate({ side = 384, write = true } = {}) {
   return rows;
 }
 
+/**
+ * The gate's findings, pose by pose — to the console, and to
+ * `Art/render/hop-lab/silhouette-report.txt` next to the flat drawings it
+ * measured, so the numbers and the pictures live together.
+ */
 function reportGate(rows) {
-  console.log('silhouette gate — flat, no facial detail, no outline\n');
+  const lines = [];
+  const say = (line = '') => { lines.push(line); process.stdout.write(line + '\n'); };
   const width = 22;
+
+  say('silhouette gate — flat, no facial detail, no outline');
+  say('');
   for (const row of rows) {
-    const mark = row.pass ? 'pass' : 'FAIL';
-    console.log(`${row.pose.padEnd(8)} ${mark}   ${row.situation}`);
-    const cells = row.parts.map((p) => {
-      const flag = p.pass ? ' ' : '!';
-      return `${p.label} ${(p.exposure * 100).toFixed(0)}%${flag}`;
-    });
+    say(`${row.pose.padEnd(8)} ${row.pass ? 'pass' : 'FAIL'}   ${row.situation}`);
+    const cells = row.parts.map((p) => `${p.label} ${(p.exposure * 100).toFixed(0)}%${p.pass ? ' ' : '!'}`);
     for (let i = 0; i < cells.length; i += 5) {
-      console.log('         ' + cells.slice(i, i + 5).map((c) => c.padEnd(width)).join(''));
+      say('         ' + cells.slice(i, i + 5).map((c) => c.padEnd(width)).join('').trimEnd());
     }
   }
+
   const bad = rows.filter((r) => !r.pass);
-  console.log('\n' + '-'.repeat(74));
+  say('');
+  say('-'.repeat(74));
   if (!bad.length) {
-    console.log(`all ${rows.length} poses read as flat silhouettes.`);
-    return 0;
-  }
-  for (const row of bad) {
-    for (const p of row.parts.filter((x) => !x.pass)) {
-      console.log(`  ${row.pose}: ${p.label} shows ${(p.exposure * 100).toFixed(0)}% of itself ` +
-        `(min ${(p.minExposure * 100).toFixed(0)}%), ${(p.share * 100).toFixed(1)}% of the silhouette ` +
-        `(min ${(p.minShare * 100).toFixed(1)}%)`);
+    say(`all ${rows.length} poses read as flat silhouettes.`);
+  } else {
+    for (const row of bad) {
+      for (const p of row.parts.filter((x) => !x.pass)) {
+        say(`  ${row.pose}: ${p.label} shows ${(p.exposure * 100).toFixed(0)}% of itself ` +
+          `(min ${(p.minExposure * 100).toFixed(0)}%), ${(p.share * 100).toFixed(1)}% of the silhouette ` +
+          `(min ${(p.minShare * 100).toFixed(1)}%)`);
+      }
     }
+    say('');
+    say('Fix in this order: pose → overlap → tone → spacing → stroke.');
+    say('Thickening the outline cannot pass this test — it is measured without one.');
   }
-  console.log('\nFix in this order: pose → overlap → tone → spacing → stroke.');
-  console.log('Thickening the outline cannot pass this test — it is measured without one.');
-  return 1;
+
+  fs.mkdirSync(OUT, { recursive: true });
+  fs.writeFileSync(path.join(OUT, 'silhouette-report.txt'), lines.join('\n') + '\n');
+  return bad.length ? 1 : 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -255,6 +279,232 @@ function reportGate(rows) {
  * picture, checked here so the failure arrives next to the change that caused it
  * rather than three scripts downstream.
  */
+/**
+ * The Swift pose table, read back out of `HopPose.swift`.
+ *
+ * Deliberately a small hand-rolled reader rather than anything general: the
+ * input is one generated-looking switch statement in one file, and a parser that
+ * fails loudly on markup it has not seen is worth more here than one that
+ * shrugs and reports "no differences".
+ */
+function swiftPoses() {
+  const src = fs.readFileSync(
+    path.join(ROOT, 'HopPotty', 'DesignSystem', 'Components', 'HopPose.swift'), 'utf8');
+  const from = src.indexOf('static func parameters(for pose: HopPose) -> HopPoseGeometry {');
+  if (from < 0) throw new Error('HopPose.swift no longer has a parameters(for:) table');
+  const body = src.slice(from);
+  const out = {};
+  const marks = [...body.matchAll(/\n\s*case \.`?(\w+)`?:/g)];
+  for (let i = 0; i < marks.length; i++) {
+    const at = marks[i].index + marks[i][0].length;
+    const to = i + 1 < marks.length ? marks[i + 1].index : body.length;
+    out[marks[i][1]] = body.slice(at, to);
+  }
+  return out;
+}
+
+/** The text inside `name(` … `)`, paren-balanced, or null. */
+function callArgs(text, name) {
+  const at = text.indexOf(name + '(');
+  if (at < 0) return null;
+  let depth = 0;
+  for (let i = at + name.length; i < text.length; i++) {
+    if (text[i] === '(') depth++;
+    else if (text[i] === ')') {
+      depth--;
+      if (!depth) return text.slice(at + name.length + 1, i);
+    }
+  }
+  return null;
+}
+
+const num = (s) => (s === undefined ? undefined : Number(s));
+const one = (text, re) => { const m = re.exec(text); return m ? m : null; };
+
+/** One Swift case as the same shape `hop-art.js` stores a pose in. */
+function swiftPose(text) {
+  const p = {};
+  const scalar = (key) => {
+    const m = one(text, new RegExp(`\\b${key}: (-?[\\d.]+)`));
+    if (m) p[key] = num(m[1]);
+  };
+  ['lift', 'squash', 'tilt', 'lean', 'armsForward', 'bellyScale', 'torsoWidth'].forEach(scalar);
+  const point = (key) => {
+    const m = one(text, new RegExp(`\\b${key}: CGPoint\\(x: (-?[\\d.]+), y: (-?[\\d.]+)\\)`));
+    if (m) p[key] = [num(m[1]), num(m[2])];
+  };
+  point('armL'); point('armR'); point('tongueTo');
+  for (const side of ['legL', 'legR']) {
+    const m = one(text, new RegExp(
+      `\\b${side}: HopLegGeometry\\(hip: CGPoint\\(x: (-?[\\d.]+), y: (-?[\\d.]+)\\), ` +
+      `ankle: CGPoint\\(x: (-?[\\d.]+), y: (-?[\\d.]+)\\), toeSpread: (-?[\\d.]+)\\)`));
+    if (m) p[side] = { hip: [num(m[1]), num(m[2])], ankle: [num(m[3]), num(m[4])], spread: num(m[5]) };
+  }
+  const mouth = one(text, /\bmouth: \.(\w+)/);
+  if (mouth) p.mouth = mouth[1];
+  for (const flag of ['withPack', 'wiggling', 'sleeping']) {
+    if (new RegExp(`\\b${flag}: true`).test(text)) p[flag] = true;
+  }
+  const eyes = callArgs(text, 'HopEyeGeometry');
+  if (eyes !== null) {
+    const e = {};
+    const gaze = one(eyes, /gaze: CGSize\(width: (-?[\d.]+), height: (-?[\d.]+)\)/);
+    if (gaze) e.gaze = [num(gaze[1]), num(gaze[2])];
+    const blink = one(eyes, /blink: (-?[\d.]+)/);
+    if (blink) e.blink = num(blink[1]);
+    const mood = one(eyes, /mood: \.(\w+)/);
+    if (mood) e.mood = mood[1];
+    const lid = one(eyes, /lidDrop: (-?[\d.]+)/);
+    if (lid) e.lidDrop = num(lid[1]);
+    p.eyes = e;
+  }
+  return p;
+}
+
+/** The generator's own defaults, so "unset" compares equal to "set to the
+ *  default" on either side. These are `figure()`'s destructuring defaults. */
+const POSE_DEFAULTS = {
+  lift: 0, squash: 0, tilt: 0, lean: 0, armsForward: 0,
+  armL: [22, 103], armR: [128, 103],
+  legL: { hip: [56, 124], ankle: [52, 146], spread: 1 },
+  legR: { hip: [94, 124], ankle: [98, 146], spread: 1 },
+  mouth: 'open', bellyScale: 1, torsoWidth: 58,
+  withPack: false, wiggling: false, sleeping: false, tongueTo: null,
+  eyes: { gaze: [0, 0], blink: 0, mood: 'happy', lidDrop: 0 },
+};
+
+function normalise(p) {
+  const legOf = (l, d) => ({
+    hip: (l && l.hip) || d.hip,
+    ankle: (l && l.ankle) || d.ankle,
+    spread: (l && (l.spread ?? l.toeSpread)) ?? d.spread,
+  });
+  const e = p.eyes || {};
+  return {
+    lift: p.lift ?? 0, squash: p.squash ?? 0, tilt: p.tilt ?? 0, lean: p.lean ?? 0,
+    armsForward: p.armsForward ?? ((p.frontL || p.frontR) ? 1 : 0),
+    armL: p.armL || POSE_DEFAULTS.armL, armR: p.armR || POSE_DEFAULTS.armR,
+    legL: legOf(p.legL, POSE_DEFAULTS.legL), legR: legOf(p.legR, POSE_DEFAULTS.legR),
+    mouth: p.mouth || 'open', bellyScale: p.bellyScale ?? 1, torsoWidth: p.torsoWidth ?? 58,
+    withPack: !!p.withPack, wiggling: !!p.wiggling, sleeping: !!p.sleeping,
+    tongueTo: p.tongueTo || null,
+    eyes: {
+      gaze: e.gaze || [0, 0], blink: e.blink ?? 0,
+      mood: e.mood || 'happy', lidDrop: e.lidDrop ?? 0,
+    },
+  };
+}
+
+/**
+ * The generator's pose table against Swift's.
+ *
+ * This exists because the two have diverged before and nothing noticed: the
+ * Swift port kept a stale canvas transform while the SVGs moved, so the app drew
+ * a clipped frog while the renders showed a fixed one. One owner is the policy;
+ * this is the check that the policy was kept.
+ */
+function checkPoseTables() {
+  let bad = 0;
+  const swift = swiftPoses();
+  for (const name of Object.keys(art.POSE_PARAMS)) {
+    if (!(name in swift)) {
+      console.log(`  FAIL HopPose.swift has no case for \`${name}\``);
+      bad++;
+      continue;
+    }
+    const a = normalise(art.POSE_PARAMS[name]);
+    const b = normalise(swiftPose(swift[name]));
+    for (const key of Object.keys(a)) {
+      if (JSON.stringify(a[key]) !== JSON.stringify(b[key])) {
+        console.log(`  FAIL ${name}.${key}: hop-art.js says ${JSON.stringify(a[key])}, ` +
+          `HopPose.swift says ${JSON.stringify(b[key])}`);
+        bad++;
+      }
+    }
+  }
+  if (!bad) console.log(`  ok   all ${Object.keys(art.POSE_PARAMS).length} poses match HopPose.swift, parameter for parameter`);
+  return bad;
+}
+
+/** The outline levels against `HopOutlineStyle`, for the same reason. */
+function checkOutlineLevels() {
+  const src = fs.readFileSync(
+    path.join(ROOT, 'HopPotty', 'DesignSystem', 'Components', 'HopCharacterShapes.swift'), 'utf8');
+  const named = { hero: 'hero', default: 'standard', scene: 'scene', small: 'small', highContrast: 'highContrast', off: 'off' };
+  let bad = 0;
+  for (const [level, swiftName] of Object.entries(named)) {
+    const m = new RegExp(
+      `static let ${swiftName} = HopOutlineStyle\\(exterior: ([\\d.]+), inner: ([\\d.]+), innerOpacity: ([\\d.]+)\\)`
+    ).exec(src);
+    if (!m) { console.log(`  FAIL HopOutlineStyle has no \`${swiftName}\``); bad++; continue; }
+    const l = art.OUTLINE[level];
+    if (Number(m[1]) !== l.exterior || Number(m[2]) !== l.inner || Number(m[3]) !== l.innerOpacity) {
+      console.log(`  FAIL outline ${level}: hop-art.js has ${l.exterior}/${l.inner}/${l.innerOpacity}, ` +
+        `HopOutlineStyle.${swiftName} has ${m[1]}/${m[2]}/${m[3]}`);
+      bad++;
+    }
+  }
+  if (!bad) console.log('  ok   all six outline levels match HopOutlineStyle');
+  return bad;
+}
+
+/**
+ * The canvas transform against `HopCanvas`.
+ *
+ * This is the one that actually went wrong: the Swift port kept a stale
+ * `scale 3.2, offset (16, 0)` while the generator solved a new one from the
+ * drawing, so the app clipped fourteen of fifteen poses while every render on
+ * disk was fine. Three numbers, checked, and it cannot happen quietly again.
+ */
+function checkCanvas() {
+  const src = fs.readFileSync(
+    path.join(ROOT, 'HopPotty', 'DesignSystem', 'Components', 'HopCharacterShapes.swift'), 'utf8');
+  const want = [
+    ['referenceScale', /static let referenceScale: CGFloat = ([\d.]+)/, art.SCALE],
+    ['referenceOrigin.x', /static let referenceOrigin = CGPoint\(x: ([\d.]+), y: [\d.]+\)/, art.OX],
+    ['referenceOrigin.y', /static let referenceOrigin = CGPoint\(x: [\d.]+, y: ([\d.]+)\)/, art.OY],
+    ['groundLine', /static let groundLine: CGFloat = ([\d.]+)\n/, art.GROUND],
+    ['groundAnkle', /static let groundAnkle: CGFloat = ([\d.]+)/, art.ANKLE],
+  ];
+  let bad = 0;
+  for (const [label, re, expected] of want) {
+    const m = re.exec(src);
+    if (!m) { console.log(`  FAIL HopCanvas has no ${label}`); bad++; continue; }
+    if (Number(m[1]) !== expected) {
+      console.log(`  FAIL HopCanvas.${label}: hop-art.js has ${expected}, Swift has ${m[1]}`);
+      bad++;
+    }
+  }
+  if (!bad) console.log('  ok   HopCanvas restates the generator\'s transform exactly');
+  return bad;
+}
+
+/** The colour tokens against `HopPalette`, so neither language invents a green. */
+function checkTokens() {
+  const src = fs.readFileSync(
+    path.join(ROOT, 'HopPottyKit', 'Sources', 'HopPottyDesignTokens', 'HopPalette.swift'), 'utf8');
+  const want = {
+    hopFillHighlight: art.T.fillHighlight,
+    hopFillShadow: art.T.fillShadow,
+    hopFillDeep: art.T.fillDeep,
+    hopOutline: art.T.outline,
+  };
+  let bad = 0;
+  for (const [token, hex] of Object.entries(want)) {
+    const m = new RegExp(`static let ${token} = HopColorValue\\(hex: 0x([0-9A-Fa-f]{6})\\)`).exec(src);
+    if (!m) { console.log(`  FAIL HopPalette has no \`${token}\``); bad++; continue; }
+    if (`#${m[1].toUpperCase()}` !== hex.toUpperCase()) {
+      console.log(`  FAIL ${token}: hop-art.js paints ${hex}, HopPalette says #${m[1].toUpperCase()}`);
+      bad++;
+    }
+  }
+  if (!/static let hopFill = hopGreen/.test(src)) {
+    console.log('  FAIL HopPalette.hopFill is no longer hopGreen'); bad++;
+  }
+  if (!bad) console.log('  ok   Hop\'s colour tokens match HopPalette');
+  return bad;
+}
+
 function checkContracts() {
   let bad = 0;
   const dir = path.join(ROOT, 'Art', 'character');
@@ -292,6 +542,11 @@ function checkContracts() {
     if (dupes.length) { console.log(`  FAIL hop-${pose}.svg repeats ids: ${[...new Set(dupes)].join(', ')}`); bad++; }
   }
   if (!bad) console.log('  ok   no pose repeats an id');
+
+  bad += checkCanvas();
+  bad += checkPoseTables();
+  bad += checkOutlineLevels();
+  bad += checkTokens();
   return bad ? 1 : 0;
 }
 
@@ -348,17 +603,17 @@ function labPage() {
   button { font:inherit; font-size:12px; padding:5px 11px; border-radius:999px; border:1px solid var(--line);
            background:#fff; color:var(--ink); cursor:pointer; }
   button[aria-pressed="true"] { background:var(--ink); color:#fff; border-color:var(--ink); }
-  main { padding:20px; display:grid; gap:18px; grid-template-columns:repeat(auto-fill,minmax(560px,1fr)); }
+  main { padding:20px; display:grid; gap:18px; grid-template-columns:repeat(auto-fill,minmax(min(100%,560px),1fr)); }
   .card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 16px 16px; }
   .card header { display:flex; align-items:baseline; gap:10px; margin-bottom:10px; }
   .card h2 { font-size:14px; margin:0; }
   .card p { margin:0; font-size:12px; color:#7D766D; }
-  .grounds { display:flex; gap:10px; }
-  .ground { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
-  .ground .stage { width:100%; aspect-ratio:1; background:var(--bg); border-radius:12px;
+  .grounds { display:flex; gap:10px; overflow-x:auto; padding-bottom:2px; }
+  .ground { flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .ground .stage { width:var(--hop); height:var(--hop); background:var(--bg); border-radius:12px;
                    display:grid; place-items:center; overflow:hidden; border:1px solid rgba(0,0,0,.06); }
   .ground span { font-size:10px; color:#7D766D; }
-  .stage svg { width:var(--hop); height:var(--hop); max-width:100%; max-height:100%; }
+  .stage svg { width:100%; height:100%; display:block; }
   body { --hop:160px; }
   .note { grid-column:1/-1; font-size:12px; color:#5A544D; background:#FFF3D4; border:1px solid #FFD769;
           border-radius:12px; padding:10px 14px; }

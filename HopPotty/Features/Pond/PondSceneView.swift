@@ -237,11 +237,9 @@ private struct PondSceneFraming: ViewModifier {
             content
         } else {
             content
-                // Portrait, not landscape. The pond has a sky, a horizon, a
-                // water body and a near bank stacked in depth, and a 4:3 letter
-                // box crops that into a strip of water — which is exactly how a
-                // place turns back into a picture of a place.
-                .aspectRatio(0.86, contentMode: .fit)
+                // The drawing's own aspect, so a framed pond is the whole
+                // composition with nothing extended and nothing cropped.
+                .aspectRatio(PondGeometry.referenceAspect, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: theme.radius.hero, style: .continuous))
                 .overlay {
                     RoundedRectangle(cornerRadius: theme.radius.hero, style: .continuous)
@@ -268,12 +266,23 @@ enum PondGeometry {
     ///
     /// `PondCatalog` places its forty-one anchors in unit coordinates against a
     /// scene of roughly this shape: the water is 0.78 of the width and 0.46 of
-    /// the height, which is a properly foreshortened pond at 0.86 and a circular
+    /// the height, which is a properly foreshortened pond at 1.1 and a circular
     /// puddle at a phone's 0.46. Stretching the composition to whatever frame it
     /// is handed is what turns the catalogue's geometry into nonsense — a
     /// duckling on the grass, a reed in the water — so the drawing keeps its own
     /// shape and the *frame* is what varies.
-    static let referenceAspect: CGFloat = 0.86
+    ///
+    /// `Art/pond/pond-stage.svg` is this same composition, at this same aspect,
+    /// with the same band lines. The render harness and the app place the
+    /// catalogue against one geometry, not two.
+    static let referenceAspect: CGFloat = 1.10
+
+    /// Where the stage hangs when the frame is taller than the drawing.
+    ///
+    /// Below centre: the extra height then reads as sky above the horizon rather
+    /// than as an empty field below the pond, which is what puts the water in the
+    /// lower half of a screen held in a hand.
+    static let verticalBias: CGFloat = 0.55
 
     /// The rectangle the whole composition is drawn into, for a given frame.
     ///
@@ -291,7 +300,7 @@ enum PondGeometry {
         let h = max(1, size.height)
         let stageHeight = w / referenceAspect
         let slack = h - stageHeight
-        return CGRect(x: 0, y: slack >= 0 ? slack * 0.34 : slack * 0.5, width: w, height: stageHeight)
+        return CGRect(x: 0, y: slack >= 0 ? slack * verticalBias : slack * 0.5, width: w, height: stageHeight)
     }
 
     /// The inverse of ``point(_:in:)``: where a finger landed, in the
@@ -408,6 +417,9 @@ enum PondGeometry {
 /// it is the rule to check first if he ever stops reading.
 private struct PondPalette {
     let skyTop: Color
+    /// The top of the *frame* when it is taller than the drawing. Deeper than
+    /// `skyTop`, so a tall phone reads as more air rather than as a flat band.
+    let zenith: Color
     let skyBottom: Color
     let sun: Color
     let cloud: Color
@@ -450,7 +462,10 @@ private struct PondPalette {
     let dusk: Color?
 
     init(theme: HopTheme) {
-        skyTop = Color(PondPalette.mix(HopPalette.pondBlueLight, HopPalette.pondBlueSoft, 0.42))
+        // The horizon's own colour, so the sky that continues above the stage
+        // meets the stage's first gradient stop with no seam.
+        skyTop = Color(HopPalette.pondBlueLight)
+        zenith = Color(PondPalette.mix(HopPalette.pondBlue, HopPalette.pondBlueLight, 0.42))
         skyBottom = Color(PondPalette.mix(HopPalette.cloud, HopPalette.sunshineSoft, 0.55))
         sun = Color(HopPalette.sunshineSoft).opacity(0.62)
         cloud = Color(HopPalette.white)
@@ -534,19 +549,25 @@ private struct PondStillLayer: View {
         // duckling on the grass — the sky's own top colour continues above the
         // stage and the near bank's continues below it, so the crop has no seam
         // and the extra height reads as more sky and more grass.
+        let above = CGRect(x: 0, y: 0, width: max(1, size.width), height: max(0, stage.minY) + 1)
         outer.fill(
-            Path(CGRect(x: 0, y: 0, width: max(1, size.width), height: max(0, stage.minY) + 1)),
-            with: .color(ink.skyTop)
+            Path(above),
+            with: .linearGradient(
+                Gradient(colors: [ink.zenith, ink.skyTop]),
+                startPoint: .zero,
+                endPoint: CGPoint(x: 0, y: above.maxY)
+            )
         )
-        outer.fill(
-            Path(CGRect(
-                x: 0,
-                y: stage.maxY - 1,
-                width: max(1, size.width),
-                height: max(0, size.height - stage.maxY) + 1
-            )),
-            with: .color(ink.meadow)
+        // Below the stage the meadow continues, with the foreground band's own
+        // ink over it — the same two fills `PondForegroundLayer` puts down, in
+        // the same order, so the seam at the stage's edge is invisible.
+        let below = CGRect(
+            x: 0,
+            y: stage.maxY - 1,
+            width: max(1, size.width),
+            height: max(0, size.height - stage.maxY) + 1
         )
+        outer.fill(Path(below), with: .color(ink.meadow))
 
         var context = outer
         context.translateBy(x: stage.minX, y: stage.minY)
@@ -569,8 +590,10 @@ private struct PondStillLayer: View {
         // The key light: an off-frame sun, high and to the left. Every highlight
         // below is placed against this one call. A soft radial, not a disc —
         // `sunbeam` is a decoration a child unlocks and would collide with one.
-        let sunCentre = CGPoint(x: w * 0.16, y: horizon * 0.22)
-        let sunRadius = w * 0.62
+        // Kept wholly inside the stage, so a frame taller than the drawing can
+        // continue the sky above it without the glow ending in a straight line.
+        let sunCentre = CGPoint(x: w * 0.18, y: h * 0.30)
+        let sunRadius = h * 0.31
         context.fill(
             Path(ellipseIn: CGRect(
                 x: sunCentre.x - sunRadius,
@@ -891,6 +914,17 @@ private struct PondDriftLayer: View {
             at: CGPoint(x: w * 0.26 + nearDrift * HopPondMotion.cloudDrift * 0.55 * u, y: h * 0.145),
             width: w * 0.20,
             opacity: 0.48,
+            ink: ink
+        )
+        // A third cloud *above* the drawing, in the sky a tall frame adds. On a
+        // framed pond it falls outside the canvas and is never rasterised; on a
+        // full-bleed phone it is the difference between open sky and a flat band
+        // of blue above the horizon.
+        drawCloud(
+            into: &context,
+            at: CGPoint(x: w * 0.62 - farDrift * HopPondMotion.cloudDrift * 0.4 * u, y: -h * 0.13),
+            width: w * 0.24,
+            opacity: 0.55,
             ink: ink
         )
 

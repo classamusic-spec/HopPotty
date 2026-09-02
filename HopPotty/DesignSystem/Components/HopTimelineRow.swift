@@ -17,15 +17,38 @@ public extension PottyEventSource {
 /// One entry in the day's timeline.
 ///
 /// Reads as a single line to VoiceOver — time, kind, who recorded it — because
-/// that is one fact. The rail and the node are decorative and hidden.
+/// that is one fact. The mark is decorative and hidden.
+///
+/// ## Health, not a journal
+///
+/// This row used to be a vertical rail: a 32pt tinted disc with the event glyph
+/// inside it, a 2pt connector drawn down to the next row, and the source of the
+/// entry spelled out under every single line. Four of those is four coloured
+/// circles and three lengths of pipe on a screen that already has a painted pond
+/// above it. Apple Health draws an entry as a time, a small tinted symbol and a
+/// word, separated by a hairline, and that is what this is now.
+///
+/// Two things went with the rail:
+///
+/// - **The disc.** The tint moved onto the glyph itself. Meaning still rides on
+///   the silhouette as well as the colour (`Docs/CONTRACTS.md` §6), so nothing
+///   is carried by hue alone; there is simply one fewer object per row.
+/// - **The source, on the ordinary rows.** "Logged by Hop's routine" under every
+///   entry is the default case announcing itself once per line. It is shown when
+///   it is actually informative — a grown-up added the entry by hand, or it came
+///   back from a backup — and VoiceOver reads it on every row regardless, so
+///   nothing is lost to a screen-reader user.
+///
+/// An accident is drawn exactly like every other entry: `eventAccident` is the
+/// palette's neutral grey, and there is no warning mark, no red and no emphasis
+/// anywhere in this row (§7, `Docs/CONTRACTS.md` §4.3).
 ///
 /// ## Arrival
 ///
 /// `arrivalIndex:` gives a day's worth of entries a staggered arrival: each row
-/// fades and slides a few points toward its rail, and its connector *draws*
-/// downward a beat behind the node, so a timeline reads as being written down
-/// the page rather than as a block appearing. Off by default, and off entirely
-/// under Reduce Motion, where the rows simply fade in together.
+/// fades and slides a few points toward its leading edge, so a timeline reads as
+/// being written down the page rather than as a block appearing. Off by default,
+/// and off entirely under Reduce Motion, where the rows simply fade in together.
 public struct HopTimelineRow: View {
     @Environment(\.hopTheme) private var theme
     @State private var hasArrived = false
@@ -50,56 +73,66 @@ public struct HopTimelineRow: View {
         )
     }
 
-    /// The connector follows the node rather than arriving with it. The extra
-    /// beat is what makes it read as a line being drawn; under Reduce Motion
-    /// there is no beat, because there is nothing to draw.
-    private var railAnimation: Animation {
-        theme.reduceMotion ? arrivalAnimation : arrivalAnimation.delay(0.08)
-    }
-
     private var tint: Color { theme.color.accent(for: event.kind) }
 
     private var timeText: String {
         event.timestamp.formatted(date: .omitted, time: .shortened)
     }
 
+    /// The provenance worth printing. `childRoutine` and `pauseCompletion` are
+    /// the two ordinary paths — an entry with no caption came from the routine,
+    /// which is what a caregiver already assumes.
+    private var printedSource: String? {
+        switch event.source {
+        case .parentManual, .restored: event.source.displayName
+        case .childRoutine, .pauseCompletion: nil
+        }
+    }
+
     public var body: some View {
-        HStack(alignment: .top, spacing: theme.spacing.m) {
+        HStack(alignment: .center, spacing: theme.spacing.m) {
             Text(timeText)
-                .hopTextStyle(.parentCaption)
+                .hopTextStyle(.parentCallout)
                 // Monospaced so a column of times lines up on the colon instead
                 // of ragging left as the hour changes width.
                 .hopNumericText()
                 .foregroundStyle(theme.color.textSecondary)
-                .frame(width: 64, alignment: .trailing)
-                .padding(.top, 6)
+                .frame(width: 76, alignment: .leading)
 
-            rail
+            HopGlyphView(HopGlyph(event.kind), size: 17)
+                .foregroundStyle(tint)
+                .frame(width: 20)
+                .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(event.kind.displayName)
-                    .hopTextStyle(.parentHeadline)
+                    .hopTextStyle(.parentBody)
                     .foregroundStyle(theme.color.textPrimary)
 
-                Text(event.source.displayName)
-                    .hopTextStyle(.parentCaption)
-                    .foregroundStyle(theme.color.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                if let printedSource {
+                    Text(printedSource)
+                        .hopTextStyle(.parentCaption)
+                        .foregroundStyle(theme.color.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
                 if let note = event.note, !note.isEmpty {
                     Text(note)
-                        .hopTextStyle(.parentCallout)
+                        .hopTextStyle(.parentCaption)
                         .foregroundStyle(theme.color.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, theme.spacing.xs)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, isLast ? 0 : theme.spacing.xl)
+        }
+        .padding(.vertical, theme.spacing.s)
+        .frame(minHeight: theme.hitTarget.parent)
+        // The hairline is inset to the time column the way a system list insets
+        // to its label, and the last row has none — the card's own edge is there.
+        .overlay(alignment: .bottom) {
+            if !isLast { HopRowDivider(leadingInset: 0) }
         }
         .opacity(isArriving ? 0 : 1)
-        // Toward the rail, not down the page: a row sliding vertically would
-        // cross the row above it, and the rail is the thing it belongs to.
         .offset(x: isArriving && !theme.reduceMotion ? -10 : 0)
         .animation(arrivalAnimation, value: hasArrived)
         .onAppear { hasArrived = true }
@@ -108,26 +141,10 @@ public struct HopTimelineRow: View {
         .accessibilityValue(accessibilityValue)
     }
 
+    /// VoiceOver always hears the source, whether or not the row prints it.
     private var accessibilityValue: String {
         guard let note = event.note, !note.isEmpty else { return event.source.displayName }
         return "\(event.source.displayName). \(HopStrings.noteLabel): \(note)"
-    }
-
-    private var rail: some View {
-        VStack(spacing: 0) {
-            HopGlyphBadge(HopGlyph(event.kind), tint: tint, diameter: 32)
-            if !isLast {
-                Rectangle()
-                    .fill(theme.color.divider)
-                    .frame(width: 2)
-                    .frame(maxHeight: .infinity)
-                    .padding(.vertical, 2)
-                    .scaleEffect(y: isArriving && !theme.reduceMotion ? 0 : 1, anchor: .top)
-                    .animation(railAnimation, value: hasArrived)
-            }
-        }
-        .frame(width: 32)
-        .accessibilityHidden(true)
     }
 }
 

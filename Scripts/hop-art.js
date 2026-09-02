@@ -532,7 +532,11 @@ function bagNode() {
     id: 'optional-bag', tone: T.bagBody,
     shapes: [{ t: 'r', x: 98, y: 84, w: 22, h: 30, r: 9 }],
     children: [{
-      id: 'bag-strap', tone: T.bagStrap,
+      // Out of the silhouette: the strap runs up behind the torso and adds
+      // nothing to Hop's outline that the pack's own body does not, and keeping
+      // it out is what lets `HopFigureShape.silhouette` — which has no way to
+      // grow a quadratic stroke — describe the same shape.
+      id: 'bag-strap', tone: T.bagStrap, sil: false,
       shapes: [{ t: 's', d: 'M 92 78 q 12 4 16 20', w: 4 }],
     }],
   };
@@ -765,43 +769,43 @@ ${inner}
  * `node Scripts/hop-lab.js --silhouette` — and where a limb vanished the *pose*
  * was moved before anything was done to the stroke.
  */
-const poses = {
+const POSE_PARAMS = {
   /** The reference pose: arms wide, open smile. App icon and dashboard chip. */
-  idle: () => figure({}),
+  idle: {},
 
   /** Eyes closed mid-blink; cross-faded with `idle` for the ambient loop. */
-  blink: () => figure({ eyes: { blink: 1, mood: 'rest' } }),
+  blink: { eyes: { blink: 1, mood: 'rest' } },
 
   /** Speaking a line, one hand raised toward the child. Also Hop pointing at a
    *  button, which is the same gesture with the gaze moved. */
-  talk: () => figure({ mouth: 'talk', armR: [131, 84], eyes: { gaze: [0, 1] } }),
+  talk: { mouth: 'talk', armR: [131, 84], eyes: { gaze: [0, 1] } },
 
   /** Waving hello. Onboarding and the shield greeting.
    *  The waving hand sits clear of the jaw's outer edge rather than on it: at
    *  y=42 the head still measures 124 units across, so a hand at x=127 was a
    *  bump on the silhouette instead of a wave. */
-  wave: () => figure({ armR: [134, 38], armL: [24, 108], tilt: -3, eyes: { gaze: [1, 0] } }),
+  wave: { armR: [134, 38], armL: [24, 108], tilt: -3, eyes: { gaze: [1, 0] } },
 
   /** Walking to the bathroom with the pack — Hop holding something, and leaning.
    *  The trailing arm swings behind the hip so the two arms are separable in
    *  silhouette rather than one shape either side of the belly. */
-  walk: () => figure({
+  walk: {
     lean: 4, withPack: true,
-    armL: [26, 114], armR: [118, 74],
-    legL: { hip: [55, 122], ankle: [40, ANKLE], spread: 1 },
-    legR: { hip: [95, 122], ankle: [106, ANKLE - 8], spread: 0.8 },
+    armL: [26, 114], armR: [128, 76],
+    legL: { hip: [55, 122], ankle: [38, ANKLE], spread: 1 },
+    legR: { hip: [95, 122], ankle: [120, ANKLE - 12], spread: 1.1 },
     eyes: { gaze: [2, 0] }, mouth: 'talk',
-  }),
+  },
 
   /** Waiting patiently on the potty — sat down, hands resting, calm. Also the
    *  quiz-thinking pose: still, hands down, eyes lowered. */
-  wait: () => figure({
+  wait: {
     lift: -6, squash: 0.3,
     armL: [26, 122], armR: [124, 122],
     legL: { hip: [55, 122], ankle: [38, ANKLE - 6], spread: 1.1 },
     legR: { hip: [95, 122], ankle: [112, ANKLE - 6], spread: 1.1 },
     eyes: { gaze: [0, 3], lidDrop: 0.35 }, mouth: 'small',
-  }),
+  },
 
   /**
    * Mid-hop, airborne. The celebration.
@@ -817,13 +821,13 @@ const poses = {
    * legs tuck asymmetrically for the same reason: two identical tucked legs are
    * one leg.
    */
-  jump: () => figure({
+  jump: {
     lift: 8, squash: -0.15,
     armL: [14, 74], armR: [136, 74],
-    legL: { hip: [55, 122], ankle: [40, 134], spread: 0.9 },
-    legR: { hip: [95, 122], ankle: [106, 142], spread: 0.9 },
+    legL: { hip: [55, 122], ankle: [28, 128], spread: 1.15 },
+    legR: { hip: [95, 122], ankle: [118, 140], spread: 1.15 },
     eyes: { blink: 1, mood: 'happy' }, mouth: 'open',
-  }),
+  },
 
   /**
    * Both arms up. The star-earned moment.
@@ -834,29 +838,29 @@ const poses = {
    * cuts across the forearms — which is what turns "a lumpy head" into "arms
    * behind the head".
    */
-  cheer: () => figure({
+  cheer: {
     lift: 2,
     armL: [15, 30], armR: [135, 30],
     eyes: { gaze: [0, -2] }, mouth: 'open',
-  }),
+  },
 
   /** Resting during quiet hours and "paused until tomorrow". */
-  sleep: () => figure({
+  sleep: {
     tilt: 4, lift: -4, squash: 0.2, sleeping: true,
     armL: [26, 120], armR: [124, 120],
     legL: { hip: [56, 124], ankle: [50, ANKLE - 4], spread: 1 },
     legR: { hip: [94, 124], ankle: [100, ANKLE - 4], spread: 1 },
     eyes: { blink: 1, mood: 'rest' }, mouth: 'small',
-  }),
+  },
 
   /** Landing frame after a jump — the squash before the settle. */
-  land: () => figure({
+  land: {
     squash: 0.5,
     armL: [18, 122], armR: [132, 122],
     legL: { hip: [55, 120], ankle: [42, ANKLE], spread: 1.2 },
     legR: { hip: [95, 120], ankle: [108, ANKLE], spread: 1.2 },
     eyes: { gaze: [0, 2] }, mouth: 'open',
-  }),
+  },
 
   // ---- Mini-game states ----
 
@@ -867,24 +871,24 @@ const poses = {
    * the waist they were the torso's own green over the torso and Hop read as a
    * legless bust.
    */
-  sit: () => figure({
+  sit: {
     lift: -10, squash: 0.35,
-    armL: [44, 130], armR: [106, 130], frontL: true, frontR: true,
+    armL: [54, 130], armR: [100, 134], frontL: true, frontR: true,
     legL: { hip: [55, 120], ankle: [30, ANKLE - 10], spread: 1.2 },
     legR: { hip: [95, 120], ankle: [120, ANKLE - 10], spread: 1.2 },
     eyes: { gaze: [0, -3] }, mouth: 'small',
-  }),
+  },
 
   /** Tongue out for a fly. Same squat; the tongue reaches toward `tongueTo`. */
-  catch: () => figure({
+  catch: {
     lift: -10, squash: 0.35,
-    armL: [44, 130], armR: [106, 130], frontL: true, frontR: true,
+    armL: [54, 130], armR: [100, 134], frontL: true, frontR: true,
     legL: { hip: [55, 120], ankle: [30, ANKLE - 10], spread: 1.2 },
     legR: { hip: [95, 120], ankle: [120, ANKLE - 10], spread: 1.2 },
     // Out sideways at mouth height. Aimed up at the fly it crossed his own
     // eye, and a pink bar over the pupil reads as damage, not as a tongue.
     eyes: { gaze: [3, -4] }, mouth: 'open', tongueTo: [138, 53],
-  }),
+  },
 
   /**
    * Tummy full, and the body saying so. Bigger belly, hands on it, knees
@@ -894,13 +898,13 @@ const poses = {
    * The two hands are held at different heights and different reaches: level
    * with each other they fused into one green mitten across the belly.
    */
-  full: () => figure({
+  full: {
     squash: 0.1, bellyScale: 1.28, torsoWidth: 68, wiggling: true,
-    armL: [50, 122], armR: [88, 106], frontL: true, frontR: true,
-    legL: { hip: [55, 124], ankle: [64, ANKLE], spread: 0.9 },
-    legR: { hip: [95, 124], ankle: [86, ANKLE], spread: 0.9 },
+    armL: [42, 120], armR: [112, 126], frontL: true, frontR: true,
+    legL: { hip: [55, 124], ankle: [58, ANKLE], spread: 1.1 },
+    legR: { hip: [95, 124], ankle: [92, ANKLE], spread: 1.1 },
     eyes: { gaze: [0, 3], lidDrop: 0.15 }, mouth: 'small',
-  }),
+  },
 
   /**
    * Hands held out front, palms up, for washing and wiping games — and the
@@ -909,11 +913,19 @@ const poses = {
    * The hands are offset rather than symmetrical for the same reason `full`'s
    * are: two hands at the same height and the same reach are one shape.
    */
-  scrub: () => figure({
-    armL: [60, 118], armR: [92, 106], frontL: true, frontR: true,
+  scrub: {
+    armL: [38, 118], armR: [112, 108], frontL: true, frontR: true,
     eyes: { gaze: [0, 4] }, mouth: 'talk',
-  }),
+  },
 };
+
+/** Each entry, built. The parameters are kept apart from the building so the
+ *  table can be compared with `HopPoseGeometry.parameters(for:)` in Swift — see
+ *  `hop-lab.js --contracts`, which exists because the two diverged once before
+ *  and nothing noticed until the app drew a clipped frog while the renders
+ *  showed a fixed one. */
+const poses = Object.fromEntries(
+  Object.entries(POSE_PARAMS).map(([name, params]) => [name, () => figure(params)]));
 
 /**
  * Head only, for avatars and the app icon.
@@ -951,15 +963,9 @@ function poseSVG(name, opts = {}) {
 
 const POSE_NAMES = [...Object.keys(poses), 'face'];
 
-/** The anatomical ids a silhouette check can hide one at a time. */
-const LIMB_IDS = [
-  'head', 'body', 'left-arm', 'right-arm', 'left-hand', 'right-hand',
-  'left-leg', 'right-leg', 'left-foot', 'right-foot',
-];
-
 module.exports = {
   T, OUTLINE, CANVAS, STAGE, GROUND, ANKLE, SCALE, OX, OY, FEET_FRACTION,
-  poses, POSE_NAMES, LIMB_IDS, poseSVG,
+  poses, POSE_PARAMS, POSE_NAMES, poseSVG,
 };
 
 // ---------------------------------------------------------------------------

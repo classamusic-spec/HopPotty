@@ -73,6 +73,82 @@ enum HopCanvas {
     }
 }
 
+/// How strongly Hop is separated from what is behind him, and from himself.
+///
+/// Three levels of separation hold this character together and none of them is
+/// allowed to carry it alone: the exterior silhouette, the internal overlap
+/// rims, and the tonal ramp in ``HopCharacterPalette``. This type carries the
+/// two that are geometry.
+///
+/// `exterior` is how far the silhouette underlay grows past the fill — the
+/// weight of the outside edge. `inner` is the same for a part's own rim, drawn
+/// at `innerOpacity` beneath its own fill so it only appears where that part
+/// crosses something already drawn. `inner` is always roughly half `exterior`,
+/// because an internal boundary as strong as the outside one reads as a
+/// cut-out rather than as an arm in front of a chest.
+///
+/// Both are in **reference units** and are multiplied by ``HopCanvas/unit(for:)``
+/// at the one place they are used, so the outline scales with Hop exactly as
+/// every other line in the drawing does. That is deliberate and it is why the
+/// SVG side rejects `vector-effect="non-scaling-stroke"`: a stroke pinned to
+/// device pixels would be eight times heavier relative to the body at 64pt than
+/// at 512pt, which is the "magnified sticker" failure inverted.
+///
+/// The numbers are `OUTLINE` in `Scripts/hop-art.js`, and `highContrast` is
+/// capped at 2.8 by the canvas rather than by taste: at 3.1 the `jump` pose's
+/// eye sockets come within 5.5 units of the top edge and `check-hop-fit.js`
+/// goes red.
+struct HopOutlineStyle: Equatable, Sendable {
+    var exterior: CGFloat
+    var inner: CGFloat
+    var innerOpacity: Double
+
+    /// No outline at all. Not a shipping state — it is the test that the pose,
+    /// the depth order and the green ramp hold Hop up on their own.
+    static let off = HopOutlineStyle(exterior: 0, inner: 0, innerOpacity: 0)
+    /// 200pt and up. A softer edge, because at hero size the tonal separation is
+    /// doing more of the work and a small Hop's outline looks like a sticker.
+    static let hero = HopOutlineStyle(exterior: 1.55, inner: 0.9, innerOpacity: 0.5)
+    /// The everyday state, and what `Art/character/hop-*.svg` ships with.
+    static let standard = HopOutlineStyle(exterior: 2.0, inner: 1.15, innerOpacity: 0.62)
+    /// Over illustration — pond water, vegetation green, a dark sky — where the
+    /// background is Hop's own hue and the silhouette is all that is left.
+    static let scene = HopOutlineStyle(exterior: 2.35, inner: 1.25, innerOpacity: 0.72)
+    /// 96pt and below, where the everyday edge is under a pixel.
+    static let small = HopOutlineStyle(exterior: 2.6, inner: 1.35, innerOpacity: 0.78)
+    /// Increase Contrast, and any accessibility appearance.
+    static let highContrast = HopOutlineStyle(exterior: 2.8, inner: 1.75, innerOpacity: 0.95)
+
+    /// The responsive rule, and the only place it is written on this side.
+    ///
+    /// Its twin is the `SIZES` table in `Scripts/hop-lab.js`, which is what the
+    /// lab's **Auto** setting draws — so what a reviewer sees in the lab is what
+    /// the app puts on screen.
+    static func resolved(
+        forSize size: CGFloat,
+        onScenery: Bool = false,
+        highContrast: Bool = false
+    ) -> HopOutlineStyle {
+        if highContrast { return .highContrast }
+        if size <= 96 { return .small }
+        if onScenery { return .scene }
+        return size >= 200 ? .hero : .standard
+    }
+}
+
+/// Where Hop is standing, as far as his outline is concerned.
+///
+/// Semantic, not a per-screen override: a caller says *what kind of ground this
+/// is*, and the outline state is resolved from that together with the size and
+/// the accessibility appearance. No screen gets to nudge a stroke width.
+public enum HopGround: Equatable, Sendable {
+    /// Cards, sheets, cream, white — the app's own surfaces.
+    case surface
+    /// Illustration: pond water, vegetation, a night sky. Hop's own hue is in
+    /// the background, so the silhouette has to work harder.
+    case scenery
+}
+
 /// The fixed numbers of Hop's body — the ones a pose never changes.
 ///
 /// Transcribed from the constants and part functions at the top of
@@ -131,9 +207,12 @@ enum HopAnatomy {
     static let crownTop: CGFloat = crownCentre.y - crownRadii.height
 
     /// The floor Hop stands on, in reference units — the line the ground shadow
-    /// is centred on in `figure()`. Motion anchors here rather than at the
-    /// bottom of the view, because the view is a square and Hop is not.
-    static let groundLine: CGFloat = 159
+    /// is centred on in `figure()`, which is ``HopCanvas/groundLine`` less the
+    /// shadow's own height so that the toes touch the shadow rather than pierce
+    /// it. Motion anchors here rather than at the bottom of the view, because
+    /// the view is a square and Hop is not.
+    static let shadowRadii = CGSize(width: 40, height: 3.6)
+    static let groundLine: CGFloat = HopCanvas.groundLine - shadowRadii.height
 
     /// The head's bounding box in reference space: the jaw sets the width, the
     /// eye sockets the top, the jaw the bottom.
@@ -281,13 +360,17 @@ extension HopPoseGeometry {
             .concatenating(CGAffineTransform(translationX: 0, y: -lift))
     }
 
-    /// The head's own `rotate(tilt 75 50)`, inside the body group.
-    var headTransform: CGAffineTransform {
+    /// The head's own `rotate(tilt 75 50)`, on its own — the silhouette needs it
+    /// separately, because that layer is one path in body space and the head is
+    /// the only part of it that carries a rotation of its own.
+    var headTilt: CGAffineTransform {
         CGAffineTransform(translationX: -HopAnatomy.faceCentre.x, y: -HopAnatomy.faceCentre.y)
             .concatenating(CGAffineTransform(rotationAngle: tilt * .pi / 180))
             .concatenating(CGAffineTransform(translationX: HopAnatomy.faceCentre.x, y: HopAnatomy.faceCentre.y))
-            .concatenating(bodyTransform)
     }
+
+    /// The head's rotation inside the body group.
+    var headTransform: CGAffineTransform { headTilt.concatenating(bodyTransform) }
 
     /// Scales the open mouth about the face centre, as `mouth()` does.
     var mouthTransform: CGAffineTransform {
@@ -311,26 +394,41 @@ struct HopFigureShape: Shape {
     var geometry: HopPoseGeometry
     var part: Part
 
-    /// In `figure`'s draw order: shadow, pack, legs, torso, belly, arms, head,
-    /// face, tongue, wiggle.
+    /// In `figure`'s draw order: shadow, silhouette, pack, legs, torso, belly,
+    /// arms, head, face, tongue, wiggle.
     ///
-    /// Each leg is two cases rather than one, and the pair is not a single
-    /// case, because the generator finishes a whole leg — shin, sole, toes,
-    /// then the darker creases over them — before it starts the other one. Any
-    /// pose that crosses the feet (`full` brings them together) depends on
-    /// that: with both sets of creases stacked last they would draw over the
-    /// far foot instead of under it.
+    /// **The split is the separation system.** Every limb is its own case
+    /// because every limb has to carry its own rim, and a rim only appears
+    /// where that part crosses something already drawn. So the order of these
+    /// cases *is* the list of boundaries the drawing has: a foot after its own
+    /// shin gives foot-against-leg, a hand after its own arm gives
+    /// hand-against-arm and hand-against-hand, the torso after both legs gives
+    /// leg-against-body, and the head last gives arm-against-head — which is
+    /// the failure everybody could name.
+    ///
+    /// Each leg is finished before the other one starts, creases and all,
+    /// because a pose that crosses the feet (`full` brings them together)
+    /// otherwise draws both sets of creases over the far foot.
     enum Part {
         case shadow
+        /// Every body shape at once, in one path: the exterior edge. Drawn
+        /// under everything and in one flat colour, so the union has no
+        /// interior seams and only the outside of Hop survives.
+        case silhouette
         case pack
         case packStrap
-        case legLeft
+        case shinLeft
+        case footLeft
         case toeCreasesLeft
-        case legRight
+        case shinRight
+        case footRight
         case toeCreasesRight
         case torso
         case belly
-        case arms
+        case armLeft
+        case handLeft
+        case armRight
+        case handRight
         case head
         case spots
         case eyeWhites
@@ -374,15 +472,21 @@ struct HopFigureShape: Shape {
     private func build(_ path: inout Path) {
         switch part {
         case .shadow: shadow(&path)
+        case .silhouette: silhouette(&path)
         case .pack: pack(&path)
         case .packStrap: packStrap(&path)
-        case .legLeft: leg(geometry.legL, side: -1, into: &path)
+        case .shinLeft: shin(geometry.legL, into: &path)
+        case .footLeft: foot(geometry.legL, side: -1, into: &path)
         case .toeCreasesLeft: toeCreases(geometry.legL, side: -1, into: &path)
-        case .legRight: leg(geometry.legR, side: 1, into: &path)
+        case .shinRight: shin(geometry.legR, into: &path)
+        case .footRight: foot(geometry.legR, side: 1, into: &path)
         case .toeCreasesRight: toeCreases(geometry.legR, side: 1, into: &path)
         case .torso: torso(&path)
         case .belly: belly(&path)
-        case .arms: arms(&path)
+        case .armLeft: arm(to: geometry.armL, from: HopAnatomy.shoulderL, into: &path)
+        case .handLeft: hand(at: geometry.armL, from: HopAnatomy.shoulderL, into: &path)
+        case .armRight: arm(to: geometry.armR, from: HopAnatomy.shoulderR, into: &path)
+        case .handRight: hand(at: geometry.armR, from: HopAnatomy.shoulderR, into: &path)
         case .head: head(&path)
         case .spots: spots(&path)
         case .eyeWhites: eyeWhites(&path)
@@ -402,8 +506,11 @@ struct HopFigureShape: Shape {
 
     private func shadow(_ path: inout Path) {
         path.addHopEllipse(
-            centre: CGPoint(x: 75, y: 159 - geometry.lift * 0.1),
-            radii: CGSize(width: max(0, 40 - geometry.lift * 0.4), height: 4)
+            centre: CGPoint(x: 75, y: HopAnatomy.groundLine - geometry.lift * 0.1),
+            radii: CGSize(
+                width: max(0, HopAnatomy.shadowRadii.width - geometry.lift * 0.4),
+                height: HopAnatomy.shadowRadii.height
+            )
         )
     }
 
@@ -416,13 +523,50 @@ struct HopFigureShape: Shape {
         path.addQuadCurve(to: CGPoint(x: 108, y: 98), control: CGPoint(x: 104, y: 82))
     }
 
-    /// A leg is the shin capsule, the sole, and three toes fanned outward and
-    /// down. `side` −1 is Hop's right, the viewer's left.
-    private func leg(_ shape: HopLegGeometry, side: Double, into path: inout Path) {
+    /// Hop's whole outline, as one path.
+    ///
+    /// Every body shape, in body space, with the head's own tilt folded in —
+    /// the head is the only part that carries a rotation the body group does
+    /// not. The view strokes this once in `hop-outline` and fills it in the
+    /// same colour, which grows it by the stroke's half-width and leaves a
+    /// clean exterior edge with no interior seams anywhere.
+    ///
+    /// The belly and the face are not in it: the belly is inside the torso, and
+    /// a silhouette with a mouth in it is not a silhouette. Neither is the
+    /// ground shadow, which is not part of Hop.
+    private func silhouette(_ path: inout Path) {
+        if geometry.withPack {
+            pack(&path)
+            // The strap is a stroke, not a fill; it contributes nothing the
+            // pack's own body does not already cover on the outside.
+        }
+        shin(geometry.legL, into: &path)
+        foot(geometry.legL, side: -1, into: &path)
+        shin(geometry.legR, into: &path)
+        foot(geometry.legR, side: 1, into: &path)
+        torso(&path)
+        arm(to: geometry.armL, from: HopAnatomy.shoulderL, into: &path)
+        hand(at: geometry.armL, from: HopAnatomy.shoulderL, into: &path)
+        arm(to: geometry.armR, from: HopAnatomy.shoulderR, into: &path)
+        hand(at: geometry.armR, from: HopAnatomy.shoulderR, into: &path)
+        var crown = Path()
+        head(&crown)
+        path.addPath(crown.applying(geometry.headTilt))
+    }
+
+    /// The shin: hip to ankle, one capsule.
+    private func shin(_ shape: HopLegGeometry, into path: inout Path) {
+        path.addHopCapsule(from: shape.hip, to: shape.ankle, radius: HopAnatomy.legWidth / 2)
+    }
+
+    /// The foot: the sole, and three toes fanned outward and down. `side` −1 is
+    /// Hop's right, the viewer's left. It is a part of its own — not part of the
+    /// leg — because "the foot is distinguishable from the leg above it" is one
+    /// of the things the silhouette check asks, and the answer is this rim.
+    private func foot(_ shape: HopLegGeometry, side: Double, into path: inout Path) {
         let foot = footCentre(for: shape, side: side)
         let reachX = Double(HopAnatomy.toeReach.width)
         let reachY = Double(HopAnatomy.toeReach.height)
-        path.addHopCapsule(from: shape.hip, to: shape.ankle, radius: HopAnatomy.legWidth / 2)
         path.addHopEllipse(centre: foot, radii: HopAnatomy.soleRadii)
         for toe in HopAnatomy.toes {
             let angle = toeAngle(toe.angle, side: side) * .pi / 180
@@ -493,29 +637,33 @@ struct HopFigureShape: Shape {
         )
     }
 
-    /// An arm reaches from a fixed shoulder to the pose's hand point, and the
-    /// three fingers fan about the direction it ended up pointing. The fingers
-    /// are what make the hands read as hands.
-    private func arms(_ path: inout Path) {
-        for (shoulder, hand) in [
-            (HopAnatomy.shoulderL, geometry.armL),
-            (HopAnatomy.shoulderR, geometry.armR),
-        ] {
-            path.addHopCapsule(from: shoulder, to: hand, radius: HopAnatomy.armWidth / 2)
-            path.addHopCircle(centre: hand, radius: HopAnatomy.palmRadius)
-            let direction = atan2(Double(hand.y - shoulder.y), Double(hand.x - shoulder.x))
-            let reach = Double(HopAnatomy.fingerLength)
-            for spread in HopAnatomy.fingerAngles {
-                let angle = direction + spread * .pi / 180
-                path.addHopCapsule(
-                    from: hand,
-                    to: CGPoint(
-                        x: Double(hand.x) + cos(angle) * reach,
-                        y: Double(hand.y) + sin(angle) * reach
-                    ),
-                    radius: HopAnatomy.fingerWidth / 2
-                )
-            }
+    /// The upper arm: a capsule from a fixed shoulder to the pose's hand point.
+    ///
+    /// In the generator this is authored in the arm's own space and placed with
+    /// `translate(shoulder) rotate(θ)`; here the two ends are enough, because a
+    /// `Path` has no group to hang a transform on. The geometry is the same one.
+    private func arm(to hand: CGPoint, from shoulder: CGPoint, into path: inout Path) {
+        path.addHopCapsule(from: shoulder, to: hand, radius: HopAnatomy.armWidth / 2)
+    }
+
+    /// The hand: a palm and three fingers fanned about the direction the arm
+    /// ended up pointing. The fingers are what make a hand read as a hand — and
+    /// the hand is a part of its own so that it carries a rim against the arm,
+    /// against the belly, and against the other hand.
+    private func hand(at hand: CGPoint, from shoulder: CGPoint, into path: inout Path) {
+        path.addHopCircle(centre: hand, radius: HopAnatomy.palmRadius)
+        let direction = atan2(Double(hand.y - shoulder.y), Double(hand.x - shoulder.x))
+        let reach = Double(HopAnatomy.fingerLength)
+        for spread in HopAnatomy.fingerAngles {
+            let angle = direction + spread * .pi / 180
+            path.addHopCapsule(
+                from: hand,
+                to: CGPoint(
+                    x: Double(hand.x) + cos(angle) * reach,
+                    y: Double(hand.y) + sin(angle) * reach
+                ),
+                radius: HopAnatomy.fingerWidth / 2
+            )
         }
     }
 

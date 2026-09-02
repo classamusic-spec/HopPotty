@@ -28,17 +28,32 @@ struct HopArtwork: View {
     }
 
     /// The asset-catalog name for a key.
+    ///
+    /// Delegated to `HopIllustrationKey.assetName`, which is the contract the
+    /// art pipeline actually satisfies: **drop the family segment and join what
+    /// remains with hyphens**, so `scene.routine.try` is `routine-try`. This
+    /// file used to replace every dot with a hyphen instead, which produced
+    /// `scene-routine-try` and would have missed every exported drawing the day
+    /// the catalog landed. Nothing caught it because the catalog is still empty
+    /// — `HopArtwork` drew its placeholder either way.
     static func assetName(for key: HopIllustrationKey) -> String {
-        key.rawValue.replacingOccurrences(of: ".", with: "-")
+        key.assetName
     }
 
     /// Whether the bundle actually carries this drawing.
     ///
-    /// Checked once per render rather than cached: the answer is fixed for the
-    /// life of the process and `UIImage(named:)` is itself cached by UIKit.
-    private var isPresent: Bool {
-        UIImage(named: Self.assetName(for: key)) != nil
+    /// Public to the feature layer because a screen's *ground* has to know: a
+    /// missing picture inside a screen is a placeholder, but a missing picture
+    /// behind the words is a lilac blob under a sentence, and a caller that can
+    /// ask simply draws the room instead.
+    ///
+    /// Checked per render rather than cached: the answer is fixed for the life
+    /// of the process and `UIImage(named:)` is itself cached by UIKit.
+    static func hasAsset(for key: HopIllustrationKey) -> Bool {
+        UIImage(named: assetName(for: key)) != nil
     }
+
+    private var isPresent: Bool { Self.hasAsset(for: key) }
 
     var body: some View {
         Group {

@@ -78,6 +78,13 @@ public enum HopTypography {
     public static let parentCallout = HopTextStyle(name: "parentCallout", family: .standard, size: 15, weight: .regular, lineHeightMultiple: 1.33)
     public static let parentCaption = HopTextStyle(name: "parentCaption", family: .standard, size: 13, weight: .regular, lineHeightMultiple: 1.31)
     public static let parentFootnote = HopTextStyle(name: "parentFootnote", family: .standard, size: 12, weight: .medium, lineHeightMultiple: 1.33, tracking: 0.2)
+    /// A figure in a compact totals row — the day's counts on Home, the week's
+    /// on Progress. Additive: `metric` below is the *rounded* number style and
+    /// stays that way because the child's star badge shares it, while a row of
+    /// four numbers on a caregiver's dashboard is parent chrome and is set in
+    /// the system font like the rest of it. Smaller than `parentLargeTitle`,
+    /// which is a heading and would shout at four across.
+    public static let parentMetric = HopTextStyle(name: "parentMetric", family: .standard, size: 24, weight: .bold, lineHeightMultiple: 1.15, tracking: -0.4)
 
     // Numerics. Monospaced digits are applied at the SwiftUI layer so countdowns
     // do not jitter as they tick.
@@ -92,6 +99,6 @@ public enum HopTypography {
     public static let all: [HopTextStyle] = [
         hero, childTitle, childInstruction, celebration, buttonLarge,
         parentLargeTitle, parentTitle, parentHeadline, parentBody, parentCallout,
-        parentCaption, parentFootnote, metric, timer, timerHero,
+        parentCaption, parentFootnote, parentMetric, metric, timer, timerHero,
     ]
 }

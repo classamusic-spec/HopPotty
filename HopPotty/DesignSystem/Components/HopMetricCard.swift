@@ -77,6 +77,111 @@ public struct HopMetricCard: View {
     }
 }
 
+/// One column of a compact totals row: a number, then a small mark and a word.
+public struct HopMetricColumn: Identifiable, Sendable {
+    public let id: String
+    public let value: String
+    public let label: String
+    public let glyph: HopGlyph
+    public let tint: Color
+
+    public init(value: String, label: String, glyph: HopGlyph, tint: Color) {
+        self.id = "\(glyph.rawValue)-\(label)"
+        self.value = value
+        self.label = label
+        self.glyph = glyph
+        self.tint = tint
+    }
+}
+
+/// Several numbers on one line, divided by hairlines.
+///
+/// The dashboard's day used to be a grid of ``HopMetricCard`` — each a card of
+/// its own with a 32pt tinted disc at the top of it. Three or four of those side
+/// by side is the "giant colourful tiles" a parent surface is asked not to have,
+/// and on Home they sat directly under a painted pond and spent whatever colour
+/// budget was left. Fitness and Screen Time draw a day's summary as one row of
+/// figures separated by hairlines, and so does this: the number leads, the event
+/// tint survives as a 13pt mark beside its label, and the whole row is one card.
+///
+/// `HopMetricCard` is unchanged and still right for a single figure that needs a
+/// card of its own.
+///
+/// At accessibility text sizes the row would give each column about four
+/// characters, so it reflows into two columns rather than shrinking — a number
+/// that has to be zoomed to be read is not a number a caregiver can glance at.
+public struct HopMetricRow: View {
+    @Environment(\.hopTheme) private var theme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private let columns: [HopMetricColumn]
+    private let arrivalIndex: Int?
+
+    public init(_ columns: [HopMetricColumn], arrivalIndex: Int? = nil) {
+        self.columns = columns
+        self.arrivalIndex = arrivalIndex
+    }
+
+    public var body: some View {
+        HopCard(arrivalIndex: arrivalIndex) {
+            if dynamicTypeSize.isAccessibilitySize {
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), alignment: .leading), count: 2),
+                    alignment: .leading,
+                    spacing: theme.spacing.l
+                ) {
+                    ForEach(columns) { cell($0) }
+                }
+            } else {
+                HStack(alignment: .center, spacing: 0) {
+                    ForEach(Array(columns.enumerated()), id: \.element.id) { index, column in
+                        if index > 0 {
+                            Rectangle()
+                                .fill(theme.color.divider)
+                                .frame(width: theme.isHighContrast ? 1 : 0.5)
+                                .frame(maxHeight: .infinity)
+                                .accessibilityHidden(true)
+                        }
+                        cell(column)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, theme.spacing.m)
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private func cell(_ column: HopMetricColumn) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(column.value)
+                .hopTextStyle(.parentMetric)
+                .foregroundStyle(theme.color.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .hopNumericTransition()
+                .hopAnimation(.parentTransition, value: column.value)
+
+            HStack(spacing: theme.spacing.xs) {
+                HopGlyphView(column.glyph, size: 13)
+                    .foregroundStyle(column.tint)
+                    .accessibilityHidden(true)
+
+                Text(column.label)
+                    .hopTextStyle(.parentCaption)
+                    .foregroundStyle(theme.color.textSecondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(column.label)
+        .accessibilityValue(column.value)
+    }
+}
+
 /// A ring showing a fraction of something.
 ///
 /// The track is always visible so the ring reads as "part of a whole" even at

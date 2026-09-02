@@ -96,7 +96,9 @@ final class ParentHomeModel {
                         mayHaveShieldUp: snapshotScreenTime.mayHaveShieldUp,
                         decision: decision
                     ),
-                    insight: InsightPresentation.headline(from: report)
+                    // The dashboard shows one observation, and never one
+                    // the product bars — see `ParentInsightPolicy`.
+                    insight: ParentInsightPolicy.shown(InsightPresentation.cards(from: report)).first
                 )
             )
         } catch {

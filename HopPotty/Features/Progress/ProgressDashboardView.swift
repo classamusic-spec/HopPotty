@@ -156,8 +156,10 @@ struct ProgressDashboardView: View {
                         arrivalIndex: snapshot.insights.count
                     )
                 }
-                // Every insight surface carries the label, without exception.
-                InsightDisclaimerLabel()
+                // Not repeated here: every `HopInsightCard` above renders
+                // `insight.disclaimer` itself, and three cards under one more
+                // copy of the same sentence is the boilerplate §35 rules out.
+                // The section's own preamble above still states it once.
             }
         }
     }

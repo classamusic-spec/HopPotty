@@ -253,11 +253,11 @@ function pottyPauseShield(appearance = 'light') {
 
         <div style="text-align:center;margin-top:10px;font-family:${sys};font-size:17px;font-weight:400;
           line-height:1.42;color:${P.sand600}">
-          Let's hop to the potty.<br>Your game will be here when you get back.</div>
+          Let's hop to the potty. Your game will be here when you get back.</div>
 
         <div style="width:100%;margin-top:32px;height:50px;border-radius:14px;background:${col.brandAction};
           display:grid;place-items:center;font-family:${sys};font-size:17px;font-weight:600;color:${col.textOnBrand}">
-          Let's Go</div>
+          Let's Go!</div>
 
         <div style="width:100%;margin-top:8px;height:44px;display:grid;place-items:center;
           font-family:${sys};font-size:17px;font-weight:400;color:${INK}">Need a grown-up?</div>
@@ -286,13 +286,13 @@ function pottyPauseShield(appearance = 'light') {
  */
 function routineStepOne(appearance = 'light') {
   const col = c(appearance);
-  const GROUND = 438;
+  const GROUND = 424;
   const DOOR_X = 330;
   const scene = `<div style="position:relative;width:393px;height:852px">
     ${scenes.meadow(393, 852, { horizon: 0.49, glow: [180, 392, 190], propsOffset: 218 })}
     <svg width="393" height="852" viewBox="0 0 393 852" style="position:absolute;left:0;top:0;display:block">
       ${pathToDoor(393, 852, GROUND, DOOR_X)}
-      ${doorway(DOOR_X, GROUND, 0.56)}
+      ${doorway(DOOR_X, GROUND, 0.52)}
     </svg>
   </div>`;
 
@@ -303,14 +303,12 @@ function routineStepOne(appearance = 'light') {
       ${hop('walk', 290)}
 
       <div style="height:${T.spacing.l}px"></div>
-      ${words('Potty time!', "Let's hop to the potty.", {
-        small: 'Your game will be here when you get back.',
-      })}
+      ${words('Potty time!', "Let's hop to the potty. Your game will be here when you get back.")}
 
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto">
-        ${childButton(col, appearance, "Let's Go", { kind: 'primary', height: 104, radius: T.radius.hero })}
+        ${childButton(col, appearance, "Let's Go!", { kind: 'primary', height: 104, radius: T.radius.hero })}
         <div style="height:${T.spacing.m}px"></div>
         ${childButton(col, appearance, 'Need a grown-up?', {
           kind: 'secondary',
@@ -406,7 +404,7 @@ function routineComplete(appearance = 'light') {
         <div style="height:56px;padding:0 26px 0 18px;border-radius:28px;background:${P.sunshineSoft};
           display:flex;align-items:center;gap:10px;box-shadow:${elevation(appearance, 'resting')}">
           ${MARK.star(P.sunshineBright, 30)}
-          <span style="${type('buttonLarge', { color: P.sunshineDeep })};font-size:24px">+1 Hop Star</span>
+          <span style="${type('buttonLarge', { color: P.sunshineDeep })};font-size:23px">You earned a star!</span>
         </div>
       </div>
 
@@ -421,9 +419,9 @@ function routineComplete(appearance = 'light') {
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto">
-        ${childButton(col, appearance, 'Back to Play', { kind: 'primary', height: 104, radius: T.radius.hero })}
+        ${childButton(col, appearance, 'Back to play!', { kind: 'primary', height: 104, radius: T.radius.hero })}
         <div style="height:${T.spacing.m}px"></div>
-        ${childButton(col, appearance, 'See my pond', {
+        ${childButton(col, appearance, 'See your pond', {
           kind: 'secondary',
           fill: alpha(col.surface, .78), textColor: P.sand600, fontSize: 20,
         })}
@@ -482,7 +480,7 @@ const HAND_C = { x: 51, y: -35 };
 const HAND_HALF = { w: 64, h: 80 };
 
 function hopHand(cx, cy, s, { flip = false, rot = 0, fill = P.hopGreen, rim = P.cloud } = {}) {
-  const crease = mix(fill, P.hopGreenInk, 0.55);
+  const crease = mix(fill, P.hopGreenInk, 0.42);
   const inner = mix(fill, P.hopGreenInk, 0.24);
   return `<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${flip ? -s : s} ${s})
       translate(${-HAND_C.x} ${-HAND_C.y})"
@@ -498,9 +496,9 @@ function hopHand(cx, cy, s, { flip = false, rot = 0, fill = P.hopGreen, rim = P.
     </g>
     <!-- The palm pad is a shade deeper than the fingers, so a hand has an inside
          as well as an outline and the four fingers stay countable. -->
-    <ellipse cx="52" cy="-12" rx="44" ry="38" fill="${inner}" opacity="0.16"/>
+    <ellipse cx="52" cy="-12" rx="44" ry="38" fill="${inner}" opacity="0.11"/>
     <path d="M 16 -40 q 42 14 78 -6" stroke="${crease}" stroke-width="6" fill="none"
-      stroke-linecap="round" opacity="0.4"/>
+      stroke-linecap="round" opacity="0.26"/>
   </g>`;
 }
 

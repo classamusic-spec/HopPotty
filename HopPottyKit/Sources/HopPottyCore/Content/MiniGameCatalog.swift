@@ -161,10 +161,14 @@ public enum MiniGameCatalog {
     public static let bathroomMatch = MiniGame(
         id: .bathroomMatch,
         title: .child("games.bathroomMatch.title", "Bathroom Match"),
-        childDescription: .child("games.bathroomMatch.description", "Find the two that go together."),
+        // The board is a drag, not a pairs game: the child picks the soap up and
+        // puts it by the sink. The description has to say what to do with a
+        // finger, and "find the two that go together" described the memory game
+        // this used to be.
+        childDescription: .child("games.bathroomMatch.description", "Put each thing where it goes."),
         learningGoal: .parent(
             "games.bathroomMatch.goal",
-            "Gives your child words for the things in a bathroom: soap, towel, paper, flush."
+            "Gives your child words for the things in a bathroom — soap, towel, paper, toothbrush — and where each one belongs."
         ),
         // The calm one. The board reshuffles as long as a child wants it to, so
         // it is the only game with no ending of its own.

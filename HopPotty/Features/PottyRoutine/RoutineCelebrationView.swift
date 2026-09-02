@@ -25,9 +25,14 @@ struct RoutineCelebrationView: View {
     /// nothing else. Both sentences are praise, and the star is the same star.
     let outcome: PottyEventKind?
     /// Stars earned in this run.
+    ///
+    /// This run's star, and nothing about any other run. The lifetime total used
+    /// to be printed under it — "13 stars in your pond" — and it is gone: a
+    /// running tally on the last screen of a bathroom trip is a performance
+    /// metric, and this screen is praise for a thing the child controls. The
+    /// total still exists, in the pond, where a child goes to look at it because
+    /// they want to.
     let starsEarned: Int
-    /// Lifetime total after this run.
-    let totalStars: Int
     /// The decoration this run unlocked, if one landed.
     let unlocked: PondItem?
     let onSeeThePond: () -> Void
@@ -78,6 +83,7 @@ struct RoutineCelebrationView: View {
             .padding(.vertical, theme.spacing.xxxl)
         }
         .scrollIndicators(.hidden)
+        .background { ChildMeadow(horizonFraction: 0.62) }
         .task { await runSequence() }
         .accessibilityElement(children: .contain)
     }
@@ -126,40 +132,39 @@ struct RoutineCelebrationView: View {
         }
     }
 
+    /// One star, said once.
     private var stars: some View {
-        VStack(spacing: theme.spacing.s) {
+        HStack(spacing: theme.spacing.m) {
             HopStarBadge(count: starsEarned, animatesArrival: true)
                 .accessibilityHidden(true)
 
             Text(HopCopy.celebration.starsEarned.localized(for: starsEarned))
                 .hopTextStyle(.childTitle)
                 .foregroundStyle(theme.color.textPrimary)
-                .multilineTextAlignment(.center)
-
-            Text(HopCopy.celebration.starTotal.localized(for: totalStars))
-                .hopTextStyle(.parentBody)
-                .foregroundStyle(theme.color.textSecondary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
         }
         // Arrives with the screen, for the same reason Hop does.
     }
 
+    /// The one thing this run unlocked, if anything did.
+    ///
+    /// It used to sit inside a tinted card, which made the celebration a page
+    /// with two panels on it. The item is a thing in the pond, so it is drawn as
+    /// a thing standing in the meadow with a sentence under it — the same
+    /// treatment the star above it gets, and no second reward carousel.
     private func unlockedRow(_ item: PondItem) -> some View {
-        VStack(spacing: theme.spacing.m) {
+        VStack(spacing: theme.spacing.s) {
             HopArtwork(.pondItem(item.id), accessibilityLabel: PondItemNaming.name(for: item.id).localized)
-                .frame(width: 120, height: 120)
+                .frame(width: 108, height: 108)
 
             Text(HopCopy.celebration.pondUnlock.localized)
                 .hopTextStyle(.childInstruction)
-                .foregroundStyle(theme.color.textPrimary)
+                .foregroundStyle(theme.color.textSecondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(theme.spacing.xl)
         .frame(maxWidth: .infinity)
-        .background {
-            RoundedRectangle(cornerRadius: theme.radius.xl, style: .continuous)
-                .fill(HopColors.wash(theme.color.celebration, isDark: theme.isDark))
-        }
         .hopTransition(.childArrive)
     }
 
@@ -233,7 +238,6 @@ struct RoutineCelebrationView: View {
     RoutineCelebrationView(
         outcome: .pee,
         starsEarned: 1,
-        totalStars: 8,
         unlocked: nil,
         onSeeThePond: {},
         onFinish: {}
@@ -246,7 +250,6 @@ struct RoutineCelebrationView: View {
     RoutineCelebrationView(
         outcome: .poop,
         starsEarned: 1,
-        totalStars: 8,
         unlocked: nil,
         onSeeThePond: {},
         onFinish: {}
@@ -259,7 +262,6 @@ struct RoutineCelebrationView: View {
     RoutineCelebrationView(
         outcome: .tried,
         starsEarned: 1,
-        totalStars: 8,
         unlocked: nil,
         onSeeThePond: {},
         onFinish: {}
@@ -272,7 +274,6 @@ struct RoutineCelebrationView: View {
     RoutineCelebrationView(
         outcome: .pee,
         starsEarned: 3,
-        totalStars: 12,
         unlocked: nil,
         onSeeThePond: {},
         onFinish: {}
@@ -286,7 +287,6 @@ struct RoutineCelebrationView: View {
     RoutineCelebrationView(
         outcome: .tried,
         starsEarned: 1,
-        totalStars: 3,
         unlocked: PondCatalog.item(.lilyPadSmall),
         onSeeThePond: {},
         onFinish: {}
@@ -299,7 +299,6 @@ struct RoutineCelebrationView: View {
     RoutineCelebrationView(
         outcome: .tried,
         starsEarned: 1,
-        totalStars: 3,
         unlocked: PondCatalog.item(.lilyPadSmall),
         onSeeThePond: {},
         onFinish: {}
@@ -312,7 +311,6 @@ struct RoutineCelebrationView: View {
     RoutineCelebrationView(
         outcome: .poop,
         starsEarned: 2,
-        totalStars: 34,
         unlocked: nil,
         onSeeThePond: {},
         onFinish: {}
@@ -326,7 +324,6 @@ struct RoutineCelebrationView: View {
     RoutineCelebrationView(
         outcome: .pee,
         starsEarned: 3,
-        totalStars: 48,
         unlocked: PondCatalog.item(.rainbow),
         onSeeThePond: {},
         onFinish: {}

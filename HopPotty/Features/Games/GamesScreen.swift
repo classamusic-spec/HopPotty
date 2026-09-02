@@ -8,9 +8,16 @@ import HopPottyCore
 /// ordering that implies one game is the reward for another — the catalog's own
 /// order is the order here, and every entry in it is offered.
 ///
-/// Eight of them no longer fit one screen at every type size, so the chooser
-/// scrolls when it has to and does not when it does not. That is the only thing
-/// the count changed: nothing is behind a page, a category or a "more".
+/// ## Eight, and all eight are the offer
+///
+/// There is no featured row, no "more games" section, no disclosure and no
+/// second tier. Every game gets the same tile at the same size in the same grid,
+/// because a child who wants Flush and Wave is not choosing a lesser thing than
+/// a child who wants Bubble Wash — and a chooser that ranked them would teach
+/// exactly that. What holding eight well actually needs is not fewer of them but
+/// *bigger pictures*: the tile leads with the game's own illustration, at the
+/// aspect it was drawn, so a child who cannot read picks by looking. Two columns
+/// on a phone, three on an iPad, and it scrolls when it has to.
 ///
 /// Whether games are offered at all is `AppSettings.miniGamesEnabled`, which the
 /// caller checks before presenting this screen — the child-facing surface has no
@@ -18,6 +25,7 @@ import HopPottyCore
 struct GamesScreen: View {
     @Environment(\.hopTheme) private var theme
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// Called with the round a child finished, so the caller can award through
     /// `RewardService`. One star, whatever happened on the board.
@@ -79,8 +87,12 @@ struct GamesScreen: View {
         .padding(.top, theme.spacing.xl)
     }
 
-    /// One column on a phone, two on an iPad. The card is the same card either
+    /// Two columns on a phone, three on an iPad. The tile is the same tile either
     /// way: an iPad gets more games in view, not bigger ones.
+    ///
+    /// At an accessibility type size the titles need the whole width, so the
+    /// grid collapses to one column rather than letting eight names wrap to four
+    /// lines each in a 160pt box.
     private var layout: some View {
         LazyVGrid(columns: columns, spacing: theme.spacing.l) {
             ForEach(MiniGameCatalog.all) { game in
@@ -92,8 +104,13 @@ struct GamesScreen: View {
     private var columns: [GridItem] {
         Array(
             repeating: GridItem(.flexible(), spacing: theme.spacing.l),
-            count: horizontalSizeClass == .regular ? 2 : 1
+            count: columnCount
         )
+    }
+
+    private var columnCount: Int {
+        if dynamicTypeSize >= .accessibility1 { return 1 }
+        return horizontalSizeClass == .regular ? 3 : 2
     }
 
     // MARK: - Running one
@@ -141,6 +158,21 @@ struct GamesScreen: View {
 }
 
 /// One game on the chooser. All eight are drawn by this one view, at one size.
+///
+/// The tile *is* the picture: the illustration fills it at the 4:3 it was drawn
+/// at, and the game's name sits over the bottom of it on a scrim. A
+/// three-year-old chooses by recognising the bathroom, the pond or the muddy
+/// hands, so nothing is allowed to shrink the picture — which is what a caption
+/// block under it does, and what the one-line description used to do.
+///
+/// The description is still there; it is the accessibility hint. A caregiver
+/// reading the list with VoiceOver hears "Bubble Wash. Pop every bubble to get
+/// your hands sparkly clean." — the same words, at the moment they are useful,
+/// rather than as four lines of small type under every one of eight tiles.
+///
+/// Nothing on the tile ranks it. No badge, no "new", no order number, no
+/// progress, no best score — there is no score anywhere in this app, and a
+/// chooser is the easiest place to accidentally invent one.
 private struct GameChoiceCard: View {
     @Environment(\.hopTheme) private var theme
     @FocusState private var isFocused: Bool
@@ -150,29 +182,9 @@ private struct GameChoiceCard: View {
 
     var body: some View {
         Button(action: onPlay) {
-            HStack(spacing: theme.spacing.l) {
-                HopArtwork(game.illustration)
-                    .frame(width: 84, height: 84)
-
-                VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-                    Text(game.title.localized)
-                        .hopTextStyle(.buttonLarge)
-                        .foregroundStyle(theme.color.textPrimary)
-                    Text(game.childDescription.localized)
-                        .hopTextStyle(.parentCallout)
-                        .foregroundStyle(theme.color.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(theme.spacing.l)
-            .frame(maxWidth: .infinity, minHeight: theme.hitTarget.childPrimary, alignment: .leading)
-            .background {
-                RoundedRectangle(cornerRadius: theme.radius.xl, style: .continuous)
-                    .fill(theme.color.surfaceElevated)
-            }
+            GameChoiceTile(game: game)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(HopSurfaceButtonStyle())
         .modifier(theme.elevation(.resting))
         .focused($isFocused)
         .hopFocusRing(isFocused, cornerRadius: theme.radius.xl)
@@ -183,6 +195,75 @@ private struct GameChoiceCard: View {
     }
 }
 
+/// The tile's face.
+///
+/// A view of its own so it can read ``EnvironmentValues/hopIsPressed``, which
+/// `HopSurfaceButtonStyle` publishes into the *label's* environment — a press
+/// scale read beside the `.buttonStyle` would be reading a value that never
+/// changes.
+private struct GameChoiceTile: View {
+    @Environment(\.hopTheme) private var theme
+    @Environment(\.hopIsPressed) private var isPressed
+
+    let game: MiniGame
+
+    var body: some View {
+        HopArtwork(game.illustration)
+            .aspectRatio(4.0 / 3.0, contentMode: .fill)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: theme.hitTarget.childPrimary)
+            .clipped()
+            .overlay(alignment: .bottomLeading) { nameplate }
+            .background {
+                RoundedRectangle(cornerRadius: theme.radius.xl, style: .continuous)
+                    .fill(theme.color.surfaceElevated)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: theme.radius.xl, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: theme.radius.xl, style: .continuous)
+                    .strokeBorder(
+                        theme.color.divider.opacity(theme.isHighContrast ? 1 : 0.35),
+                        lineWidth: theme.isHighContrast ? 1.5 : 0.75
+                    )
+            }
+            .scaleEffect(isPressed ? 0.975 : 1)
+            .hopAnimation(.childTap, value: isPressed)
+    }
+
+    /// The name, over the bottom of the picture.
+    ///
+    /// The scrim is `HopSemanticPalette/scrim` rather than a hand-picked black,
+    /// which is the one thing that keeps the name legible over eight different
+    /// illustrations — a bright pond, a white bathroom, a wooden hallway —
+    /// without a per-tile decision. It fades to nothing over the top half, so it
+    /// darkens the caption and not the picture.
+    private var nameplate: some View {
+        Text(game.title.localized)
+            .hopTextStyle(.buttonLarge)
+            .foregroundStyle(theme.color.textOnBrand)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, theme.spacing.l)
+            .padding(.bottom, theme.spacing.m)
+            .padding(.top, theme.spacing.xxl)
+            .background {
+                LinearGradient(
+                    stops: [
+                        .init(color: scrim(0), location: 0),
+                        .init(color: scrim(0.42), location: 0.55),
+                        .init(color: scrim(0.72), location: 1),
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+    }
+
+    private func scrim(_ opacity: Double) -> Color {
+        Color(theme.color.values.scrim.opacity(opacity))
+    }
+}
+
 // MARK: - Runners
 //
 // One tiny view per game, each owning its own session. Eight of these rather
@@ -190,30 +271,58 @@ private struct GameChoiceCard: View {
 // concrete type — and because eight ten-line structs are cheaper to read, and
 // far cheaper to get wrong, than the abstraction that would remove them.
 //
-// They differ in exactly two places, and both differences come from the game's
-// `MiniGameCompletion`:
+// Seven of them differ in exactly two places, and both differences come from the
+// game's `MiniGameCompletion`:
 //
 // * a `.whenChildIsDone` game has no ending of its own, so tapping "All done"
 //   *is* how it finishes and it earns the same star as a board that ran itself
 //   out;
 // * a `.handOffToRoutine` game tells the host so, and hands the caller a result
 //   carrying the routine step to open next.
+//
+// Bubble Wash is the eighth, and it does not use `GameHostView` at all.
 
+/// Bubble Wash, without game chrome.
+///
+/// Hand washing is not a scored round. It is the last step of going to the
+/// toilet, and §23 rules out the two things `GameHostView` would put around it:
+/// a row of progress dots, and a "Play again" button on the ending. Twenty
+/// seconds of scrubbing that offers itself again the moment it finishes is a
+/// loop, and dots that fill up turn a rinse into a level.
+///
+/// So this runner presents ``BubbleWashScreen`` exactly as `PottyRoutineView`
+/// does — the screen brings its own line, runs its own beats and finishes
+/// itself — and adds the one piece of chrome that is *not* negotiable: the way
+/// out. It is the same control in the same corner as every other game's, so
+/// leaving works the same way wherever a child is. `GameHostView` is untouched;
+/// the other seven still want it.
 private struct BubbleWashRunner: View {
-    @State private var session = BubbleWashSession()
+    @Environment(\.hopTheme) private var theme
     let onLeave: () -> Void
     let onFinish: (MiniGameRoundResult) -> Void
 
     var body: some View {
-        GameHostView(
-            game: session.game,
-            isFinished: session.isFinished,
-            completion: session.completion,
-            onPlayAgain: { session.restart() },
-            onLeave: { session.isFinished ? onFinish(MiniGameRoundResult(session: session)) : onLeave() }
-        ) {
-            BubbleWashGameView(session: session)
-        }
+        BubbleWashScreen(
+            // The screen finishes when the hands are clean, and that ending
+            // earns the same one star every other game earns.
+            onFinish: { onFinish(MiniGameRoundResult(game: MiniGameCatalog.bubbleWash)) }
+        )
+        .overlay(alignment: .topTrailing) { leaveButton }
+    }
+
+    /// Leaving partway through. No star, no comment, no "are you sure" — and no
+    /// `onAskForHelp`, because the game list is already inside Child Space and
+    /// the grown-up door is on the hub behind the gate.
+    private var leaveButton: some View {
+        HopIconButton(
+            systemImage: "checkmark",
+            accessibilityLabel: HopCopy.games.doneButton.localized,
+            tint: theme.color.brandAction,
+            minimumTarget: theme.hitTarget.child,
+            action: onLeave
+        )
+        .hopPageMargins()
+        .padding(.top, theme.spacing.m)
     }
 }
 

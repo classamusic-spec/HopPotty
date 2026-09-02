@@ -81,29 +81,70 @@ struct ProgressChartSection: View {
     }
 }
 
-/// The period's totals as tiles.
+/// The period's totals: one compact row, and the accident count under it.
+///
+/// ## What changed
+///
+/// This was a `LazyVGrid` of ``HopMetricCard`` — four cards, each with a 32pt
+/// tinted disc, each 140pt wide, reflowing into two rows on a phone. On a screen
+/// that also carries a chart, a list of observations and a timeline, that is
+/// four more cards for four numbers.
+///
+/// It is now one card of four columns divided by hairlines, in the shape Fitness
+/// and Screen Time use for a period's summary. Accidents left the row and became
+/// a labelled line beneath it — still counted, still in the caregiver's own
+/// words, and no longer a quarter of the biggest numbers on the screen (§7:
+/// recorded, never ranked). "Checks" replaces the row's fourth tile: it is the
+/// participation total, the preferred vocabulary for this product.
 struct ProgressTotalsRow: View {
     @Environment(\.hopTheme) private var theme
 
     let aggregate: PeriodAggregate
 
     var body: some View {
-        LazyVGrid(
-            columns: [GridItem(.adaptive(minimum: 140), spacing: 12)],
-            spacing: 12
-        ) {
-            ForEach(Array(PottyEventKind.parentDisplayOrder.enumerated()), id: \.element.id) { index, kind in
-                // The tiles lift into place in the display order, once per
-                // load. Every kind is on the same beat: the stagger follows the
-                // order they are drawn in and says nothing about the counts.
-                HopMetricCard(
-                    value: ParentFormat.count(aggregate.count(of: kind)),
-                    label: kind.parentLabel,
-                    glyph: kind.glyph,
-                    tint: kind.tint(theme),
-                    arrivalIndex: index
-                )
+        VStack(alignment: .leading, spacing: theme.spacing.s) {
+            HopMetricRow(
+                [
+                    HopMetricColumn(
+                        value: ParentFormat.count(aggregate.participationCount),
+                        label: HopCopy.parentHome.summaryChecksLabel.localized,
+                        glyph: .check,
+                        tint: theme.color.success
+                    ),
+                    HopMetricColumn(
+                        value: ParentFormat.count(aggregate.count(of: .tried)),
+                        label: PottyEventKind.tried.parentLabel,
+                        glyph: .tried,
+                        tint: theme.color.eventTried
+                    ),
+                    HopMetricColumn(
+                        value: ParentFormat.count(aggregate.count(of: .pee)),
+                        label: PottyEventKind.pee.parentLabel,
+                        glyph: .pee,
+                        tint: theme.color.eventPee
+                    ),
+                    HopMetricColumn(
+                        value: ParentFormat.count(aggregate.count(of: .poop)),
+                        label: PottyEventKind.poop.parentLabel,
+                        glyph: .poop,
+                        tint: theme.color.eventPoop
+                    ),
+                ],
+                arrivalIndex: 0
+            )
+
+            HStack(spacing: theme.spacing.s) {
+                Text(hop: HopCopy.parentHome.summaryAccidentsRecorded)
+                    .font(theme.font(.parentCallout))
+                    .foregroundStyle(theme.color.textSecondary)
+                Spacer(minLength: theme.spacing.s)
+                Text(verbatim: ParentFormat.count(aggregate.accidentCount))
+                    .font(theme.font(.parentCallout))
+                    .foregroundStyle(theme.color.textSecondary)
+                    .hopNumericText()
             }
+            .padding(.horizontal, theme.spacing.xs)
+            .accessibilityElement(children: .combine)
         }
     }
 }
@@ -132,6 +173,7 @@ struct ProgressTimelineSection: View {
                             )
                         }
                     }
+                    .padding(.horizontal, theme.spacing.l)
                     .background(
                         RoundedRectangle(cornerRadius: theme.radius.l, style: .continuous)
                             .fill(theme.color.surface)

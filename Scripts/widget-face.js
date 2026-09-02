@@ -24,10 +24,12 @@
  * result can be measured against the artwork rather than admired.
  *
  * Nothing is redrawn, re-proportioned or recoloured. The one thing this script
- * decides is *which* elements are the head: everything from the crown ellipse
- * onward, which in `Scripts/hop-art.js`'s `figure()` is precisely the head
- * group, the face group and (for `sleep`) the two z's — the body is emitted
- * before it, and the ground shadow before that.
+ * decides is *which* elements are the head: the head's share of
+ * `#hop-silhouette` — the exterior outline, which is drawn as a sibling of the
+ * figure so the parts union without seams — followed by the whole of `#head`,
+ * which in `Scripts/hop-art.js`'s `figure()` is the internal rim, the head
+ * fills, the face group and (for `sleep`) the two z's. The body is emitted
+ * around those and the ground shadow before them, and neither comes across.
  *
  * ## Nothing about the canvas is assumed
  *
@@ -172,7 +174,7 @@ function attrs(raw) {
 function read(src) {
   const drawables = [];
   const clips = {};
-  const stack = [{ matrix: IDENTITY, style: {}, clip: null }];
+  const stack = [{ matrix: IDENTITY, style: {}, clip: null, groups: [] }];
   let collecting = null; // the clipPath id currently being filled
   let pendingText = null;
 
@@ -207,9 +209,14 @@ function read(src) {
     const matrix = mul(top.matrix, parseTransform(a.transform));
     const clipRef = /url\(#([^)]+)\)/.exec(a['clip-path'] || '');
     const clip = clipRef ? clipRef[1] : top.clip;
+    // The ids of every group a record is inside. `hop-art.js` names the
+    // anatomical groups, and the extraction below asks "is this inside #head"
+    // rather than counting elements — a question that survives the rig gaining
+    // or losing a part.
+    const groups = a.id ? [...top.groups, a.id] : top.groups;
 
     if (name === 'svg' || name === 'g') {
-      if (!selfClosing) stack.push({ matrix, style, clip });
+      if (!selfClosing) stack.push({ matrix, style, clip, groups });
       continue;
     }
     if (name === 'clipPath') {
@@ -218,7 +225,7 @@ function read(src) {
       continue;
     }
 
-    const record = { name, attrs: a, matrix, style, clip };
+    const record = { name, attrs: a, matrix, style, clip, groups };
     if (collecting) {
       clips[collecting].d = geometry(record);
       continue;
@@ -367,6 +374,7 @@ function paletteByValue() {
  * `HopWidgetFaceRole` in the widget.
  */
 const ROLES = {
+  outline: { hex: '#356B50', token: 'hopOutline' },
   head: { hex: '#63C88A', token: 'hopGreen' },
   spot: { hex: '#45A971', token: null },
   eyeWhite: { hex: '#FFFFFF', token: 'white' },
@@ -397,13 +405,53 @@ function anchorOf(src, label) {
   const { drawables } = read(src);
   const crown = drawables.findIndex(isCrown);
   if (crown < 0) throw new Error(`${label}: no crown ellipse — has hop-art.js's headShape changed?`);
+  const headMatrix = drawables[crown].matrix;
+
+  // Where the head *starts*, which is not where the crown starts.
+  //
+  // Hop's outline is drawn under his fills, so `#head` opens with its own
+  // internal rim and only then paints the crown. Slicing at the crown drops
+  // that rim, and the widget was the one un-outlined Hop in the product
+  // because of it. Walk back over everything inside `#head` instead.
+  let start = crown;
+  while (start > 0 && drawables[start - 1].groups.includes('head')) start -= 1;
+
+  // And the exterior silhouette, which is drawn earlier still — `#hop-silhouette`
+  // is a sibling of the figure, not part of it, so that the union of all the
+  // parts has no interior seams. It holds one child per part, and its children
+  // are not named; but the head's share of it is drawn from the same four
+  // shapes as the head's own rim, so it is the child with that geometry, under
+  // that placement. That is the band that makes Hop hold his shape at 24 points.
+  //
+  // Matching on the geometry rather than the matrix matters: the head is placed
+  // by `rotate(0 75 50)` in every pose that does not tilt it, and a rotation of
+  // nothing is the identity — so half the body shares the head's matrix.
+  const rim = drawables[start];
+  if (start === crown || (rim.style.fill || '').toUpperCase() !== ROLES.outline.hex) {
+    throw new Error(`${label}: #head does not open with its outline rim — has hop-art.js's outline system changed?`);
+  }
+  const silhouette = drawables
+    .map((d, i) => [d, i])
+    .filter(([d]) => d.groups.includes('hop-silhouette') &&
+      d.attrs.d === rim.attrs.d && same(d.matrix, rim.matrix))
+    .map(([, i]) => i);
+  if (!silhouette.length) {
+    throw new Error(`${label}: #hop-silhouette has no part drawn from the head's shapes — has hop-art.js's outline system changed?`);
+  }
+
   return {
-    index: crown,
-    matrix: drawables[crown].matrix,
-    at: apply(drawables[crown].matrix, FACE_CENTRE),
-    scale: scaleOf(drawables[crown].matrix),
+    index: start,
+    silhouette,
+    matrix: headMatrix,
+    at: apply(headMatrix, FACE_CENTRE),
+    scale: scaleOf(headMatrix),
     drawables,
   };
+}
+
+/** Two matrices are the same placement, to within the rounding the art emits. */
+function same(a, b) {
+  return a.every((n, i) => Math.abs(n - b[i]) < 1e-6);
 }
 
 /** The shared frame: `hop-face.svg`'s viewBox, and where it puts the head. */
@@ -432,6 +480,7 @@ function roleFor(record, d, frame) {
   const hex = paint.toUpperCase();
   const stroked = !record.style.fill || record.style.fill === 'none';
   switch (hex) {
+    case ROLES.outline.hex: return 'outline';
     case ROLES.head.hex: return 'head';
     case ROLES.spot.hex: return 'spot';
     case ROLES.eyeWhite.hex: return record.clip ? 'highlight' : 'eyeWhite';
@@ -472,7 +521,8 @@ function head(pose, frame) {
 
   const shapes = [];
   const marks = [];
-  for (const record of drawables.slice(anchor.index)) {
+  const source = [...anchor.silhouette.map((i) => drawables[i]), ...drawables.slice(anchor.index)];
+  for (const record of source) {
     const m = mul(norm, record.matrix);
     if (record.name === 'text') {
       const at = apply(m, { x: Number(record.attrs.x), y: Number(record.attrs.y) });
@@ -486,9 +536,14 @@ function head(pose, frame) {
       continue;
     }
     const d = geometry({ ...record, matrix: m });
-    const stroked = !record.style.fill || record.style.fill === 'none';
+    const role = roleFor(record, d, frame);
+    // An outline is painted with the same colour on both sides — filled so the
+    // parts union without seams, stroked so the union grows. Only the stroke
+    // ever shows, because the part's own fill lands on top of the fill; so it
+    // crosses as a stroke, and the widget draws one path instead of two.
+    const stroked = role === 'outline' || !record.style.fill || record.style.fill === 'none';
     shapes.push({
-      role: roleFor(record, d, frame),
+      role,
       d,
       strokeWidth: stroked ? round(record.style.strokeWidth * scaleOf(m)) : 0,
       opacity: record.style.opacity ?? 1,
@@ -720,8 +775,14 @@ function build({ quiet = false } = {}) {
   fs.mkdirSync(PROOF, { recursive: true });
   for (const art of arts) {
     fs.writeFileSync(path.join(PROOF, `${art.pose}.svg`), proofSVG(art, { viewBox }));
+    // Laid back over the pose, minus the exterior outline — see the second
+    // check below for why that band cannot be part of this comparison.
     fs.writeFileSync(path.join(PROOF, `${art.pose}-in-place.svg`),
-      proofSVG(art, { viewBox: viewBoxOf(art.pose), place: true }));
+      proofSVG(art, {
+        viewBox: viewBoxOf(art.pose),
+        place: true,
+        paint: (role) => (role === 'outline' ? null : ROLES[role].hex),
+      }));
   }
 
   if (!quiet) {
@@ -868,7 +929,15 @@ async function check() {
   //    Outside the head the pose is still wearing a body, so the mask is the
   //    proof's own coverage — which is exactly the claim being made: every pixel
   //    the widget draws is the pixel the artwork draws there.
-  console.log('\neach mood, laid back over its own pose (where the head draws)');
+  //
+  //    Minus the exterior outline, and that exclusion is structural rather than
+  //    a tolerance. Hop's outline is drawn *under* the whole figure so the parts
+  //    union without seams, so in a pose the band around the jaw is covered by
+  //    the torso — while the widget draws a head with no body under it, where
+  //    the same band is the edge of the drawing. A free-standing head has an
+  //    outline where an attached one has a neck. That band is not unproven: it
+  //    is check 1, against a head-only pose, every pixel, on both grounds.
+  console.log('\neach mood, laid back over its own pose (where the head draws, outline aside)');
   for (const pose of MOODS) {
     report(`${pose} in place`,
       await difference(page, path.join(ART, `hop-${pose}.svg`), path.join(PROOF, `${pose}-in-place.svg`),
@@ -878,8 +947,8 @@ async function check() {
   await browser.close();
   if (bad) {
     console.log('\nThe emitted head no longer matches the artwork. Re-run Scripts/widget-face.js;');
-    console.log('if it still fails, the extraction rule (everything from the crown onward) has');
-    console.log('stopped describing what hop-art.js draws.');
+    console.log("if it still fails, the extraction rule (the head's share of the outline,");
+    console.log('then the whole of #head) has stopped describing what hop-art.js draws.');
   }
   console.log(`\n${bad ? `${bad} check(s) failed` : 'All widget-face checks passed'}`);
   process.exitCode = bad ? 1 : 0;

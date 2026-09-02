@@ -56,9 +56,9 @@ const HOP = { x: 0.5, y: 0.665, extent: 0.22 };
  * ellipse is what a card would otherwise have been doing.
  */
 function hopOnHisPad(w, h) {
-  const cx = w * HOP.x;
-  const cy = h * HOP.y;
-  const side = w * HOP.extent;
+  const box = scenes.pondStageBox(w, h);
+  const [cx, cy] = scenes.pondPoint(HOP.x, HOP.y, w, h);
+  const side = box.w * HOP.extent;
   const r = side * 0.62;
   const padDeep = mix(P.hopGreenDeep, P.pondBlueDeep, 0.18);
   return `
@@ -80,11 +80,11 @@ function hopsPond(appearance = 'light') {
   const col = c(appearance);
   const W = 393, H = 852;
 
-  // Inline, not an `<img>`: the pond exposes stable ids (`pond-ripples`,
-  // `pond-lily-1`, `pond-reeds`, …) and the web prototype's motion layer has to
-  // be able to reach them. An `<img>` would seal them off.
-  const scene = artOrInline(['Art/pond/pond-scene.svg', 'Art/scenes/pond.svg'], { width: W, height: H, fit: 'slice' },
-    scenes.pond(W, H, UNLOCKED));
+  // The composition at its own aspect, with sky and grass continuing above and
+  // below it. Inline, not an `<img>`: the pond exposes stable ids
+  // (`pond-ripples`, `pond-lily-1`, `pond-reeds`, …) and the web prototype's
+  // motion layer has to be able to reach them. An `<img>` would seal them off.
+  const scene = scenes.pondStage(W, H);
 
   // The child's own twelve, in the world, at PondCatalog's anchors — with Hop
   // composited between the `decoration` and `foreground` layers, which is where

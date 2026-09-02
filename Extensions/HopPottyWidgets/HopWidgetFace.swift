@@ -39,6 +39,9 @@ import HopPottyDesignTokens
 /// lock screen. Declaration order is paint order, back to front, and it has to
 /// match `ROLES` in `Scripts/widget-face.js`.
 enum HopWidgetFaceRole: String, Sendable {
+    /// The band that holds Hop's shape: his exterior outline, and the internal
+    /// rim under the head fills. Drawn first because it is drawn under.
+    case outline
     case head
     case spot
     case eyeWhite
@@ -284,7 +287,7 @@ struct HopWidgetFace: View {
         return palette(role)
     }
 
-    /// The artwork's palette. Ten of the twelve roles are a `HopPalette` token
+    /// The artwork's palette. Eleven of the thirteen roles are a `HopPalette` token
     /// by value — `Scripts/widget-face.js` asserts that against
     /// `HopPalette.swift` every time it runs, so these cannot drift from the
     /// drawing. The two that are not are character-only colours the brand ramp
@@ -293,6 +296,7 @@ struct HopWidgetFace: View {
     /// brighter than any brand hue.
     private func palette(_ role: HopWidgetFaceRole) -> Color {
         switch role {
+        case .outline: Color(HopPalette.hopOutline)
         case .head: Color(HopPalette.hopGreen)
         case .spot: Color(HopColorValue(hex: 0x45A971))
         case .eyeWhite: Color(HopPalette.white)
@@ -336,6 +340,12 @@ struct HopWidgetFace: View {
     // together.
     private func stencilAlpha(_ role: HopWidgetFaceRole) -> Double? {
         switch role {
+        // Dropped, and it is the only role dropped for the opposite of the
+        // usual reason. An outline exists to separate Hop from what is behind
+        // him; in vibrancy the head wash already ends in a hard edge against
+        // the blurred wallpaper, so a second edge in the same single colour
+        // only thickens the silhouette and eats the jaw.
+        case .outline: nil
         case .head: 0.32
         case .spot: nil
         case .eyeWhite: 0.62
