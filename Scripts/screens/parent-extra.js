@@ -1048,11 +1048,11 @@ function bandLabel(text, { dark = false, top = 12 } = {}) {
     text-transform:uppercase">${text}</div>`;
 }
 
-/** A HopPotty widget: a surface card at the system's corner radius. */
-function widgetCard(appearance, w, h, inner, { pad = 14 } = {}) {
-  const col = c(appearance);
-  return `<div style="width:${w}px;height:${h}px;border-radius:${T.radius.xl}px;background:${col.surface};
-    padding:${pad}px;overflow:hidden;box-shadow:0 6px 18px ${alpha(P.midnight, .16)};display:flex;flex-direction:column">${inner}</div>`;
+/** A HopPotty widget, at the system's corner radius, on the gradient the code sets. */
+function widgetCard(w, h, inner, { pad = 14 } = {}) {
+  return `<div style="width:${w}px;height:${h}px;border-radius:${T.radius.xl}px;padding:${pad}px;overflow:hidden;
+    background:linear-gradient(135deg, ${P.hopGreenSoft} 0%, ${P.cloud} 100%);
+    box-shadow:0 6px 18px ${alpha(P.midnight, .16)};display:flex">${inner}</div>`;
 }
 
 /** A neutral app icon. Never a real logo, never a real name. */
@@ -1067,13 +1067,41 @@ const ICON_TINTS = [P.pondBlueSoft, P.sunshineSoft, P.lavenderSoft, P.peachSoft,
   P.hopGreenSoft, P.sand100, P.pondBlueSoft, P.sunshineSoft];
 
 /**
+ * Hop's widget face — a head, two eyes and a smile, at whatever size is asked.
+ *
+ * `Extensions/HopPottyWidgets/HopWidgetFace.swift` redraws Hop rather than
+ * importing the design system into a memory-limited process, and the accessory
+ * families composite into a single-colour vibrant layer, so the same face has a
+ * monochrome form. Both are drawn here the way that file draws them.
+ */
+function widgetFace(size, { mono = false } = {}) {
+  const body = mono ? 'none' : P.hopGreen;
+  const line = mono ? '#FFFFFF' : P.hopGreenDeep;
+  const white = mono ? '#FFFFFF' : '#FFFFFF';
+  const s = size;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 100 100" style="display:block;flex:0 0 auto">
+    <circle cx="50" cy="50" r="47" fill="${body}" stroke="${line}" stroke-width="${mono ? 5 : 4.5}"/>
+    <g>
+      <circle cx="32" cy="30" r="17" fill="${white}" stroke="${line}" stroke-width="${mono ? 4 : 3.5}"/>
+      <circle cx="68" cy="30" r="17" fill="${white}" stroke="${line}" stroke-width="${mono ? 4 : 3.5}"/>
+      ${mono ? '' : `<circle cx="34" cy="32" r="7.5" fill="${P.midnight}"/><circle cx="70" cy="32" r="7.5" fill="${P.midnight}"/>`}
+    </g>
+    <path d="M 32 60 Q 50 76 68 60" fill="none" stroke="${line}" stroke-width="${mono ? 5 : 4.5}" stroke-linecap="round"/>
+  </svg>`;
+}
+
+/**
  * 42 — the widgets.
  *
- * Two places, one screen: the Home Screen widgets at their real sizes above, the
- * lock-screen accessories below. Everything shown is something the app already
- * knows — the next pause, the mode, the interval, the child's name and their
- * star count. There is no streak, no "days in a row", and nothing a widget would
- * have to invent.
+ * Two places, one screen: the Home Screen families at their real sizes above,
+ * the three lock-screen accessories below.
+ *
+ * What is on them is exactly what `WidgetSnapshot` carries and
+ * `NextPauseDisplayState` resolves — a headline, a countdown the system ticks
+ * from a date, and Hop's mood. No stars, no pond, no event counts, no app
+ * count, and no child's name: `Docs/Widgets.md` §2 lists each of those as
+ * deliberately absent, because a widget is legible from a locked screen to
+ * whoever is holding the phone, and `showsChildName` is off by default.
  */
 function widgets(appearance = 'light') {
   const col = c(appearance);
@@ -1082,83 +1110,60 @@ function widgets(appearance = 'light') {
   const M = 24;
   const smallW = 158, mediumW = W - M * 2;
 
-  const smallWidget = widgetCard(appearance, smallW, smallW, `
-    <div style="display:flex;align-items:center;gap:6px;flex:0 0 auto">
-      ${avatarDisc(24, { fill: P.hopGreenSoft, ring: null })}
-      <span style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};font-size:11.5px">Maya</span>
+  const headline = (size) => `<div style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};
+    font-family:'HopRounded','HopStandard',sans-serif;font-size:${size}px;flex:0 0 auto">Next Potty Pause</div>`;
+
+  const countdown = (size) => `<div style="${type('metric', { color: P.hopGreenInk })};font-size:${size}px;
+    font-variant-numeric:tabular-nums;flex:0 0 auto">24:13</div>`;
+
+  // systemSmall — face top-left, then the words pinned to the bottom.
+  const smallWidget = widgetCard(smallW, smallW, `
+    <div style="display:flex;flex-direction:column;width:100%">
+      ${widgetFace(40)}
       <div style="flex:1"></div>
-      ${MARK.star(col.celebration, 13)}
-      <span style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};font-size:11.5px;font-variant-numeric:tabular-nums">13</span>
-    </div>
-    <div style="flex:1"></div>
-    <div style="${type('parentFootnote', { color: col.textTertiary, weight: 'semibold' })};font-size:10px;
-      letter-spacing:.6px;text-transform:uppercase;flex:0 0 auto">Next Potty Pause</div>
-    <div style="${type('metric', { color: col.textPrimary })};font-size:30px;margin-top:2px;flex:0 0 auto">in 24 min</div>
-    <div style="display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:3px 9px;border-radius:20px;
-      background:${P.hopGreenSoft};align-self:flex-start;flex:0 0 auto">
-      <div style="width:6px;height:6px;border-radius:3px;background:${P.hopGreenDeep}"></div>
-      <span style="${type('parentFootnote', { color: P.hopGreenInk, weight: 'semibold' })};font-size:10.5px">Guided routine</span>
+      ${headline(12.5)}
+      <div style="height:2px"></div>
+      ${countdown(30)}
     </div>`);
 
-  const mediumWidget = widgetCard(appearance, mediumW, smallW, `
-    <div style="display:flex;height:100%;gap:14px">
-      <div style="width:104px;flex:0 0 auto;border-radius:${T.radius.l}px;background:${mix(P.hopGreenSoft, P.cloud, .25)};
-        position:relative;overflow:hidden">
-        <div style="position:absolute;left:0;right:0;bottom:0;height:34px;background:${alpha(P.hopGreenLight, .55)}"></div>
-        <div style="position:absolute;left:50%;bottom:2px;transform:translateX(-50%)">
-          ${svg('Art/character/hop-sit.svg', { width: 92 })}
-        </div>
+  // systemMedium — the same words, beside a bigger face.
+  const mediumWidget = widgetCard(mediumW, smallW, `
+    <div style="display:flex;align-items:center;gap:16px;width:100%">
+      ${widgetFace(64)}
+      <div style="display:flex;flex-direction:column;justify-content:center">
+        ${headline(14.5)}
+        <div style="height:3px"></div>
+        ${countdown(42)}
       </div>
-      <div style="flex:1;display:flex;flex-direction:column;min-width:0">
-        <div style="display:flex;align-items:center;gap:7px;flex:0 0 auto">
-          ${avatarDisc(22, { fill: P.hopGreenSoft, ring: null })}
-          <span style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};font-size:11.5px">Maya</span>
-          <div style="flex:1"></div>
-          ${MARK.star(col.celebration, 13)}
-          <span style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};font-size:11.5px;font-variant-numeric:tabular-nums">13</span>
-        </div>
-        <div style="flex:1"></div>
-        <div style="${type('parentFootnote', { color: col.textTertiary, weight: 'semibold' })};font-size:10px;
-          letter-spacing:.6px;text-transform:uppercase;flex:0 0 auto">Next Potty Pause</div>
-        <div style="${type('metric', { color: col.textPrimary })};font-size:32px;margin-top:2px;flex:0 0 auto">in 24 min</div>
-        <div style="${type('parentCaption', { color: col.textSecondary })};font-size:12.5px;margin-top:5px;flex:0 0 auto">
-          Guided routine · every 45 minutes</div>
-        <div style="${type('parentCaption', { color: col.textTertiary })};font-size:12px;margin-top:2px;flex:0 0 auto">
-          Quiet from 12:30 PM</div>
+    </div>`, { pad: 18 });
+
+  // The three accessory families, drawn the way the vibrant layer renders them.
+  const accessoryCircular = `
+    <div style="width:72px;height:72px;border-radius:36px;background:${alpha('#FFFFFF', .22)};
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex:0 0 auto">
+      ${widgetFace(22, { mono: true })}
+      <div style="${type('parentFootnote', { color: '#FFFFFF', weight: 'semibold' })};
+        font-family:'HopRounded','HopStandard',sans-serif;font-size:13px;font-variant-numeric:tabular-nums">24:13</div>
+    </div>`;
+
+  const accessoryRectangular = `
+    <div style="width:176px;height:72px;border-radius:${T.radius.m}px;background:${alpha('#FFFFFF', .16)};
+      padding:0 12px;display:flex;align-items:center;gap:9px;flex:0 0 auto">
+      ${widgetFace(26, { mono: true })}
+      <div>
+        <div style="${type('parentFootnote', { color: '#FFFFFF', weight: 'semibold' })};
+          font-family:'HopRounded','HopStandard',sans-serif;font-size:12px">Next Potty Pause</div>
+        <div style="${type('parentTitle', { color: '#FFFFFF' })};font-size:21px;margin-top:1px;
+          font-variant-numeric:tabular-nums">24:13</div>
       </div>
-    </div>`);
+    </div>`;
 
-  /** Accessory widgets render monochrome over the wallpaper. Drawn that way. */
-  const circular = (inner) => `<div style="width:72px;height:72px;border-radius:36px;
-    background:${alpha('#FFFFFF', .22)};display:grid;place-items:center;position:relative">${inner}</div>`;
-
-  const lockCircular = circular(`
-    <svg width="72" height="72" viewBox="0 0 72 72" style="position:absolute;inset:0">
-      <circle cx="36" cy="36" r="32" fill="none" stroke="${alpha('#FFFFFF', .3)}" stroke-width="5"/>
-      <circle cx="36" cy="36" r="32" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"
-        stroke-dasharray="94 201" transform="rotate(-90 36 36)"/>
-    </svg>
-    <div style="position:relative;text-align:center">
-      <div style="${type('parentFootnote', { color: '#FFFFFF', weight: 'bold' })};font-size:17px;line-height:1;font-variant-numeric:tabular-nums">24</div>
-      <div style="${type('parentFootnote', { color: alpha('#FFFFFF', .8) })};font-size:9.5px;line-height:1.2;margin-top:1px">min</div>
-    </div>`);
-
-  const lockStars = circular(`
-    <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:1px">
-      ${MARK.star('#FFFFFF', 17)}
-      <div style="${type('parentFootnote', { color: '#FFFFFF', weight: 'bold' })};font-size:15px;line-height:1.1;font-variant-numeric:tabular-nums">13</div>
-    </div>`);
-
-  const lockRectangular = `
-    <div style="width:172px;height:72px;border-radius:${T.radius.m}px;background:${alpha('#FFFFFF', .16)};
-      padding:9px 12px;display:flex;flex-direction:column;justify-content:center">
-      <div style="display:flex;align-items:center;gap:6px">
-        ${MARK.clock(alpha('#FFFFFF', .85), 12)}
-        <span style="${type('parentFootnote', { color: alpha('#FFFFFF', .85), weight: 'semibold' })};font-size:10px;
-          letter-spacing:.6px;text-transform:uppercase">Next Potty Pause</span>
-      </div>
-      <div style="${type('parentTitle', { color: '#FFFFFF' })};font-size:20px;margin-top:3px">in 24 min</div>
-      <div style="${type('parentFootnote', { color: alpha('#FFFFFF', .75) })};font-size:11px;margin-top:1px">Maya · Guided routine</div>
+  // accessoryInline sits where the date does, above the clock, and is the one
+  // family that phrases the countdown in words.
+  const accessoryInline = `
+    <div style="display:flex;align-items:center;justify-content:center;gap:7px">
+      ${widgetFace(15, { mono: true })}
+      <span style="${type('parentCallout', { color: alpha('#FFFFFF', .88) })};font-size:14px">Next Potty Pause in 24 min</span>
     </div>`;
 
   return `
@@ -1201,13 +1206,13 @@ function widgets(appearance = 'light') {
       <div style="position:absolute;inset:0">${wallpaper(W, BAND_B, { night: true })}</div>
       ${bandLabel('Lock Screen', { dark: true })}
       <div style="position:relative;display:flex;flex-direction:column;height:100%;padding:0 ${M}px">
-        <div style="height:44px"></div>
+        <div style="height:46px"></div>
+        <div style="flex:0 0 auto">${accessoryInline}</div>
         <div style="flex:0 0 auto;text-align:center">
-          <div style="${type('parentCallout', { color: alpha('#FFFFFF', .82) })};font-size:14px">Tuesday, 8 September</div>
-          <div style="${type('timerHero', { color: '#FFFFFF' })};font-size:62px;line-height:1.05;font-variant-numeric:tabular-nums">9:41</div>
+          <div style="${type('timerHero', { color: '#FFFFFF' })};font-size:62px;line-height:1.1;font-variant-numeric:tabular-nums">9:41</div>
         </div>
-        <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:14px;margin-top:14px">
-          ${lockCircular}${lockRectangular}${lockStars}
+        <div style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px">
+          ${accessoryCircular}${accessoryRectangular}
         </div>
         <div style="flex:1"></div>
         ${homeIndicator('#FFFFFF')}
@@ -1219,10 +1224,16 @@ function widgets(appearance = 'light') {
 /**
  * 43 — the Live Activity.
  *
- * A pause is running. The activity says which routine step the child is on and
- * that Hop is waiting — and shows no countdown, because a visible clock on a
- * three-year-old's bathroom trip is pressure, and because the pause ending is
- * the app's job rather than the child's.
+ * A pause is running. This is the caregiver's phone, not the child's: the child
+ * is looking at the shield, which says "Your game comes back soon." and shows no
+ * clock at all, because a countdown reads as pressure to a three-year-old. The
+ * parent gets the clock, because the thing they need from across the room is
+ * that the pause is real, is bounded and is nearly over.
+ *
+ * Drawn from `Extensions/HopPottyWidgets/PottyPauseActivity.swift`: the headline
+ * is `shield.title`, the second line is `shield.returning`, the routine position
+ * is `2 / 5` with no step *title* — "Wipe" on a lock screen is a fact about a
+ * child's morning published to the room — and nothing here is a control.
  */
 function liveActivity(appearance = 'light') {
   const col = c(appearance);
@@ -1230,60 +1241,44 @@ function liveActivity(appearance = 'light') {
   const BAND_B = H - BAND_A - 10;
   const M = 22;
 
-  const stepChip = (label, glyph, on) => `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:1">
-      <div style="width:36px;height:36px;border-radius:18px;display:grid;place-items:center;
-        background:${on ? P.hopGreenDeep : alpha('#FFFFFF', .12)}">${glyph(on ? '#FFFFFF' : alpha('#FFFFFF', .55), 19)}</div>
-      <span style="${type('parentFootnote', { color: on ? '#FFFFFF' : alpha('#FFFFFF', .55), weight: on ? 'semibold' : 'medium' })};font-size:10px">${label}</span>
-    </div>`;
+  const timer = (size, width) => `<div style="${type('metric', { color: P.hopGreenInk })};font-size:${size}px;
+    width:${width}px;text-align:right;font-variant-numeric:tabular-nums;flex:0 0 auto">2:14</div>`;
 
-  const flush = (f, s = 20) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="${f}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M19.4 12a7.4 7.4 0 1 1-2.2-5.2"/><path d="M19.8 3.6v5h-5"/><circle cx="12" cy="12" r="2.2" fill="${f}" stroke="none"/></svg>`;
-
-  // The expanded Dynamic Island: leading, trailing, centre, bottom.
+  // The expanded Dynamic Island: leading face, trailing clock, centred title,
+  // and a bottom region of progress plus the step position.
   const island = `
-    <div style="width:${W - M * 2}px;border-radius:${T.radius.xxl}px;background:#000000;padding:14px 18px 16px;
-      box-shadow:0 10px 30px ${alpha('#000000', .5)}">
-      <div style="display:flex;align-items:center;gap:12px">
-        ${avatarDisc(38, { fill: alpha(P.hopGreen, .22), ring: alpha(P.hopGreenLight, .6), ringWidth: 1.5 })}
-        <div style="flex:1;min-width:0">
-          <div style="${type('parentHeadline', { color: '#FFFFFF', weight: 'semibold' })};font-size:15.5px">Potty Pause</div>
-          <div style="${type('parentCaption', { color: alpha('#FFFFFF', .66) })};font-size:12.5px;margin-top:1px">Hop is waiting</div>
-        </div>
-        <div style="text-align:right;flex:0 0 auto">
-          <div style="${type('parentFootnote', { color: alpha('#FFFFFF', .66), weight: 'semibold' })};font-size:10.5px;
-            letter-spacing:.5px;text-transform:uppercase">Step 2 of 5</div>
-          <div style="${type('parentTitle', { color: '#FFFFFF' })};font-size:17px;margin-top:1px">Wipe</div>
-        </div>
+    <div style="width:${W - M * 2}px;border-radius:${T.radius.xxl}px;background:#000000;padding:16px 18px 17px;
+      border:1px solid ${alpha(P.hopGreen, .55)};box-shadow:0 10px 30px ${alpha('#000000', .5)}">
+      <div style="display:flex;align-items:center;gap:14px">
+        ${widgetFace(40)}
+        <div style="flex:1;text-align:center;${type('parentHeadline', { color: '#FFFFFF', weight: 'semibold' })};
+          font-family:'HopRounded','HopStandard',sans-serif;font-size:16px">Potty time!</div>
+        <div style="${type('metric', { color: '#FFFFFF' })};font-size:22px;width:84px;text-align:right;
+          font-variant-numeric:tabular-nums;flex:0 0 auto">2:14</div>
       </div>
-      <div style="display:flex;gap:4px;margin-top:14px">
-        ${stepChip('Try', MARK.ring, false)}
-        ${stepChip('Wipe', MARK.hand, true)}
-        ${stepChip('Flush', flush, false)}
-        ${stepChip('Wash', MARK.droplets, false)}
-        ${stepChip('High five', MARK.star, false)}
+      <div style="margin-top:14px;height:6px;border-radius:3px;background:${alpha('#FFFFFF', .18)};overflow:hidden">
+        <div style="width:28%;height:100%;border-radius:3px;background:${P.hopGreen}"></div>
       </div>
-      <div style="${type('parentCaption', { color: alpha('#FFFFFF', .62) })};font-size:12.5px;text-align:center;margin-top:12px">
-        The pause ends on its own. Maya's game comes back.</div>
+      <div style="${type('parentCaption', { color: alpha('#FFFFFF', .62) })};
+        font-family:'HopRounded','HopStandard',sans-serif;font-size:12px;text-align:center;margin-top:8px;
+        font-variant-numeric:tabular-nums">2 / 5</div>
     </div>`;
 
+  // The lock-screen presentation, on the tint the activity configuration sets.
   const activityCard = `
-    <div style="width:${W - M * 2}px;border-radius:${T.radius.xl}px;background:${alpha('#FFFFFF', .16)};
-      padding:14px 16px 15px">
-      <div style="display:flex;align-items:center;gap:11px">
-        ${avatarDisc(34, { fill: alpha(P.hopGreen, .3), ring: alpha(P.hopGreenLight, .6), ringWidth: 1.5 })}
-        <div style="flex:1;min-width:0">
-          <div style="${type('parentHeadline', { color: '#FFFFFF', weight: 'semibold' })};font-size:15px">Potty Pause · Hop is waiting</div>
-          <div style="${type('parentCaption', { color: alpha('#FFFFFF', .72) })};font-size:12.5px;margin-top:1px">Maya · Step 2 of 5 · Wipe</div>
-        </div>
-        <div style="width:28px;height:28px;border-radius:14px;background:${alpha('#FFFFFF', .18)};display:grid;place-items:center;flex:0 0 auto">
-          ${EXTRA.shield(alpha('#FFFFFF', .9), 15)}
-        </div>
+    <div style="width:${W - M * 2}px;border-radius:${T.radius.xl}px;background:${P.hopGreenSoft};
+      padding:12px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 24px ${alpha(P.midnight, .3)}">
+      ${widgetFace(46)}
+      <div style="flex:1;min-width:0">
+        <div style="${type('parentHeadline', { color: P.hopGreenInk, weight: 'semibold' })};
+          font-family:'HopRounded','HopStandard',sans-serif;font-size:17px">Potty time!</div>
+        <div style="${type('parentCaption', { color: P.sand600 })};font-family:'HopRounded','HopStandard',sans-serif;
+          font-size:13px;margin-top:2px">Your game comes back soon.</div>
+        <div style="${type('parentCaption', { color: P.sand500, weight: 'medium' })};
+          font-family:'HopRounded','HopStandard',sans-serif;font-size:12px;margin-top:2px;
+          font-variant-numeric:tabular-nums">2 / 5</div>
       </div>
-      <div style="margin-top:14px">
-        ${stepDots(5, 1, { done: alpha('#FFFFFF', .85), todo: alpha('#FFFFFF', .3), now: '#FFFFFF' })}
-      </div>
-      <div style="${type('parentCallout', { color: alpha('#FFFFFF', .8) })};font-size:13.5px;text-align:center;margin-top:14px">
-        Your game comes back soon.</div>
+      ${timer(30, 92)}
     </div>`;
 
   return `
@@ -1296,6 +1291,8 @@ function liveActivity(appearance = 'light') {
       <div style="position:relative;display:flex;flex-direction:column;height:100%;align-items:center">
         <div style="height:46px;flex:0 0 auto"></div>
         ${island}
+        <div style="${type('parentCaption', { color: alpha('#FFFFFF', .5) })};font-size:11.5px;margin-top:14px">
+          No buttons. Every action with consequences stays behind the grown-up gate.</div>
         <div style="flex:1"></div>
       </div>
     </div>
@@ -1313,8 +1310,8 @@ function liveActivity(appearance = 'light') {
         <div style="flex:1.1"></div>
         ${activityCard}
         <div style="${type('parentCaption', { color: alpha('#FFFFFF', .62) })};font-size:12px;text-align:center;
-          margin-top:16px;padding:0 10px;line-height:1.4">
-          No countdown, on purpose. A visible clock reads as pressure to a small child, and the pause ends whether or not anyone is watching it.</div>
+          margin-top:16px;padding:0 6px;line-height:1.4">
+          The clock is on the grown-up's phone. Your child's own screen shows the pause with no countdown on it at all.</div>
         <div style="flex:0.75"></div>
         ${homeIndicator('#FFFFFF')}
       </div>

@@ -25,6 +25,17 @@ struct PondSceneView: View {
     let nextUp: PondItem?
     /// Drawn on its lily pad in the middle of his own pond.
     var showsHop: Bool = true
+    /// Whether the scene is a *place* rather than a picture.
+    ///
+    /// The pond screen shows the scene as an object on a page: a 4:3 card with
+    /// rounded corners and a hairline, which is what makes it read as something
+    /// the child owns and can look into. `HopHubView` uses the same drawing as
+    /// the ground the child's home stands on, where a card edge halfway up the
+    /// screen would be a frame around the room the child is standing in. The
+    /// geometry needs no second set of numbers either way — every anchor in
+    /// `PondCatalog` is in unit coordinates, so the scene simply takes the shape
+    /// it is given.
+    var isFullBleed: Bool = false
     let onTapItem: (PondItemID) -> Void
 
     private var itemsToDraw: [PondItem] {
@@ -60,18 +71,40 @@ struct PondSceneView: View {
             }
             .hopAnimation(.childArrive, value: unlocked)
         }
-        .aspectRatio(4.0 / 3.0, contentMode: .fit)
-        .clipShape(RoundedRectangle(cornerRadius: theme.radius.hero, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: theme.radius.hero, style: .continuous)
-                .strokeBorder(theme.color.divider.opacity(theme.isHighContrast ? 1 : 0.4), lineWidth: theme.isHighContrast ? 1.5 : 0.75)
-        }
+        .modifier(PondSceneFraming(isFullBleed: isFullBleed))
         // One element with a summary. Forty-one separately focusable sprites in
         // a picture is not navigation, it is a maze; the collection strip below
         // is the linear, per-item list VoiceOver actually wants.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(HopCopy.a11y.pondScene.localized(forNickname: context.nickname))
         .accessibilityValue(HopCopy.pond.starCount.localized(for: context.totalStars))
+    }
+}
+
+/// Gives the scene its shape: a card on a page, or the ground under a room.
+///
+/// A `ViewModifier` rather than an `if` in `body` because the two branches are
+/// different concrete view types, and because the theme it needs for the corner
+/// radius is only reachable from a real `View`.
+private struct PondSceneFraming: ViewModifier {
+    @Environment(\.hopTheme) private var theme
+    let isFullBleed: Bool
+
+    func body(content: Content) -> some View {
+        if isFullBleed {
+            content
+        } else {
+            content
+                .aspectRatio(4.0 / 3.0, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: theme.radius.hero, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: theme.radius.hero, style: .continuous)
+                        .strokeBorder(
+                            theme.color.divider.opacity(theme.isHighContrast ? 1 : 0.4),
+                            lineWidth: theme.isHighContrast ? 1.5 : 0.75
+                        )
+                }
+        }
     }
 }
 

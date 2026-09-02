@@ -563,6 +563,96 @@ public struct NotificationCopy: HopCopySection {
     )
 }
 
+// MARK: - Child hub
+
+/// Hop's screen: the child's home inside HopPotty, and the four places it opens.
+///
+/// Every string here names a *place*, never an instruction — the hub is the one
+/// child surface where nothing is asked of the child at all. The four door
+/// labels are short because each one sits under a picture that already says
+/// what it is; a pre-reader picks the lily pad, not the word "pond".
+///
+/// The tab label and the grown-up controls are the two adult-facing strings on
+/// an otherwise entirely child-facing screen: the caregiver is the one who taps
+/// the tab to hand the device over, and the one who answers the gate to take it
+/// back.
+public struct ChildHubCopy: HopCopySection {
+    public static let surface: HopCopySurface = .childHub
+
+    public let tab = HopCopyEntry.parent(
+        "childHub.tab",
+        "Hop",
+        comment: "Tab label for the child's side of the app, in the caregiver's tab bar. The frog's name — keep it identical to brand.character.name."
+    )
+
+    public let title = HopNameVariants(
+        named: .child(
+            "childHub.title.named",
+            "Hi, %1$@! What shall we do?",
+            comment: "Greeting at the top of the child's home screen. An open question, because every answer below it is a good one.",
+            placeholders: [.nickname()]
+        ),
+        unnamed: .child(
+            "childHub.title.unnamed",
+            "Hi! What shall we do?",
+            comment: "The same greeting when no nickname is set."
+        )
+    )
+
+    public let pottyButton = HopCopyEntry.child(
+        "childHub.button.potty",
+        "Potty time",
+        comment: "Opens the guided routine. An announcement, not an order — the child may also arrive here from a Potty Pause."
+    )
+    public let pondButton = HopCopyEntry.child(
+        "childHub.button.pond",
+        "Hop's pond",
+        comment: "Opens the pond, where the stars go. Possessive; some languages will need a different construction."
+    )
+    public let gamesButton = HopCopyEntry.child(
+        "childHub.button.games",
+        "Games",
+        comment: "Opens the mini-game chooser."
+    )
+    public let questionsButton = HopCopyEntry.child(
+        "childHub.button.questions",
+        "Hop's questions",
+        comment: "Opens a round of three questions from Hop."
+    )
+
+    public let pottyHint = HopCopyEntry.child(
+        "childHub.hint.potty",
+        "Hop comes along for every step.",
+        comment: "VoiceOver hint on the potty door. Read aloud, so it is held to the same warmth as anything Hop says."
+    )
+    public let pondHint = HopCopyEntry.child(
+        "childHub.hint.pond",
+        "See the friends in your pond.",
+        comment: "VoiceOver hint on the pond door."
+    )
+    public let gamesHint = HopCopyEntry.child(
+        "childHub.hint.games",
+        "Pick a game to play with Hop.",
+        comment: "VoiceOver hint on the games door."
+    )
+    public let questionsHint = HopCopyEntry.child(
+        "childHub.hint.questions",
+        "Hop asks you three things.",
+        comment: "VoiceOver hint on the questions door. Three is the whole round."
+    )
+
+    public let grownUps = HopCopyEntry.parent(
+        "childHub.grownUps",
+        "Grown-ups",
+        comment: "The small control in the corner that leaves the child's side of the app. Adult-facing: it is the caregiver who taps it."
+    )
+    public let grownUpsHint = HopCopyEntry.parent(
+        "childHub.grownUpsHint",
+        "Opens the grown-up area. A grown-up answers a question first.",
+        comment: "VoiceOver hint on the grown-up control, naming the gate so an adult knows what tapping it costs."
+    )
+}
+
 // MARK: - Routine chrome
 
 /// Buttons and framing around the guided routine. The steps themselves live in
@@ -1132,6 +1222,7 @@ public enum HopCopy {
     public static let quickReminder = QuickReminderCopy()
     public static let shield = ShieldCopy()
     public static let notification = NotificationCopy()
+    public static let childHub = ChildHubCopy()
     public static let routine = RoutineChromeCopy()
     public static let celebration = CelebrationCopy()
     public static let pond = PondCopy()
@@ -1148,7 +1239,7 @@ public enum HopCopy {
     /// content rather than declared one by one.
     public static let sections: [any HopCopySection] = [
         brand, common, onboarding, parentHome, timerSettings, quickReminder, shield, notification,
-        routine, celebration, pond, games, quizzes, settings, errors, parentGate,
+        childHub, routine, celebration, pond, games, quizzes, settings, errors, parentGate,
         purchase, a11y,
     ]
 
