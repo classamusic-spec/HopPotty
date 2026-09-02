@@ -64,9 +64,20 @@ final class SettingsModel {
         do {
             switch action {
             case .deleteChild(let childID):
-                var loaded = try await environment.deletion.receipt(forChild: childID)
-                loaded.childName = environment.children.first { $0.id == childID }?.nickname
-                receipt = loaded
+                // The nickname is not patched in here. `DeletionReceipt.childName`
+                // is a read accessor over a `let` -- the receipt is immutable on
+                // purpose, because a receipt that can be edited after the fact is
+                // not a receipt. The line that used to be here assigned to it:
+                //
+                //     error: cannot assign to property: 'childName' is a get-only
+                //            property
+                //
+                // and it was redundant besides. `DataDeletionService` already
+                // resolves the nickname from `repositories.profiles` while it
+                // counts, which is the same fact from a more authoritative place
+                // at a better moment -- read from the store as the numbers are
+                // taken, rather than from this screen's in-memory copy afterwards.
+                receipt = try await environment.deletion.receipt(forChild: childID)
             case .deleteEverything:
                 receipt = try await environment.deletion.receiptForEverything()
             }

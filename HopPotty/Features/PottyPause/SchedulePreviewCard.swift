@@ -142,6 +142,17 @@ struct SchedulePreviewCard: View {
 }
 
 #if DEBUG
+// `@MainActor` because `ParentEnvironment` is, and so is everything hanging off
+// it including `previewCalendar`. A file-scope function is nonisolated by
+// default, which made this the one caller of `previewCalendar` that was not
+// already on the main actor:
+//
+//     error: main actor-isolated static property 'previewCalendar' can not be
+//            referenced from a nonisolated context
+//
+// Every call site is a `#Preview` body, which is main-actor anyway, so the
+// annotation costs nothing and states what was already true.
+@MainActor
 private func previewSummary(_ schedule: PottySchedule) -> ScheduleSummary {
     PottyScheduleService(calendar: ParentEnvironment.previewCalendar)
         .summarize(schedule, at: HopFixtures.referenceDate)

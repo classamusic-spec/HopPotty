@@ -247,11 +247,19 @@ public final class ScreenTimeService: ScreenTimeProviding {
     /// on this device — is the most likely real-world failure and the one a
     /// generic error message would leave a caregiver completely stuck on.
     ///
-    /// UNVERIFIED — confirm on device: the exact spelling of every case below.
-    /// They are taken from Apple's documentation (`Docs/ScreenTimeArchitecture.md`
-    /// §3) rather than from a compiled SDK. If one does not exist, delete the
-    /// case; the `default` branch already maps it to `.unknown`, so a mistake here
-    /// degrades to a vaguer message and never to a wrong behaviour.
+    /// The case names were taken from Apple's documentation
+    /// (`Docs/ScreenTimeArchitecture.md` §3) rather than from a compiled SDK, and
+    /// carried an "UNVERIFIED — confirm the exact spelling of every case below"
+    /// note saying that a case which does not exist should simply be deleted,
+    /// because `default` already maps anything unrecognised to `.unknown`.
+    ///
+    /// A compiler has now checked them against the iOS 26.2 SDK. Six of the seven
+    /// exist; `FamilyControlsError.unauthorized` does not, and has been removed
+    /// on the instruction above. `.authorizationCanceled` and `.restricted`, used
+    /// by the two predicates below, both exist.
+    ///
+    /// Still unverified: which of these the framework actually *raises* in
+    /// practice, and for what. That needs a device and an approved entitlement.
     static func map(_ error: Error) -> ScreenTimeFailure {
         guard let familyError = error as? FamilyControlsError else { return .unknown }
         switch familyError {
@@ -261,7 +269,6 @@ public final class ScreenTimeService: ScreenTimeProviding {
         case .authenticationMethodUnavailable: return .authenticationMethodUnavailable
         case .unavailable: return .extensionUnavailable
         case .restricted: return .unknown  // routed to `.restricted` status by `isRestriction`
-        case .unauthorized: return .authorizationRevoked
         default: return .unknown
         }
     }
