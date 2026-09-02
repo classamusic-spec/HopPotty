@@ -141,7 +141,12 @@ struct HopOutlineStyle: Equatable, Sendable {
 /// Semantic, not a per-screen override: a caller says *what kind of ground this
 /// is*, and the outline state is resolved from that together with the size and
 /// the accessibility appearance. No screen gets to nudge a stroke width.
-public enum HopGround: Equatable, Sendable {
+///
+/// Not to be confused with `HopGround` in `HopThemeEnvironment.swift`, which is
+/// the app's *background colour* role — primary, secondary, sunken. This one is
+/// about what is behind Hop specifically, and it has only two answers because
+/// the only question the outline asks is whether his own green is back there.
+public enum HopCharacterGround: Equatable, Sendable {
     /// Cards, sheets, cream, white — the app's own surfaces.
     case surface
     /// Illustration: pond water, vegetation, a night sky. Hop's own hue is in

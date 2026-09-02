@@ -176,7 +176,7 @@ struct HopReplayButton: View {
             }
         }
     }
-    return Harness()
+    Harness()
         .padding()
         .hopBackground()
         .hopThemedRoot()

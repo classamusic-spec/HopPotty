@@ -96,7 +96,7 @@ struct QuizOptionCard: View {
 
 #Preview("Quiz option cards") {
     let question = QuizContent.washSoap
-    return HStack(spacing: 12) {
+    HStack(spacing: 12) {
         ForEach(question.options) { option in
             QuizOptionCard(
                 option: option,

@@ -71,7 +71,7 @@ public struct HopCharacterView: View {
     private let ambient: Bool
     private let castsShadow: Bool
     private let gaze: HopGaze
-    private let ground: HopGround
+    private let ground: HopCharacterGround
 
     /// Hop holding a pose, optionally hopping.
     ///
@@ -86,7 +86,7 @@ public struct HopCharacterView: View {
         castsShadow: Bool = true,
         jumping jump: HopJump? = nil,
         gaze: HopGaze = .forward,
-        ground: HopGround = .surface
+        ground: HopCharacterGround = .surface
     ) {
         self.init(
             act: jump.map { HopAct(pose: pose, beat: .hop($0)) } ?? HopAct(pose: pose),
@@ -106,7 +106,7 @@ public struct HopCharacterView: View {
         ambient: Bool = true,
         castsShadow: Bool = true,
         gaze: HopGaze = .forward,
-        ground: HopGround = .surface
+        ground: HopCharacterGround = .surface
     ) {
         self.act = act
         self.size = size
