@@ -38,7 +38,7 @@ struct PottyPauseLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    HopWidgetFace(mood: context.state.mood, size: 40)
+                    HopWidgetFace(mood: context.state.mood, size: 46)
                         .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
@@ -69,7 +69,7 @@ struct PottyPauseLiveActivity: Widget {
                     }
                 }
             } compactLeading: {
-                HopWidgetFace(mood: context.state.mood, size: 18, isMonochrome: true)
+                HopWidgetFace(mood: context.state.mood, size: 22, isMonochrome: true)
             } compactTrailing: {
                 Text(timerInterval: context.state.range, countsDown: true)
                     .font(.system(.caption2, design: .rounded, weight: .semibold))
@@ -78,7 +78,7 @@ struct PottyPauseLiveActivity: Widget {
                     // tick as the digits change, which reads as a twitch.
                     .frame(width: 44)
             } minimal: {
-                HopWidgetFace(mood: context.state.mood, size: 16, isMonochrome: true)
+                HopWidgetFace(mood: context.state.mood, size: 20, isMonochrome: true)
             }
             .keylineTint(Color(HopPalette.hopGreen))
         }
@@ -93,7 +93,7 @@ struct PottyPauseLockScreenView: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            HopWidgetFace(mood: state.mood, size: 46)
+            HopWidgetFace(mood: state.mood, size: 54)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(verbatim: headline)

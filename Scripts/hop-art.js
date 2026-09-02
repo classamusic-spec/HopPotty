@@ -6,6 +6,12 @@
  * (`hop_mascot.svg`) so every number here can be checked against it directly,
  * then scaled onto the 512×512 canvas the app and the SwiftUI port use.
  *
+ * A pose is not confined to that 150×160 box — `jump` lifts him above y=0 and
+ * every standing pose's toes reach past y=160 — so the placement on the canvas
+ * is derived from the drawing (see `STAGE`) rather than assumed from the
+ * reference's own bounds. `Scripts/check-hop-fit.js` measures the rendered
+ * result and fails if any pose reaches the canvas edge.
+ *
  * The reference is a single fused outline, which cannot animate. This file
  * rebuilds it as articulated parts — head, torso, two arms, two legs — at the
  * same proportions, so poses are parameter changes rather than redraws. The
@@ -26,6 +32,7 @@ const path = require('path');
 const C = {
   body: '#63C88A',        // HopPalette.hopGreen
   bodyDeep: '#45A971',    // spots, toe creases
+  bodyLight: '#8FDCAC',   // HopPalette.hopGreenLight — a limb crossing in front
   ink: '#1B5E39',         // nostrils, closed-eye lines (hopGreenInk)
   belly: '#FFF3D4',       // HopPalette.sunshineSoft — warm cream, reference used #FFE698
   cheek: '#FF9F8F',       // HopPalette.peachPop — reference used #FD8585
@@ -38,6 +45,41 @@ const C = {
   bagStrap: '#A76F46',
   shadow: '#243047',
 };
+
+// ---------------------------------------------------------------------------
+// The stage: where the reference space lands on the canvas
+// ---------------------------------------------------------------------------
+
+/**
+ * How the reference space is placed on the canvas.
+ *
+ * The first transform — `translate(16 0) scale(3.2)` — mapped the reference's
+ * own 150×160 bounds edge to edge, which left zero headroom: `jump` lost the
+ * top of its crown, and every pose lost its toes and its ground shadow. So the
+ * transform is solved from the drawing instead. `STAGE` is the reference-space
+ * rectangle the whole pose set is built to fit; it is scaled to the canvas with
+ * `MARGIN` of clear air on the binding axis and centred on both.
+ *
+ * The canvas stays square and 512 wide: screens size Hop by width and assume a
+ * square box, so changing the aspect would move him on every screen.
+ */
+const CANVAS = 512;
+/** Minimum clear air on every side, in canvas pixels. */
+const MARGIN = 12;
+/** The reference-space rectangle every pose is drawn to fit. */
+const STAGE = { x0: 5, y0: -3, x1: 145, y1: 164 };
+/** Reference y a standing pose's toes touch down on. Poses are built to it. */
+const GROUND = 163.6;
+/** Reference y of the ankle of a foot standing on `GROUND`. */
+const ANKLE = 146;
+
+/** Rounded to a tenth so the SwiftUI port carries a number, not a fraction. */
+const SCALE = Math.floor((CANVAS - 2 * MARGIN) /
+  Math.max(STAGE.x1 - STAGE.x0, STAGE.y1 - STAGE.y0) * 10) / 10;
+const OX = +(CANVAS / 2 - SCALE * (STAGE.x0 + STAGE.x1) / 2).toFixed(3);
+const OY = +(CANVAS / 2 - SCALE * (STAGE.y0 + STAGE.y1) / 2).toFixed(3);
+/** Where the feet land in the box. Screens position Hop by this fraction. */
+const FEET_FRACTION = (OY + SCALE * GROUND) / CANVAS;
 
 // ---------------------------------------------------------------------------
 // Anatomy, in reference coordinates
@@ -170,19 +212,27 @@ function wiggle() {
 /**
  * An arm from a shoulder to a hand point, with three fingers fanned along the
  * arm's direction. Fingers are what make the reference's hands read as hands.
+ *
+ * `shade` moves the arm one step *up* the green ramp, to `hopGreenLight`. An arm
+ * that crosses in front of the torso is otherwise the same flat green as the
+ * torso and simply disappears — `scrub`'s cupped hands and `full`'s hand on the
+ * tummy were both invisible. Lighter rather than darker because a value step is
+ * the only depth cue this style allows and the nearer thing is the lit one: the
+ * darker step read as a pair of heavy sleeves, not as arms in front.
  */
-function arm(shoulder, hand, { width = 15 } = {}) {
+function arm(shoulder, hand, { width = 15, shade = false } = {}) {
+  const skin = shade ? C.bodyLight : C.body;
   const [sx, sy] = shoulder; const [hx, hy] = hand;
   const dx = hx - sx, dy = hy - sy; const len = Math.hypot(dx, dy) || 1;
   const ux = dx / len, uy = dy / len;
   const finger = (deg) => {
     const a = Math.atan2(uy, ux) + (deg * Math.PI) / 180;
     const tx = hx + Math.cos(a) * 12, ty = hy + Math.sin(a) * 12;
-    return `<line x1="${hx}" y1="${hy}" x2="${tx.toFixed(1)}" y2="${ty.toFixed(1)}" stroke="${C.body}" stroke-width="10.5" stroke-linecap="round"/>`;
+    return `<line x1="${hx}" y1="${hy}" x2="${tx.toFixed(1)}" y2="${ty.toFixed(1)}" stroke="${skin}" stroke-width="10.5" stroke-linecap="round"/>`;
   };
   return `<g>
-    <line x1="${sx}" y1="${sy}" x2="${hx}" y2="${hy}" stroke="${C.body}" stroke-width="${width}" stroke-linecap="round"/>
-    <circle cx="${hx}" cy="${hy}" r="9.5" fill="${C.body}"/>
+    <line x1="${sx}" y1="${sy}" x2="${hx}" y2="${hy}" stroke="${skin}" stroke-width="${width}" stroke-linecap="round"/>
+    <circle cx="${hx}" cy="${hy}" r="9.5" fill="${skin}"/>
     ${finger(-50)}${finger(0)}${finger(50)}
   </g>`;
 }
@@ -190,13 +240,19 @@ function arm(shoulder, hand, { width = 15 } = {}) {
 /**
  * A leg from hip to ankle with a three-toed foot. `side` −1 is Hop's right
  * (viewer's left); toes fan outward and down like the reference.
+ *
+ * The fan is shallow — the reference's toes splay across the ground rather than
+ * hanging off the front of the foot. The steepest toe used to point almost
+ * straight down at 82°, which put the lowest ink two units below the ground
+ * shadow: Hop stood *through* his own shadow, and the toes were the first thing
+ * the canvas cut off.
  */
 function leg(hip, ankle, side, { toeSpread = 1 } = {}) {
   const [hx, hy] = hip; const [ax, ay] = ankle;
   const fx = ax - side * 2, fy = ay + 3;
   const toe = (deg, r = 5) => {
     const a = (deg * Math.PI) / 180;
-    const tx = fx + Math.cos(a) * 15 * toeSpread, ty = fy + Math.sin(a) * 11;
+    const tx = fx + Math.cos(a) * 15 * toeSpread, ty = fy + Math.sin(a) * 10;
     return `<line x1="${fx}" y1="${fy}" x2="${tx.toFixed(1)}" y2="${ty.toFixed(1)}" stroke="${C.body}" stroke-width="${r * 2}" stroke-linecap="round"/>`;
   };
   const base = side < 0 ? 180 : 0;
@@ -210,8 +266,8 @@ function leg(hip, ankle, side, { toeSpread = 1 } = {}) {
   return `<g>
     <line x1="${hx}" y1="${hy}" x2="${ax}" y2="${ay}" stroke="${C.body}" stroke-width="26" stroke-linecap="round"/>
     <ellipse cx="${fx}" cy="${fy}" rx="14" ry="8.5" fill="${C.body}"/>
-    ${toe(t(-6), 6)}${toe(t(-44), 6)}${toe(t(-82), 5.6)}
-    ${crease(t(-30))}${crease(t(-70))}
+    ${toe(t(-4), 6)}${toe(t(-34), 6)}${toe(t(-64), 5.6)}
+    ${crease(t(-20))}${crease(t(-50))}
   </g>`;
 }
 
@@ -230,8 +286,14 @@ function zzz() {
   </g>`;
 }
 
+/**
+ * The ground shadow, resting on `GROUND` so its lower edge is the lowest ink in
+ * the drawing and the toes touch it rather than pierce it. It shrinks and fades
+ * with `lift`, which is what makes an airborne pose read as airborne.
+ */
 function shadow(lift = 0) {
-  return `<ellipse cx="75" cy="${159 - lift * 0.1}" rx="${40 - lift * 0.4}" ry="4" fill="${C.shadow}" opacity="${0.12 - lift * 0.002}"/>`;
+  const ry = 3.6;
+  return `<ellipse cx="75" cy="${(GROUND - ry - lift * 0.1).toFixed(2)}" rx="${40 - lift * 0.4}" ry="${ry}" fill="${C.shadow}" opacity="${(0.12 - lift * 0.002).toFixed(3)}"/>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -245,9 +307,12 @@ function shadow(lift = 0) {
 function figure(p = {}) {
   const {
     lift = 0, squash = 0, tilt = 0, lean = 0,
-    armL = [8, 90], armR = [142, 90],
-    legL = { hip: [56, 124], ankle: [52, 146], spread: 1 },
-    legR = { hip: [94, 124], ankle: [98, 146], spread: 1 },
+    // The reference hangs the arms down and out at roughly 30°, not straight
+    // out at shoulder height: horizontal arms read as poles bolted to a barrel,
+    // and reached past both edges of the canvas.
+    armL = [22, 103], armR = [128, 103], shadeL = false, shadeR = false,
+    legL = { hip: [56, 124], ankle: [52, ANKLE], spread: 1 },
+    legR = { hip: [94, 124], ankle: [98, ANKLE], spread: 1 },
     eyes: eyeOpts = {}, mouth: mouthKind = 'open',
     withPack = false, sleeping = false, showShadow = true,
     bellyScale = 1, tongueTo = null, wiggling = false,
@@ -262,8 +327,8 @@ function figure(p = {}) {
     ${leg(legR.hip, legR.ankle, 1, { toeSpread: legR.spread })}
     ${torso({ squash, width: torsoWidth })}
     ${belly({ scale: bellyScale })}
-    ${arm(shoulderL, armL)}
-    ${arm(shoulderR, armR)}
+    ${arm(shoulderL, armL, { shade: shadeL })}
+    ${arm(shoulderR, armR, { shade: shadeR })}
     ${headShape({ tilt })}
     <g transform="rotate(${tilt} 75 50)">
       ${spots()}
@@ -279,8 +344,8 @@ function figure(p = {}) {
 }
 
 function wrap(inner) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-<g transform="translate(16 0) scale(3.2)">${inner}
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CANVAS} ${CANVAS}" width="${CANVAS}" height="${CANVAS}">
+<g transform="translate(${OX} ${OY}) scale(${SCALE})">${inner}
 </g>
 </svg>`;
 }
@@ -293,79 +358,101 @@ const poses = {
   blink: () => wrap(figure({ eyes: { blink: 1, mood: 'rest' } })),
 
   /** Speaking a line. Smaller mouth, one hand slightly raised toward the child. */
-  talk: () => wrap(figure({ mouth: 'talk', armR: [136, 84], eyes: { gaze: [0, 1] } })),
+  talk: () => wrap(figure({ mouth: 'talk', armR: [128, 90], eyes: { gaze: [0, 1] } })),
 
   /** Waving hello. Onboarding and the shield greeting. */
-  wave: () => wrap(figure({ armR: [143, 38], armL: [12, 100], tilt: -3, eyes: { gaze: [1, 0] } })),
+  wave: () => wrap(figure({ armR: [127, 42], armL: [26, 106], tilt: -3, eyes: { gaze: [1, 0] } })),
 
   /** Walking to the bathroom with the pack. Routine step one. */
   walk: () => wrap(figure({
     lean: 4, withPack: true,
-    armL: [24, 112], armR: [122, 78],
-    legL: { hip: [55, 122], ankle: [44, 146], spread: 1 },
-    legR: { hip: [95, 122], ankle: [104, 140], spread: 0.8 },
+    armL: [30, 110], armR: [120, 80],
+    legL: { hip: [55, 122], ankle: [44, ANKLE], spread: 1 },
+    legR: { hip: [95, 122], ankle: [104, ANKLE - 6], spread: 0.8 },
     eyes: { gaze: [2, 0] }, mouth: 'talk',
   })),
 
   /** Waiting patiently on the potty — sat down, hands resting, calm. */
   wait: () => wrap(figure({
     lift: -6, squash: 0.3,
-    armL: [32, 124], armR: [118, 124],
-    legL: { hip: [55, 122], ankle: [42, 138], spread: 1.1 },
-    legR: { hip: [95, 122], ankle: [108, 138], spread: 1.1 },
+    armL: [30, 120], armR: [120, 120],
+    legL: { hip: [55, 122], ankle: [42, ANKLE - 6], spread: 1.1 },
+    legR: { hip: [95, 122], ankle: [108, ANKLE - 6], spread: 1.1 },
     eyes: { gaze: [0, 3], lidDrop: 0.35 }, mouth: 'small',
   })),
 
-  /** Mid-hop, airborne. The celebration. */
+  /**
+   * Mid-hop, airborne. The celebration.
+   *
+   * `lift` is the one parameter that costs the whole set size: every pose is
+   * scaled to fit the tallest thing any pose draws, and the crown of a lifted
+   * Hop is it. Eight is as high as he goes before everyone else shrinks.
+   */
   jump: () => wrap(figure({
-    lift: 10, squash: -0.15,
-    armL: [14, 58], armR: [136, 58],
+    lift: 8, squash: -0.15,
+    armL: [23, 58], armR: [127, 58],
     legL: { hip: [55, 122], ankle: [48, 136], spread: 0.9 },
     legR: { hip: [95, 122], ankle: [102, 136], spread: 0.9 },
     eyes: { blink: 1, mood: 'happy' }, mouth: 'open',
   })),
 
-  /** Both arms straight up. The star-earned moment. */
+  /**
+   * Both arms up. The star-earned moment.
+   *
+   * Out as well as up: Hop's eye sockets are the widest part of him at that
+   * height, so hands raised straight overhead vanish behind his own head and
+   * the pose reads as a frog with no arms at all.
+   */
   cheer: () => wrap(figure({
     lift: 2,
-    armL: [30, 30], armR: [120, 30],
+    armL: [23, 40], armR: [127, 40],
     eyes: { gaze: [0, -2] }, mouth: 'open',
   })),
 
   /** Resting during quiet hours and "paused until tomorrow". */
   sleep: () => wrap(figure({
     tilt: 4, lift: -4, squash: 0.2, sleeping: true,
-    armL: [34, 122], armR: [116, 122],
+    armL: [30, 118], armR: [120, 118],
+    legL: { hip: [56, 124], ankle: [52, ANKLE - 4], spread: 1 },
+    legR: { hip: [94, 124], ankle: [98, ANKLE - 4], spread: 1 },
     eyes: { blink: 1, mood: 'rest' }, mouth: 'small',
   })),
 
   /** Landing frame after a jump — the squash before the settle. */
   land: () => wrap(figure({
     squash: 0.5,
-    armL: [14, 108], armR: [136, 108],
-    legL: { hip: [55, 120], ankle: [46, 146], spread: 1.2 },
-    legR: { hip: [95, 120], ankle: [104, 146], spread: 1.2 },
+    armL: [24, 116], armR: [126, 116],
+    legL: { hip: [55, 120], ankle: [46, ANKLE], spread: 1.2 },
+    legR: { hip: [95, 120], ankle: [104, ANKLE], spread: 1.2 },
     eyes: { gaze: [0, 2] }, mouth: 'open',
   })),
 
   // ---- Mini-game states ----
 
-  /** Frog squat on a lily pad, watching the sky. Fly Snack's resting state. */
+  /**
+   * Frog squat on a lily pad, watching the sky. Fly Snack's resting state.
+   *
+   * The hands come down past the hips and onto the pad: with the arms tucked at
+   * the waist they were the torso's own green over the torso and Hop read as a
+   * legless bust.
+   */
   sit: () => wrap(figure({
     lift: -10, squash: 0.35,
-    armL: [50, 134], armR: [100, 134],
-    legL: { hip: [55, 120], ankle: [30, 134], spread: 1.2 },
-    legR: { hip: [95, 120], ankle: [120, 134], spread: 1.2 },
+    armL: [46, 128], armR: [104, 128], shadeL: true, shadeR: true,
+    legL: { hip: [55, 120], ankle: [32, ANKLE - 10], spread: 1.2 },
+    legR: { hip: [95, 120], ankle: [118, ANKLE - 10], spread: 1.2 },
     eyes: { gaze: [0, -3] }, mouth: 'small',
   })),
 
   /** Tongue out for a fly. Same squat; the tongue reaches toward `tongueTo`. */
   catch: () => wrap(figure({
     lift: -10, squash: 0.35,
-    armL: [50, 134], armR: [100, 134],
-    legL: { hip: [55, 120], ankle: [30, 134], spread: 1.2 },
-    legR: { hip: [95, 120], ankle: [120, 134], spread: 1.2 },
-    eyes: { gaze: [3, -4] }, mouth: 'open', tongueTo: [142, 34],
+    armL: [46, 128], armR: [104, 128], shadeL: true, shadeR: true,
+    legL: { hip: [55, 120], ankle: [32, ANKLE - 10], spread: 1.2 },
+    legR: { hip: [95, 120], ankle: [118, ANKLE - 10], spread: 1.2 },
+    // Out sideways at mouth height. Aimed up at the fly it crossed his own
+    // eye, and a pink bar over the pupil reads as damage, not as a tongue.
+    eyes: { gaze: [3, -4] }, mouth: 'open', tongueTo: [138, 53],
   })),
 
   /**
@@ -375,19 +462,32 @@ const poses = {
    */
   full: () => wrap(figure({
     squash: 0.1, bellyScale: 1.28, torsoWidth: 68, wiggling: true,
-    armL: [20, 104], armR: [88, 112],
-    legL: { hip: [55, 124], ankle: [66, 150], spread: 0.9 },
-    legR: { hip: [95, 124], ankle: [84, 150], spread: 0.9 },
+    // Both hands on the tummy, and clear of the wiggle marks: an arm parked on
+    // top of them cancelled the one cue that says he is squirming.
+    armL: [46, 118], armR: [92, 112], shadeL: true, shadeR: true,
+    legL: { hip: [55, 124], ankle: [66, ANKLE], spread: 0.9 },
+    legR: { hip: [95, 124], ankle: [84, ANKLE], spread: 0.9 },
     eyes: { gaze: [0, 3], lidDrop: 0.15 }, mouth: 'small',
   })),
 
-  /** Hands held out front, palms up, for washing and wiping games. */
+  /**
+   * Hands held out front, palms up, for washing and wiping games. Shaded,
+   * because hands in front of the body in one flat green are no hands at all.
+   */
   scrub: () => wrap(figure({
-    armL: [50, 118], armR: [100, 118],
+    armL: [56, 112], armR: [94, 112], shadeL: true, shadeR: true,
     eyes: { gaze: [0, 4] }, mouth: 'talk',
   })),
 
-  /** Head only, for avatars and the app icon. */
+  /**
+   * Head only, for avatars and the app icon.
+   *
+   * A crop, not a pose — and the only drawing here that keeps the original
+   * `translate(16 8) scale(3.2)`. Its box is already tight on the head with 17
+   * to 61 canvas pixels of air on every side, so it was never clipped, and it is
+   * used at chip sizes where a head that suddenly shrank by a tenth would show.
+   * `HopPoseGeometry.faceCrop` is this rectangle, and stays matched to it.
+   */
   face: () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 290" width="512" height="290">
 <g transform="translate(16 8) scale(3.2)">
   ${headShape({ neck: false })}
@@ -407,3 +507,11 @@ for (const [name, build] of Object.entries(poses)) {
   fs.writeFileSync(file, build().trim() + '\n');
   console.log('wrote', path.relative(path.resolve(__dirname, '..'), file));
 }
+// Printed rather than buried, because two constants outside this file — `FEET`
+// in `Scripts/screens/child.js` and `SIT_FEET` in `Scripts/screens/parent.js`,
+// and `referenceScale`/`referenceOffset` in `HopCharacterShapes.swift` — are
+// this transform restated, and drift the moment the stage moves.
+console.log('----');
+console.log(`transform  translate(${OX} ${OY}) scale(${SCALE})   stage ${JSON.stringify(STAGE)}`);
+console.log(`feet       ground y=${GROUND} -> canvas ${(OY + SCALE * GROUND).toFixed(1)}` +
+  `  = ${FEET_FRACTION.toFixed(4)} of the box  (FEET and SIT_FEET)`);

@@ -11,11 +11,16 @@ import HopPottyCore
 /// with the same scroll that reveals it. There is no modal: a caregiver checking
 /// the timeline should never have to dismiss anything to get back to the timer.
 ///
-/// On a regular width the panel splits into two columns and the card sits beside
-/// the water instead of across it, because an iPad in landscape has room for
-/// both and a single column down the middle of a 1024pt screen is a phone layout
-/// that was stretched. The measure is capped either way — see
+/// On a regular width the panel splits into two columns and the countdown sits
+/// beside the water instead of across it, because an iPad in landscape has room
+/// for both and a single column down the middle of a 1024pt screen is a phone
+/// layout that was stretched. The measure is capped either way — see
 /// `HopLayout.readableWidth`.
+///
+/// The countdown itself has no card under it: it stands on the water, and
+/// `HopTimerCard`'s `.scene` surface is where the contrast that costs is bought
+/// back. Nothing below it changed — the panel, the quick reminder bar and the
+/// footer are all still on their own opaque grounds.
 ///
 /// Nothing about what the screen *does* moved: the same model call behind Skip,
 /// Start Now, Resume and Restore access; the same log sheet; the same two

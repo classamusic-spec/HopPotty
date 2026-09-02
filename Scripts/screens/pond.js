@@ -51,7 +51,7 @@ function hopsPond(appearance = 'light') {
       </div>
       ${locked ? `<div style="display:flex;align-items:center;gap:3px">
           ${MARK.star(P.sunshineBright, 11)}
-          <span style="${type('parentFootnote', { color: P.sand600, weight: 'semibold' })};font-size:11px">${cost}</span>
+          <span style="${type('parentFootnote', { color: P.sand600, weight: 'semibold' })}">${cost}</span>
         </div>` : `<div style="height:14px"></div>`}
     </div>`;
 
@@ -92,14 +92,13 @@ function hopsPond(appearance = 'light') {
           </div>
           <div style="display:flex;align-items:center;gap:7px;padding:4px 16px 0">
             ${MARK.star(P.sunshineBright, 14)}
-            <span style="${type('parentCallout', { color: P.sand600 })};font-size:14px">3 more stars and a dragonfly hops in!</span>
+            <span style="${type('parentCallout', { color: P.sand600 })}">3 more stars and a dragonfly hops in!</span>
           </div>
-          <div style="display:flex;gap:9px;padding:11px 16px 0;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;padding:11px 16px 0">
             ${tile(THUMB.lilyPad)}
             ${tile(THUMB.fish)}
             ${tile(THUMB.butterfly)}
             ${tile(THUMB.flowerY)}
-            ${tile(THUMB.lilyFlower)}
             ${tile(lockedGlyph, { locked: true, cost: 3 })}
           </div>
         </div>

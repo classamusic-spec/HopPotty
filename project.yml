@@ -285,12 +285,25 @@ targets:
   #  2. It gets HopPottyDesignTokens as well as HopPottyCore. Both are
   #     platform-agnostic Swift packages with no UI framework in them, so this
   #     buys the real palette without pulling the app's SwiftUI design system
-  #     into a memory-limited process. The frog is redrawn simply rather than
-  #     shared — see the note at the top of HopWidgetFace.swift.
+  #     into a memory-limited process.
+  #
+  #     Hop himself comes across the same boundary, as data rather than as a
+  #     view: Scripts/widget-face.js lifts his head out of the shipped pose art
+  #     and emits it as path data into HopWidgetFaceArt.swift, so the widget
+  #     draws the real mascot with no design system and no resource bundle.
+  #     It is the arrangement the splash screen's logo already uses
+  #     (Scripts/logo-art.js -> HopLogoArtwork.swift). See the note at the top
+  #     of HopWidgetFace.swift.
   #
   #  3. Its Info.plist declares NO principal class. A WidgetKit extension is
   #     entered through @main on a WidgetBundle. Scripts/verify-config.sh checks
   #     for the ABSENCE of one here, and for its presence in the other three.
+  #
+  #  4. Its sources are the whole directory, not a file list — which is how the
+  #     generated mascot becomes a member of the target with no line of its own
+  #     below. Scripts/verify-config.sh checks that: that the directory is still
+  #     taken whole, that no exclude has started matching Swift, and that the
+  #     generated head is still current with Art/character.
   # ---------------------------------------------------------------------------
   HopPottyWidgets:
     type: app-extension

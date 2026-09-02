@@ -301,6 +301,86 @@ if grep -q '<key>NSSupportsLiveActivities</key>' "$WIDGET_PLIST" 2>/dev/null; th
 fi
 
 # ---------------------------------------------------------------------------
+section "The mascot the widget draws"
+# ---------------------------------------------------------------------------
+#
+# The widget target has neither the design system nor a resource bundle, so it
+# cannot call HopCharacterView and cannot load Art/character/hop-face.svg. Hop's
+# head is carried across instead, as path data generated from that same art by
+# Scripts/widget-face.js — the arrangement the splash screen's logo already uses.
+#
+# Two things about that are invisible at build time and wrong at runtime, which
+# is what this section is for: the generated file being absent from the target,
+# and the generated file being older than the drawing it came from.
+
+FACE_ART=$WIDGET_DIR/HopWidgetFaceArt.swift
+FACE_VIEW=$WIDGET_DIR/HopWidgetFace.swift
+FACE_GENERATOR=Scripts/widget-face.js
+FACE_SOURCES="hop-idle.svg hop-wave.svg hop-jump.svg hop-cheer.svg hop-sleep.svg"
+
+# The first 16 hex digits of the sha256 of a file list, on either a Linux or a
+# macOS toolchain. Nothing else in this script needs a hash; if a third one is
+# ever wanted, this is the helper to move up top.
+sha_prefix () {
+    if command -v sha256sum >/dev/null 2>&1; then
+        cat "$@" | sha256sum | cut -c1-16
+    elif command -v shasum >/dev/null 2>&1; then
+        cat "$@" | shasum -a 256 | cut -c1-16
+    else
+        echo ""
+    fi
+}
+
+if [ -f "$FACE_ART" ] && [ -f "$FACE_VIEW" ]; then
+    # Membership. The widget target takes the whole directory rather than a file
+    # list, which is why the generated file needs no line of its own in
+    # project.yml — and is also why that has to be checked rather than assumed:
+    # one `excludes:` entry matching Swift and the mascot silently stops being
+    # compiled while everything else still builds.
+    if grep -q "^      - path: $WIDGET_DIR$" project.yml; then
+        # `\%…%` rather than `/…/` for the sed addresses: the path has slashes in
+        # it, and the range runs from this target's directory entry to the next
+        # `- path:` line, which is where its `excludes:` end.
+        if sed -n "\%^      - path: $WIDGET_DIR\$%,\%^      - path: %p" project.yml \
+            | grep -qE '^ +- "[^"]*\.swift"'; then
+            fail "project.yml excludes a Swift file from $WIDGET_DIR — $(basename "$FACE_ART") may not be a member of the target"
+        else
+            pass "$(basename "$FACE_ART") is a member of HopPottyWidgets (the target takes the directory)"
+        fi
+    else
+        fail "project.yml does not give HopPottyWidgets the whole $WIDGET_DIR directory — the generated mascot would not be compiled"
+    fi
+
+    if grep -q 'HopWidgetFaceArt' "$FACE_VIEW"; then
+        pass "HopWidgetFace.swift draws the generated art"
+    else
+        fail "HopWidgetFace.swift no longer references HopWidgetFaceArt — is the widget still drawing the real mascot?"
+    fi
+
+    # Freshness. Regenerating the character art without re-running the generator
+    # leaves the widget showing the previous mascot: nothing fails to build, and
+    # nobody sees it until they put the widget on a home screen. A warning
+    # rather than a failure — it is one command to fix, and it is cosmetic where
+    # everything else in this file is not.
+    RECORDED="$(sed -n 's|^// source-digest: \([0-9a-f]*\).*|\1|p' "$FACE_ART" | head -1)"
+    # shellcheck disable=SC2086 # the file list is deliberately word-split
+    ACTUAL="$(cd Art/character 2>/dev/null && sha_prefix $FACE_SOURCES 2>/dev/null || echo "")"
+    if [ -z "$RECORDED" ]; then
+        fail "$FACE_ART has no source-digest line — it was not written by $FACE_GENERATOR"
+    elif [ -z "$ACTUAL" ]; then
+        warn "no sha256 tool (or no Art/character) — skipped the mascot freshness check"
+    elif [ "$RECORDED" = "$ACTUAL" ]; then
+        pass "the widget's mascot is current with Art/character (digest $RECORDED)"
+    else
+        warn "Art/character has changed since the widget's mascot was generated ($RECORDED, now $ACTUAL) — run: node $FACE_GENERATOR"
+    fi
+elif [ -f "$FACE_VIEW" ]; then
+    fail "$FACE_ART is missing — $FACE_VIEW draws from it. Run: node $FACE_GENERATOR"
+else
+    warn "$FACE_VIEW not found — skipping the mascot checks"
+fi
+
+# ---------------------------------------------------------------------------
 section "Developer-only sources are guarded"
 # ---------------------------------------------------------------------------
 #

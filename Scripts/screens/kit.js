@@ -35,7 +35,7 @@ function segmented(col, appearance, items, activeIndex) {
       const on = i === activeIndex;
       return `<div style="flex:1;height:30px;border-radius:9px;display:grid;place-items:center;
         ${on ? `background:${col.surface};box-shadow:${elevation(appearance, 'resting')};` : ''}
-        ${type('parentCallout', { color: on ? col.textPrimary : col.textSecondary, weight: on ? 'semibold' : 'medium' })};font-size:13.5px">${label}</div>`;
+        ${type('parentCallout', { color: on ? col.textPrimary : col.textSecondary, weight: on ? 'semibold' : 'medium' })};">${label}</div>`;
     }).join('')}
   </div>`;
 }
@@ -66,7 +66,7 @@ function listRow(col, { icon, label, value, sub, accessory, chevron = false, las
     ${icon || ''}
     <div style="flex:1;min-width:0">
       <div style="${type('parentBody', { color: labelColor || col.textPrimary })};font-size:16px">${label}</div>
-      ${sub ? `<div style="${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;margin-top:1px">${sub}</div>` : ''}
+      ${sub ? `<div style="${type('parentCaption', { color: col.textSecondary })};margin-top:1px">${sub}</div>` : ''}
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex:0 0 auto;max-width:56%">${acc}</div>
   </div>`;
@@ -75,11 +75,11 @@ function listRow(col, { icon, label, value, sub, accessory, chevron = false, las
 /** A grouped-list section: optional uppercase header, a card of rows, a footer. */
 function listGroup(col, appearance, { header, rows, footer }) {
   return `<div style="flex:0 0 auto">
-    ${header ? `<div style="${type('parentFootnote', { color: col.textTertiary, weight: 'semibold' })};
-      font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;padding:0 16px 6px">${header}</div>` : ''}
+    ${header ? `<div style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};
+      letter-spacing:.5px;text-transform:uppercase;padding:0 16px 6px">${header}</div>` : ''}
     <div style="background:${col.surface};border-radius:${T.radius.l}px;overflow:hidden;
       box-shadow:${elevation(appearance, 'resting')}">${rows.join('')}</div>
-    ${footer ? `<div style="${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;
+    ${footer ? `<div style="${type('parentCaption', { color: col.textSecondary })};
       padding:7px 16px 0;line-height:1.35">${footer}</div>` : ''}
   </div>`;
 }
@@ -207,8 +207,8 @@ function sparkline(values, { w = 300, h = 60, stroke, fill, dot = true, pad = 6 
 
 /** The hedge that sits on every observation HopPotty makes. */
 function patternLabel(col) {
-  return `<div style="display:inline-block;padding:3px 9px;border-radius:8px;background:${col.surfaceSunken};
-    ${type('parentFootnote', { color: col.textTertiary, weight: 'medium' })};font-size:10.5px">Pattern, not medical advice</div>`;
+  return `<div style="display:inline-block;padding:4px 9px;border-radius:8px;background:${col.surfaceSunken};
+    ${type('parentFootnote', { color: col.textSecondary, weight: 'medium' })}">Pattern, not medical advice</div>`;
 }
 
 // ---------------------------------------------------------------------------

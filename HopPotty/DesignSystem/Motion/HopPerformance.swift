@@ -15,9 +15,10 @@ import HopPottyDesignTokens
 // up first (``HopPose/route(to:)``).
 //
 // So one type owns all of it. ``HopPerformer`` publishes a single
-// ``HopFrame`` — pose, expression, and the body's offset, squash, lean and
-// opacity — plus the spring that carries Hop *into* that frame. The view renders
-// the frame and nothing else. Two consequences fall out for free:
+// ``HopFrame`` — pose, expression, the parts of the body still catching up with
+// them (``HopSecondary``), and the body's offset, squash, lean and opacity —
+// plus the spring that carries Hop *into* that frame. The view renders the
+// frame and nothing else. Two consequences fall out for free:
 //
 // * **Interrupt safety.** Every frame is a complete, valid configuration. An
 //   act that is cancelled mid-beat does not leave a half-applied transform
@@ -74,21 +75,65 @@ extension HopPoseGeometry {
         eyes.gaze.height += expression.gaze.height
         tilt += expression.tilt
 
-        if expression.squint > 0 {
-            let happy = HopEyeMood.happy.closedArcDirection
-            eyes.closedArcDirection += (happy - eyes.closedArcDirection) * expression.squint
-            close(eyesBy: expression.squint)
-        }
+        close(eyesBy: expression.squint, toward: .happy)
         if let open = expression.mouthOpen {
             mouthOpenScale = open
         }
     }
 
-    /// Closes the eyes by `amount` of whatever they still have open.
-    mutating func close(eyesBy amount: Double) {
+    /// Closes the eyes by `amount` of whatever they still have open, bending the
+    /// shut-eye line toward `mood` by exactly as much as this closure
+    /// contributed.
+    ///
+    /// Weighting the bend by the closure it actually caused is what keeps two
+    /// sources of eye-closing from fighting. A resting blink lands on the
+    /// resting arc; the same blink arriving on top of a delighted squeeze barely
+    /// moves the arc at all, because there is almost no eye left for it to
+    /// close and so almost none of the line is its to claim.
+    mutating func close(eyesBy amount: Double, toward mood: HopEyeMood) {
         guard amount > 0 else { return }
-        eyes.blink = min(1, eyes.blink + amount * (1 - eyes.blink))
+        let closed = amount * (1 - eyes.blink)
+        guard closed > 0 else { return }
+        eyes.closedArcDirection += (mood.closedArcDirection - eyes.closedArcDirection) * closed
+        eyes.blink = min(1, eyes.blink + closed)
     }
+
+    /// Folds in the parts of the body that arrive after the rest of it.
+    mutating func apply(_ secondary: HopSecondary) {
+        guard secondary != .settled else { return }
+        armL.x += secondary.hands.width
+        armL.y += secondary.hands.height
+        armR.x += secondary.hands.width
+        armR.y += secondary.hands.height
+        bellyScale = max(0.1, bellyScale + secondary.belly)
+    }
+}
+
+// MARK: - Secondary motion
+
+/// The parts of Hop that arrive a beat after the rest of him.
+///
+/// A body that moves as one piece reads as a picture being transformed. What
+/// separates *animated* from *moved* is that the soft, heavy and far-from-centre
+/// parts lag the main action and then overshoot it: hands that have not dropped
+/// yet when the body crouches, and that swing down past the pose when it lands;
+/// a belly that spreads a moment after the squash that spread it.
+///
+/// Expressed as an offset from the pose rather than as a pose of its own,
+/// because it has to compose with *any* pose — there is no authored drawing of
+/// "cheering with the arms slightly behind", and there should not be.
+///
+/// Zeroed under Reduce Motion by ``HopFrame/resolved(reduceMotion:)`` along with
+/// every other travelling quantity: a hand arriving late is still a hand
+/// travelling.
+struct HopSecondary: Equatable, Sendable {
+    /// Where the hands are, relative to where the pose puts them, in the
+    /// 150 × 160 reference units. Positive `height` is downward.
+    var hands: CGSize = .zero
+    /// Added to the pose's belly scale. Positive is spread.
+    var belly: Double = 0
+
+    static let settled = HopSecondary()
 }
 
 // MARK: - Gaze
@@ -127,6 +172,35 @@ public struct HopGaze: Equatable, Sendable {
     /// Down at his own hands — washing, wiping, holding something.
     public static var down: HopGaze { HopGaze(x: 0.5, y: 1.1) }
 
+    // MARK: How a look arrives
+
+    /// How the eyes travel to a new target.
+    ///
+    /// Flat, and it has to be. Bounce on a pupil is an eye that overshoots the
+    /// thing it is looking at and comes back, which reads as a wobble rather
+    /// than as attention — and before this existed a gaze change inherited
+    /// whichever beat's spring happened to be current, so pointing Hop at a
+    /// button just after he landed carried the settle's 0.46 bounce.
+    ///
+    /// TODO: belongs in `HopMotion` as `hopGaze`; defined here because this
+    /// layer does not own HopPottyKit.
+    static let eyeSpring = HopSpring(duration: 0.24, bounce: 0)
+
+    /// How the head follows. Slower than the eyes, and flat for the same reason.
+    ///
+    /// TODO: belongs in `HopMotion` as `hopGazeFollow`.
+    static let headSpring = HopSpring(duration: 0.42, bounce: 0)
+
+    /// How long the head waits before starting after the eyes.
+    ///
+    /// Eyes reach a target first and the head turns to catch up; a head and a
+    /// pair of eyes that set off together read as a doll being turned. Under a
+    /// tenth of a second, which is small enough that nobody will see the delay
+    /// and large enough that everybody will see the difference.
+    ///
+    /// TODO: belongs in `HopMotion` as `hopGazeFollowDelay`.
+    static let headFollowDelay: Double = 0.09
+
     /// Reference units of eye travel per unit of frame, and the ceiling on it.
     private static let reach: CGFloat = 7
     private static let ceiling: CGFloat = 4.5
@@ -160,6 +234,8 @@ public struct HopGaze: Equatable, Sendable {
 struct HopFrame: Equatable, Sendable {
     var pose: HopPose
     var expression: HopExpression = .neutral
+    /// The parts of the body that have not caught up with the pose yet.
+    var secondary: HopSecondary = .settled
     /// 0…1 of the jump height, upward.
     var elevation: CGFloat = 0
     /// Sideways travel as a fraction of Hop's own height. Positive is the
@@ -199,8 +275,19 @@ struct HopFrame: Equatable, Sendable {
         flat.drift = 0
         flat.squash = 1
         flat.lean = 0
+        // A hand arriving a beat late is still a hand travelling, and it is the
+        // one that travels furthest on screen.
+        flat.secondary = .settled
         return flat
     }
+
+    /// Whether Hop is somewhere the child cannot see him.
+    ///
+    /// True only where an act has deliberately put him there — off-stage after
+    /// an exit, or waiting in the wings before an entrance. It is what lets the
+    /// *next* act put him back on his mark without the child watching him slide
+    /// across the screen to reach it.
+    var isOffStage: Bool { opacity < 1 }
 }
 
 // MARK: - Acts
@@ -226,6 +313,18 @@ public enum HopBeatKind: Equatable, Sendable {
     case entrance(HopJumpDrift)
     /// Hop leaves, and stays gone.
     case exit(HopJumpDrift)
+
+    /// Whether this beat's *first* frame has Hop off-stage and invisible.
+    ///
+    /// ``HopCharacterView`` needs the answer before the performer has run, and
+    /// it can only run one render after the view first appears. Without this,
+    /// the single frame in between draws Hop standing on his mark — and the
+    /// entrance then begins by sliding that visible drawing off the side of the
+    /// screen before hopping it back on.
+    var opensOffStage: Bool {
+        if case .entrance = self { return true }
+        return false
+    }
 }
 
 /// What Hop is doing: a pose to rest in, and a beat to play on the way there.
@@ -318,13 +417,12 @@ public struct HopAct: Equatable, Sendable {
         case .hop(let jump):
             return jump.duration(reduceMotion: reduceMotion)
         case .entrance, .exit:
+            // One hop's worth of beats, because that is literally what it is:
+            // the same crouch, rise, hang, fall and settle, with the ground
+            // moving under him.
             return reduceMotion
                 ? HopMotion.reducedMotionFade * 2
-                : HopMotion.jumpCrouch.duration
-                    + HopMotion.jumpRise.duration
-                    + HopMotion.jumpHang
-                    + HopMotion.jumpFall.duration
-                    + HopMotion.jumpSettle.duration
+                : HopJump.duration(hops: 1)
         }
     }
 }
@@ -345,15 +443,40 @@ final class HopPerformer {
     /// shift can stand down rather than fight the squash.
     private(set) var suspendsAmbient = false
 
+    /// Whether the performer has published a frame of its own yet.
+    ///
+    /// Read by the view so that an act which opens off-stage is not preceded by
+    /// one rendered frame of Hop standing on his mark.
+    private(set) var hasStarted = false
+
     /// Bumped by every run. A run whose generation is stale has been replaced
     /// and must not write another frame — which is what stops a cancelled act
     /// from clobbering the one that replaced it.
     private var generation = 0
-    private var hasStarted = false
+
+    /// How far off the ground counts as *in the air* for the purpose of
+    /// interrupting.
+    ///
+    /// A hop is at 1 and the delight's happy bob is at 0.18. Dropping the bob
+    /// without a landing beat costs nothing — it is eleven points at the size
+    /// Hop is usually drawn — while dropping a whole hop that way is a character
+    /// with no weight in him.
+    private static let airborne: CGFloat = 0.5
 
     /// The mouth's own beat while speaking. Short and flat: a syllable is not
     /// a bounce, and any overshoot here reads as chewing.
+    ///
+    /// TODO: belongs in `HopMotion` as `hopSyllable`; defined here because this
+    /// layer does not own HopPottyKit.
     private static let syllable = HopSpring(duration: 0.12, bounce: 0)
+
+    /// How far the head turns on a phrase, in degrees, and how many syllables a
+    /// phrase is. Under a degree: the point is that the head is *not* on the
+    /// syllable clock, not that it is doing something big.
+    ///
+    /// TODO: both belong in `HopMotion`; defined here for the same reason.
+    private static let speechTilt: Double = 0.7
+    private static let syllablesPerPhrase = 5
 
     /// Plays `act`. Safe to call again at any moment, including mid-beat.
     func perform(_ act: HopAct, reduceMotion: Bool) async {
@@ -365,15 +488,76 @@ final class HopPerformer {
             // First appearance. Hop is simply already here — routing in from a
             // pose he was never in would make every screen animate on arrival,
             // which is a different design decision and not this one's to make.
+            //
+            // The frame is published *before* `hasStarted`, and with no `await`
+            // between them, so there is no instant at which the view can see
+            // "the performer has started" alongside a frame it did not write.
+            frame = openingFrame(for: act)
             hasStarted = true
-            frame = HopFrame.rest(act.pose, spring: act.pose.arrivalMotion.spring)
             await play(act, reduceMotion: reduceMotion, generation: mine)
             return
         }
 
-        await travel(to: act.pose, reduceMotion: reduceMotion, generation: mine)
-        guard isCurrent(mine) else { return }
+        // An act that opens off-stage says where it starts. There is nothing to
+        // route from, and routing to the mark first would put Hop on it only to
+        // slide him straight back off.
+        if !act.beat.opensOffStage {
+            await travel(to: act.pose, reduceMotion: reduceMotion, generation: mine)
+            guard isCurrent(mine) else { return }
+        }
         await play(act, reduceMotion: reduceMotion, generation: mine)
+    }
+
+    /// The frame an act begins on — the first thing the view will ever draw.
+    ///
+    /// Everything rests on its mark except an entrance, which begins in the
+    /// wings. Getting that one right at *frame zero* is the difference between
+    /// Hop hopping on and Hop appearing, sliding off and hopping back on.
+    private func openingFrame(for act: HopAct) -> HopFrame {
+        if case .entrance(let drift) = act.beat {
+            return HopPerformer.wings(side: HopPerformer.side(of: drift))
+        }
+        return HopFrame.rest(act.pose, spring: act.pose.arrivalMotion.spring)
+    }
+
+    /// Which side of the stage a drift belongs to.
+    ///
+    /// `inPlace` has no side, and is treated as the right. The entrance, the
+    /// exit and the rest frame an exit leaves behind all ask this one function,
+    /// because an exit that leaves by one side and rests off the other would put
+    /// Hop back on screen the moment anything re-read the frame.
+    private static func side(of drift: HopJumpDrift) -> CGFloat {
+        drift.apexTravel < 0 ? -1 : 1
+    }
+
+    /// Hop waiting in the wings: off-stage, invisible, and already crouched, so
+    /// the first thing the child sees of him is a body pushing off rather than a
+    /// drawing appearing.
+    private static func wings(side: CGFloat) -> HopFrame {
+        HopFrame(
+            pose: .land,
+            secondary: HopJumpBeat.crouch.secondary,
+            drift: side * HopFrame.offStageDrift,
+            squash: HopMotion.jumpSquash,
+            opacity: 0,
+            spring: HopMotion.jumpCrouch
+        )
+    }
+
+    /// One jump beat, as a complete frame.
+    private static func beatFrame(
+        for beat: HopJumpBeat,
+        drift: HopJumpDrift,
+        restingOn rest: HopPose
+    ) -> HopFrame {
+        HopFrame(
+            pose: beat.pose(restingOn: rest),
+            secondary: beat.secondary,
+            elevation: beat.elevation,
+            drift: drift.apexTravel * beat.driftFactor,
+            squash: beat.squash,
+            spring: beat.spring
+        )
     }
 
     // MARK: Landing cleanly
@@ -389,7 +573,7 @@ final class HopPerformer {
             // frame is complete, Hop is simply not on screen.
             frame = HopFrame(
                 pose: act.pose,
-                drift: drift.apexTravel < 0 ? -HopFrame.offStageDrift : HopFrame.offStageDrift,
+                drift: HopPerformer.side(of: drift) * HopFrame.offStageDrift,
                 opacity: 0,
                 spring: HopMotion.jumpFall
             )
@@ -415,7 +599,46 @@ final class HopPerformer {
     /// Under Reduce Motion the route collapses: the intermediate poses exist to
     /// make a change *readable as movement*, and there is no movement to read.
     private func travel(to pose: HopPose, reduceMotion: Bool, generation mine: Int) async {
-        let route = reduceMotion ? [pose] : frame.pose.route(to: pose)
+        // Two states the previous act can have left Hop in that no route knows
+        // how to start from. Both are read off the *resolved* frame, so under
+        // Reduce Motion — where nothing ever leaves the ground — neither can
+        // fire spuriously.
+        let standing = frame.resolved(reduceMotion: reduceMotion)
+
+        if standing.elevation > HopPerformer.airborne {
+            // Interrupted mid-hop. Whatever the new act is, he comes down
+            // through the landing first: a character who floats to the floor in
+            // his new pose has no weight, and it costs one beat to give him some.
+            frame = HopFrame(
+                pose: .land,
+                secondary: HopJumpBeat.impact.secondary,
+                squash: HopMotion.jumpSquash,
+                spring: HopMotion.jumpFall
+            )
+            await hold(HopMotion.jumpFall.duration(reduceMotion: reduceMotion))
+            guard isCurrent(mine) else { return }
+        }
+
+        if standing.isOffStage {
+            // An exit left him in the wings. Put him back on his mark while he
+            // is still invisible and then fade him in, rather than sliding a
+            // visible drawing back across the screen to reach it.
+            frame = HopFrame(pose: pose, opacity: 0, spring: HopMotion.jumpCrouch)
+            await hold(HopMotion.jumpCrouch.duration(reduceMotion: reduceMotion))
+            guard isCurrent(mine) else { return }
+
+            let spring = pose.arrivalMotion.spring
+            frame = HopFrame.rest(pose, spring: spring)
+            await hold(spring.duration(reduceMotion: reduceMotion))
+            return
+        }
+
+        // Under Reduce Motion the route collapses to the destination — but to
+        // *nothing at all* when Hop is already in the pose, or every act would
+        // start with a cross-fade from a drawing to itself.
+        let route: [HopPose] = reduceMotion
+            ? (frame.pose == pose ? [] : [pose])
+            : frame.pose.route(to: pose)
 
         guard !route.isEmpty else {
             // Already in the pose — but possibly still mid-transform from a beat
@@ -468,10 +691,13 @@ final class HopPerformer {
         await hold(HopMotion.reducedMotionFade)
     }
 
-    /// Crouch, rise, hang, land — once, or a few times in a burst.
+    /// Crouch, rise, hang, fall, impact — once, or a few times in a burst.
     ///
-    /// Hops inside a burst do not settle between them; only the last one does.
-    /// That is the difference between one happy burst and a queue of jumps.
+    /// Hops inside a burst do not settle between them, and do not crouch again
+    /// either: the impact of one hop *is* the crouch of the next. That is the
+    /// difference between one happy burst and a queue of jumps, and it is also
+    /// the difference between a burst and a burst with a quarter of a second of
+    /// stillness in the middle of it.
     private func playHop(
         _ jump: HopJump,
         restingOn rest: HopPose,
@@ -488,25 +714,30 @@ final class HopPerformer {
                 await hold(HopMotion.jumpRepeatGap)
                 guard isCurrent(mine) else { return }
             }
-            for beat in [HopJumpBeat.crouch, .airborne, .landing] {
+            for beat in (index == 0 ? HopJumpBeat.opening : HopJumpBeat.repeated) {
                 guard isCurrent(mine) else { return }
-                frame = HopFrame(
-                    pose: beat.pose(restingOn: rest),
-                    elevation: beat.elevation,
-                    drift: jump.drift.apexTravel * beat.elevation,
-                    squash: beat.squash,
-                    spring: beat.spring
-                )
+                frame = HopPerformer.beatFrame(for: beat, drift: jump.drift, restingOn: rest)
                 await hold(beat.hold)
             }
         }
 
         guard isCurrent(mine) else { return }
-        frame = HopFrame.rest(rest, spring: HopMotion.jumpSettle)
-        await hold(HopMotion.jumpSettle.duration)
+        frame = HopFrame.rest(rest, spring: HopJumpBeat.grounded.spring)
+        await hold(HopJumpBeat.grounded.hold)
     }
 
     /// Wind up away from the wave, bring the arm up, rock twice, settle.
+    ///
+    /// The rocks move the *hand* as well as the body, and against it: a wave in
+    /// which only the torso rotates is a sway, and a hand that swings with the
+    /// body it is attached to has no wrist. The offset is small — the arm is
+    /// drawn from a fixed shoulder to the hand, so a few reference units at the
+    /// hand swings the whole forearm through several degrees.
+    ///
+    /// It moves the hand *vertically*. The raised hand in `wave` is already
+    /// close to the right edge of the reference box, and pushing it further out
+    /// would take the fingertips off the canvas; raising and dropping it rotates
+    /// the arm by just as much with the whole 150-unit height to do it in.
     private func playWave(restingOn rest: HopPose, reduceMotion: Bool, generation mine: Int) async {
         guard !reduceMotion else {
             await crossFade(to: .wave, restingOn: rest, generation: mine)
@@ -514,18 +745,37 @@ final class HopPerformer {
         }
 
         // Anticipation: away from the movement, and down onto the feet.
-        frame = HopFrame(pose: rest, squash: 0.97, lean: 1.6, spring: HopMotion.jumpCrouch)
+        frame = HopFrame(
+            pose: rest,
+            secondary: HopSecondary(hands: CGSize(width: 0, height: 4)),
+            squash: 0.97,
+            lean: 1.6,
+            spring: HopMotion.jumpCrouch
+        )
         await hold(HopMotion.jumpCrouch.duration)
         guard isCurrent(mine) else { return }
 
-        frame = HopFrame(pose: .wave, lean: -2.2, spring: HopAnimationToken.childTap.spring)
+        // The arm arrives behind the body, which is what an arm thrown up does.
+        frame = HopFrame(
+            pose: .wave,
+            secondary: HopSecondary(hands: CGSize(width: 0, height: 12)),
+            lean: -2.2,
+            spring: HopAnimationToken.childTap.spring
+        )
         await hold(HopAnimationToken.childTap.spring.duration)
 
         // Two rocks, borrowing the fall beat: short, flat, and the same length
-        // each way, which is what stops a wave reading as a wobble.
+        // each way, which is what stops a wave reading as a wobble. The leans
+        // decay and so does the hand's swing, because a wave that keeps the same
+        // amplitude is a metronome.
         for lean in [1.4, -1.8] {
             guard isCurrent(mine) else { return }
-            frame = HopFrame(pose: .wave, lean: lean, spring: HopMotion.jumpFall)
+            frame = HopFrame(
+                pose: .wave,
+                secondary: HopSecondary(hands: CGSize(width: 0, height: -lean * 2.6)),
+                lean: lean,
+                spring: HopMotion.jumpFall
+            )
             await hold(HopMotion.jumpFall.duration)
         }
 
@@ -550,6 +800,7 @@ final class HopPerformer {
         frame = HopFrame(
             pose: rest,
             expression: HopExpression(squint: 0.3),
+            secondary: HopSecondary(hands: CGSize(width: 0, height: -4), belly: 0.04),
             squash: 0.95,
             spring: HopMotion.jumpCrouch
         )
@@ -559,6 +810,7 @@ final class HopPerformer {
         frame = HopFrame(
             pose: rest,
             expression: HopExpression(squint: 0.95),
+            secondary: HopSecondary(hands: CGSize(width: 0, height: 5), belly: -0.03),
             elevation: 0.18,
             squash: 1.04,
             spring: HopAnimationToken.childTap.spring
@@ -567,10 +819,12 @@ final class HopPerformer {
         guard isCurrent(mine) else { return }
 
         // The squint releases more slowly than it arrived, which is the whole
-        // difference between a smile and a twitch.
+        // difference between a smile and a twitch. The hands come down through
+        // where the pose puts them rather than stopping dead on it.
         frame = HopFrame(
             pose: rest,
             expression: HopExpression(squint: 0.25),
+            secondary: HopSecondary(hands: CGSize(width: 0, height: -2)),
             spring: HopMotion.jumpSettle
         )
         await hold(HopMotion.jumpSettle.duration)
@@ -582,6 +836,13 @@ final class HopPerformer {
     /// caller drives this from however long the caption is on screen. The shapes
     /// are held for a jittered slice rather than a fixed one: speech is not a
     /// metronome, and a mouth on a fixed beat reads as a machine.
+    ///
+    /// Two frequencies, and they are deliberately far apart. The **mouth** moves
+    /// at syllable rate, and by a varying amount rather than between two fixed
+    /// positions, because a jaw that alternates between exactly two openings is
+    /// a puppet's hinge. The **head** moves at roughly phrase rate — once every
+    /// few syllables — because that is what heads do. Nodding on every syllable
+    /// is not liveliness, it is a vibration.
     private func playSpeech(
         for seconds: TimeInterval?,
         restingOn rest: HopPose,
@@ -597,18 +858,26 @@ final class HopPerformer {
 
         let deadline = seconds.map { ContinuousClock.now.advanced(by: .seconds($0)) }
         var isOpen = true
+        var spoken = 0
+        var tilt = -HopPerformer.speechTilt
         while isCurrent(mine) {
             if let deadline, ContinuousClock.now >= deadline { return }
+            if spoken % HopPerformer.syllablesPerPhrase == 0 {
+                tilt = -tilt
+            }
             frame = HopFrame(
                 pose: rest,
                 expression: HopExpression(
-                    mouthOpen: isOpen ? 0.88 : 0.34,
-                    tilt: isOpen ? -0.5 : 0.4
+                    mouthOpen: isOpen
+                        ? Double.random(in: 0.72...0.95)
+                        : Double.random(in: 0.22...0.45),
+                    tilt: tilt
                 ),
                 spring: HopPerformer.syllable
             )
             await hold(Double.random(in: 0.11...0.19))
             isOpen.toggle()
+            spoken += 1
         }
     }
 
@@ -630,46 +899,48 @@ final class HopPerformer {
         reduceMotion: Bool,
         generation mine: Int
     ) async {
-        let side: CGFloat = drift.apexTravel > 0 ? 1 : -1
+        let side = HopPerformer.side(of: drift)
 
         guard !reduceMotion else {
-            frame = HopFrame(pose: rest, opacity: 0, spring: HopMotion.jumpCrouch)
-            await hold(HopMotion.reducedMotionFade)
-            guard isCurrent(mine) else { return }
+            // He was never here: the opening frame already has him at zero
+            // opacity on his mark, so this is a fade in and nothing else. It
+            // must not begin by fading him *out*, which is what setting an
+            // invisible frame from a visible one would do.
             frame = HopFrame.rest(rest, spring: HopMotion.jumpRise)
-            await hold(HopMotion.reducedMotionFade)
+            await hold(HopMotion.reducedMotionFade * 2)
             return
         }
 
-        // Off-stage. Held for the crouch beat, which is both the anticipation
-        // and the frame that guarantees the fade has somewhere to start.
-        frame = HopFrame(
-            pose: .land,
-            elevation: 0,
-            drift: side * HopFrame.offStageDrift,
-            squash: HopMotion.jumpSquash,
-            opacity: 0,
-            spring: HopMotion.jumpCrouch
-        )
-        await hold(HopMotion.jumpCrouch.duration)
+        // In the wings, crouched. Held for the crouch beat, which is both the
+        // anticipation and the frame that guarantees the fade has somewhere to
+        // start. Usually already the current frame — ``openingFrame(for:)`` put
+        // him here before the view drew anything — in which case nothing moves.
+        frame = HopPerformer.wings(side: side)
+        await hold(HopJumpBeat.crouch.hold)
         guard isCurrent(mine) else { return }
 
-        frame = HopFrame(
-            pose: .jump,
-            elevation: 1,
-            drift: side * HopFrame.offStageDrift * 0.45,
-            squash: HopMotion.jumpStretch,
-            spring: HopMotion.jumpRise
-        )
-        await hold(HopMotion.jumpRise.duration + HopMotion.jumpHang)
-        guard isCurrent(mine) else { return }
+        // The same air as any hop, with the ground moving under him. Most of
+        // the distance is covered at the top of the arc, because that is where a
+        // hop actually covers ground; the fall is nearly vertical onto the mark.
+        let arc: [(beat: HopJumpBeat, distance: CGFloat)] = [
+            (.rise, 0.44), (.hang, 0.26), (.fall, 0.08), (.impact, 0),
+        ]
+        for step in arc {
+            guard isCurrent(mine) else { return }
+            frame = HopFrame(
+                pose: step.beat.pose(restingOn: rest),
+                secondary: step.beat.secondary,
+                elevation: step.beat.elevation,
+                drift: side * HopFrame.offStageDrift * step.distance,
+                squash: step.beat.squash,
+                spring: step.beat.spring
+            )
+            await hold(step.beat.hold)
+        }
 
-        frame = HopFrame(pose: .land, squash: HopMotion.jumpSquash, spring: HopMotion.jumpFall)
-        await hold(HopMotion.jumpFall.duration)
         guard isCurrent(mine) else { return }
-
-        frame = HopFrame.rest(rest, spring: HopMotion.jumpSettle)
-        await hold(HopMotion.jumpSettle.duration)
+        frame = HopFrame.rest(rest, spring: HopJumpBeat.grounded.spring)
+        await hold(HopJumpBeat.grounded.hold)
     }
 
     /// Hop leaves: crouch, one hop out, gone. The last frame is off-stage and
@@ -680,7 +951,7 @@ final class HopPerformer {
         reduceMotion: Bool,
         generation mine: Int
     ) async {
-        let side: CGFloat = drift.apexTravel < 0 ? -1 : 1
+        let side = HopPerformer.side(of: drift)
 
         guard !reduceMotion else {
             frame = HopFrame(pose: rest, opacity: 0, spring: HopMotion.jumpFall)
@@ -688,27 +959,33 @@ final class HopPerformer {
             return
         }
 
-        frame = HopFrame(pose: .land, squash: HopMotion.jumpSquash, spring: HopMotion.jumpCrouch)
-        await hold(HopMotion.jumpCrouch.duration)
-        guard isCurrent(mine) else { return }
-
-        frame = HopFrame(
-            pose: .jump,
-            elevation: 1,
-            drift: side * HopFrame.offStageDrift * 0.45,
-            squash: HopMotion.jumpStretch,
-            spring: HopMotion.jumpRise
-        )
-        await hold(HopMotion.jumpRise.duration + HopMotion.jumpHang)
-        guard isCurrent(mine) else { return }
-
         frame = HopFrame(
             pose: .land,
-            drift: side * HopFrame.offStageDrift,
+            secondary: HopJumpBeat.crouch.secondary,
             squash: HopMotion.jumpSquash,
-            opacity: 0,
-            spring: HopMotion.jumpFall
+            spring: HopJumpBeat.crouch.spring
         )
-        await hold(HopMotion.jumpFall.duration)
+        await hold(HopJumpBeat.crouch.hold)
+        guard isCurrent(mine) else { return }
+
+        // The entrance's arc, run backwards, and the fade held back until he is
+        // most of the way off: a character who dissolves at the top of his own
+        // hop has not left, he has stopped existing.
+        let arc: [(beat: HopJumpBeat, distance: CGFloat, opacity: Double)] = [
+            (.rise, 0.42, 1), (.hang, 0.66, 1), (.fall, 0.88, 0.5), (.impact, 1, 0),
+        ]
+        for step in arc {
+            guard isCurrent(mine) else { return }
+            frame = HopFrame(
+                pose: step.beat.pose(restingOn: rest),
+                secondary: step.beat.secondary,
+                elevation: step.beat.elevation,
+                drift: side * HopFrame.offStageDrift * step.distance,
+                squash: step.beat.squash,
+                opacity: step.opacity,
+                spring: step.beat.spring
+            )
+            await hold(step.beat.hold)
+        }
     }
 }

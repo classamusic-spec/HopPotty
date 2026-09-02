@@ -116,7 +116,10 @@ struct NextPauseWidgetView: View {
     private var small: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .top) {
-                HopWidgetFace(mood: state.mood, size: 40)
+                // `size` is the width of Hop's head, and a frog's head is wider
+                // than it is tall — so these numbers are larger than the square
+                // face they replaced while covering about the same area.
+                HopWidgetFace(mood: state.mood, size: 48)
                 Spacer(minLength: 0)
             }
             Spacer(minLength: 0)
@@ -145,7 +148,7 @@ struct NextPauseWidgetView: View {
 
     private var medium: some View {
         HStack(spacing: 16) {
-            HopWidgetFace(mood: state.mood, size: 64)
+            HopWidgetFace(mood: state.mood, size: 72)
             VStack(alignment: .leading, spacing: 4) {
                 Text(verbatim: state.headline)
                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
@@ -187,7 +190,7 @@ struct NextPauseWidgetView: View {
         ZStack {
             AccessoryWidgetBackground()
             VStack(spacing: 1) {
-                HopWidgetFace(mood: state.mood, size: 20, isMonochrome: true)
+                HopWidgetFace(mood: state.mood, size: 26, isMonochrome: true)
                 countdown
                     .font(.system(.caption2, design: .rounded, weight: .semibold))
                     .lineLimit(1)
@@ -202,7 +205,7 @@ struct NextPauseWidgetView: View {
 
     private var rectangular: some View {
         HStack(spacing: 8) {
-            HopWidgetFace(mood: state.mood, size: 26, isMonochrome: true)
+            HopWidgetFace(mood: state.mood, size: 30, isMonochrome: true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: state.headline)
                     .font(.system(.caption, design: .rounded, weight: .semibold))

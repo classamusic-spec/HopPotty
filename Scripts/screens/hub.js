@@ -35,7 +35,7 @@ function hopHub(appearance = 'light') {
       background:${primary ? col.brandAction : alpha('#FFFFFF', .94)};box-shadow:${elevation(appearance, primary ? 'raised' : 'resting')}">
       ${thumb(art, 88, 64, focus)}
       <span style="${type('buttonLarge', { color: primary ? col.textOnBrand : INK })};font-size:24px;flex:1">${label}</span>
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="${primary ? alpha('#FFFFFF', .85) : P.sand400}"
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="${primary ? alpha('#FFFFFF', .85) : P.sand500}"
         stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
     </div>`;
 
@@ -57,7 +57,7 @@ function hopHub(appearance = 'light') {
             ${MARK.star(P.sunshineBright, 21)}
             <span style="${type('buttonLarge', { color: P.sunshineDeep })};font-size:19px">13</span>
           </div>
-          <div style="height:36px;padding:0 14px;border-radius:18px;background:${alpha('#FFFFFF', .7)};
+          <div style="height:${T.hitTarget.parentMinimum}px;padding:0 15px;border-radius:22px;background:${alpha('#FFFFFF', .7)};
             display:flex;align-items:center;gap:6px">
             ${MARK.hand(P.sand500, 14)}
             <span style="${type('parentCallout', { color: P.sand600, weight: 'medium' })};font-size:13px">Grown-ups</span>
@@ -69,7 +69,7 @@ function hopHub(appearance = 'light') {
 
         <div style="flex:1"></div>
 
-        <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:10px">
+        <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:${T.spacing.m}px">
           ${door('Potty time', 'Art/scenes/routine-try.svg', 0.55, { primary: true })}
           ${door("Hop's Pond", 'Art/pond/pond-preview.svg', 0.6)}
           ${door('Games', 'Art/scenes/games-flySnack.svg', 0.55)}

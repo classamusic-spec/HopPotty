@@ -121,33 +121,60 @@ caregiver reads the first as a fact and the second as a prompt to open the app.
 
 ## 4. Hop, at widget size
 
-**DESIGN, and a knowing duplication.** The widget does not use
-`HopCharacterView`. It draws `HopWidgetFace`: a head, two eyes, a smile, and a
-"z" when the schedule is off.
+**DESIGN.** The widget draws the real mascot — the head from
+`Art/character/hop-{idle,wave,jump,cheer,sleep}.svg`, one file per
+`HopWidgetMood` — without using `HopCharacterView` and without bundling any art.
 
 `project.yml` gives the three Screen Time extensions four shared source files and
 `HopPottyCore`, and nothing from `HopPotty/DesignSystem`. The
 shield-configuration extension — the one other place a HopPotty extension draws
 anything — follows the same rule: it reads pre-resolved strings and colours out
-of the App Group. This widget follows that precedent rather than breaking it,
-because:
+of the App Group. This widget keeps that boundary, because:
 
 - a widget is redrawn from an archived view hierarchy, so `HopCharacterView`'s
   ambient motion, blink timer and pose animation are inert;
-- a 40-point accessory circle cannot show a character, only a face;
 - pulling the design system into a widget target means pulling the shape layer,
   the theme environment and the glyph layer into a memory-limited process to draw
   one frog at thumbnail size.
 
-What keeps the two Hops in step is the **shared palette**, not a shared view. The
-widget target depends on `HopPottyDesignTokens` — a platform-agnostic package with
-no UI framework in it — so every colour comes from `HopPalette` and no hex value
-is retyped. If Hop's green changes, both change.
+So Hop crosses the boundary as **data**. `Scripts/widget-face.js` reads the
+shipped art, takes everything from the crown ellipse onward — which in
+`Scripts/hop-art.js` is exactly the head, the face and the sleeping z's —
+resolves it to absolute coordinates and emits it into
+`Extensions/HopPottyWidgets/HopWidgetFaceArt.swift` as `M`/`L`/`C`/`Q`/`Z` path
+data. `HopWidgetFace` decodes that into `Path`s. It is the arrangement the splash
+screen's lockup already uses (`Scripts/logo-art.js` → `HopLogoArtwork.swift`),
+for the same reason: a drawing a diff can review, in a target that cannot have
+the drawing.
 
-Accessory (lock screen) families render into a single-colour vibrant layer, so
-`HopWidgetFace(isMonochrome: true)` draws from `Color.primary` and the system's
-own styles instead of the palette, and the accessory views are
-`.widgetAccentable()`.
+Nothing about it is typed by hand, and two checks keep it that way:
+
+- `node Scripts/widget-face.js --check` renders the emitted coordinates back over
+  the artwork they came from and measures the difference — every mood over its
+  own pose, and `idle` over `hop-face.svg`, which `hop-art.js` draws
+  independently from the same anatomy;
+- `Scripts/verify-config.sh` compares a digest of the five art files against the
+  one recorded in the generated header, so art regenerated without re-running the
+  generator is reported rather than shipped.
+
+Colour comes from `HopPalette`, as before: the generator matches every fill in
+the art back to a token *by value* and emits a role, and `HopWidgetFace` maps the
+role to the token. Two of the face's colours — the mid-green of the forehead
+spots and the tongue's pink — have no brand token and are carried as values, the
+same two `HopCharacterPalette` declares that way in the app.
+
+**The accessory families are the hard case.** Lock-screen widgets and the Dynamic
+Island are composited into a single-colour vibrant layer, which keeps roughly
+each colour's luminance and discards its hue. Handing that the coloured drawing
+makes Hop's dark pupils and dark mouth — the two things that make a face a face —
+the *dimmest* things on screen; what survives is a pale disc.
+`HopWidgetFace(isMonochrome: true)` therefore paints the same geometry as a
+stencil: `Color.primary` at a tone per part, inverted (the drawing's darkest
+parts are the brightest here), stepped so each feature contrasts with the one
+under it, with anything under a point across dropped and a floor under the stroke
+widths. The table is in `HopWidgetFace.swift` under `MARK: Stencil`, and
+`node Scripts/widget-face.js --sheet` renders it over a wallpaper at every size
+the widget uses — beside what the naive version would have looked like.
 
 ---
 

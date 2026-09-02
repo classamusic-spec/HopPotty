@@ -46,6 +46,26 @@ function grownUpChip(label) {
   </div>`;
 }
 
+/**
+ * "Skip this", drawn as an offer rather than an escape.
+ *
+ * The slot is the same height whether or not a step offers a skip, so the big
+ * green button lands on the same pixel on all six routine screens. A child
+ * tapping "Next" through the routine should not have to find the button again
+ * at every step, and the strip below it is the fixed thing they navigate by.
+ *
+ * The drawn row is `hitTarget.parentMinimum`. The child minimum is 72pt and the
+ * SwiftUI view is expected to reach it with `.hopHitTarget(.child)`, which
+ * expands the frame without changing what is drawn — see `Docs/DesignReview.md`.
+ */
+const SKIP_H = T.hitTarget.parentMinimum;
+
+function skipRow(label) {
+  return `<div style="flex:0 0 auto;height:${SKIP_H}px;display:flex;align-items:center;justify-content:center">
+    ${label ? `<span style="${type('parentHeadline', { color: P.sand600, weight: 'semibold' })}">${label}</span>` : ''}
+  </div>`;
+}
+
 const STEP = {
   try: (f, s = 22) => MARK.ring(f, s),
   wipe: (f, s = 22) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="${f}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4.4" y="4.4" width="10" height="15.2" rx="5"/><path d="M14.4 19.6h5.2V9.2a4.8 4.8 0 0 0-5.2-4.8"/><circle cx="9.4" cy="9.4" r="1.6"/></svg>`,
@@ -67,7 +87,7 @@ function stepStrip(active) {
         ${now ? `box-shadow:0 0 0 4px ${alpha(P.hopGreenDeep, .18)};` : ''}">
         ${done ? `<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="${fg}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.6 9.8 17.4 19 7.6"/></svg>` : STEP[key](fg, 21)}
       </div>
-      <div style="${type('parentFootnote', { color: now ? P.sand600 : P.sand500, weight: now ? 'semibold' : 'medium' })};font-size:11.5px">${label}</div>
+      <div style="${type('parentFootnote', { color: P.sand600, weight: now ? 'semibold' : 'medium' })}">${label}</div>
     </div>`;
   };
   return `<div style="display:flex;align-items:flex-start;padding:13px 8px 12px;border-radius:${T.radius.xl}px;
@@ -172,7 +192,7 @@ function routineStepOne(appearance = 'light') {
       ${hop('walk', 250)}
 
       <div style="flex:0 0 auto;text-align:center;margin-top:22px">
-        <div style="${type('childTitle', { color: INK })};font-size:35px">Let's hop to the potty!</div>
+        <div style="${type('childTitle', { color: INK })}">Let's hop to the potty!</div>
         <div style="${type('childInstruction', { color: INK })};font-size:19px;margin-top:9px;opacity:.72">
           Hop is coming too. Take your time.</div>
       </div>
@@ -181,7 +201,8 @@ function routineStepOne(appearance = 'light') {
 
       <div style="flex:0 0 auto">
         ${childButton(col, appearance, "I'm here!", { kind: 'primary', height: 100, radius: T.radius.hero })}
-        <div style="height:14px"></div>
+        <div style="height:${T.spacing.m}px"></div>
+        ${skipRow(null)}
         ${stepStrip(0)}
       </div>
     </div>`);
@@ -227,7 +248,7 @@ function routineOutcome(appearance = 'light') {
         ${hop('wait', 170)}
 
         <div style="flex:0 0 auto;text-align:center;margin-top:4px">
-          <div style="${type('childTitle', { color: INK })};font-size:35px">All done trying?</div>
+          <div style="${type('childTitle', { color: INK })}">All done trying?</div>
         </div>
 
         <div style="flex:1"></div>
@@ -257,7 +278,7 @@ function routineComplete(appearance = 'light') {
   const sparkle = (x, y, s, o) => `<div style="position:absolute;left:${x}px;top:${y}px;opacity:${o}">${MARK.star(P.sunshine, s)}</div>`;
 
   return stage(scene, `
-    <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 24px 6px;overflow:hidden">
+    <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
       <div style="height:34px"></div>
 
       <div style="flex:0 0 auto;text-align:center">
@@ -290,7 +311,7 @@ function routineComplete(appearance = 'light') {
         ${childButton(col, appearance, 'Back to Play', { kind: 'primary', height: 104, radius: T.radius.hero })}
         <div style="height:14px"></div>
         ${childButton(col, appearance, 'See my pond', {
-          kind: 'secondary', height: 76, radius: 38,
+          kind: 'secondary',
           fill: alpha('#FFFFFF', .76), textColor: P.sand600, fontSize: 21,
         })}
       </div>
@@ -359,7 +380,7 @@ function bubbleWash(appearance = 'light') {
 
       <div style="flex:0 0 auto">
         ${childButton(col, appearance, 'All done', {
-          kind: 'secondary', height: 76, radius: 38,
+          kind: 'secondary',
           fill: '#FFFFFF', textColor: P.pondBlueDeep, fontSize: 21,
           border: `1.5px solid ${alpha(P.pondBlueDeep, .2)}`,
         })}
@@ -467,5 +488,5 @@ function quiz(appearance = 'light') {
 
 module.exports = {
   pottyPauseShield, routineStepOne, routineOutcome, routineComplete, bubbleWash, quiz,
-  stepStrip, grownUpChip, stage, bubble, hop, STEP, FEET, INK,
+  stepStrip, grownUpChip, stage, skipRow, bubble, hop, STEP, FEET, INK,
 };

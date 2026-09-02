@@ -184,6 +184,98 @@ private struct HopPoseTransitionPreview: View {
     }
 }
 
+/// Replays one hop on a loop, because the things worth checking in a jump all
+/// happen inside two thirds of a second and none of them can be seen once.
+///
+/// In order: the crouch shifting weight *against* the drift, the hands still up
+/// while the body drops, the arms trailing the rise and arriving at the apex,
+/// the fall handing off to a much shorter spring so he accelerates into the
+/// floor, the compression happening only at the floor, and the hands swinging
+/// down past the pose on contact before the settle brings them home.
+private struct HopJumpLoopPreview: View {
+    var hops: Int = 1
+    var drift: HopJumpDrift = .inPlace
+    var pose: HopPose = .idle
+    var size: CGFloat = 220
+
+    @State private var replay = 0
+
+    var body: some View {
+        HopCharacterStage(
+            act: .hopping(HopJump(hops: hops, drift: drift, replay: replay), restingOn: pose),
+            size: size
+        )
+        .frame(height: size + HopJump.headroom(for: size), alignment: .bottom)
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(HopJump.duration(hops: hops) + 0.9))
+                guard !Task.isCancelled else { return }
+                replay += 1
+            }
+        }
+    }
+}
+
+/// Cycles the gaze and changes nothing else.
+///
+/// That is the whole test: a look has its own spring, so it must not inherit the
+/// bounce of whatever beat happened to run last, and the head has to arrive
+/// after the eyes rather than with them.
+private struct HopGazePreview: View {
+    private static let targets: [(name: String, gaze: HopGaze)] = [
+        ("forward", .forward),
+        ("left", .left),
+        ("up", .up),
+        ("right", .right),
+        ("down", .down),
+    ]
+
+    @State private var index = 0
+
+    var body: some View {
+        VStack(spacing: 16) {
+            HopCharacterStage(pose: .idle, size: 220, gaze: HopGazePreview.targets[index].gaze)
+            Text(verbatim: HopGazePreview.targets[index].name)
+                .hopTextStyle(.parentCaption)
+        }
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1.6))
+                guard !Task.isCancelled else { return }
+                index = (index + 1) % HopGazePreview.targets.count
+            }
+        }
+    }
+}
+
+/// Alternates an entrance and an exit, which is where the off-stage handling has
+/// to hold. Two things to watch for, both of which used to happen: Hop standing
+/// on his mark for a frame *before* an entrance and then sliding off to start
+/// it, and Hop sliding back on from the wings after an exit instead of fading in
+/// on his mark.
+private struct HopEntrancePreview: View {
+    @State private var isEntering = true
+
+    var body: some View {
+        VStack(spacing: 16) {
+            HopCharacterStage(
+                act: isEntering ? .entering(from: .left) : .exiting(toward: .right),
+                size: 180
+            )
+            .frame(height: 180 + HopJump.headroom(for: 180), alignment: .bottom)
+            Text(verbatim: isEntering ? "entering" : "exiting")
+                .hopTextStyle(.parentCaption)
+        }
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2.2))
+                guard !Task.isCancelled else { return }
+                isEntering.toggle()
+            }
+        }
+    }
+}
+
 /// Drives one act at a time so the beats, the anticipation and the recovery can
 /// be watched, and so an interrupt can be forced by tapping a second act
 /// mid-beat — which is the thing that has to land cleanly.
@@ -258,11 +350,35 @@ private struct HopActPreview: View {
     VStack(spacing: 24) {
         HopCharacterStage(pose: .idle, size: 220, jumping: HopJump())
             .frame(height: 220 + HopJump.headroom(for: 220), alignment: .bottom)
-        Text("Crouch, rise, hang, land, settle.").hopTextStyle(.parentCaption)
+        Text("Crouch, rise, hang, fall, impact, settle.").hopTextStyle(.parentCaption)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .hopBackground()
     .hopThemedRoot()
+}
+
+#Preview("Hop · jump on a loop (weight, follow-through)") {
+    VStack(spacing: 24) {
+        HopJumpLoopPreview()
+        Text("Hands lag the body, arrive at the apex, and swing past on contact.")
+            .hopTextStyle(.parentCaption)
+            .multilineTextAlignment(.center)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground()
+    .hopThemedRoot()
+}
+
+#Preview("Hop · jump on a loop · Reduce Motion") {
+    VStack(spacing: 24) {
+        HopJumpLoopPreview()
+        Text("One cross-fade, no travel, no lag: there is nothing for a hand to trail.")
+            .hopTextStyle(.parentCaption)
+            .multilineTextAlignment(.center)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground()
+    .hopThemedRoot(reduceMotion: true)
 }
 
 #Preview("Hop · repeated jump") {
@@ -270,6 +386,18 @@ private struct HopActPreview: View {
         HopCharacterStage(pose: .cheer, size: 220, jumping: HopJump(hops: 3, drift: .right))
             .frame(height: 220 + HopJump.headroom(for: 220), alignment: .bottom)
         Text("One burst, not a queue.").hopTextStyle(.parentCaption)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground()
+    .hopThemedRoot()
+}
+
+#Preview("Hop · burst on a loop (no dead beat)") {
+    VStack(spacing: 24) {
+        HopJumpLoopPreview(hops: 3, drift: .right, pose: .cheer)
+        Text("Each landing is the next crouch. Nothing holds still in the middle.")
+            .hopTextStyle(.parentCaption)
+            .multilineTextAlignment(.center)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .hopBackground()
@@ -294,6 +422,52 @@ private struct HopActPreview: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .hopBackground()
     .hopThemedRoot()
+}
+
+#Preview("Hop · gaze tracking (eyes lead, head follows)") {
+    VStack(spacing: 24) {
+        HopGazePreview()
+        Text("Flat springs, and the head starts after the eyes.")
+            .hopTextStyle(.parentCaption)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground()
+    .hopThemedRoot()
+}
+
+#Preview("Hop · gaze tracking · Reduce Motion") {
+    VStack(spacing: 24) {
+        HopGazePreview()
+        Text("The look still lands; it cross-fades there.")
+            .hopTextStyle(.parentCaption)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground()
+    .hopThemedRoot(reduceMotion: true)
+}
+
+#Preview("Hop · entrance and exit") {
+    VStack(spacing: 24) {
+        HopEntrancePreview()
+        Text("Never on his mark before an entrance, never sliding back after an exit.")
+            .hopTextStyle(.parentCaption)
+            .multilineTextAlignment(.center)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground()
+    .hopThemedRoot()
+}
+
+#Preview("Hop · entrance and exit · Reduce Motion") {
+    VStack(spacing: 24) {
+        HopEntrancePreview()
+        Text("He fades in and out on his mark. Nothing crosses the screen.")
+            .hopTextStyle(.parentCaption)
+            .multilineTextAlignment(.center)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground()
+    .hopThemedRoot(reduceMotion: true)
 }
 
 #Preview("Hop · Reduce Motion (must be still)") {

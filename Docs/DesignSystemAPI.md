@@ -46,7 +46,7 @@ HopSheet<Content: View>(title: String, onDismiss: () -> Void, content: () -> Con
 
 ```swift
 HopMetricCard(value: String, label: String, glyph: HopGlyph, tint: Color)
-HopTimerCard(state: PottyPauseDisplayState, onSkip: () -> Void, onStartNow: () -> Void)
+HopTimerCard(state: PottyPauseDisplayState, surface: HopTimerCardSurface = .card, onSkip: () -> Void, onStartNow: () -> Void)
 HopProgressRing(progress: Double, lineWidth: CGFloat = 12, tint: Color)
 HopTimelineRow(event: PottyEvent, isLast: Bool)
 HopInsightCard(insight: Insight, onAction: ((InsightAction) -> Void)?)

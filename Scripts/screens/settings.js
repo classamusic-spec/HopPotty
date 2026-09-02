@@ -31,14 +31,14 @@ function timerSettings(appearance = 'light') {
 
   const action = (label, last) => listRow(col, {
     label: `<span style="text-align:center;display:block;color:${col.brandAction}">${label}</span>`,
-    accessory: '', last, minHeight: 46,
+    accessory: '', last, minHeight: T.hitTarget.parentMinimum,
   });
 
   return `
   <div style="display:flex;flex-direction:column;height:100%;background:${col.backgroundSecondary}">
     ${statusBar(col.textPrimary)}
     ${navBar(col, 'Potty Pause', { large: true })}
-    <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:10px;padding:2px 20px 6px;overflow:hidden">
+    <div class="fit" style="flex:1;display:flex;flex-direction:column;gap:${T.spacing.s}px;padding:2px 20px 6px;overflow:hidden">
 
       <!-- The schedule, said once, in words. Every control below only edits this sentence. -->
       <div style="flex:0 0 auto;background:${dark ? alpha(P.hopGreen, .13) : P.hopGreenSoft};border-radius:${T.radius.l}px;
@@ -46,7 +46,7 @@ function timerSettings(appearance = 'light') {
         <div style="width:30px;height:30px;border-radius:15px;flex:0 0 auto;display:grid;place-items:center;
           background:${dark ? alpha(P.hopGreenLight, .2) : '#FFFFFF'}">${MARK.clock(accentInk, 17)}</div>
         <div style="flex:1">
-          <div style="${type('parentFootnote', { color: accentInk, weight: 'semibold' })};font-size:11px;
+          <div style="${type('parentFootnote', { color: accentInk, weight: 'semibold' })};
             letter-spacing:.6px;text-transform:uppercase">Your schedule</div>
           <div style="${type('parentCallout', { color: dark ? col.textPrimary : accentInk })};font-size:14px;
             line-height:1.42;margin-top:3px">
@@ -116,7 +116,7 @@ function chooseApps(appearance = 'light') {
   const countTile = (n, label) => `
     <div style="flex:1;text-align:center">
       <div style="${type('metric', { color: col.textPrimary })};font-size:30px">${n}</div>
-      <div style="${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;margin-top:1px">${label}</div>
+      <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:1px">${label}</div>
     </div>`;
 
   // --- Apple's picker. System chrome, deliberately not ours. ---
@@ -131,7 +131,7 @@ function chooseApps(appearance = 'light') {
       ${box}
       <div style="width:30px;height:30px;border-radius:7px;background:${col.divider};flex:0 0 auto"></div>
       <div style="flex:1;${type('parentBody', { color: col.textPrimary })};font-size:16px">${name}</div>
-      <span style="${type('parentCallout', { color: col.textTertiary })};font-size:15px">${detail}</span>
+      <span style="${type('parentCallout', { color: col.textSecondary })}">${detail}</span>
       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${col.textTertiary}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
     </div>`;
   };
@@ -166,7 +166,7 @@ function chooseApps(appearance = 'light') {
               background:${dark ? alpha(P.pondBlueLight, .2) : P.pondBlueSoft}">${MARK.lock(col.eventPee, 16)}</div>
             <div style="flex:1">
               <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:14.5px">HopPotty never learns which apps</div>
-              <div style="${type('parentCaption', { color: col.textSecondary })};font-size:13px;margin-top:3px;line-height:1.42">
+              <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:3px;line-height:1.42">
                 Apple hands over a sealed token for each choice. HopPotty can count them and pause them — it cannot read a name or an icon, and never sees what happens inside.</div>
             </div>
           </div>
@@ -192,10 +192,10 @@ function chooseApps(appearance = 'light') {
       <div style="padding:0 16px 10px;flex:0 0 auto">
         <div style="height:36px;border-radius:10px;background:${col.surfaceSunken};display:flex;align-items:center;gap:7px;padding:0 10px">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="${col.textTertiary}" stroke-width="2.4" stroke-linecap="round"><circle cx="10.6" cy="10.6" r="6.8"/><path d="M15.6 15.6 20 20"/></svg>
-          <span style="${type('parentCallout', { color: col.textTertiary })};font-size:15px">Search</span>
+          <span style="${type('parentCallout', { color: col.textSecondary })}">Search</span>
         </div>
       </div>
-      <div style="${type('parentFootnote', { color: col.textTertiary })};font-size:11.5px;letter-spacing:.5px;
+      <div style="${type('parentFootnote', { color: col.textSecondary })};letter-spacing:.5px;
         text-transform:uppercase;padding:2px 16px 6px;flex:0 0 auto">Categories</div>
       <div style="flex:1;overflow:hidden;box-shadow:inset 0 0.5px 0 ${col.divider}">
         ${pickerRow('Games', '', 'some')}

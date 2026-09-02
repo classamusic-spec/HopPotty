@@ -21,6 +21,19 @@ import HopPottyDesignTokens
 // against a weight shift of 9.7s against a blink somewhere in 2.8…6.5s never
 // resynchronises into one visible pulse, which is what would turn three subtle
 // movements into one obvious one.
+//
+// Worth checking rather than asserting, because the breath is not always 3.4s —
+// ``HopPose/breathPeriod`` slows it to 4.25s seated and 5.78s asleep. Against
+// the 9.7s weight shift those are 2.85, 2.28 and 1.68 cycles: none of them is
+// near a whole number, so the two never come back into step in any of the three
+// states Hop spends his time in.
+//
+// Two of the four layers are still *periodic*, though, and both of them start
+// the moment Hop appears — which is precisely when somebody is looking. Two slow
+// movements that set off together read as one movement however different their
+// periods become afterwards, so the weight shift starts a third of a turn into
+// its own cycle. The blink and the glance need no such treatment: their
+// intervals are redrawn at random every time, so they have no phase to share.
 
 /// A slow breath: the body swells and settles about the ground line.
 public struct HopBreathingModifier: ViewModifier {
@@ -96,6 +109,15 @@ public struct HopWeightShiftModifier: ViewModifier {
 
     private var isActive: Bool { isEnabled && !theme.reduceMotion }
 
+    /// How far into its own cycle the shift starts, in turns.
+    ///
+    /// The breath and the weight shift are the two periodic layers of the idle
+    /// and both would otherwise begin, in the same direction, on the frame Hop
+    /// appears. Offsetting one of them is the difference between "he is alive"
+    /// and "something on this screen just moved". Not a half turn, which would
+    /// simply put them in antiphase and be just as regular.
+    private static let phaseOffset: Double = 0.31
+
     public func body(content: Content) -> some View {
         content
             // The "off" end of the swing is upright, not the mirror of the "on"
@@ -103,7 +125,11 @@ public struct HopWeightShiftModifier: ViewModifier {
             // rather than frozen mid-lean.
             .rotationEffect(.degrees(shifted ? degrees : 0), anchor: anchor)
             .animation(
-                isActive ? .easeInOut(duration: period / 2).repeatForever(autoreverses: true) : nil,
+                isActive
+                    ? .easeInOut(duration: period / 2)
+                        .repeatForever(autoreverses: true)
+                        .delay(period * HopWeightShiftModifier.phaseOffset)
+                    : nil,
                 value: shifted
             )
             .onAppear { shifted = isActive }
@@ -137,6 +163,17 @@ public struct HopBlinkingModifier: ViewModifier {
     /// dial that anything is allowed to turn up.
     private static let doubleBlinkChance = 0.32
 
+    /// How much of ``HopMotion/blinkDuration`` the lid takes to fall.
+    ///
+    /// A lid drops faster than it lifts — roughly half the time in a real eye.
+    /// A blink that closes and opens at the same rate is the clearest tell that
+    /// a face is being driven by a timer rather than by a body, and it costs one
+    /// multiplication to not do it.
+    ///
+    /// TODO: belongs in `HopMotion` beside `blinkDuration`; defined here because
+    /// this layer does not own HopPottyKit.
+    private static let closingShare = 0.6
+
     public func body(content: Content) -> some View {
         content.task(id: isActive) {
             guard isActive else {
@@ -168,9 +205,15 @@ public struct HopBlinkingModifier: ViewModifier {
     /// property of the drawing rather than a UI transition — so it names its
     /// own easing, guarded by `isActive`, which is already false under Reduce
     /// Motion.
+    ///
+    /// The two halves are not the same length. The lid falls in
+    /// ``closingShare`` of ``HopMotion/blinkDuration`` and lifts over the whole
+    /// of it, and the easings agree with that: `easeIn` on the way down, because
+    /// a lid accelerates as it closes, `easeOut` on the way up.
     private func blink() async {
-        withAnimation(.easeIn(duration: HopMotion.blinkDuration)) { phase = 1 }
-        try? await Task.sleep(for: .seconds(HopMotion.blinkDuration))
+        let closing = HopMotion.blinkDuration * HopBlinkingModifier.closingShare
+        withAnimation(.easeIn(duration: closing)) { phase = 1 }
+        try? await Task.sleep(for: .seconds(closing))
         guard !Task.isCancelled else {
             phase = 0
             return
@@ -188,6 +231,11 @@ public struct HopBlinkingModifier: ViewModifier {
 /// eye offset rather than the body, because at the sizes Hop is drawn a body
 /// movement small enough to be tasteful is too small to see, and an eye
 /// movement that size is not.
+///
+/// A glance is **not symmetric**. An eye leaves for somewhere in a flick and
+/// comes back on its own time, and the whole read depends on that: the same
+/// movement played at one speed in both directions is a drift, which is what a
+/// tired or a vacant face does. Out fast, hold, back slowly.
 ///
 /// Fixed amplitude, fixed interval range, no memory of how long anyone has been
 /// looking. It cannot build, and it cannot ask for anything.
@@ -212,6 +260,17 @@ public struct HopMicroSettleModifier: ViewModifier {
 
     private var isActive: Bool { isEnabled && !theme.reduceMotion }
 
+    /// How long the eyes take to leave, and how long to come back.
+    ///
+    /// The flick out is about a blink and a half — fast enough to read as
+    /// *looking at something* — and the return is nearly three times that, which
+    /// is what stops the pair of them reading as a repeated gesture.
+    ///
+    /// TODO: both belong in `HopMotion` beside `blinkDuration`; defined here
+    /// because this layer does not own HopPottyKit.
+    private static let glanceOut: Double = 0.24
+    private static let glanceBack: Double = 0.62
+
     public func body(content: Content) -> some View {
         content.task(id: isActive) {
             guard isActive else {
@@ -226,14 +285,14 @@ public struct HopMicroSettleModifier: ViewModifier {
                     width: CGFloat.random(in: -reach...reach),
                     height: CGFloat.random(in: (-reach * 0.6)...(reach * 0.6))
                 )
-                withAnimation(.easeInOut(duration: 0.9)) { offset = target }
+                withAnimation(.easeOut(duration: HopMicroSettleModifier.glanceOut)) { offset = target }
                 try? await Task.sleep(for: .seconds(Double.random(in: 1.1...2.4)))
                 guard !Task.isCancelled else {
                     offset = .zero
                     return
                 }
-                withAnimation(.easeInOut(duration: 1.1)) { offset = .zero }
-                try? await Task.sleep(for: .seconds(1.1))
+                withAnimation(.easeInOut(duration: HopMicroSettleModifier.glanceBack)) { offset = .zero }
+                try? await Task.sleep(for: .seconds(HopMicroSettleModifier.glanceBack))
             }
         }
     }

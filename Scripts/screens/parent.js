@@ -3,8 +3,9 @@
  *
  * Hop's pond is the screen, not an illustration on it. The scene is the full
  * backdrop of the top of the display and Hop sits in it on his lily pad; the
- * numbers a parent opens the app for float over the scene as one card, and
- * everything else lives on a rounded sheet that rises from below the water.
+ * numbers a parent opens the app for float on the water with nothing under them
+ * — no card, just ink, a shaped veil and two pill controls — and everything else
+ * lives on a rounded sheet that rises from below the surface.
  *
  * The pond is drawn by the same code `10-hops-pond` uses (`scenes.pond` through
  * `artOr`, with ids from `PondCatalog`), so Home and the reward screen are
@@ -19,12 +20,6 @@ const pondScreen = require('./pond');
 function card(col, inner, { pad = 17, radius = T.radius.xl, elev = 'resting', bg, extra = '', appearance = 'light' } = {}) {
   return `<div style="background:${bg || col.surface};border-radius:${radius}px;padding:${pad}px;
     box-shadow:${elev === 'none' ? 'none' : elevation(appearance, elev)};${extra}">${inner}</div>`;
-}
-
-function pillButton(col, label, { fill, textColor, grow = true, height = 44 } = {}) {
-  return `<div style="flex:${grow ? 1 : '0 0 auto'};height:${height}px;border-radius:${height / 2}px;
-    background:${fill};display:grid;place-items:center;${type('parentHeadline', { color: textColor, weight: 'semibold' })}
-    ${fill === 'transparent' ? `border:1.5px solid ${col.divider};` : ''}">${label}</div>`;
 }
 
 const GLYPH = {
@@ -93,11 +88,16 @@ function tabBar(col, active) {
 /**
  * Decorations Home shows, by `PondCatalog` id.
  *
- * Home is a crop of the pond, not the whole pond, and the timer card sits on the
+ * Home is a crop of the pond, not the whole pond, and the countdown stands on the
  * near shore — so an id anchored below Hop's pad would be bought and never seen.
- * These are the ones whose anchors land in the band the card leaves open: the
- * clouds, the far reeds, the pads Hop needs, a lily flower, a fish, a butterfly,
- * and the two reed clumps that rise behind the card's top corners.
+ * These are the ones whose anchors land in the band the countdown leaves open:
+ * the clouds, the far reeds, the pads Hop needs, a lily flower, a fish, a
+ * butterfly, and the two reed clumps that rise either side of the numerals.
+ *
+ * With the card gone this list is also a legibility decision. Every one of these
+ * is either lighter than the water it sits on or anchored clear of the numerals;
+ * the dark decorations — the dragonfly especially — stay above the block, which
+ * is why the worst ground pixel behind the countdown is still water.
  */
 const HOME_DECOR = ['cloudPuff', 'fernPatch', 'lilyPadLarge', 'lilyPadSmall', 'lilyFlower',
   'fishOrange', 'reedsLeft', 'reedsRight', 'butterflyBlue'];
@@ -129,7 +129,7 @@ function pondCrop(w, bankY, height) {
  * The pond is a tall composition (sky → far bank → water → near shore). Home
  * only has room for its middle, so the drawing is made taller than the band and
  * pulled up: the sky thins out, the water fills the frame, and Hop's pad lands
- * clear of both the top pills and the timer card.
+ * clear of both the top pills and the countdown.
  */
 function pondBackdrop(appearance, { w, boxH, top, height }) {
   const col = c(appearance);
@@ -208,32 +208,136 @@ function sceneTopBar(col, appearance, { pageX }) {
 }
 
 /**
- * The one card that floats on the water: label, countdown, mode, two actions.
+ * The countdown block, standing on the water with nothing under it.
  *
- * Unchanged from the sheet version in everything but its ground. Over a pond it
- * needs its own opaque field or the countdown loses contrast against the water,
- * so the surface sits at 95% with a hairline instead of the flat fill a card on
- * `backgroundPrimary` can get away with.
+ * There is no card here on purpose. A caregiver opens this app to read one
+ * number, and the number now sits on the pond itself — but a pond is not a
+ * colour. It is a gradient of sky, hills and water with ripples drifting across
+ * it, so the legibility the card used to guarantee has to be rebuilt out of
+ * three things that are not a card:
+ *
+ * 1. **A veil shaped like the content, not like a box** (`heroVeil`). A soft
+ *    ellipse of the ground's own light — `cloud` by day, `scrim` at dusk —
+ *    inscribed in its own box so it reaches zero alpha on every side and has no
+ *    edge to see. It exists to raise the *floor* of the water under the type,
+ *    which is the only number WCAG cares about.
+ * 2. **A tight halo on the glyphs** (`heroHalo`). Not a drop shadow — a 2px and
+ *    a 12px pass in the veil's own colour, so a numeral crossing a ripple keeps
+ *    its own edge.
+ * 3. **Weight and size.** The countdown grew from 44 to 56 and the label went
+ *    from `textSecondary` to the full ink: over a drawing, hierarchy has to come
+ *    from size, not from a colour that is already spending its contrast on the
+ *    ground.
+ *
+ * Every run of ink here is marked `data-ink`, which is not decoration: it lets a
+ * checker measure each run's box, hide the ink, screenshot the ground it stood
+ * on and find the *worst pixel* inside that box — the same composite-then-measure
+ * order `ContrastTests` uses. Against these three renders the worst pixel gives:
+ *
+ * | run           | light (phone) | dark (phone) | light (iPad) |
+ * | ---           | ---           | ---          | ---          |
+ * | Next Potty Pause | 8.6:1      | 8.7:1        | 9.2:1        |
+ * | 28:14         | 10.2:1        | 9.8:1        | 8.2:1        |
+ * | Routine Mode  | 6.2:1         | 7.0:1        | 5.1:1        |
+ * | Skip          | 7.1:1         | 7.5:1        | 7.1:1        |
+ * | Start Now     | 5.0:1         | 10.8:1       | 5.0:1        |
+ *
+ * against a 4.5:1 floor for everything except the countdown, which is large text
+ * at 3:1. The binding case is "Routine Mode" on iPad, where the block crosses the
+ * near shore and the ink is the darkest green the palette has — 5.1:1, which is
+ * the number to watch if this crop ever moves. See `Docs/Accessibility.md` §1.6.
  */
-function timerCard(col, appearance) {
-  if (process.env.HOP_NO_CARD) return '';
+function heroVeil(appearance) {
+  const col = c(appearance);
   const dark = appearance.startsWith('dark');
-  const modeSoft = dark ? alpha(T.palette.hopGreen, .18) : T.palette.hopGreenSoft;
+  // Light lifts the water toward the sheet's own cloud; dusk deepens it with
+  // the same scrim the pond already wears, so neither reads as a new material.
+  const tone = dark ? col.scrim : T.palette.cloud;
+  const core = dark ? 0.46 : 0.66;
+  // The box is hung 56 above the block and 8 below it so its centre lands on the
+  // numerals rather than in the middle of the block — the label, the countdown
+  // and the mode line all live in the top hundred points, and the buttons below
+  // carry their own fill and need none of this.
+  //
+  // `50% 50% at 50% 50%` is load-bearing, not decoration: an ellipse wider than
+  // its own box is cut off by that box, and a gradient that is still opaque
+  // where it is cut is a rectangle with a visible edge — which is exactly the
+  // card this screen just removed. Inscribing the ellipse means the veil reaches
+  // zero alpha on every side of its box, so there is nothing to see an edge of.
+  return `<div style="position:absolute;left:-60px;right:-60px;top:-56px;bottom:-8px;pointer-events:none;
+    background:radial-gradient(50% 50% at 50% 50%,
+      ${alpha(tone, core)} 0%, ${alpha(tone, core * 0.88)} 30%, ${alpha(tone, core * 0.56)} 55%,
+      ${alpha(tone, core * 0.2)} 78%, ${alpha(tone, 0)} 100%)"></div>`;
+}
+
+/** The glyph-level half of the same job: a tight halo in the veil's colour. */
+function heroHalo(appearance) {
+  const col = c(appearance);
+  const dark = appearance.startsWith('dark');
+  const tone = dark ? col.scrim : T.palette.cloud;
+  return `text-shadow:0 1px 2px ${alpha(tone, dark ? .6 : .95)}, 0 0 12px ${alpha(tone, dark ? .55 : .85)};`;
+}
+
+/**
+ * The two actions, drawn to survive water.
+ *
+ * Both are real controls with real fills — a button is a surface, which is not
+ * the card the countdown lost — but they are not the same surface. Start Now is
+ * the saturated brand solid at `raised`, white on deep green, and it would read
+ * over anything. Skip is the one that had to change: a hairline over transparent
+ * is invisible on a pond, so it becomes a frosted neutral pill — the same
+ * material as the pills along the top of the scene, which is already this
+ * screen's language for "a control floating on the water". Quieter than the
+ * primary, never faint.
+ */
+function heroButton(col, appearance, label, { role }) {
+  const dark = appearance.startsWith('dark');
+  const H = 48;
+  // Capsules, not the 14pt radius a parent button has on a card. On this screen
+  // a capsule is already what "a control floating on the water" looks like —
+  // the child switcher, the star count and the bell are all `scenePill` — so
+  // the two actions join that family rather than looking like a form that lost
+  // its form. `HopSceneActionButton` draws the same shape in the app.
+  const R = H / 2;
+  if (role === 'primary') {
+    return `<div style="flex:1;height:${H}px;border-radius:${R}px;background:${col.brandAction};
+      display:grid;place-items:center;box-shadow:${elevation(appearance, 'raised')};
+      ${type('parentHeadline', { color: col.textOnBrand, weight: 'bold' })};font-size:17px">
+      <span data-ink>${label}</span></div>`;
+  }
+  // The same fill, hairline and blur `HomeScenePill` gives the child switcher
+  // and the star count at the top of this scene, and the same numbers
+  // `HopSceneActionButton` uses in the app.
+  return `<div style="flex:1;height:${H}px;border-radius:${R}px;
+    background:${alpha(col.surface, dark ? .8 : .88)};
+    border:1px solid ${alpha(col.divider, .5)};
+    display:grid;place-items:center;box-shadow:${elevation(appearance, 'resting')};backdrop-filter:blur(16px);
+    ${type('parentHeadline', { color: col.textSecondary, weight: 'semibold' })};font-size:17px">
+    <span data-ink>${label}</span></div>`;
+}
+
+/** Label, countdown, mode and the two actions — centred, on the pond. */
+function timerHero(col, appearance) {
+  const dark = appearance.startsWith('dark');
+  const halo = heroHalo(appearance);
   const modeInk = dark ? T.palette.hopGreenLight : T.palette.hopGreenInk;
-  return `<div style="background:${alpha(col.surface, dark ? .94 : .95)};border-radius:${T.radius.xl}px;
-    border:1px solid ${alpha(col.divider, dark ? .8 : .9)};padding:16px 17px 15px;
-    box-shadow:${elevation(appearance, 'raised')};backdrop-filter:blur(22px)">
-    <div style="display:flex;flex-direction:column;align-items:center;text-align:center">
-      <div style="${type('parentCaption', { color: col.textSecondary, weight: 'semibold' })};text-transform:uppercase;letter-spacing:.6px;font-size:11.5px">Next Potty Pause</div>
-      <div style="${type('timerHero', { color: col.textPrimary })};font-size:44px;margin-top:1px;font-variant-numeric:tabular-nums">28:14</div>
-      <div style="display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:4px 11px;border-radius:20px;background:${modeSoft}">
-        <div style="width:7px;height:7px;border-radius:4px;background:${dark ? T.palette.hopGreenLight : T.palette.hopGreenDeep}"></div>
-        <span style="${type('parentFootnote', { color: modeInk, weight: 'semibold' })};font-size:12px">Routine Mode</span>
+  const modeDot = dark ? T.palette.hopGreenLight : T.palette.hopGreenDeep;
+  return `<div data-hero style="position:relative">
+    ${heroVeil(appearance)}
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center;text-align:center">
+      <div data-ink style="${type('parentCaption', { color: col.textPrimary, weight: 'bold' })};text-transform:uppercase;
+        letter-spacing:.9px;font-size:11.5px;${halo}">Next Potty Pause</div>
+      <div data-ink style="${type('timerHero', { color: col.textPrimary })};font-size:56px;line-height:1.02;margin-top:3px;
+        font-variant-numeric:tabular-nums;${halo}">28:14</div>
+      <div style="display:inline-flex;align-items:center;gap:7px;margin-top:7px">
+        <div style="width:8px;height:8px;border-radius:4px;background:${modeDot};
+          box-shadow:0 0 0 3px ${alpha(dark ? col.scrim : T.palette.cloud, dark ? .45 : .8)}"></div>
+        <span data-ink style="${type('parentFootnote', { color: modeInk, weight: 'bold' })};font-size:12.5px;${halo}">Routine Mode</span>
       </div>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:12px">
-      ${pillButton(col, 'Skip', { fill: 'transparent', textColor: col.textSecondary })}
-      ${pillButton(col, 'Start Now', { fill: col.brandAction, textColor: col.textOnBrand })}
+      <div style="display:flex;gap:12px;margin-top:17px;align-self:stretch">
+        ${heroButton(col, appearance, 'Skip', { role: 'secondary' })}
+        ${heroButton(col, appearance, 'Start Now', { role: 'primary' })}
+      </div>
     </div>
   </div>`;
 }
@@ -299,12 +403,14 @@ const W = 393, H = 852;
 const PAGE = T.spacing.pageCompact;      // 20
 const TAB_H = 50, HOME_IND = 26;
 const SHEET_Y = 497;                     // the water line the sheet rises to
-const CARD_BOTTOM = SHEET_Y - 14;
+// No card edge to sit against any more, so the block keeps its own air above
+// the sheet instead of the 14pt gap a card's shadow used to fill.
+const HERO_BOTTOM = SHEET_Y - 26;
 // The pond is drawn short and wide and hung 36px down: that crop puts the sky
 // behind the pills, the far bank behind Hop's head, and the fish, the small pad
-// and the lily flower in the strip of water the timer card leaves open.
-// The bank sits just clear of the timer card, so Hop stands on it with water
-// visible between his feet and the card's top edge.
+// and the lily flower in the strip of water the countdown leaves open.
+// The bank sits just clear of the countdown, so Hop stands on it with water
+// visible between his feet and the label above the numerals.
 const POND = pondCrop(W, 239, SHEET_Y + 48);
 const HOP_W = Math.round(W * 0.34);      // 134
 
@@ -336,8 +442,8 @@ function parentHome(appearance = 'light') {
     </div>
 
     <!-- the countdown, floating on the water -->
-    <div style="position:absolute;left:${PAGE}px;right:${PAGE}px;bottom:${H - CARD_BOTTOM}px">
-      ${timerCard(col, appearance)}
+    <div style="position:absolute;left:${PAGE}px;right:${PAGE}px;bottom:${H - HERO_BOTTOM}px">
+      ${timerHero(col, appearance)}
     </div>
 
     <div style="position:absolute;left:0;right:0;top:0">${statusBar(dark ? col.textPrimary : T.palette.midnight)}</div>
@@ -391,7 +497,7 @@ function parentHomePad(appearance = 'light') {
   const dark = appearance.startsWith('dark');
   const w = PAD.w - PAD.rail;              // 780
   const sheetY = 430;                      // 56% — the pond runs across the top
-  const cardBottom = sheetY - 18;
+  const heroBottom = sheetY - 16;
   const pond = pondCrop(w, 236, sheetY + 44);
   const hopW = Math.round(w * 0.20);
   const gap = 20, gutter = 28;
@@ -420,8 +526,8 @@ function parentHomePad(appearance = 'light') {
         </div>
       </div>
 
-      <div style="position:absolute;left:${gutter}px;width:${Math.round(w * 0.52)}px;bottom:${PAD.h - cardBottom}px">
-        ${timerCard(col, appearance)}
+      <div style="position:absolute;left:${gutter}px;width:${Math.round(w * 0.52)}px;bottom:${PAD.h - heroBottom}px">
+        ${timerHero(col, appearance)}
       </div>
 
       <div style="position:absolute;left:0;right:0;top:22px;height:44px">
@@ -431,4 +537,4 @@ function parentHomePad(appearance = 'light') {
   </div>`;
 }
 
-module.exports = { parentHome, parentHomePad, card, pillButton, GLYPH, metricChip, timelineRow, tabBar };
+module.exports = { parentHome, parentHomePad, card, GLYPH, metricChip, timelineRow, tabBar };

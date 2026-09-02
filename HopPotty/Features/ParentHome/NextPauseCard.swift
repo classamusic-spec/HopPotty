@@ -19,14 +19,19 @@ import HopPottyCore
 ///
 /// ## Standing on water
 ///
-/// The card itself is unchanged: same content, same controls, same Dynamic Type
-/// behaviour, and `HopTimerCard` was already opaque and `.raised`, which is
-/// exactly what a countdown needs over a drawing. What did change is everything
-/// *below* it. A status pill and a tonal button are both washes of a tint, and a
-/// wash over a pond is a wash over whatever the pond happens to be doing there,
-/// so the footer gets its own opaque field. It appears only when there is
-/// something to say — in the ordinary counting case there is nothing under the
-/// card at all.
+/// There is no card. The countdown sits directly on the pond
+/// (``HopTimerCardSurface/scene``), which is a legibility problem before it is a
+/// look: the ground under the most important number in the app is a gradient of
+/// sky, hills and drifting water rather than a colour. `HopTimerCard` solves it
+/// there — a content-shaped veil with no edge, a tight halo on the glyphs, and
+/// controls that carry their own ground — and the numbers are in its
+/// documentation.
+///
+/// What this view still owns is everything *below* the timer. A status pill and
+/// a tonal button are both washes of a tint, and a wash over a pond is a wash
+/// over whatever the pond happens to be doing there, so the footer keeps its own
+/// opaque field. It appears only when there is something to say — in the
+/// ordinary counting case there is nothing under the timer at all.
 struct NextPauseCard: View {
     @Environment(\.hopTheme) private var theme
 
@@ -40,9 +45,12 @@ struct NextPauseCard: View {
     let onRestoreAccess: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: theme.spacing.m) {
+        // Centred, because the timer above has no card and therefore no left
+        // edge for the footer to line up against.
+        VStack(alignment: .center, spacing: theme.spacing.m) {
             HopTimerCard(
                 state: displayState,
+                surface: .scene,
                 onSkip: onSkip,
                 onStartNow: onStartNow
             )

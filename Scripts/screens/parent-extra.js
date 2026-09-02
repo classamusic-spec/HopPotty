@@ -49,7 +49,7 @@ function avatarDisc(size, { fill = P.hopGreenSoft, ring = P.hopGreenLight, ringW
 /** The uppercase eyebrow an onboarding screen opens with. */
 function eyebrow(col, text, tint) {
   return `<div style="${type('parentFootnote', { color: tint || col.brandAction, weight: 'semibold' })};
-    font-size:12px;letter-spacing:.9px;text-transform:uppercase">${text}</div>`;
+    letter-spacing:.9px;text-transform:uppercase">${text}</div>`;
 }
 
 /** A back chevron on its own row, as onboarding draws it. */
@@ -66,7 +66,7 @@ function promiseRow(col, appearance, { glyph, tint, soft, text }) {
   return `<div style="display:flex;gap:13px;align-items:flex-start;background:${col.surface};
     border-radius:${T.radius.l}px;padding:13px 15px;box-shadow:${elevation(appearance, 'resting')}">
     ${iconTile(soft, glyph(tint, 18), { size: 34, radius: 11 })}
-    <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};font-size:13.5px;line-height:1.42">${text}</div>
+    <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.42">${text}</div>
   </div>`;
 }
 
@@ -171,15 +171,15 @@ function screenTimeAsk(appearance = 'light') {
 
       <div style="flex:0 0 auto;margin-top:18px;display:flex;gap:11px;align-items:flex-start;
         border-radius:${T.radius.l}px;padding:13px 15px;background:${col.surfaceSunken};border:1px solid ${col.divider}">
-        ${iconTile(dark ? alpha('#FFFFFF', .08) : '#FFFFFF', EXTRA.info(col.textTertiary, 17), { size: 30, radius: 9 })}
-        <div style="flex:1;${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;line-height:1.4">
+        ${iconTile(dark ? alpha('#FFFFFF', .08) : '#FFFFFF', EXTRA.info(col.textSecondary, 17), { size: 30, radius: 9 })}
+        <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.4">
           The next screen is Apple's. HopPotty cannot see or change what it asks.</div>
       </div>
 
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto">
-        <div style="${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;line-height:1.4;
+        <div style="${type('parentCaption', { color: col.textSecondary })};line-height:1.4;
           text-align:center;padding:0 6px 14px">
           Without Screen Time permission, apps are never paused. Hop still checks in on your schedule, and you can turn pausing on later in Settings.</div>
         ${pageDots(col, 4, 3)}
@@ -218,7 +218,7 @@ function childProfile(appearance = 'light') {
       ${on ? '' : `box-shadow:inset 0 -1px 0 ${col.divider};`}">
       <div style="flex:1;min-width:0">
         <div style="${type('parentBody', { color: col.textPrimary, weight: on ? 'semibold' : 'regular' })};font-size:16px">${title}</div>
-        <div style="${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;margin-top:1px">${sub}</div>
+        <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:1px">${sub}</div>
       </div>
       ${on
         ? `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${col.brandAction}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 12.6 9.6 17.6 19.4 6.6"/></svg>`
@@ -240,9 +240,9 @@ function childProfile(appearance = 'light') {
         <span style="${type('parentTitle', { color: col.textPrimary })};font-size:20px">Maya</span>
         <div style="width:2px;height:24px;background:${col.brandAction};border-radius:1px;margin-left:2px"></div>
         <div style="flex:1"></div>
-        <span style="${type('parentFootnote', { color: col.textTertiary })};font-size:12px">4/24</span>
+        <span style="${type('parentFootnote', { color: col.textSecondary })};">4/24</span>
       </div>
-      <div style="flex:0 0 auto;${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;
+      <div style="flex:0 0 auto;${type('parentCaption', { color: col.textSecondary })};
         line-height:1.4;padding:7px 4px 0">
         Optional. HopPotty asks for nothing else: no last name, no birthday, no photo.</div>
 
@@ -253,7 +253,7 @@ function childProfile(appearance = 'light') {
       </div>
 
       <div style="flex:0 0 auto;padding-top:20px">
-        ${eyebrow(col, 'Character', col.textTertiary)}
+        ${eyebrow(col, 'Character', col.textSecondary)}
         <div style="display:flex;gap:12px;margin-top:11px">
           ${AVATARS.map(([name, fill, ring], i) => `
             <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
@@ -266,14 +266,14 @@ function childProfile(appearance = 'light') {
       </div>
 
       <div style="flex:0 0 auto;padding-top:20px">
-        ${eyebrow(col, 'Where are you starting?', col.textTertiary)}
+        ${eyebrow(col, 'Where are you starting?', col.textSecondary)}
         <div style="margin-top:9px;background:${col.surface};border-radius:${T.radius.l}px;overflow:hidden;
           box-shadow:${elevation(appearance, 'resting')}">
           ${band('Just starting out', 'Around 2. Nappies most of the day.')}
           ${band('Getting the hang of it', 'Around 3. Dry stretches, some accidents.', true)}
           ${band('Mostly independent', '4 and up. Needs the occasional nudge.', false)}
         </div>
-        <div style="${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;line-height:1.4;padding:7px 4px 0">
+        <div style="${type('parentCaption', { color: col.textSecondary })};line-height:1.4;padding:7px 4px 0">
           This only picks a starting routine, and you can change it any time. HopPotty stores no age and no birthday.</div>
       </div>
 
@@ -318,7 +318,7 @@ function firstPauseSet(appearance = 'light') {
         border-radius:${T.radius.l}px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start">
         ${iconTile(dark ? alpha(P.hopGreenLight, .2) : '#FFFFFF', MARK.clock(accentInk, 17), { size: 30, radius: 15 })}
         <div style="flex:1">
-          <div style="${type('parentFootnote', { color: accentInk, weight: 'semibold' })};font-size:11px;
+          <div style="${type('parentFootnote', { color: accentInk, weight: 'semibold' })};
             letter-spacing:.6px;text-transform:uppercase">Your schedule</div>
           <div style="${type('parentCallout', { color: dark ? col.textPrimary : accentInk })};font-size:14px;
             line-height:1.42;margin-top:3px">
@@ -327,8 +327,8 @@ function firstPauseSet(appearance = 'light') {
       </div>
 
       <div style="flex:0 0 auto;margin-top:10px;display:flex;gap:11px;align-items:flex-start;padding:0 4px">
-        ${MARK.check(col.textTertiary, 15)}
-        <div style="flex:1;${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;line-height:1.42">
+        ${MARK.check(col.textSecondary, 15)}
+        <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.42">
           A pause always ends on its own timer. Screen access is never held back for a result.</div>
       </div>
 
@@ -340,7 +340,7 @@ function firstPauseSet(appearance = 'light') {
           ${iconTile(dark ? alpha(P.pondBlue, .2) : P.pondBlueSoft, MARK.play(col.eventPee, 16), { size: 32, radius: 10 })}
           <div style="flex:1">
             <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15.5px">Try a Potty Pause</div>
-            <div style="${type('parentCaption', { color: col.textSecondary })};font-size:13px;margin-top:3px;line-height:1.42">
+            <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:3px;line-height:1.42">
               This runs one pause right now so you can see exactly what your child sees. It ends on its own.</div>
           </div>
         </div>
@@ -352,7 +352,7 @@ function firstPauseSet(appearance = 'light') {
       <div style="flex:0 0 auto">
         ${ctaButton(col, appearance, 'Go to HopPotty')}
         <div style="height:12px"></div>
-        <div style="text-align:center;${type('parentCallout', { color: col.textTertiary })};font-size:15px">Change the schedule</div>
+        <div style="text-align:center;${type('parentCallout', { color: col.textSecondary })};font-size:15px">Change the schedule</div>
       </div>
     </div>`);
 }
@@ -437,7 +437,7 @@ function settingsHub(appearance = 'light') {
       <div style="flex:1"></div>
 
       <div style="flex:0 0 auto;text-align:center;padding-bottom:2px;
-        ${type('parentCaption', { color: col.textTertiary })};font-size:12px">Version 1.0 (12)</div>
+        ${type('parentCaption', { color: col.textSecondary })};">Version 1.0 (12)</div>
     </div>
     ${tabBar(col, 'Settings')}
     ${homeIndicator(col.textPrimary)}
@@ -466,7 +466,7 @@ function childProfiles(appearance = 'light') {
       <div style="width:26px;height:26px;border-radius:13px;background:${soft};display:grid;place-items:center;flex:0 0 auto">${glyph(tint, 14)}</div>
       <div style="min-width:0">
         <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'bold' })};font-size:15px;line-height:1.1">${value}</div>
-        <div style="${type('parentFootnote', { color: col.textTertiary })};font-size:10.5px;line-height:1.2">${label}</div>
+        <div style="${type('parentFootnote', { color: col.textSecondary })};line-height:1.2">${label}</div>
       </div>
     </div>`;
 
@@ -479,15 +479,15 @@ function childProfiles(appearance = 'light') {
           <div style="display:flex;align-items:center;gap:8px">
             <span style="${type('parentTitle', { color: col.textPrimary })};font-size:19px">${name}</span>
             ${active ? `<span style="padding:2px 8px;border-radius:8px;background:${dark ? alpha(P.hopGreen, .2) : P.hopGreenSoft};
-              ${type('parentFootnote', { color: dark ? P.hopGreenLight : P.hopGreenInk, weight: 'semibold' })};font-size:10.5px">Currently shown</span>` : ''}
+              ${type('parentFootnote', { color: dark ? P.hopGreenLight : P.hopGreenInk, weight: 'semibold' })};">Currently shown</span>` : ''}
           </div>
-          <div style="${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;margin-top:2px">${schedule}</div>
+          <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:2px">${schedule}</div>
         </div>
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="${col.textTertiary}" stroke-width="2.8"
           stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><path d="M9 5l7 7-7 7"/></svg>
       </div>
 
-      <div style="${type('parentFootnote', { color: col.textTertiary, weight: 'semibold' })};font-size:11px;
+      <div style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};
         letter-spacing:.5px;text-transform:uppercase;margin-top:13px;padding-top:12px;border-top:1px solid ${col.divider}">Today</div>
       <div style="display:flex;gap:6px;margin-top:9px">
         ${stat(MARK.ring, TINT.tried.tint, TINT.tried.soft, counts[0], 'Tried')}
@@ -497,11 +497,11 @@ function childProfiles(appearance = 'light') {
       </div>
 
       <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
-        <span style="${type('parentFootnote', { color: col.textTertiary })};font-size:11.5px;flex:0 0 auto">Pond</span>
+        <span style="${type('parentFootnote', { color: col.textSecondary })};flex:0 0 auto">Pond</span>
         <div style="flex:1;height:7px;border-radius:4px;background:${col.surfaceSunken};overflow:hidden">
           <div style="width:${Math.round((pond / 41) * 100)}%;height:100%;border-radius:4px;background:${col.brandPrimary}"></div>
         </div>
-        <span style="${type('parentFootnote', { color: col.textTertiary })};font-size:11.5px;flex:0 0 auto;
+        <span style="${type('parentFootnote', { color: col.textSecondary })};flex:0 0 auto;
           font-variant-numeric:tabular-nums">${pond} of 41</span>
       </div>
     </div>`;
@@ -535,9 +535,9 @@ function childProfiles(appearance = 'light') {
           <div style="display:flex;align-items:center;gap:8px">
             <span style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15px">HopPotty Family</span>
             <span style="padding:2px 8px;border-radius:8px;background:${dark ? alpha(P.hopGreen, .2) : P.hopGreenSoft};
-              ${type('parentFootnote', { color: dark ? P.hopGreenLight : P.hopGreenInk, weight: 'semibold' })};font-size:10.5px">Unlocked</span>
+              ${type('parentFootnote', { color: dark ? P.hopGreenLight : P.hopGreenInk, weight: 'semibold' })};">Unlocked</span>
           </div>
-          <div style="${type('parentCaption', { color: col.textSecondary })};font-size:13px;margin-top:3px;line-height:1.42">
+          <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:3px;line-height:1.42">
             One purchase, already made. Every child you add is covered.</div>
         </div>
       </div>
@@ -615,7 +615,7 @@ function paywallFamily(appearance = 'light') {
           'No ads, no analytics, no tracking — in either version.',
         ].map((line, i) => `<div style="display:flex;gap:10px;align-items:flex-start;${i ? 'margin-top:7px' : ''}">
           ${MARK.check(col.success, 15)}
-          <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};font-size:12.5px;line-height:1.35">${line}</div>
+          <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.35">${line}</div>
         </div>`).join('')}
       </div>
 
@@ -625,7 +625,7 @@ function paywallFamily(appearance = 'light') {
         <div style="text-align:center;${type('parentTitle', { color: col.textPrimary })};font-size:22px">$19.99 once</div>
         <div style="margin-top:12px">${ctaButton(col, appearance, 'Unlock HopPotty')}</div>
         <div style="margin-top:9px">${secondaryButton(col, 'Restore purchase', { height: 50 })}</div>
-        <div style="${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;line-height:1.42;
+        <div style="${type('parentCaption', { color: col.textSecondary })};line-height:1.42;
           text-align:center;padding:12px 2px 0">
           The free version keeps one child, the full routine and every reminder. Nothing your child earned is ever behind the purchase.</div>
       </div>
@@ -681,7 +681,7 @@ function parentGate(appearance = 'light') {
         </div>
         <div style="flex:1">
           <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15.5px">Held</div>
-          <div style="${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;margin-top:1px">Press and hold, one second.</div>
+          <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:1px">Press and hold, one second.</div>
         </div>
       </div>
 
@@ -693,7 +693,7 @@ function parentGate(appearance = 'light') {
           <span style="${type('parentTitle', { color: col.textPrimary })};font-size:22px;font-variant-numeric:tabular-nums">3</span>
           <div style="width:2px;height:26px;background:${col.brandAction};border-radius:1px;margin-left:2px"></div>
         </div>
-        <div style="${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;line-height:1.42;padding:9px 2px 0">
+        <div style="${type('parentCaption', { color: col.textSecondary })};line-height:1.42;padding:9px 2px 0">
           Three tries, then Hop offers a different sum. There is no lock-out — Restore Screen Access must always be reachable.</div>
       </div>
 
@@ -731,7 +731,7 @@ function deleteDataConfirm(appearance = 'light') {
 
   const line = (text) => `
     <div style="display:flex;gap:11px;align-items:flex-start;padding:3px 0">
-      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="${col.textTertiary}" stroke-width="2"
+      <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="${col.textSecondary}" stroke-width="2"
         style="flex:0 0 auto;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M8 12h8" stroke-linecap="round"/></svg>
       <div style="flex:1;${type('parentBody', { color: col.textSecondary })};font-size:16px;line-height:1.35">${text}</div>
     </div>`;
@@ -751,8 +751,8 @@ function deleteDataConfirm(appearance = 'light') {
 
       <div style="flex:0 0 auto;display:flex;gap:11px;align-items:flex-start;margin-top:14px;
         background:${col.surfaceSunken};border-radius:${T.radius.l}px;padding:12px 14px;border:1px solid ${col.divider}">
-        ${iconTile(dark ? alpha('#FFFFFF', .08) : '#FFFFFF', MARK.lock(col.textTertiary, 15), { size: 28, radius: 9 })}
-        <div style="flex:1;${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;line-height:1.42">
+        ${iconTile(dark ? alpha('#FFFFFF', .08) : '#FFFFFF', MARK.lock(col.textSecondary, 15), { size: 28, radius: 9 })}
+        <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.42">
           Every event, star and note lives on your device. Deleting removes it here, right away, and there is no copy anywhere else.</div>
       </div>
 
@@ -828,8 +828,8 @@ function accessRestored(appearance = 'light') {
       </div>
 
       <div style="flex:0 0 auto;margin-top:12px;display:flex;gap:11px;align-items:flex-start;padding:0 4px">
-        ${EXTRA.info(col.textTertiary, 15)}
-        <div style="flex:1;${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;line-height:1.42">
+        ${EXTRA.info(col.textSecondary, 15)}
+        <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.42">
           iOS can turn this off on its own — when a child's account changes, or when another parental-controls app takes over.</div>
       </div>
 
@@ -865,7 +865,7 @@ function progressEmpty(appearance = 'light') {
       ${last ? '' : `box-shadow:inset 0 -1px 0 ${col.divider};`}">
       <div style="width:30px;height:30px;border-radius:15px;background:${soft};display:grid;place-items:center;flex:0 0 auto">${glyph(tint, 16)}</div>
       <div style="flex:1;${type('parentCallout', { color: col.textSecondary })};font-size:14.5px">${text}</div>
-      <span style="${type('parentFootnote', { color: col.textTertiary })};font-size:11.5px;flex:0 0 auto">${label}</span>
+      <span style="${type('parentFootnote', { color: col.textSecondary })};flex:0 0 auto">${label}</span>
     </div>`;
 
   return `
@@ -878,7 +878,7 @@ function progressEmpty(appearance = 'light') {
         <div style="display:flex;align-items:center;gap:7px;height:32px;padding:0 12px 0 5px;border-radius:16px;
           background:${col.surface};box-shadow:${elevation(appearance, 'resting')}">
           ${avatarDisc(24, { fill: P.hopGreenSoft, ring: null })}
-          <span style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};font-size:12.5px">Maya</span>
+          <span style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};">Maya</span>
         </div>
       </div>
 
@@ -982,20 +982,20 @@ function quickReminderSheet(appearance = 'light') {
       </div>
 
       <div style="flex:0 0 auto;padding-top:16px">
-        <div style="${type('parentFootnote', { color: col.textTertiary, weight: 'semibold' })};font-size:11.5px;
+        <div style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};
           letter-spacing:.5px;text-transform:uppercase">Why, if you like</div>
         <div style="display:flex;gap:8px;margin-top:9px">
           ${['After a drink', 'Before leaving', 'Before a nap'].map((label, i) => `
             <div style="flex:1;height:38px;border-radius:19px;display:grid;place-items:center;
               background:${i === 0 ? (dark ? alpha(P.pondBlue, .22) : P.pondBlueSoft) : col.surface};
               border:1.5px solid ${i === 0 ? (dark ? alpha(P.pondBlue, .5) : P.pondBlue) : col.divider};
-              ${type('parentCaption', { color: i === 0 ? (dark ? P.pondBlueLight : P.pondBlueDeep) : col.textSecondary, weight: i === 0 ? 'semibold' : 'medium' })};font-size:12.5px">${label}</div>`).join('')}
+              ${type('parentCaption', { color: i === 0 ? (dark ? P.pondBlueLight : P.pondBlueDeep) : col.textSecondary, weight: i === 0 ? 'semibold' : 'medium' })};">${label}</div>`).join('')}
         </div>
       </div>
 
       <div style="flex:0 0 auto;display:flex;gap:11px;align-items:flex-start;margin-top:14px;padding:0 4px">
-        ${MARK.bell(col.textTertiary, 15)}
-        <div style="flex:1;${type('parentCaption', { color: col.textTertiary })};font-size:12.5px;line-height:1.42">
+        ${MARK.bell(col.textSecondary, 15)}
+        <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.42">
           A Potty Pause is already coming at about 2:20 PM. You can set this anyway.</div>
       </div>
 
@@ -1044,7 +1044,7 @@ function bandLabel(text, { dark = false, top = 12 } = {}) {
   const ink = dark ? '#FFFFFF' : P.midnight;
   return `<div style="position:absolute;left:14px;top:${top}px;z-index:3;height:24px;padding:0 11px;border-radius:12px;
     background:${alpha(dark ? '#FFFFFF' : P.midnight, dark ? .16 : .1)};display:flex;align-items:center;
-    ${type('parentFootnote', { color: alpha(ink, .82), weight: 'semibold' })};font-size:10.5px;letter-spacing:.7px;
+    ${type('parentFootnote', { color: alpha(ink, .82), weight: 'semibold' })};letter-spacing:.7px;
     text-transform:uppercase">${text}</div>`;
 }
 
@@ -1293,7 +1293,7 @@ function liveActivity(appearance = 'light') {
       <div style="position:relative;display:flex;flex-direction:column;height:100%;align-items:center">
         <div style="height:46px;flex:0 0 auto"></div>
         ${island}
-        <div style="${type('parentCaption', { color: alpha('#FFFFFF', .5) })};font-size:11.5px;margin-top:14px;
+        <div style="${type('parentCaption', { color: alpha('#FFFFFF', .5) })};margin-top:14px;
           text-align:center;padding:0 26px;line-height:1.4">
           No buttons. Every action with consequences stays behind the grown-up gate.</div>
         <div style="flex:1"></div>
@@ -1312,7 +1312,7 @@ function liveActivity(appearance = 'light') {
         </div>
         <div style="flex:1.1"></div>
         ${activityCard}
-        <div style="${type('parentCaption', { color: alpha('#FFFFFF', .62) })};font-size:12px;text-align:center;
+        <div style="${type('parentCaption', { color: alpha('#FFFFFF', .62) })};text-align:center;
           margin-top:16px;padding:0 6px;line-height:1.4">
           The clock is on the grown-up's phone. Your child's own screen shows the pause with no countdown on it at all.</div>
         <div style="flex:0.75"></div>
@@ -1405,7 +1405,7 @@ function insightsPad(appearance = 'light') {
             <div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 13px 0 5px;border-radius:17px;
               background:${col.surface};box-shadow:${elevation(appearance, 'resting')}">
               ${avatarDisc(26, { fill: P.hopGreenSoft, ring: null })}
-              <span style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};font-size:13px">Maya</span>
+              <span style="${type('parentFootnote', { color: col.textSecondary, weight: 'semibold' })};">Maya</span>
             </div>
           </div>
         </div>
@@ -1420,7 +1420,7 @@ function insightsPad(appearance = 'light') {
                 <div style="display:flex;align-items:center;gap:4px;padding:3px 10px 3px 7px;border-radius:11px;
                   background:${TINT.check.soft};margin-bottom:9px">
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="${TINT.check.tint}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"/><path d="M5.6 12.4 12 6l6.4 6.4"/></svg>
-                  <span style="${type('parentFootnote', { color: TINT.check.tint, weight: 'semibold' })};font-size:12px">+12% vs last week</span>
+                  <span style="${type('parentFootnote', { color: TINT.check.tint, weight: 'semibold' })};">+12% vs last week</span>
                 </div>
               </div>
               <div style="margin:8px -4px 0">
@@ -1429,7 +1429,7 @@ function insightsPad(appearance = 'light') {
                 })}
               </div>
               <div style="display:flex;justify-content:space-between;margin-top:4px">
-                ${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d) => `<span style="${type('parentFootnote', { color: col.textTertiary })};font-size:11.5px;width:22px;text-align:center">${d}</span>`).join('')}
+                ${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d) => `<span style="${type('parentFootnote', { color: col.textSecondary })};width:22px;text-align:center">${d}</span>`).join('')}
               </div>
               <div style="margin-top:12px">${patternLabel(col)}</div>`)}
 
@@ -1454,7 +1454,7 @@ function insightsPad(appearance = 'light') {
                 </div>
                 <div style="flex:1">
                   <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15px">4 accidents were logged, 3 of them after 3 PM.</div>
-                  <div style="${type('parentCaption', { color: col.textSecondary })};font-size:13px;margin-top:4px;line-height:1.38">
+                  <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:4px;line-height:1.38">
                     Recorded as a neutral fact. Accidents never touch your child's stars, and your child never sees this entry.</div>
                 </div>
               </div>`)}
@@ -1466,7 +1466,7 @@ function insightsPad(appearance = 'light') {
               <div style="display:flex;align-items:flex-start;gap:16px;margin-top:8px">
                 <div style="flex:1;min-width:0">
                   <div style="${type('metric', { color: col.textPrimary })};font-size:28px">45–55 min</div>
-                  <div style="${type('parentCaption', { color: col.textSecondary })};font-size:13px;margin-top:4px;line-height:1.38">
+                  <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:4px;line-height:1.38">
                     after the last visit is when most successful tries happened.</div>
                 </div>
                 <div style="width:140px;flex:0 0 auto;padding-top:14px">${dayShape([0.3, 0.45, 0.6, 1, 0.72, 0.4, 0.25], 3)}</div>
@@ -1480,13 +1480,13 @@ function insightsPad(appearance = 'light') {
               <div style="display:flex;align-items:flex-start;gap:16px;margin-top:8px">
                 <div style="flex:1;min-width:0">
                   <div style="${type('metric', { color: col.textPrimary })};font-size:28px">2h 15m</div>
-                  <div style="${type('parentCaption', { color: col.textSecondary })};font-size:13px;margin-top:4px;line-height:1.38">
+                  <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:4px;line-height:1.38">
                     on Thursday morning. Last week's longest was 1h 50m.</div>
                 </div>
                 <div style="width:140px;flex:0 0 auto;padding-top:12px">
-                  <div style="${type('parentFootnote', { color: col.textTertiary })};font-size:11px">This week</div>
+                  <div style="${type('parentFootnote', { color: col.textSecondary })};">This week</div>
                   <div style="height:10px;border-radius:5px;background:${TINT.pee.tint};margin-top:4px"></div>
-                  <div style="${type('parentFootnote', { color: col.textTertiary })};font-size:11px;margin-top:9px">Last week</div>
+                  <div style="${type('parentFootnote', { color: col.textSecondary })};margin-top:9px">Last week</div>
                   <div style="height:10px;width:81%;border-radius:5px;background:${TINT.pee.soft};margin-top:4px"></div>
                 </div>
               </div>
@@ -1501,7 +1501,7 @@ function insightsPad(appearance = 'light') {
                 </div>
                 <div style="flex:1">
                   <div style="${type('parentHeadline', { color: col.textPrimary, weight: 'semibold' })};font-size:15px">Most visits happened between 9:00 AM and 11:00 AM.</div>
-                  <div style="${type('parentCaption', { color: col.textSecondary })};font-size:13px;margin-top:4px;line-height:1.38">
+                  <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:4px;line-height:1.38">
                     The average gap between logged visits was 1 hour 10 minutes.</div>
                 </div>
               </div>`)}
@@ -1511,7 +1511,7 @@ function insightsPad(appearance = 'light') {
             ${cardBox(`
               <div style="display:flex;gap:13px;align-items:flex-start">
                 <div style="width:34px;height:34px;border-radius:11px;background:${col.surfaceSunken};display:grid;place-items:center;flex:0 0 auto">
-                  ${EXTRA.info(col.textTertiary, 18)}
+                  ${EXTRA.info(col.textSecondary, 18)}
                 </div>
                 <div style="flex:1;${type('parentCallout', { color: col.textSecondary })};font-size:13.5px;line-height:1.4">
                   These are patterns in what you logged. They describe your child's week and nothing else.</div>

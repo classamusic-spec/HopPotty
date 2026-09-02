@@ -25,10 +25,11 @@ function meetHop(appearance = 'light') {
   return `
   <div style="display:flex;flex-direction:column;height:100%;background:${col.backgroundPrimary}">
     ${statusBar(col.textPrimary)}
-    <div style="flex:1;display:flex;flex-direction:column;padding:0 28px 8px;min-height:0">
+    <div style="flex:1;display:flex;flex-direction:column;padding:0 ${T.spacing.xxl}px 8px;min-height:0">
 
-      <div style="height:26px;display:flex;align-items:center;justify-content:flex-end">
-        <span style="${type('parentCallout', { color: col.textTertiary })};font-size:15px">Skip</span>
+      <div style="height:${T.hitTarget.parentMinimum}px;display:flex;align-items:center;justify-content:flex-end;
+        margin-right:-4px;padding:0 4px">
+        <span style="${type('parentCallout', { color: col.textSecondary })}">Skip</span>
       </div>
 
       <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0">
@@ -65,9 +66,9 @@ function meetHop(appearance = 'light') {
 
       <div style="flex:0 0 auto;text-align:center;padding:0 4px">
         <div style="${type('hero', { color: col.textPrimary })};font-size:42px">Meet Hop</div>
-        <div style="${type('parentBody', { color: col.textSecondary })};font-size:19px;margin-top:10px">
+        <div style="${type('parentBody', { color: col.textSecondary })};font-size:19px;margin-top:${T.spacing.s}px">
           Your child's new potty-time buddy.</div>
-        <div style="${type('parentCallout', { color: col.textTertiary })};font-size:15px;margin-top:14px;
+        <div style="${type('parentCallout', { color: col.textSecondary })};margin-top:14px;
           line-height:1.45;padding:0 6px">
           HopPotty pauses the games your child is playing, invites them to the potty, and hands the game straight back.</div>
       </div>
@@ -103,7 +104,7 @@ function theIdea(appearance = 'light') {
       </div>
       <div style="flex:1;min-width:0">
         <div style="${type('parentTitle', { color: col.textPrimary, weight: 'bold' })};font-size:17px;letter-spacing:.4px">${word}</div>
-        <div style="${type('parentCaption', { color: col.textSecondary })};font-size:13.5px;margin-top:1px">${body}</div>
+        <div style="${type('parentCaption', { color: col.textSecondary })};margin-top:1px">${body}</div>
       </div>
     </div>`;
 
@@ -126,14 +127,15 @@ function theIdea(appearance = 'light') {
   return `
   <div style="display:flex;flex-direction:column;height:100%;background:${col.backgroundPrimary}">
     ${statusBar(col.textPrimary)}
-    <div style="flex:1;display:flex;flex-direction:column;padding:0 24px 8px;min-height:0">
+    <div style="flex:1;display:flex;flex-direction:column;padding:0 ${T.spacing.xxl}px 8px;min-height:0">
 
-      <div style="height:26px;display:flex;align-items:center;justify-content:flex-end">
-        <span style="${type('parentCallout', { color: col.textTertiary })};font-size:15px">Skip</span>
+      <div style="height:${T.hitTarget.parentMinimum}px;display:flex;align-items:center;justify-content:flex-end;
+        margin-right:-4px;padding:0 4px">
+        <span style="${type('parentCallout', { color: col.textSecondary })}">Skip</span>
       </div>
 
       <div style="flex:0 0 auto;padding:10px 2px 0">
-        <div style="${type('parentFootnote', { color: col.brandAction, weight: 'semibold' })};font-size:12px;
+        <div style="${type('parentFootnote', { color: col.brandAction, weight: 'semibold' })};
           letter-spacing:.9px;text-transform:uppercase">The idea</div>
         <div style="${type('parentLargeTitle', { color: col.textPrimary })};font-size:32px;margin-top:5px">Pause. Potty. Play.</div>
         <div style="${type('parentCallout', { color: col.textSecondary })};font-size:15px;margin-top:8px;line-height:1.42">
@@ -152,8 +154,8 @@ function theIdea(appearance = 'light') {
         </div>
 
         <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px">
-          ${MARK.loop(col.textTertiary, 15)}
-          <span style="${type('parentCaption', { color: col.textTertiary })};font-size:13.5px">
+          ${MARK.loop(col.textSecondary, 15)}
+          <span style="${type('parentCaption', { color: col.textSecondary })}">
             And around again, on the rhythm you set.</span>
         </div>
 
@@ -163,7 +165,7 @@ function theIdea(appearance = 'light') {
           padding:14px 15px;box-shadow:${elevation(appearance, 'resting')}">
           <div style="width:34px;height:34px;border-radius:11px;flex:0 0 auto;display:grid;place-items:center;
             background:${dark ? alpha(P.hopGreen, .2) : P.hopGreenSoft}">${MARK.lock(dark ? P.hopGreenLight : P.hopGreenInk, 18)}</div>
-          <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};font-size:13.5px;line-height:1.42">
+          <div style="flex:1;${type('parentCaption', { color: col.textSecondary })};line-height:1.42">
             The pause ends on its own timer. Screen access is never held back for a result.</div>
         </div>
         <div style="flex:1"></div>

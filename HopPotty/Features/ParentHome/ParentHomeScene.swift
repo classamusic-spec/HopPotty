@@ -17,7 +17,7 @@ import HopPottyDesignTokens
 /// The proportions are the render's, expressed against the container's width
 /// rather than a 393pt phone: the drawing is a landscape, so the crop that keeps
 /// the sky behind the pills, the far bank behind Hop's head and the water in the
-/// gap the timer card leaves is a proportion of the width, not of the height. A
+/// gap the countdown leaves is a proportion of the width, not of the height. A
 /// short container (a landscape phone, a split-view iPad) clamps against the
 /// height so the water line can never fall off the bottom.
 struct HomePondMetrics {
@@ -48,25 +48,26 @@ struct HomePondMetrics {
         CGPoint(x: width * 0.56, y: sceneHeight * 0.508)
     }
 
-    /// The water the scroll content leaves open above the timer card.
+    /// The water the scroll content leaves open above the countdown.
     ///
-    /// At an accessibility text size the pond gives most of it back: the card
-    /// and the panel under it are what a caregiver came for, and a screen that
-    /// opens on two thirds of a drawing is a screen they have to scroll before
-    /// they can read anything.
+    /// At an accessibility text size the pond gives most of it back: the
+    /// countdown and the panel under it are what a caregiver came for, and a
+    /// screen that opens on two thirds of a drawing is a screen they have to
+    /// scroll before they can read anything.
     var opening: CGFloat {
         let base = min(width * (isRegular ? 0.34 : 0.62), height * (isRegular ? 0.42 : 0.50))
         return isAccessibilitySize ? base * 0.6 : base
     }
 
-    /// The timer card is a column beside the water on iPad and the full measure
-    /// on a phone.
+    /// The timer is a column beside the water on iPad and the full measure on a
+    /// phone. Named for the card it used to be; the block it now measures has no
+    /// card, but the width it is allowed is the same decision.
     var cardMaxWidth: CGFloat {
         isRegular ? width * 0.56 : .infinity
     }
 
     /// Enough panel that it reaches the bottom of the screen on a short day —
-    /// the card's own height is allowed for, and anything taller simply scrolls.
+    /// the timer's own height is allowed for, and anything taller simply scrolls.
     var sheetMinHeight: CGFloat {
         max(0, height - opening - (isRegular ? 190 : 220))
     }
@@ -230,7 +231,7 @@ struct HomeSceneTopBar: View {
 /// The panel the day's detail lives on.
 ///
 /// A rounded top on the app's own ground, rising out of the water — not a
-/// presented sheet. It scrolls with the card above it, which is the whole point:
+/// presented sheet. It scrolls with the countdown above it, which is the point:
 /// the pond is where the screen starts and the detail is what a caregiver pulls
 /// up when they want it, in one gesture, with nothing to dismiss afterwards.
 struct HomeSheetPanel<Content: View>: View {

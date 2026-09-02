@@ -176,7 +176,7 @@ from `HopSemanticPalette.shadow` so dark mode does not glow.
 | --- | --- | --- | --- | --- |
 | `flat` | 0 | 0 | 0 | Rows inside an already-elevated card |
 | `resting` | 14 | 4 | 1.00 | Dashboard cards |
-| `raised` | 24 | 8 | 1.15 | The hero timer card |
+| `raised` | 24 | 8 | 1.15 | The primary action on a scene, and any card that must lift off a drawing |
 | `floating` | 40 | 16 | 1.30 | Sheets, popovers, the celebration overlay |
 
 ---

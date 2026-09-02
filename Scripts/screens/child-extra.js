@@ -26,7 +26,7 @@ const fs = require('fs');
 const path = require('path');
 const { T, c, type, svg, statusBar, homeIndicator, alpha, mix, elevation, artOr, ROOT } = require('./ui');
 const { childButton, stepDots, MARK } = require('./kit');
-const { stepStrip, grownUpChip, stage } = require('./child');
+const { stepStrip, grownUpChip, stage, skipRow } = require('./child');
 const scenes = require('./scenes');
 
 const P = T.palette;
@@ -361,17 +361,10 @@ function routineTopRow(index) {
   </div>`;
 }
 
-/** "Skip this", drawn as an offer rather than an escape. */
-function skipRow(label) {
-  return `<div style="flex:0 0 auto;height:38px;display:flex;align-items:center;justify-content:center">
-    <span style="${type('parentHeadline', { color: P.sand600, weight: 'semibold' })};font-size:16px">${label}</span>
-  </div>`;
-}
-
 /** Title and instruction, in the one arrangement every routine screen uses. */
 function routineHead(title, instruction) {
   return `<div style="flex:0 0 auto;text-align:center;margin-top:8px">
-    <div style="${type('childTitle', { color: P.midnight })};font-size:36px">${title}</div>
+    <div style="${type('childTitle', { color: P.midnight })}">${title}</div>
     <div style="${type('childInstruction', { color: P.midnight })};font-size:19px;margin-top:7px;opacity:.72">${instruction}</div>
   </div>`;
 }
@@ -409,7 +402,8 @@ function routineStep(appearance, {
 
       <div style="flex:0 0 auto">
         ${childButton(col, appearance, primary, { kind: 'primary', height: 100, radius: T.radius.hero })}
-        ${skip ? skipRow(skip) : '<div style="height:14px"></div>'}
+        <div style="height:${T.spacing.m}px"></div>
+        ${skipRow(skip)}
         ${stepStrip(index)}
       </div>
     </div>`);
@@ -516,6 +510,7 @@ function routineTryTimer(appearance = 'light') {
 
       <div style="flex:0 0 auto">
         ${childButton(col, appearance, 'Next', { kind: 'primary', height: 100, radius: T.radius.hero })}
+        <div style="height:${T.spacing.m}px"></div>
         ${skipRow('Skip this')}
         ${stepStrip(0)}
       </div>
@@ -547,9 +542,9 @@ const GAMES = [
 ];
 
 /** A thumbnail: the game's own scene, cropped to a band around its subject. */
-function thumb(key, w, h, focus) {
+function thumb(key, h, focus) {
   const url = bgImage(`Art/scenes/games-${key}.svg`);
-  return `<div style="width:${w}px;height:${h}px;background-color:${P.sand100};
+  return `<div style="width:100%;height:${h}px;background-color:${P.sand100};
     ${url ? `background-image:${url};background-size:cover;background-position:center ${(focus * 100).toFixed(0)}%;
     background-repeat:no-repeat;` : ''}"></div>`;
 }
@@ -563,11 +558,11 @@ function gamesHub(appearance = 'light') {
   const card = (g) => `
     <div style="border-radius:${T.radius.l}px;overflow:hidden;background:${col.surface};
       box-shadow:${elevation(appearance, 'resting')}">
-      ${thumb(g.key, Math.ceil(cardW), 92, g.focus)}
+      ${thumb(g.key, 90, g.focus)}
       <div style="padding:8px 11px 10px">
         <div style="${type('childInstruction', { color: H })};font-size:14.5px;line-height:1.18;height:21px;overflow:hidden">${g.title}</div>
-        <div style="${type('parentCallout', { color: col.textTertiary })};font-size:11px;line-height:1.3;
-          height:29px;overflow:hidden;margin-top:2px">${g.desc}</div>
+        <div style="${type('parentCaption', { color: col.textSecondary })};line-height:1.3;
+          height:34px;overflow:hidden;margin-top:3px">${g.desc}</div>
       </div>
     </div>`;
 
@@ -641,7 +636,7 @@ function gameScreen(appearance, {
         ${primary ? childButton(col, appearance, primary, { kind: 'primary', height: 96, radius: T.radius.hero }) : ''}
         ${primary && secondary ? '<div style="height:12px"></div>' : ''}
         ${secondary ? childButton(col, appearance, secondary, {
-          kind: 'secondary', height: 76, radius: 38,
+          kind: 'secondary',
           fill: '#FFFFFF', textColor: tint, fontSize: 21,
           border: `1.5px solid ${alpha(tint, .2)}`,
         }) : ''}
@@ -714,8 +709,6 @@ function gameBathroomMatch(appearance = 'light') {
         ${tile(PICT.soap, P.lavenderDeep, { matched: true })}
         ${tile(PICT.wipe, P.pondBlueDeep)}
       </div>`,
-    primary: 'All done',
-    secondary: null,
   });
 }
 
@@ -920,7 +913,7 @@ function gameFlySnackHandoff(appearance = 'light') {
         ${childButton(col, appearance, "Let's Go!", { kind: 'primary', height: 104, radius: T.radius.hero })}
         <div style="height:14px"></div>
         ${childButton(col, appearance, 'All done', {
-          kind: 'secondary', height: 76, radius: 38,
+          kind: 'secondary',
           fill: alpha('#FFFFFF', .82), textColor: P.sand600, fontSize: 21,
         })}
       </div>
