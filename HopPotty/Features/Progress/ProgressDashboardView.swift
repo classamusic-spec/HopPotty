@@ -206,6 +206,16 @@ private struct ProgressMeasure: ViewModifier {
 }
 
 #if DEBUG
+// `@MainActor` because a file-scope `private func` is nonisolated by default,
+// while `ParentEnvironment`, the design-system modifiers and the views
+// themselves are all main-actor isolated. Every call site is a `#Preview` body,
+// which is main-actor anyway, so the annotation states what was already true.
+//
+// Six file-scope preview helpers across the app have this exact shape. The
+// compiler named four of them (one in run 60, three in run 66) and stopped;
+// the other two were found by looking for the shape rather than waiting to be
+// told. All six are annotated.
+@MainActor
 private func progressPreview(_ environment: ParentEnvironment) -> some View {
     NavigationStack { ProgressDashboardView() }
         .environment(environment)

@@ -543,6 +543,44 @@ was checked and is fine: `VerificationResult` and `Transaction` are both
 
 ---
 
+## Layer 11 — the preview layer, twice
+
+*Run 66. 15 diagnostics, two classes, and three more found by looking.*
+
+### 11.1 File-scope preview helpers are nonisolated — 8 errors, 3 files
+
+```
+PottyPauseSettingsView.swift:285:5: error: call to main actor-isolated initializer
+                                   'init(root:)' in a synchronous nonisolated context
+```
+
+The same shape as layer 5's `previewSummary`: a file-scope `private func` that
+builds a view. A file-scope function is nonisolated by default, while
+`ParentEnvironment`, the design-system modifiers and the views themselves are
+all main-actor isolated. Every call site is a `#Preview` body, which is
+main-actor anyway, so `@MainActor` on the helper states what was already true.
+
+**Six helpers in the app have this exact shape.** The compiler named four (one
+in run 60, three in run 66) and stopped. The other two — `PaywallView` and
+`ParentHomeView` — were found by searching for the shape instead of waiting to
+be told. All six are annotated, which is the second time in three layers that
+reading has beaten building to the rest of a class.
+
+### 11.2 The preview environment was calling constructors positionally — 7 errors
+
+```
+PreviewEnvironment.swift:83:54: error: missing argument label 'profiles:' in call
+```
+
+`InMemoryChildProfileRepository(children)`, `InMemoryPottyEventRepository(events)`
+and four more: every in-memory repository takes a labelled parameter with a
+default, and every call site here omitted the label. Plus a second
+`DeletionReceipt()` construction site, the twin of the four fixed in layer 4.5 —
+the compiler found the first four together and this one only once they were
+gone.
+
+---
+
 ## Reading a failed build
 
 `.github/workflows/ci.yml` ends with a **Summarise diagnostics** step,

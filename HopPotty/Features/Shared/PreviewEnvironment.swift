@@ -80,15 +80,15 @@ extension ParentEnvironment {
         )
 
         let repositories = RepositorySet(
-            profiles: InMemoryChildProfileRepository(children),
-            events: InMemoryPottyEventRepository(resolvedEvents),
-            rewards: InMemoryRewardRepository(PreviewData.stars(for: child.id, events: resolvedEvents)),
+            profiles: InMemoryChildProfileRepository(profiles: children),
+            events: InMemoryPottyEventRepository(events: resolvedEvents),
+            rewards: InMemoryRewardRepository(transactions: PreviewData.stars(for: child.id, events: resolvedEvents)),
             pond: InMemoryPondProgressRepository(),
-            schedules: InMemoryScheduleRepository([resolvedSchedule]),
+            schedules: InMemoryScheduleRepository(schedules: [resolvedSchedule]),
             screenTime: InMemoryScreenTimeConfigurationRepository(),
             quizzes: InMemoryQuizProgressRepository(),
             games: InMemoryGameProgressRepository(),
-            settings: InMemorySettingsRepository(AppSettings(activeChildID: child.id, hasCompletedOnboarding: true))
+            settings: InMemorySettingsRepository(settings: AppSettings(activeChildID: child.id, hasCompletedOnboarding: true))
         )
 
         let environment = ParentEnvironment(
@@ -130,14 +130,21 @@ extension ParentEnvironment {
             screenTime: InMemoryScreenTimeConfigurationRepository(),
             quizzes: InMemoryQuizProgressRepository(),
             games: InMemoryGameProgressRepository(),
-            settings: InMemorySettingsRepository(AppSettings(hasCompletedOnboarding: false))
+            settings: InMemorySettingsRepository(settings: AppSettings(hasCompletedOnboarding: false))
         )
         return ParentEnvironment(
             repositories: repositories,
             screenTime: previewScreenTime(.notDetermined, clock: clock),
             purchases: MockPurchaseService(),
             notifications: MockNotificationService(permission: .notDetermined),
-            deletion: PreviewDeletionService(receipt: DeletionReceipt()),
+            deletion: PreviewDeletionService(
+                receipt: DeletionReceipt(
+                    scope: .entireApp,
+                    childNickname: nil,
+                    counts: DeletionCounts(),
+                    completedAt: .now
+                )
+            ),
             export: PreviewExportService(),
             liveActivities: NoOpLiveActivityController(),
             clock: clock,
