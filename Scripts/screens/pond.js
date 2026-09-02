@@ -85,7 +85,7 @@ function hopsPond(appearance = 'light') {
           padding:14px 0 12px;box-shadow:0 2px 14px ${alpha(INK, .1)}">
           <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 16px">
             <span style="${type('childInstruction', { color: INK })};font-size:19px">Decorations</span>
-            <span style="${type('buttonLarge', { color: P.hopGreenInk })};font-size:18px">12 / 40</span>
+            <span style="${type('buttonLarge', { color: P.hopGreenInk })};font-size:18px">12 / 41</span>
           </div>
           <div style="display:flex;align-items:center;gap:7px;padding:4px 16px 0">
             ${MARK.star(P.sunshineBright, 14)}
