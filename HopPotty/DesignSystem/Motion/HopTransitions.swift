@@ -36,7 +36,23 @@ struct HopPageShift: ViewModifier, Animatable {
 
     static let identity = HopPageShift(travel: 0, rise: 0, depth: 1, dim: 0)
 
-    var animatableData: AnimatablePair<Double, AnimatablePair<Double, AnimatablePair<Double, Double>>> {
+    // `nonisolated`, and it has to be. `ViewModifier` is a `@MainActor`
+    // protocol, so conforming to it makes this struct main-actor isolated;
+    // `Animatable` is not, and SwiftUI's animation machinery reads and writes
+    // `animatableData` on its own terms. Swift 6 calls that out directly:
+    //
+    //     error: conformance of '...' to protocol 'Animatable' crosses into
+    //            main actor-isolated code and can cause data races
+    //
+    // This is safe rather than merely silenced: the type is a value type whose
+    // every stored property is a `Double`, so there is no shared mutable state
+    // for the two domains to race over -- each side animates its own copy. That
+    // is also why `nonisolated` is *allowed* to touch the stored properties at
+    // all (SE-0434 permits it for `Sendable` storage in a global-actor-isolated
+    // value type); if any property here were a reference, the compiler would
+    // refuse and the fix would have to be a real one.
+    nonisolated var animatableData: AnimatablePair<Double, AnimatablePair<Double, AnimatablePair<Double, Double>>> {
+
         get { AnimatablePair(travel, AnimatablePair(rise, AnimatablePair(depth, dim))) }
         set {
             travel = newValue.first
@@ -71,7 +87,23 @@ struct HopSurfaceArrival: ViewModifier, Animatable {
 
     static let identity = HopSurfaceArrival(lift: 0, depth: 1, dim: 0)
 
-    var animatableData: AnimatablePair<Double, AnimatablePair<Double, Double>> {
+    // `nonisolated`, and it has to be. `ViewModifier` is a `@MainActor`
+    // protocol, so conforming to it makes this struct main-actor isolated;
+    // `Animatable` is not, and SwiftUI's animation machinery reads and writes
+    // `animatableData` on its own terms. Swift 6 calls that out directly:
+    //
+    //     error: conformance of '...' to protocol 'Animatable' crosses into
+    //            main actor-isolated code and can cause data races
+    //
+    // This is safe rather than merely silenced: the type is a value type whose
+    // every stored property is a `Double`, so there is no shared mutable state
+    // for the two domains to race over -- each side animates its own copy. That
+    // is also why `nonisolated` is *allowed* to touch the stored properties at
+    // all (SE-0434 permits it for `Sendable` storage in a global-actor-isolated
+    // value type); if any property here were a reference, the compiler would
+    // refuse and the fix would have to be a real one.
+    nonisolated var animatableData: AnimatablePair<Double, AnimatablePair<Double, Double>> {
+
         get { AnimatablePair(lift, AnimatablePair(depth, dim)) }
         set {
             lift = newValue.first

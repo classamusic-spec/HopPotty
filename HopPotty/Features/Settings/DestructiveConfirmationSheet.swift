@@ -99,7 +99,12 @@ struct DestructiveConfirmationSheet: View {
 #Preview("Delete one child") {
     DestructiveConfirmationSheet(
         title: HopCopy.parentGate.deleteChildTitle.localized(forNickname: "Maya"),
-        receipt: DeletionReceipt(childName: "Maya", events: 47, stars: 31, decorations: 6),
+        receipt: DeletionReceipt(
+            scope: .childProfile(childID: UUID()),
+            childNickname: "Maya",
+            counts: DeletionCounts(pottyEvents: 47, starsRemoved: 31, pondItems: 6),
+            completedAt: .now
+        ),
         isWorking: false,
         onConfirm: {}
     )
@@ -109,7 +114,12 @@ struct DestructiveConfirmationSheet: View {
 #Preview("Delete everything, AX3") {
     DestructiveConfirmationSheet(
         title: HopCopy.parentGate.deleteEverythingTitle.localized,
-        receipt: DeletionReceipt(events: 412, stars: 260, decorations: 18, children: 2),
+        receipt: DeletionReceipt(
+            scope: .entireApp,
+            childNickname: nil,
+            counts: DeletionCounts(pottyEvents: 412, starsRemoved: 260, pondItems: 18, profiles: 2),
+            completedAt: .now
+        ),
         isWorking: false,
         onConfirm: {}
     )
@@ -120,7 +130,12 @@ struct DestructiveConfirmationSheet: View {
 #Preview("Nothing to remove, dark") {
     DestructiveConfirmationSheet(
         title: HopCopy.parentGate.deleteChildTitle.localized(forNickname: nil),
-        receipt: DeletionReceipt(),
+        receipt: DeletionReceipt(
+            scope: .childProfile(childID: UUID()),
+            childNickname: nil,
+            counts: DeletionCounts(),
+            completedAt: .now
+        ),
         isWorking: false,
         onConfirm: {}
     )

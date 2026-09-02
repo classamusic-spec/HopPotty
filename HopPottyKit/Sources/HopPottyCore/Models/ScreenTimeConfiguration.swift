@@ -76,7 +76,18 @@ public enum ScreenTimeAuthorizationStatus: String, Codable, CaseIterable, Sendab
 ///
 /// Raw `NSError`s are logged for diagnostics but never surfaced; every case here
 /// maps to a specific recovery sentence in the UI.
-public enum ScreenTimeFailure: String, Codable, CaseIterable, Sendable {
+///
+/// `Error` is part of the conformance list because this is the failure half of
+/// nineteen `Result<_, ScreenTimeFailure>` signatures across the Screen Time
+/// layer, and `Result`'s `Failure` is constrained to `Error`. It was missing,
+/// and the first compile of the app target reported it twenty-three times in
+/// nine files -- one omission, seen from every call site at once.
+///
+/// `Error` requires nothing to implement, so nothing below changes. What it
+/// adds is the ability to `throw` one, which is deliberate: a Screen Time
+/// failure is exactly the kind of thing a caller should be able to propagate
+/// rather than unwrap by hand.
+public enum ScreenTimeFailure: String, Error, Codable, CaseIterable, Sendable {
     case authorizationRevoked
     case noSelection
     case monitoringRegistrationFailed

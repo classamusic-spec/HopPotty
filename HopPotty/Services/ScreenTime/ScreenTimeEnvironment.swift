@@ -47,7 +47,16 @@ public final class ScreenTimeEnvironment {
     ///
     /// The `configuration` parameter is accepted in both configurations so call
     /// sites are written once.
-    public static func resolved(
+    // `internal`, not `public`. `AppBuildConfiguration` is internal, and a
+    // public method cannot take an internal parameter type or use an internal
+    // static property as a default argument -- the first compile of the app
+    // target said so twice on these two lines. Demoting is the right direction
+    // rather than promoting `AppBuildConfiguration`: this is an app target, not
+    // a framework, so `public` buys nothing here, and the two peers this
+    // deliberately mirrors -- `ServiceContainer.resolved` and
+    // `LiveActivityController.resolved` -- are both internal already. This one
+    // was the outlier.
+    static func resolved(
         configuration: AppBuildConfiguration = .resolved
     ) -> ScreenTimeEnvironment {
         #if DEBUG

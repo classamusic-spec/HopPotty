@@ -241,7 +241,12 @@ struct HopNotificationRequest: Sendable {
 
 /// `UNAuthorizationStatus`, restated so nothing outside this file imports
 /// `UserNotifications` to read a permission.
-enum NotificationPermission: String, Sendable, CaseIterable {
+// `Codable` because `OnboardingDraft` stores one and is itself `Codable`: an
+// interrupted setup is persisted after every change, and this is part of what
+// gets persisted. Without it the draft's synthesised conformance fails, which is
+// how the first compile of the app target reported this -- as two errors on
+// `OnboardingDraft` rather than one on the type actually missing it.
+enum NotificationPermission: String, Codable, Sendable, CaseIterable {
     case notDetermined
     case denied
     case authorized

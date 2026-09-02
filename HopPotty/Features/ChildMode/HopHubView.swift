@@ -528,10 +528,22 @@ private struct HopHubDoor: View {
 /// decides.
 private struct HopHubDoorStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        Body(configuration: configuration)
+        StyleBody(configuration: configuration)
     }
 
-    private struct Body: View {
+    // Named `StyleBody`, not `Body`. `ButtonStyle` declares
+    // `associatedtype Body: View`, and a nested type whose name matches an
+    // associated type wins the inference over the `some View` that
+    // `makeBody` actually returns. That made this `private` view the style's
+    // associated type, which is then less accessible than the style itself:
+    //
+    //     error: struct 'Body' must be as accessible as its enclosing type
+    //            because it matches a requirement in protocol 'ButtonStyle'
+    //     error: type '...' does not conform to protocol 'ButtonStyle'
+    //
+    // Renaming keeps the view private, where it belongs, and lets `Body` be
+    // inferred from the opaque return type as intended.
+    private struct StyleBody: View {
         @Environment(\.hopTheme) private var theme
         let configuration: ButtonStyleConfiguration
 

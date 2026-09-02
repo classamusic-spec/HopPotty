@@ -80,7 +80,11 @@ public final class PottyPauseEffectExecutor {
     /// re-enters the machine mid-bundle.
     public private(set) var pendingEvents: [PottyPauseEvent] = []
 
-    public init(
+    // `internal`, not `public`: `WidgetRefreshing` and `LiveActivityControlling`
+    // are internal protocols, and a public initializer cannot take them. Same
+    // reasoning as `ScreenTimeEnvironment.resolved` -- in an app target `public`
+    // is inert, and the executor is only ever constructed from inside it.
+    init(
         screenTime: any ScreenTimeProviding,
         monitoring: any ActivityMonitoringProviding,
         appGroup: AppGroupStore = .shared,

@@ -29,7 +29,14 @@ import HopPottyFixtures
 final class PreviewDeletionService: DataDeletionProviding {
     var receipt: DeletionReceipt
 
-    init(receipt: DeletionReceipt = DeletionReceipt(childName: "Maya", events: 47, stars: 31, decorations: 6, children: 1)) {
+    init(
+        receipt: DeletionReceipt = DeletionReceipt(
+            scope: .childProfile(childID: UUID()),
+            childNickname: "Maya",
+            counts: DeletionCounts(pottyEvents: 47, starsRemoved: 31, pondItems: 6, profiles: 1),
+            completedAt: .now
+        )
+    ) {
         self.receipt = receipt
     }
 
