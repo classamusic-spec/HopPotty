@@ -10,11 +10,22 @@
 # (Docs/ADR/0001-platform-agnostic-core.md), so it compiles and runs on a free
 # Linux runner in seconds, on every push.
 #
-# It cannot build the app, the three Screen Time extensions, or anything SwiftUI.
-# That needs macOS and Xcode. If this repository ever gets a macOS runner, the
-# job to add is `Scripts/bootstrap.sh && xcodebuild build -scheme HopPotty-Mock`;
-# until then, a green tick here means the domain logic is sound and says nothing
-# about the app layer. Do not read it as more than that.
+# The `app` job below is the macOS runner that job comment used to ask for. It
+# builds the app, the three Screen Time extensions and the widget extension with
+# a real Xcode, which is the only way anything SwiftUI in this repository gets
+# type-checked at all: every one of those files was written without a compiler
+# (Docs/RepositoryAudit.md), so until this job is green, "it parses" is the
+# strongest claim anyone can make about them.
+#
+# EXPECT IT TO FAIL THE FIRST TIME, and read that as the job working. Nothing
+# here had ever been compiled when it was added; its whole purpose is to turn a
+# pile of unverified files into a specific list of errors. `Docs/FirstBuild.md`
+# is where that list is worked through.
+#
+# It still cannot prove anything about Screen Time. The mock scheme swaps the
+# whole Family Controls layer out at compile time, and the Simulator has no
+# meaningful implementation of it either way — that needs a physical device and
+# an approved entitlement (Docs/Entitlements.md).
 
 name: CI
 
@@ -77,3 +88,93 @@ jobs:
       # material.
       - name: Verify configuration
         run: Scripts/verify-config.sh
+
+  app:
+    name: App and extensions (Xcode)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinning by picking the newest installed Xcode rather than a fixed path:
+      # the runner image's Xcode set changes without notice, and a hard-coded
+      # /Applications/Xcode_16.2.app turns into a broken build months later for
+      # a reason that has nothing to do with the code.
+      - name: Select Xcode
+        run: |
+          set -euo pipefail
+          newest=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Using $newest"
+          sudo xcode-select -s "$newest/Contents/Developer"
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # bootstrap.sh does the whole setup: it creates Config/Secrets.xcconfig
+      # from the template (empty team, which is correct here — this job never
+      # signs), runs the configuration checks, and generates the project. It is
+      # the same command a person runs, so if it breaks for them it breaks here.
+      - name: Generate the Xcode project
+        run: Scripts/bootstrap.sh
+
+      # CODE_SIGNING_ALLOWED=NO because a CI runner has no signing identity and
+      # no provisioning profile, and a Simulator build needs neither. This is
+      # also why the job cannot catch entitlement or provisioning mistakes —
+      # those surface on a device, and Docs/RunningLocally.md covers them.
+      - name: Build
+        run: |
+          set -euo pipefail
+          xcodebuild build \
+            -project HopPotty.xcodeproj \
+            -scheme HopPotty-Mock \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath .derived \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee /tmp/xcodebuild.log
+
+      # Runs even when the build fails, because when the build fails is exactly
+      # when someone needs to read this. xcodebuild's raw output buries a dozen
+      # real errors under thousands of lines of compiler invocations.
+      - name: Summarise diagnostics
+        if: always()
+        run: |
+          set -uo pipefail
+          log=/tmp/xcodebuild.log
+          [ -f "$log" ] || { echo "No build log — the job failed before xcodebuild ran." >> "$GITHUB_STEP_SUMMARY"; exit 0; }
+          strip() { sed "s#$GITHUB_WORKSPACE/##g"; }
+          errors=$(grep -E '^[^ ]+\.swift:[0-9]+:[0-9]+: error:' "$log" | strip | sort -u || true)
+          # `ld:` and `fatal error:` are included because a linker failure — a
+          # framework the mock scheme should not be pulling in, say — carries no
+          # "error:" at all and would otherwise vanish from this summary.
+          others=$(grep -E '(^|[^.])error:|^ld: |^fatal error:' "$log" | grep -vE '\.swift:[0-9]+:[0-9]+: error:' | strip | sort -u || true)
+          warns=$(grep -E '^[^ ]+\.swift:[0-9]+:[0-9]+: warning:' "$log" | strip | sort -u || true)
+          {
+            echo "## Xcode build"
+            echo
+            printf '%s Swift errors, %s other errors, %s warnings\n\n' \
+              "$(printf '%s' "$errors" | grep -c . || true)" \
+              "$(printf '%s' "$others" | grep -c . || true)" \
+              "$(printf '%s' "$warns" | grep -c . || true)"
+            if [ -n "$errors" ]; then
+              echo "### Swift errors"; echo '```'; printf '%s\n' "$errors" | head -300; echo '```'
+            fi
+            if [ -n "$others" ]; then
+              echo "### Other errors (linking, resources, signing)"; echo '```'; printf '%s\n' "$others" | head -100; echo '```'
+            fi
+            if [ -n "$warns" ]; then
+              echo "<details><summary>Warnings</summary>"; echo; echo '```'
+              printf '%s\n' "$warns" | head -200; echo '```'; echo "</details>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # The full log, because the summary is deliberately truncated and the first
+      # error is often explained by something a hundred lines above it.
+      - name: Upload the build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: /tmp/xcodebuild.log
+          if-no-files-found: warn
+          retention-days: 14
