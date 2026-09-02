@@ -202,6 +202,71 @@ struct RoutineCelebrationView: View {
     }
 }
 
+// The three answers, side by side and identical.
+//
+// This preview exists to be *looked at* when someone changes the celebration:
+// three hops of the same height, the same count and the same length, differing
+// only in which way they lean. If one of them ever looks bigger than the other
+// two, the change that did it is the bug.
+
+#Preview("Celebration · the three answers, hopping identically") {
+    HStack(alignment: .bottom, spacing: 20) {
+        ForEach(RoutineOutcomeChoices.order) { kind in
+            let hop = RoutineOutcomeChoices.celebrationHop(for: kind)
+            VStack(spacing: 8) {
+                HopCharacterStage(act: .celebrating(hop), size: 140)
+                    .frame(height: 140 + HopJump.headroom(for: 140), alignment: .bottom)
+                Text(verbatim: kind.rawValue).hopTextStyle(.parentCaption)
+                Text(verbatim: "\(hop.hops) hops · \(Int(hop.duration(reduceMotion: false) * 1000)) ms")
+                    .hopTextStyle(.parentCaption)
+            }
+        }
+    }
+    .padding()
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .hopBackground(.secondary)
+    .hopThemedRoot()
+}
+
+#Preview("Celebration · I peed") {
+    RoutineCelebrationView(
+        outcome: .pee,
+        starsEarned: 1,
+        totalStars: 8,
+        unlocked: nil,
+        onSeeThePond: {},
+        onFinish: {}
+    )
+    .hopBackground(.secondary)
+    .hopThemedRoot()
+}
+
+#Preview("Celebration · I pooped") {
+    RoutineCelebrationView(
+        outcome: .poop,
+        starsEarned: 1,
+        totalStars: 8,
+        unlocked: nil,
+        onSeeThePond: {},
+        onFinish: {}
+    )
+    .hopBackground(.secondary)
+    .hopThemedRoot()
+}
+
+#Preview("Celebration · I tried") {
+    RoutineCelebrationView(
+        outcome: .tried,
+        starsEarned: 1,
+        totalStars: 8,
+        unlocked: nil,
+        onSeeThePond: {},
+        onFinish: {}
+    )
+    .hopBackground(.secondary)
+    .hopThemedRoot()
+}
+
 #Preview("Celebration · output, star, no unlock") {
     RoutineCelebrationView(
         outcome: .pee,

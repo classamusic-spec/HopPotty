@@ -172,14 +172,14 @@ const POSE_FRAMES = {
   wait: ['blink', 'smile', 'gazeL', 'gazeR', 'gazeD'],
   sit: ['blink', 'smile', 'gazeD'],
   talk: ['blink', 'smile', 'talkShut'],
-  wave: ['blink', 'smile'],
+  wave: ['blink', 'smile', 'talkShut'],
   cheer: ['blink', 'smile'],
-  walk: ['blink'],
+  walk: ['blink', 'talkShut'],
   scrub: ['blink'],
   catch: ['blink'],
   land: ['blink', 'smile'],
   full: ['blink'],
-  face: ['blink', 'gazeL', 'gazeR'],
+  face: ['blink', 'gazeL', 'gazeR', 'talkShut'],
   jump: [],
   sleep: [],
   blink: [],
@@ -439,10 +439,10 @@ body.proto .screen.on{z-index:2}
 body.proto .screen.leaving{z-index:1}
 body.proto .screen.leaving.hp-above{z-index:3}
 
-@keyframes hp-in-push{from{transform:translateX(100%)}to{transform:translateX(0)}}
-@keyframes hp-out-push{from{transform:translateX(0);opacity:1}to{transform:translateX(-${par}%);opacity:.6}}
-@keyframes hp-in-push-back{from{transform:translateX(-${par}%);opacity:.6}to{transform:translateX(0);opacity:1}}
-@keyframes hp-out-push-back{from{transform:translateX(0)}to{transform:translateX(100%)}}
+@keyframes hp-in-parent{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes hp-out-parent{from{transform:translateX(0);opacity:1}to{transform:translateX(-${par}%);opacity:.6}}
+@keyframes hp-in-parent-back{from{transform:translateX(-${par}%);opacity:.6}to{transform:translateX(0);opacity:1}}
+@keyframes hp-out-parent-back{from{transform:translateX(0)}to{transform:translateX(100%)}}
 
 @keyframes hp-in-child{from{transform:translateX(100%) scale(.9);opacity:.35}55%{opacity:1}to{transform:translateX(0) scale(1);opacity:1}}
 @keyframes hp-out-child{from{transform:translateX(0) scale(1);opacity:1}to{transform:translateX(-${par}%) scale(.93);opacity:.45}}
@@ -457,10 +457,10 @@ body.proto .screen.leaving.hp-above{z-index:3}
 @keyframes hp-fade-in{from{opacity:0}to{opacity:1}}
 @keyframes hp-fade-out{from{opacity:1}to{opacity:0}}
 
-body.proto .screen.hp-in-push{animation:hp-in-push ${spring(M.pagePush)} both}
-body.proto .screen.hp-out-push{animation:hp-out-push ${spring(M.pagePush)} both}
-body.proto .screen.hp-in-push-back{animation:hp-in-push-back ${spring(M.pagePush)} both}
-body.proto .screen.hp-out-push-back{animation:hp-out-push-back ${spring(M.pagePush)} both}
+body.proto .screen.hp-in-parent{animation:hp-in-parent ${spring(M.pagePush)} both}
+body.proto .screen.hp-out-parent{animation:hp-out-parent ${spring(M.pagePush)} both}
+body.proto .screen.hp-in-parent-back{animation:hp-in-parent-back ${spring(M.pagePush)} both}
+body.proto .screen.hp-out-parent-back{animation:hp-out-parent-back ${spring(M.pagePush)} both}
 body.proto .screen.hp-in-child{animation:hp-in-child ${spring(M.childPage)} both}
 body.proto .screen.hp-out-child{animation:hp-out-child ${spring(M.childPage)} both}
 body.proto .screen.hp-in-child-back{animation:hp-in-child-back ${spring(M.childPage)} both}

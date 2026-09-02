@@ -143,7 +143,13 @@ struct PottyRoutineView: View {
     private func stepStage(_ step: PottyRoutineStep) -> some View {
         RoutineStepStage(
             step: step,
-            timerFraction: model.showsTimerRing ? model.timerFraction : nil
+            timerFraction: model.showsTimerRing ? model.timerFraction : nil,
+            // The child has just said what happened, so Hop celebrates it —
+            // here, on the step they land on, rather than four steps later. All
+            // three answers get the same hop; only the direction differs.
+            hop: model.isAcknowledgingOutcome
+                ? RoutineOutcomeChoices.acknowledgementHop(for: model.outcome)
+                : nil
         ) {
             VStack(spacing: theme.spacing.l) {
                 if model.isAwaitingOutcome {

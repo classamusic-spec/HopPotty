@@ -13,6 +13,14 @@ struct RoutineStepStage<Actions: View>: View {
 
     let step: PottyRoutineStep
     let timerFraction: Double?
+    /// A hop for Hop to play on arriving at this step.
+    ///
+    /// Used for one thing: the instant a child answers "How did it go?", the
+    /// screen moves on and Hop celebrates the answer they just gave — on the
+    /// step they land on, so the acknowledgement costs the routine no time and
+    /// cannot hold anyone anywhere. All three answers get the same hop
+    /// (`RoutineOutcomeChoices.acknowledgementHop(for:)`).
+    var hop: HopJump? = nil
     /// The action row. The try step passes its three answers; every other step
     /// passes a single "Next".
     @ViewBuilder var actions: () -> Actions
@@ -65,7 +73,15 @@ struct RoutineStepStage<Actions: View>: View {
                 // Hop is on every step, doing the step alongside the child. He
                 // is decorative here: the drawing beside him already carries the
                 // meaning, and two readings of the same picture is clutter.
-                HopCharacterStage(pose: pose, size: ChildStage.characterSize(for: horizontalSizeClass) * 0.72)
+                //
+                // The headroom is reserved on every step, not only the hopping
+                // one, so answering the try step does not shove the card's
+                // contents around on the way out.
+                HopCharacterStage(pose: pose, size: characterSide, jumping: hop, gaze: gaze)
+                    .frame(
+                        height: characterSide + HopJump.headroom(for: characterSide),
+                        alignment: .bottom
+                    )
                     .accessibilityHidden(true)
             }
             .padding(theme.spacing.m)
@@ -100,6 +116,27 @@ struct RoutineStepStage<Actions: View>: View {
         }
     }
 
+    private var characterSide: CGFloat {
+        ChildStage.characterSize(for: horizontalSizeClass) * 0.72
+    }
+
+    /// Where Hop is looking on this step.
+    ///
+    /// He is drawn to the *right* of the illustration, so looking left is
+    /// looking at the picture; looking down is looking at his own hands, or at
+    /// the buttons under him. Eyes that point at the thing being talked about
+    /// cost nothing and are most of what makes a drawing read as watching
+    /// rather than as printed.
+    private var gaze: HopGaze {
+        switch step.id {
+        case .tryIt: .down
+        case .wipe: .down
+        case .flush: .left
+        case .wash: .down
+        case .highFive: .forward
+        }
+    }
+
     /// What Hop is doing on this step. He models the action rather than
     /// watching the child perform it.
     private var pose: HopPose {
@@ -122,6 +159,30 @@ struct RoutineStepStage<Actions: View>: View {
     }
     .hopBackground(.secondary)
     .hopThemedRoot()
+}
+
+#Preview("Routine step · Hop acknowledges the answer") {
+    RoutineStepStage(
+        step: PottyRoutineContent.washStep,
+        timerFraction: nil,
+        hop: RoutineOutcomeChoices.acknowledgementHop(for: .tried)
+    ) {
+        HopPrimaryButton(HopCopy.routine.nextButton.localized, icon: "arrow.right", size: .childPrimary) {}
+    }
+    .hopBackground(.secondary)
+    .hopThemedRoot()
+}
+
+#Preview("Routine step · Reduce Motion (hop is a cross-fade)") {
+    RoutineStepStage(
+        step: PottyRoutineContent.washStep,
+        timerFraction: nil,
+        hop: RoutineOutcomeChoices.acknowledgementHop(for: .pee)
+    ) {
+        HopPrimaryButton(HopCopy.routine.nextButton.localized, icon: "arrow.right", size: .childPrimary) {}
+    }
+    .hopBackground(.secondary)
+    .hopThemedRoot(reduceMotion: true)
 }
 
 #Preview("Routine step · wash with ring") {

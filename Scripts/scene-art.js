@@ -116,7 +116,7 @@ const DEFS = {
   // The key light for the whole pond: an off-frame sun, upper left. No disc —
   // `sunbeam` is an unlockable decoration and would collide with one.
   skyGlow: rad('skyGlow', [[0, '#FFF6DE', 0.85], [0.42, P.sunshineSoft, 0.34], [1, P.sunshineSoft, 0]]),
-  skyWarm: lin('skyWarm', [[0, '#CFE9F6'], [0.42, '#E6F5FB'], [0.75, P.sunshineSoft], [1, '#FFF0E2']]),
+  skyWarm: lin('skyWarm', [[0, '#B4DFF1'], [0.34, '#D8EFF9'], [0.66, '#EFF8FC'], [0.86, P.sunshineSoft], [1, '#FFEFDF']]),
   skyHaze: lin('skyHaze', [[0, P.cloud, 0], [0.55, P.cloud, 0.12], [1, P.cloud, 0.8]]),
   sunGlow: rad('sunGlow', [[0, P.sunshine, 0.95], [0.45, P.sunshine, 0.45], [1, P.sunshine, 0]]),
   sunDisc: rad('sunDisc', [[0, '#FFF0C2'], [1, P.sunshine]], { cx: 0.4, cy: 0.35, r: 0.75 }),
@@ -143,6 +143,9 @@ const DEFS = {
   // the water where you are looking across it, and only opens into a beach at
   // the near edge where you are looking down on it.
   shoreSand: lin('shoreSand', [[0, P.sand200, 0], [0.36, P.sand200, 0.26], [0.7, P.sand100, 0.72], [1, '#E3D9CA', 0.92]]),
+  // An opaque sand for paths on land. The pond's `shoreSand` fades out at its
+  // far rim on purpose and is the wrong tool anywhere the ground is solid.
+  pathSand: lin('pathSand', [[0, P.sand100], [0.45, P.sand200], [1, '#DDD2C2']]),
   shoreWet: lin('shoreWet', [[0, P.sand300, 0], [0.4, P.sand300, 0.3], [1, P.sand400, 0.5]]),
   // A bank that slopes into the water, as one soft ramp rather than two rings.
   pondBank: rad('pondBank', [[0, '#4FA97E', 0.5], [0.68, '#4FA97E', 0.4], [0.9, '#4FA97E', 0.14], [1, '#4FA97E', 0]]),
@@ -211,6 +214,7 @@ const DEFS = {
   // bank's shadow — is drawn as a plain shape and cut to the waterline here,
   // rather than each one being hand-fitted to an ellipse.
   pondWaterClip: '<clipPath id="pondWaterClip"><ellipse cx="600" cy="558" rx="470" ry="232"/></clipPath>',
+  pondSceneClip: '<clipPath id="pondSceneClip"><ellipse cx="393" cy="1290" rx="600" ry="330"/></clipPath>',
   tvScreenClip: '<clipPath id="tvScreenClip"><rect x="23" y="35" width="74" height="36" rx="7"/></clipPath>',
   mirrorGlassClip: '<clipPath id="mirrorGlassClip"><ellipse cx="60" cy="58" rx="28" ry="36"/></clipPath>',
   paperSheet: lin('paperSheet', [[0, '#FFFFFF'], [1, P.sand100]], { x1: 0.2, x2: 0.9 }),
@@ -1268,6 +1272,130 @@ const ITEMS = {
     <ellipse cx="101" cy="164" rx="46" ry="7" fill="${P.midnight}" opacity="0.08"/>`,
 };
 
+// ---------------------------------------------------------------------------
+// The pond in portrait. Home, Hop's Pond and the parent dashboard all ask for
+// `Art/pond/pond-scene.svg` as a full-bleed 393x852 backdrop and have been
+// falling back to a drawn placeholder because the file did not exist. It is the
+// same world as `pond-base.svg`, recomposed for a phone: the horizon and the
+// treeline sit in the top third, the near bank crosses at 53% of the height
+// (where all three screens stand the character), and the water fills the rest.
+//
+// Deliberately *base only* — no catalogue decorations. The app draws the child's
+// own unlocked items over this, and a backdrop that already showed a duckling
+// would be handing out a reward the child has not earned.
+// ---------------------------------------------------------------------------
+const PS = { W: 786, H: 1704, cx: 393, cy: 1290, rx: 600, ry: 330 };
+
+function pondScene() {
+  const { W, H, cx, cy, rx, ry } = PS;
+  const body = `
+<g id="pond-sky">
+  <rect x="0" y="0" width="${W}" height="${H}" fill="url(#skyPond)"/>
+  <ellipse id="pond-sunglow" cx="70" cy="30" rx="520" ry="620" fill="url(#skyGlow)"/>
+  <g id="pond-clouds">
+    <g id="pond-cloud-1">${cloud(190, 214, 250, { opacity: 0.95 })}${cloud(102, 254, 148, { opacity: 0.6 })}</g>
+    <g id="pond-cloud-2">${cloud(596, 128, 176, { opacity: 0.7 })}</g>
+    <g id="pond-cloud-3">${cloud(704, 386, 138, { opacity: 0.45 })}</g>
+  </g>
+  <g id="pond-birds" fill="none" stroke="${P.pondBlueDeep}" stroke-width="5" stroke-linecap="round" opacity="0.22">
+    <path d="M 258 452 q 17 -15 32 0 q 15 -15 32 0"/>
+    <path d="M 356 402 q 12 -11 24 0 q 11 -11 24 0"/>
+  </g>
+  <rect x="0" y="0" width="${W}" height="760" fill="url(#skyHaze)"/>
+</g>
+<g id="pond-hills">
+  <path d="M -20 616 Q 140 528 336 596 Q 500 654 636 588 Q 720 548 806 594 L 806 820 L -20 820 Z" fill="url(#hillHaze)"/>
+  ${treeline(-30, 300, 592, 5, '#BADFD0', { h: 66, w: 122, opacity: 0.85 })}
+  ${treeline(452, 820, 586, 5, '#BADFD0', { h: 70, w: 128, opacity: 0.85 })}
+  <path d="M -20 672 Q 160 606 350 656 Q 540 706 806 646 L 806 880 L -20 880 Z" fill="url(#hillFar)"/>
+  ${treeline(-30, 214, 690, 3, '#A2D8BB', { h: 80, w: 146 })}
+  ${treeline(596, 830, 684, 3, '#A2D8BB', { h: 84, w: 152 })}
+  <path d="M -20 726 Q 210 662 420 716 Q 620 766 806 714 L 806 920 L -20 920 Z" fill="url(#hillMid)" opacity="0.95"/>
+  ${canopy(96, 754, 168, 108, '#8CD1A9')}
+  ${canopy(742, 762, 182, 116, '#8CD1A9')}
+  <path d="M -20 762 Q 200 726 400 764 Q 620 804 806 758 L 806 1720 L -20 1720 Z" fill="url(#ground)"/>
+  <rect x="0" y="758" width="${W}" height="340" fill="url(#meadowLight)"/>
+  <g id="pond-meadow" opacity="0.22">
+    <path d="M -20 812 Q 150 782 320 810 Q 180 840 -20 848 Z" fill="#A6DFBE"/>
+    <path d="M 806 806 Q 660 778 508 806 Q 640 838 806 844 Z" fill="#A6DFBE"/>
+    <path d="M -20 908 Q 90 886 168 912 Q 70 934 -20 936 Z" fill="#4FA97E"/>
+    <path d="M 806 900 Q 700 878 620 906 Q 716 928 806 932 Z" fill="#4FA97E"/>
+  </g>
+  <g id="pond-bank-flowers">
+    ${tuft(52, 908, 44, P.hopGreenDeep, { opacity: 0.34 })}
+    ${tuft(742, 902, 42, P.hopGreenDeep, { opacity: 0.34 })}
+    ${g('translate(0 0) scale(0.78)', flower(148, 1122, 24, { fill: 'url(#yellowBall)', core: P.sunshineSoft, stemH: 42 }))}
+    ${g('translate(0 0) scale(0.74)', flower(920, 1128, 23, { fill: 'url(#peachBall)', core: P.peachSoft, petals: 6, stemH: 40 }))}
+  </g>
+  <ellipse id="pond-basin" cx="${cx}" cy="${cy - 6}" rx="${rx + 92}" ry="${ry + 96}" fill="url(#pondBank)"/>
+</g>
+<g id="pond-water">
+  <ellipse id="pond-surface" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#water)"/>
+  <g clip-path="url(#pondSceneClip)">
+    <rect x="-220" y="956" width="1230" height="120" fill="url(#waterFarBank)"/>
+    <g id="pond-reflection" transform="translate(0 1916) scale(1 -1)" opacity="0.17">
+      ${[[64, 128, 60], [244, 100, 44], [430, 140, 64], [618, 108, 48], [760, 132, 56]]
+        .map(([x, w, h]) => canopy(x, 958, w, h, '#3F9670')).join('')}
+    </g>
+    <ellipse cx="286" cy="1200" rx="392" ry="182" fill="url(#waterSkyPatch)"/>
+    <rect x="-220" y="1470" width="1230" height="164" fill="url(#waterNearShade)"/>
+    <g id="pond-fish">
+      <g id="pond-fish-1">${shadowFish(212, 1372, 1.15, 0.19)}</g>
+      <g id="pond-fish-2">${shadowFish(612, 1330, 0.92, 0.15)}</g>
+      <g id="pond-fish-3">${shadowFish(430, 1478, 0.72, 0.12)}</g>
+    </g>
+    <g id="pond-shimmer">
+      ${Array.from({ length: 18 }, (_, i) => {
+        const t = i / 17;
+        const x = 92 + t * 590 + (nz(i * 1.7) - 0.5) * 190;
+        const y = 1108 + t * 300 + (nz(i * 4.9) - 0.5) * 200;
+        return glint(x, y, 14 + nz(i * 9.1) * 38, R(0.12 + nz(i * 6.3) * 0.26));
+      }).join('')}
+    </g>
+  </g>
+  <g id="pond-ripples">
+    <g id="pond-ripple-1">${ripple(216, 1128, 118, { o: 0.4, w: 9 })}</g>
+    <g id="pond-ripple-2">${ripple(578, 1224, 100, { o: 0.3, w: 8 })}</g>
+    <g id="pond-ripple-3">${ripple(340, 1428, 146, { o: 0.26, w: 10 })}</g>
+    <g id="pond-ripple-4">${ripple(650, 1064, 70, { o: 0.24, w: 7, n: 2 })}</g>
+  </g>
+  <g id="pond-lilies">
+    <g id="pond-lily-1">${farPad(196, 1046, 46, 0.55)}</g>
+    <g id="pond-lily-2">${farPad(322, 1014, 32, 0.46)}</g>
+    <g id="pond-lily-3">${farPad(568, 1036, 38, 0.5)}</g>
+  </g>
+</g>
+<g id="pond-shore">
+  <path d="${wobbleEllipse(cx, cy + 30, rx + 24, ry + 24, { amp: 0.06, seed: 5 })} ${ellipsePath(cx, cy, rx, ry)}" fill-rule="evenodd" fill="url(#shoreSand)"/>
+  <path d="${ellipsePath(cx, cy + 6, rx + 13, ry + 10)} ${ellipsePath(cx, cy, rx, ry)}" fill-rule="evenodd" fill="url(#shoreWet)"/>
+  ${[[128, 1616, 18], [232, 1642, 13], [604, 1608, 15], [688, 1580, 11]]
+    .map(([x, y, r]) => pebble(x, y, r, r * 0.44, { fill: 'url(#stoneGrad)', light: 0.7 })).join('')}
+  <g id="pond-reeds">
+    <g id="pond-reed-1">${tuft(122, 1002, 46, P.hopGreenDeep, { opacity: 0.4 })}</g>
+    <g id="pond-reed-2">${tuft(292, 966, 32, P.hopGreenDeep, { n: 4, opacity: 0.32 })}</g>
+    <g id="pond-reed-3">${tuft(508, 972, 34, P.hopGreenDeep, { n: 4, opacity: 0.32 })}</g>
+    <g id="pond-reed-4">${tuft(676, 1004, 46, P.hopGreenDeep, { opacity: 0.4 })}</g>
+    <g id="pond-reed-5">${tuft(44, 1122, 62, P.hopGreenDeep, { opacity: 0.48 })}</g>
+    <g id="pond-reed-6">${tuft(752, 1140, 64, P.hopGreenDeep, { opacity: 0.48 })}</g>
+  </g>
+  <g id="pond-dragonfly" transform="translate(664 1016) scale(0.4)">
+    ${g('translate(-100 -100)', ITEMS.dragonfly())}
+  </g>
+</g>
+<g id="pond-foreground">
+  <path d="M -20 1646 Q 180 1618 400 1640 Q 620 1662 806 1626 L 806 1720 L -20 1720 Z" fill="url(#groundNear)"/>
+  <path d="M -20 1646 Q 180 1618 400 1640 Q 620 1662 806 1626" fill="none" stroke="#8AD0A8" stroke-width="5" opacity="0.5"/>
+  <g id="pond-grass-near">
+    ${tuft(48, 1698, 92, P.hopGreenInk, { opacity: 0.3 })}
+    ${tuft(158, 1706, 62, P.hopGreenInk, { n: 4, opacity: 0.24 })}
+    ${tuft(748, 1692, 98, P.hopGreenInk, { opacity: 0.3 })}
+    ${tuft(640, 1704, 64, P.hopGreenInk, { n: 4, opacity: 0.24 })}
+  </g>
+  <rect x="0" y="0" width="${W}" height="${H}" fill="url(#pondVignette)"/>
+</g>`;
+  return svg({ viewBox: `0 0 ${W} ${H}`, width: W, height: H, body });
+}
+
 /** Mirrors PondCatalog.placement — used only to composite the review preview. */
 const PLACEMENT = {
   lilyPadSmall: [0.46, 0.640, 1.00], reedsLeft: [0.13, 0.600, 1.00], fishOrange: [0.66, 0.710, 0.90],
@@ -1432,15 +1560,19 @@ function toilet(cx, baseY, s = 1, { lidOpen = true } = {}) {
   return g(`translate(${cx} ${baseY}) scale(${s})`, `
     ${contactShadow(0, 6, 128, 24)}
     ${wallShadow(140, -232, 96, 112, 0.55)}
-    <path d="M 52 -318 q 0 -24 24 -24 h 68 q 24 0 24 24 v 122 q 0 22 -24 22 h -68 q -24 0 -24 -22 Z" fill="url(#porcelainGrad)"/>
-    <path d="M 52 -318 q 0 -24 24 -24 h 18 v 166 h -18 q -24 0 -24 -22 Z" fill="#FFFFFF" opacity="0.55"/>
-    <path d="M 168 -300 v 100 q 0 22 -24 22 h -20 q 34 -8 34 -40 Z" fill="${P.sand400}" opacity="0.28"/>
-    <path d="M 44 -330 q 0 -16 18 -16 h 96 q 18 0 18 16 q 0 13 -18 13 h -96 q -18 0 -18 -13 Z" fill="url(#porcelainTop)"/>
-    <rect x="78" y="-306" width="40" height="16" rx="8" fill="url(#chromeGrad)"/>
-    ${specular(88, -301, 9, 2.6, -8, 0.8)}
-    <path d="M -56 0 q -24 0 -20 -26 l 18 -110 h 100 l 18 110 q 4 26 -20 26 Z" fill="url(#porcelainSide)"/>
-    <path d="M -56 0 q -24 0 -20 -26 l 18 -110 h 30 l -14 136 Z" fill="#FFFFFF" opacity="0.5"/>
-    <path d="M 56 -136 l 18 110 q 4 26 -20 26 h -24 q 30 -6 28 -34 Z" fill="${P.sand500}" opacity="0.16"/>
+    <path d="M 44 -318 q 0 -24 24 -24 h 66 q 24 0 24 24 v 122 q 0 22 -24 22 h -66 q -24 0 -24 -22 Z" fill="url(#porcelainGrad)"/>
+    <path d="M 44 -318 q 0 -24 24 -24 h 18 v 166 h -18 q -24 0 -24 -22 Z" fill="#FFFFFF" opacity="0.55"/>
+    <path d="M 158 -300 v 100 q 0 22 -24 22 h -20 q 34 -8 34 -40 Z" fill="${P.sand400}" opacity="0.28"/>
+    <path d="M 36 -330 q 0 -16 18 -16 h 94 q 18 0 18 16 q 0 13 -18 13 h -94 q -18 0 -18 -13 Z" fill="url(#porcelainTop)"/>
+    <rect x="70" y="-306" width="40" height="16" rx="8" fill="url(#chromeGrad)"/>
+    ${specular(80, -301, 9, 2.6, -8, 0.8)}
+    <path d="M 22 -128 h 122 q 14 0 16 -14 l 6 -40 q 2 -14 -14 -14 h -116 q -16 0 -16 14 Z" fill="url(#porcelainSide)"/>
+    <path d="M 20 -180 q 0 -16 16 -16 h 116 q 16 0 14 16 q -2 12 -18 12 h -116 q -16 0 -12 -12 Z" fill="url(#porcelainTop)"/>
+    <path d="M 100 -128 h 44 q 14 0 16 -14 l 6 -40 q 2 -14 -14 -14 h -24 q 14 6 12 24 Z" fill="${P.sand500}" opacity="0.16"/>
+    <path d="M -60 0 q -26 0 -22 -28 l 20 -110 h 104 l 20 110 q 4 28 -22 28 Z" fill="url(#porcelainSide)"/>
+    <path d="M -68 -2 h 136 q 8 0 8 -6 v 8 h -152 v -8 q 0 6 8 6 Z" fill="${P.sand400}" opacity="0.4"/>
+    <path d="M -60 0 q -26 0 -22 -28 l 20 -110 h 32 l -16 138 Z" fill="#FFFFFF" opacity="0.5"/>
+    <path d="M 58 -138 l 20 110 q 4 28 -22 28 h -26 q 32 -6 30 -36 Z" fill="${P.sand500}" opacity="0.16"/>
     <ellipse cx="0" cy="-4" rx="62" ry="12" fill="url(#ceramicAO)"/>
     <path d="M -98 -184 q 0 -30 34 -30 h 122 q 34 0 34 32 q 0 54 -95 54 q -95 0 -95 -56 Z" fill="url(#porcelainGrad)"/>
     <path d="M -98 -184 q 0 -30 34 -30 h 30 q -32 24 -26 82 q -38 -14 -38 -52 Z" fill="#FFFFFF" opacity="0.45"/>
@@ -1490,6 +1622,23 @@ function towelOnRail(cx, railY, s = 1) {
     <path d="M 22 5 h 16 q 8 0 8 10 v 56 q 0 8 -9 8 q -6 -6 -12 -2 Z" fill="${P.pondBlueDeep}" opacity="0.2"/>
     <rect x="-42" y="34" width="84" height="11" rx="5.5" fill="#FFFFFF" opacity="0.82"/>
     <path d="M -30 13 v 62 M -6 13 v 66 M 18 13 v 66" stroke="#FFFFFF" stroke-width="1.6" opacity="0.3" fill="none"/>`);
+}
+
+/** A two-step stool. It carries the story the room is about — a child getting
+ *  themselves up to grown-up height — and it is the one warm-hued object in a
+ *  cool room, which is what stops the far side of these frames going empty. */
+function stepStool(cx, baseY, s = 1) {
+  return g(`translate(${cx} ${baseY}) scale(${s})`, `
+    ${contactShadow(0, 5, 78, 15)}
+    <path d="M -48 -8 v -74 q 0 -10 10 -10 h 88 q 10 0 10 10 v 74 Z" fill="${P.peach}"/>
+    <path d="M -48 -8 v -74 q 0 -10 10 -10 h 22 v 84 Z" fill="#FFFFFF" opacity="0.18"/>
+    <rect x="-56" y="-100" width="116" height="17" rx="8.5" fill="url(#peachBall)"/>
+    <rect x="-52" y="-98" width="108" height="6" rx="3" fill="#FFFFFF" opacity="0.5"/>
+    <path d="M -68 0 v -38 q 0 -10 10 -10 h 88 q 10 0 10 10 v 38 Z" fill="url(#peachBall)"/>
+    <path d="M -68 0 v -38 q 0 -10 10 -10 h 22 v 48 Z" fill="#FFFFFF" opacity="0.28"/>
+    <path d="M 20 -48 h 10 q 10 0 10 10 v 38 h -20 Z" fill="${P.peachDeep}" opacity="0.28"/>
+    <rect x="-76" y="-56" width="136" height="17" rx="8.5" fill="#FFC0B2"/>
+    <rect x="-72" y="-54" width="128" height="6" rx="3" fill="#FFFFFF" opacity="0.55"/>`);
 }
 
 /** A pump bottle of hand soap, standing on its base at the origin. */
@@ -1597,13 +1746,13 @@ const scenes = {
     <rect x="128" y="138" width="344" height="7" rx="3.5" fill="${P.sand400}" opacity="0.35"/>
     <rect x="136" y="145" width="18" height="46" rx="9" fill="url(#chromeGradV)"/>
     <rect x="446" y="145" width="18" height="46" rx="9" fill="url(#chromeGradV)"/>
-    <rect x="180" y="150" width="240" height="16" rx="8" fill="${P.sand200}"/>
-    <rect x="180" y="150" width="240" height="6" rx="3" fill="#FFFFFF" opacity="0.7"/>
-    ${contactShadow(302, 432, 138, 22)}
-    <path d="M 300 258 q 96 -8 96 84 q 0 62 -18 106 q -44 12 -84 -6 q 22 -60 6 -184 Z" fill="${P.sand100}"/>
-    <path d="M 300 258 q 96 -8 96 84 q 0 62 -18 106 q -20 5 -40 3 q 26 -66 20 -122 q -6 -58 -58 -71 Z" fill="#FFFFFF" opacity="0.8"/>
-    <path d="M 376 342 q 6 56 -12 108 q -12 4 -24 4 q 24 -58 20 -114 Z" fill="${P.sand400}" opacity="0.28"/>
-    <path d="M 296 440 q 40 14 82 2" stroke="${P.sand300}" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <rect x="180" y="150" width="240" height="16" rx="8" fill="url(#chromeGrad)"/>
+    <rect x="188" y="152" width="224" height="4" rx="2" fill="#FFFFFF" opacity="0.8"/>
+    ${wallShadow(320, 424, 132, 34, 0.7)}
+    <path d="M 302 262 q 84 -6 86 74 q 2 52 -10 84 q -14 14 -34 8 q -18 -6 -22 -18 q 14 -50 -20 -148 Z" fill="${P.sand100}"/>
+    <path d="M 302 262 q 84 -6 86 74 q 2 52 -10 84 q -8 8 -18 9 q 20 -60 12 -110 q -8 -50 -70 -57 Z" fill="#FFFFFF" opacity="0.85"/>
+    <path d="M 372 342 q 6 50 -8 90 q -8 8 -18 9 q 18 -54 14 -100 Z" fill="${P.sand400}" opacity="0.24"/>
+    <path d="M 322 410 q 26 12 54 -2" stroke="${P.sand300}" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.55"/>
     <circle cx="300" cy="256" r="96" fill="url(#porcelainGrad)"/>
     <path d="M 300 160 a 96 96 0 0 0 -76 155 a 96 96 0 0 1 76 -139 Z" fill="#FFFFFF" opacity="0.8"/>
     <path d="M 300 352 a 96 96 0 0 0 82 -142 a 96 96 0 0 1 -82 128 Z" fill="${P.sand400}" opacity="0.26"/>
@@ -1615,17 +1764,7 @@ const scenes = {
 
   'routine-flush': () => `
     ${bathroom()}
-    ${g('translate(112 208)', `
-      ${wallShadow(14, 32, 58, 58, 0.5)}
-      <rect x="-38" y="-4" width="15" height="40" rx="5" fill="${P.sand300}"/>
-      <rect x="-36" y="-2" width="6" height="36" rx="3" fill="#FFFFFF" opacity="0.7"/>
-      <path d="M -28 22 h 46" stroke="url(#chromeGrad)" stroke-width="9" stroke-linecap="round" fill="none"/>
-      <circle cx="6" cy="24" r="34" fill="url(#porcelainGrad)"/>
-      <path d="M 6 -10 a 34 34 0 0 0 -28 54 a 34 34 0 0 1 28 -48 Z" fill="#FFFFFF" opacity="0.8"/>
-      <circle cx="6" cy="24" r="13" fill="${P.sand300}"/>
-      <circle cx="6" cy="23" r="11" fill="${P.sand100}"/>
-      <path d="M 34 34 q 9 32 3 56 q -13 6 -24 -2 q 8 -26 5 -54 Z" fill="${P.sand100}"/>
-      <path d="M 34 34 q 9 32 3 56 q -6 3 -13 1 q 8 -28 3 -57 Z" fill="#FFFFFF" opacity="0.75"/>`)}
+    ${stepStool(524, 436, 0.7)}
     ${toilet(324, 432, 1.02)}
     <g>
       <path d="M 320 228 m -62 0 a 62 27 0 1 1 90 23" fill="none" stroke="${P.pondBlueDeep}" stroke-width="16" stroke-linecap="round" opacity="0.85"/>
@@ -1656,6 +1795,7 @@ const scenes = {
       <path d="M 66 390 h 580 q 16 0 16 16 v 74 h -612 v -74 q 0 -16 16 -16 Z" fill="url(#porcelainGrad)"/>
       <path d="M 66 390 h 580 q 16 0 16 16 v 12 h -612 v -12 q 0 -16 16 -16 Z" fill="#FFFFFF" opacity="0.75"/>
       <path d="M 50 418 h 612" stroke="${P.sand300}" stroke-width="3" opacity="0.6" fill="none"/>
+      <rect x="50" y="421" width="612" height="10" fill="${P.sand400}" opacity="0.22"/>
       <ellipse cx="356" cy="404" rx="158" ry="42" fill="${P.sand400}" opacity="0.4"/>
       <ellipse cx="356" cy="400" rx="152" ry="38" fill="${P.porcelainShade}"/>
       <ellipse cx="356" cy="404" rx="146" ry="35" fill="${P.pondBlueLight}"/>
@@ -1700,8 +1840,11 @@ const scenes = {
    *  and the two side walls so the upper middle stays open for bubbles. */
   'games-bubbleWash': () => `
     ${bathroom({ floorY: 430, dado: 150 })}
-    <path d="M 88 352 h 464 v 78 h -464 Z" fill="url(#woodGradV)"/>
-    <path d="M 88 352 h 464 v 14 h -464 Z" fill="${P.woodDeep}" opacity="0.45"/>
+    <path d="M 88 352 h 464 v 78 h -464 Z" fill="url(#woodGrad)"/>
+    <path d="M 88 352 h 464 v 16 h -464 Z" fill="${P.woodDeep}" opacity="0.55"/>
+    <path d="M 88 352 h 30 v 78 h -30 Z" fill="#FFFFFF" opacity="0.16"/>
+    <path d="M 512 352 h 40 v 78 h -40 Z" fill="${P.woodDeep}" opacity="0.3"/>
+    <rect x="88" y="424" width="464" height="6" fill="${P.midnight}" opacity="0.16"/>
     <rect x="104" y="372" width="186" height="58" rx="12" fill="${P.woodLight}" opacity="0.5"/>
     <rect x="350" y="372" width="186" height="58" rx="12" fill="${P.woodLight}" opacity="0.5"/>
     <rect x="104" y="372" width="186" height="8" rx="4" fill="#FFFFFF" opacity="0.3"/>
@@ -1737,7 +1880,8 @@ const scenes = {
     <path d="M -20 270 Q 170 218 360 264 Q 520 302 660 256 L 660 500 L -20 500 Z" fill="url(#hillMid)"/>
     <path d="M -20 316 Q 200 286 420 320 Q 550 340 660 316 L 660 500 L -20 500 Z" fill="url(#ground)"/>
     ${friendlyDoor(496, 322, 0.46)}
-    <path d="M 26 492 Q 96 424 214 384 Q 340 342 452 326 L 496 320 L 496 342 Q 370 362 258 402 Q 152 444 122 492 Z" fill="url(#shoreSand)" opacity="0.92"/>
+    <path d="M 20 496 Q 92 424 210 382 Q 338 338 452 322 L 500 316 L 500 346 Q 372 366 260 406 Q 154 448 126 496 Z" fill="${P.sand300}" opacity="0.55"/>
+    <path d="M 26 492 Q 96 424 214 384 Q 340 342 452 326 L 496 320 L 496 342 Q 370 362 258 402 Q 152 444 122 492 Z" fill="url(#pathSand)"/>
     ${pebble(206, 390, 21, 8)}
     ${pebble(306, 366, 17, 7)}
     ${pebble(396, 344, 14, 6)}
@@ -1827,10 +1971,19 @@ function shieldHero() {
     ${cloud(430, 118, 168, { opacity: 0.75 })}
     ${cloud(1010, 156, 140, { opacity: 0.6 })}
     ${cloud(700, 92, 110, { opacity: 0.45 })}
-    <path d="M -20 372 Q 210 268 480 340 Q 720 402 940 336 Q 1090 292 1220 344 L 1220 720 L -20 720 Z" fill="url(#hillFar)"/>
-    <path d="M -20 430 Q 260 356 540 420 Q 800 478 1220 404 L 1220 720 L -20 720 Z" fill="url(#hillMid)"/>
+    <path d="M -20 340 Q 200 262 470 322 Q 720 378 950 312 Q 1090 268 1220 320 L 1220 720 L -20 720 Z" fill="url(#hillHaze)"/>
+    ${treeline(-30, 340, 320, 5, '#BADFD0', { h: 60, w: 118, opacity: 0.8 })}
+    ${treeline(980, 1250, 316, 4, '#BADFD0', { h: 62, w: 124, opacity: 0.8 })}
+    <path d="M -20 384 Q 210 292 480 356 Q 720 416 940 350 Q 1090 306 1220 358 L 1220 720 L -20 720 Z" fill="url(#hillFar)"/>
+    ${treeline(-30, 300, 396, 4, '#A2D8BB', { h: 76, w: 138 })}
+    ${treeline(1010, 1250, 388, 3, '#A2D8BB', { h: 80, w: 146 })}
+    <path d="M -20 440 Q 260 366 540 430 Q 800 488 1220 414 L 1220 720 L -20 720 Z" fill="url(#hillMid)"/>
+    ${canopy(258, 452, 168, 106, '#8CD1A9')}
+    ${canopy(1128, 462, 190, 120, '#8CD1A9')}
     <path d="M -20 500 Q 300 452 640 500 Q 940 542 1220 486 L 1220 720 L -20 720 Z" fill="url(#ground)"/>
-    <path d="M 120 720 Q 260 600 470 548 Q 640 506 900 494 L 980 494 Q 700 528 560 576 Q 400 632 340 720 Z" fill="url(#shoreSand)" opacity="0.95"/>
+    <rect x="0" y="470" width="1200" height="260" fill="url(#meadowLight)"/>
+    <path d="M 96 726 Q 244 596 462 542 Q 638 498 902 486 L 996 486 Q 690 522 546 572 Q 382 630 316 726 Z" fill="${P.sand300}" opacity="0.5"/>
+    <path d="M 120 720 Q 260 600 470 548 Q 640 506 900 494 L 980 494 Q 700 528 560 576 Q 400 632 340 720 Z" fill="url(#pathSand)"/>
     ${[[300, 664, 30], [392, 620, 26], [486, 588, 22], [578, 562, 19], [664, 542, 16], [752, 526, 14]]
       .map(([x, y, r]) => pebble(x, y, r, r * 0.42, { fill: 'url(#stoneGrad)', light: 0.6 })).join('')}
     ${door}
@@ -1844,10 +1997,11 @@ function shieldHero() {
       ${hopEyes({ gaze: [26, 5] })}
       ${hopCheeks()}
       ${hopMouth({ open: 0.35 })}`)}
-    <g fill="${P.hopGreenInk}" opacity="0.2">
-      <path d="${blade(70, 700, 96, 24, 14)}"/><path d="${blade(120, 706, 70, -18, 11)}"/>
-      <path d="${blade(1140, 692, 100, -24, 14)}"/><path d="${blade(1088, 698, 72, 18, 11)}"/>
-    </g>
+    ${tuft(240, 596, 42, P.hopGreenDeep, { opacity: 0.4 })}
+    ${tuft(806, 522, 34, P.hopGreenDeep, { n: 4, opacity: 0.34 })}
+    ${tuft(1006, 560, 46, P.hopGreenDeep, { opacity: 0.4 })}
+    ${tuft(74, 712, 96, P.hopGreenInk, { opacity: 0.26 })}
+    ${tuft(1136, 706, 104, P.hopGreenInk, { opacity: 0.26 })}
     ${flower(200, 604, 26, { fill: 'url(#yellowBall)', core: P.sunshineSoft, stemH: 46 })}
     ${flower(1010, 640, 24, { fill: 'url(#peachBall)', core: P.peachSoft, petals: 6, stemH: 44 })}
     ${g('translate(646 330) scale(0.72)', `
@@ -1855,7 +2009,8 @@ function shieldHero() {
       ${g('scale(-1 1)', butterflyHalf(P.lavender, P.lavenderSoft, '#FFFFFF'))}
       <ellipse cx="0" cy="4" rx="5" ry="28" fill="${P.night600}" opacity="0.8"/>
       <circle cx="0" cy="-26" r="7.4" fill="${P.night600}" opacity="0.8"/>`)}
-    <ellipse cx="600" cy="700" rx="720" ry="90" fill="${P.hopGreenInk}" opacity="0.08"/>`;
+    <ellipse cx="600" cy="706" rx="740" ry="94" fill="${P.hopGreenInk}" opacity="0.09"/>
+    <rect x="0" y="0" width="${W}" height="${H}" fill="url(#pondVignette)"/>`;
   return svg({ viewBox: `0 0 ${W} ${H}`, width: W, height: H, body });
 }
 
@@ -2481,6 +2636,9 @@ for (const l of layerOrder) {
 for (const [id, build] of Object.entries(ITEMS)) {
   write(`Art/pond/item-${id}.svg`, svg({ viewBox: '0 0 200 200', width: 200, height: 200, body: `<g id="item-${id}">${build()}</g>` }));
 }
+
+// --- the portrait backdrop the phone screens ask for ---
+write('Art/pond/pond-scene.svg', pondScene());
 
 // --- the whole pond, composited exactly as PondCatalog places it ---
 const previewBody = [

@@ -65,6 +65,10 @@ public struct HopCelebrationView: View {
     private let unlocked: PondItemID?
     private let onComplete: () -> Void
 
+    /// How big Hop is drawn here. Named because the headroom the hop needs is
+    /// derived from it, and the two must not drift apart.
+    private static let characterSize: CGFloat = 240
+
     public init(stars: Int, unlocked: PondItemID?, onComplete: @escaping () -> Void) {
         self.stars = stars
         self.unlocked = unlocked
@@ -78,10 +82,22 @@ public struct HopCelebrationView: View {
             VStack(spacing: theme.spacing.xl) {
                 Spacer(minLength: 0)
 
-                HopCharacterStage(pose: .cheer, size: 240, describedAs: "")
-                    .opacity(sequencer.beat >= .hopArrives ? 1 : 0)
-                    .scaleEffect(sequencer.beat >= .hopArrives ? 1 : 0.8)
-                    .hopAnimation(.childCelebrate, value: sequencer.beat)
+                // Hop arrives and then physically hops. The beats belong to
+                // the performer inside `HopCharacterView`, which is cancel-safe:
+                // handing back early lands him rather than leaving him airborne.
+                HopCharacterStage(
+                    act: sequencer.beat >= .hopArrives ? .celebrating() : .holding(.cheer),
+                    size: HopCelebrationView.characterSize,
+                    describedAs: ""
+                )
+                .frame(
+                    height: HopCelebrationView.characterSize
+                        + HopJump.headroom(for: HopCelebrationView.characterSize),
+                    alignment: .bottom
+                )
+                .opacity(sequencer.beat >= .hopArrives ? 1 : 0)
+                .scaleEffect(sequencer.beat >= .hopArrives ? 1 : 0.8)
+                .hopAnimation(.childCelebrate, value: sequencer.beat)
 
                 Text(HopStrings.celebrationTitle)
                     .hopTextStyle(.celebration, allowsTightening: false)

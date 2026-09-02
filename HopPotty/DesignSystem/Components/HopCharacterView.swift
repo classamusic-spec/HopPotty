@@ -326,7 +326,7 @@ public struct HopCharacterView: View {
     private var shadowLayer: some View {
         fill(.shadow, HopCharacterPalette.groundShadow)
             .opacity(shadowOpacity)
-            .scaleEffect(x: 1 - 0.42 * frame.elevation, y: 1, anchor: HopCanvas.groundAnchor)
+            .scaleEffect(1 - 0.42 * frame.elevation, anchor: HopCanvas.groundAnchor)
             .animation(beatAnimation, value: frame)
     }
 

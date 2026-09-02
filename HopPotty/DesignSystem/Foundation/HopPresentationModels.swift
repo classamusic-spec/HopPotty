@@ -224,13 +224,8 @@ public enum PaywallFeature: String, CaseIterable, Sendable, Identifiable {
     }
 }
 
-/// A line Hop speaks, together with its written form.
-///
-/// The caption is not optional and has no empty default: every spoken line has a
-/// written caption (`Docs/CONTRACTS.md` §6), and a type that cannot express a
-/// line without one is how that stays true.
-public 
-
 // `HopVoiceLine` was declared here while Core was being written in
 // parallel. Core owns it now (`HopPottyCore/Content/HopVoiceLine.swift`);
-// keeping a second declaration collided in the app module.
+// keeping a second declaration collided in the app module. Its doc comment —
+// that the caption is not optional and has no empty default, so a line cannot
+// be expressed without one (`Docs/CONTRACTS.md` §6) — moved with it.

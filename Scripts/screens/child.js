@@ -432,7 +432,7 @@ function quiz(appearance = 'light') {
         <div style="flex:0 0 auto;display:flex;align-items:flex-start;gap:14px;padding-top:12px">
           <div style="width:62px;height:62px;border-radius:31px;background:#FFFFFF;overflow:hidden;flex:0 0 auto;
             display:grid;place-items:center;box-shadow:${elevation(appearance, 'resting')}">
-            <div style="transform:translateY(4px)">${svg('Art/character/hop-face.svg', { width: 76 })}</div>
+            <div data-hop style="transform:translateY(4px)">${svg('Art/character/hop-face.svg', { width: 76 })}</div>
           </div>
           <div style="flex:1;${type('childInstruction', { color: INK })};font-size:23px;line-height:1.3;padding-top:2px">
             What do we do after using the potty?</div>

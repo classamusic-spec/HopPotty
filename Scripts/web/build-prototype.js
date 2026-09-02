@@ -626,10 +626,12 @@ footer.site{margin-top:56px;padding-top:22px;border-top:1px solid ${L.divider};
   .thumb{background:${D.surfaceSunken};box-shadow:inset 0 0 0 1px ${D.divider}}
 }
 
-/* ---- the states gallery ------------------------------------------------ */
-.state .box{position:relative;overflow:hidden}
+/* ---- the states gallery ------------------------------------------------
+   Taller than a still tile needs to be, and the drawing smaller inside it: a
+   jump is 34% of Hop's height and it has to have somewhere to go. */
+.state .box{position:relative;overflow:hidden;height:150px}
 .state .hop{position:relative;display:inline-block}
-.state .hop img{max-height:104px;width:auto;display:block}
+.state .hop img{max-height:88px;width:auto;display:block}
 ${motion.motionCSS()}
 `;
 }
@@ -647,7 +649,7 @@ const RUNTIME = String.raw`
   var device = document.querySelector('.device');
   var theme = localStorage.getItem('hp-theme') || 'light';
   var cur = FLOW[0], curLayer = null;
-  var hist = [], pending = null, busy = false, leaving = null;
+  var hist = [], pending = null, busy = false, leaving = null, tapTimer = null;
 
   function reduced() { return HopLife.reduced(); }
   function kindOf(slug) { return KIND[slug] || 'parent'; }
@@ -874,6 +876,7 @@ const RUNTIME = String.raw`
         if (layers[j].dataset.screen === slug) { layers[j].classList.add('on'); shown = layers[j]; break; }
       }
     }
+    clearTimeout(tapTimer); busy = false;   /* a queued tap never outlives its screen */
     if (prevLayer) hopsRest(prevLayer);
     if (shown) {
       hotspots(slug, shown);          /* measured before anything is moving */
@@ -935,7 +938,7 @@ const RUNTIME = String.raw`
     if (h && !reduced() && kindOf(from) === 'child') {
       busy = true;
       HopLife.react(h);
-      setTimeout(function () { busy = false; nav(to); }, TAP_MS);
+      tapTimer = setTimeout(function () { busy = false; nav(to); }, TAP_MS);
       return;
     }
     nav(to);
@@ -1435,7 +1438,20 @@ function build() {
   fs.mkdirSync(ASSETS, { recursive: true });
 
   const { icons, pondFile, frames } = copyArt();
-  fs.writeFileSync(path.join(ASSETS, 'app.css'), siteCSS());
+  const css = siteCSS();
+  fs.writeFileSync(path.join(ASSETS, 'app.css'), css);
+
+  // Every screen kind names a transition class; a kind with no rule behind it
+  // is a screen that changes with no animation at all, and nothing else would
+  // have failed. This caught exactly that once already.
+  for (const k of ['parent', 'child', 'sheet']) {
+    for (const cls of [`hp-in-${k}`, `hp-out-${k}`, `hp-in-${k}-back`, `hp-out-${k}-back`]) {
+      if (css.indexOf(`.screen.${cls}{`) < 0) console.warn(`  ! no CSS for transition class ${cls}`);
+    }
+  }
+  for (const cls of ['hp-in-fade', 'hp-out-fade']) {
+    if (css.indexOf(`.screen.${cls}{`) < 0) console.warn(`  ! no CSS for transition class ${cls}`);
+  }
 
   const screens = renderAll();
 

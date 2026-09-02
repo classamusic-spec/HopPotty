@@ -48,6 +48,15 @@ final class PottyRoutineModel {
     private(set) var skippedSteps: [PottyRoutineStepID] = []
     /// Seconds spent on the current timed step, 0 when the step has no duration.
     private(set) var elapsedOnStep: TimeInterval = 0
+    /// True on the step the child lands on immediately after answering, so that
+    /// screen can have Hop physically celebrate the answer they just gave.
+    ///
+    /// A flag, deliberately not a state. The routine does **not** wait for it:
+    /// `recordOutcome` advances exactly as it always did, so there is no new
+    /// place a child can be held while an animation plays, and nothing to be
+    /// stuck in if one never finishes (`Docs/ChildSafety.md` §8). It clears the
+    /// moment they move on, whichever way they move.
+    private(set) var isAcknowledgingOutcome = false
 
     private let settings: AppSettings
     private let steps: [PottyRoutineStep]
@@ -119,10 +128,18 @@ final class PottyRoutineModel {
     /// star is for going and trying (`RewardService.reason(for:)` maps `tried`,
     /// `pee` and `poop` to one reason). A branch here that paid more for output
     /// would be the contract violation the whole product is built to avoid.
+    /// All three answers take this same path with the same reward *and the same
+    /// celebration*: `RoutineOutcomeChoices.acknowledgementHop(for:)` and
+    /// `celebrationHop(for:)` build every one of them from one constant, and the
+    /// kind chooses only which way Hop leans.
     func recordOutcome(_ kind: PottyEventKind) {
         guard isAwaitingOutcome, outcome == nil else { return }
         outcome = kind
         advance()
+        // Set *after* the move, because `moveOn` clears it: the flag belongs to
+        // the step the child has just arrived on, and is gone as soon as they
+        // leave it.
+        isAcknowledgingOutcome = true
     }
 
     /// Marks the current step done and moves to the next one.
@@ -147,6 +164,7 @@ final class PottyRoutineModel {
 
     private func moveOn(from index: Int) {
         elapsedOnStep = 0
+        isAcknowledgingOutcome = false
         let next = index + 1
         stage = next < steps.count ? .step(steps[next].id) : .celebration
     }

@@ -188,23 +188,29 @@ private struct HopPoseTransitionPreview: View {
 /// be watched, and so an interrupt can be forced by tapping a second act
 /// mid-beat — which is the thing that has to land cleanly.
 private struct HopActPreview: View {
+    struct Option: Identifiable {
+        let name: String
+        let act: HopAct
+        var id: String { name }
+    }
+
     @State private var act: HopAct = .idle
     @State private var replay = 0
     @State private var label = "idle"
 
-    private var options: [(String, HopAct)] {
+    private var options: [Option] {
         [
-            ("idle", .idle),
-            ("wave", .greeting),
-            ("delight", .delighted()),
-            ("speak 2s", .speaking(for: 2)),
-            ("hop ×1", .hopping(HopJump(hops: 1, drift: .inPlace, replay: replay))),
-            ("hop ×3", .hopping(HopJump(hops: 3, drift: .right, replay: replay))),
-            ("celebrate", .celebrating(HopJump(hops: 2, drift: .left, replay: replay))),
-            ("enter", .entering(from: .left)),
-            ("exit", .exiting(toward: .right)),
-            ("sleep", .holding(.sleep)),
-            ("wait", .holding(.wait)),
+            Option(name: "idle", act: .idle),
+            Option(name: "wave", act: .greeting),
+            Option(name: "delight", act: .delighted()),
+            Option(name: "speak 2s", act: .speaking(for: 2)),
+            Option(name: "hop x1", act: .hopping(HopJump(hops: 1, drift: .inPlace, replay: replay))),
+            Option(name: "hop x3", act: .hopping(HopJump(hops: 3, drift: .right, replay: replay))),
+            Option(name: "celebrate", act: .celebrating(HopJump(hops: 2, drift: .left, replay: replay))),
+            Option(name: "enter", act: .entering(from: .left)),
+            Option(name: "exit", act: .exiting(toward: .right)),
+            Option(name: "sleep", act: .holding(.sleep)),
+            Option(name: "wait", act: .holding(.wait)),
         ]
     }
 
@@ -213,14 +219,16 @@ private struct HopActPreview: View {
             HopCharacterStage(act: act, size: 200)
                 .frame(height: 200 + HopJump.headroom(for: 200), alignment: .bottom)
 
-            Text(label).hopTextStyle(.parentCaption)
+            Text(verbatim: label).hopTextStyle(.parentCaption)
 
+            // Tap one, then tap another before it finishes: the interrupt has to
+            // land Hop cleanly, never leave him mid-air or mid-squash.
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 96))], spacing: 8) {
-                ForEach(options, id: \.0) { option in
-                    HopSecondaryButton(option.0) {
+                ForEach(options) { option in
+                    HopSecondaryButton(option.name) {
                         replay += 1
-                        label = option.0
-                        act = option.1
+                        label = option.name
+                        act = option.act
                     }
                 }
             }
