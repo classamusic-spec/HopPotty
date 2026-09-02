@@ -161,6 +161,21 @@ const DEFS = {
   towelGrad: lin('towelGrad', [[0, '#A8DCF2'], [1, '#6FC0E2']]),
   iconWell: rad('iconWell', [[0, '#FFFFFF', 0.55], [1, '#FFFFFF', 0]], { cx: 0.35, cy: 0.28, r: 0.8 }),
 
+  // -- Quiz answer set (see section 4b) --
+  // A clip so an icon may draw ground, sky or a stack that runs past the disc
+  // and still end exactly on its edge, instead of being hand-trimmed per icon.
+  iconDiscClip: '<clipPath id="iconDiscClip"><circle cx="60" cy="60" r="58"/></clipPath>',
+  paperSheet: lin('paperSheet', [[0, '#FFFFFF'], [1, P.sand100]], { x1: 0.2, x2: 0.9 }),
+  paperStack: lin('paperStack', [[0, P.sand100], [1, P.sand300]], { x1: 0.2, x2: 0.9 }),
+  screenGrad: lin('screenGrad', [[0, '#E9F7FD'], [1, P.pondBlueLight]], { x1: 0.2, x2: 0.9 }),
+  glassGrad: lin('glassGrad', [[0, '#FFFFFF'], [0.55, P.pondBlueSoft], [1, '#D6ECF6']], { x1: 0.2, x2: 0.9 }),
+  metalGrad: lin('metalGrad', [[0, P.sand100], [1, P.sand400]], { x1: 0.15, x2: 0.9 }),
+  furGrad: rad('furGrad', [[0, P.woodLight], [1, P.wood]], { cx: 0.36, cy: 0.3, r: 0.85 }),
+  furGradDeep: lin('furGradDeep', [[0, P.wood], [1, P.woodDeep]], { x1: 0.2, x2: 0.9 }),
+  shirtGrad: lin('shirtGrad', [[0, P.hopGreenLight], [1, P.hopGreenDeep]], { x1: 0.2, x2: 0.9 }),
+  hairGrad: lin('hairGrad', [[0, P.woodLight], [1, P.woodDeep]], { x1: 0.25, x2: 0.85 }),
+  chuteGrad: lin('chuteGrad', [[0, '#FFC0B2'], [1, P.peachDeep]], { x1: 0.1, x2: 0.9 }),
+
   // -- App icon --
   iconSky: lin('iconSky', [[0, '#5FBE8C'], [0.5, '#3FA672'], [1, '#227A4E']], { x1: 0.15, x2: 0.85 }),
   iconHalo: rad('iconHalo', [[0, '#FFFFFF', 0.3], [0.6, '#FFFFFF', 0.08], [1, '#FFFFFF', 0]], { cx: 0.5, cy: 0.42, r: 0.62 }),
@@ -1116,6 +1131,96 @@ const scenes = {
     <g fill="${P.sunshine}">
       ${[[142, 118, 21], [500, 128, 18], [320, 54, 23], [104, 258, 14], [540, 262, 15], [232, 74, 12], [412, 86, 13]]
         .map(([x, y, r]) => `<path d="M ${x} ${y - r} q ${R(r * 0.28)} ${R(r * 0.72)} ${r} ${r} q ${R(-r * 0.72)} ${R(r * 0.28)} ${-r} ${r} q ${R(-r * 0.28)} ${R(-r * 0.72)} ${-r} ${-r} q ${R(r * 0.72)} ${R(-r * 0.28)} ${r} ${-r} Z"/>`).join('')}
+    </g>`,
+
+  // --- Mini-game backdrops -------------------------------------------------
+  // Hop is deliberately absent from all three. The app composites the live
+  // SwiftUI character over these, and a second, painted Hop in the backdrop
+  // would read as a twin standing behind him.
+
+  /** Bubble Wash: the basin the scrubbing happens over. Props hug the counter
+   *  and the two side walls so the upper middle stays open for bubbles. */
+  'games-bubbleWash': () => `
+    ${bathroom({ floorY: 430 })}
+    <path d="M 88 352 h 464 v 78 h -464 Z" fill="${P.sand200}"/>
+    <path d="M 88 352 h 150 v 78 h -150 Z" fill="#FFFFFF" opacity="0.3"/>
+    <rect x="304" y="352" width="10" height="78" fill="${P.sand300}" opacity="0.7"/>
+    <rect x="52" y="320" width="536" height="32" rx="16" fill="${P.sand300}"/>
+    <rect x="52" y="316" width="536" height="32" rx="16" fill="url(#porcelainGrad)"/>
+    ${towelOnRail(556, 168, 0.9)}
+    ${soapPump(126, 320, 0.85)}
+    ${basinAndTap(300, 318, 1)}
+    <g>
+      <circle cx="150" cy="196" r="34" fill="url(#bubbleFill)"/>
+      <circle cx="88" cy="118" r="22" fill="url(#bubbleFill)"/>
+      <circle cx="452" cy="216" r="27" fill="url(#bubbleFill)"/>
+      <circle cx="504" cy="288" r="18" fill="url(#bubbleFill)"/>
+      <circle cx="206" cy="120" r="16" fill="url(#bubbleFill)"/>
+      <circle cx="392" cy="148" r="13" fill="url(#bubbleFill)"/>
+      <circle cx="268" cy="64" r="11" fill="url(#bubbleFill)"/>
+      <circle cx="592" cy="238" r="14" fill="url(#bubbleFill)"/>
+    </g>`,
+
+  /** Potty Path: the world the lily-pad grid is laid over. The middle of the
+   *  frame is lawn and sky on purpose — the pads land there. */
+  'games-pottyPath': () => `
+    <rect x="0" y="0" width="${SW}" height="${SH}" fill="url(#skyWarm)"/>
+    <circle cx="84" cy="68" r="78" fill="url(#sunGlow)" opacity="0.8"/>
+    <circle cx="84" cy="68" r="34" fill="url(#sunDisc)"/>
+    ${cloud(272, 62, 112, { opacity: 0.7 })}
+    ${cloud(524, 40, 86, { opacity: 0.5 })}
+    <path d="M -20 218 Q 130 162 300 202 Q 460 240 660 196 L 660 500 L -20 500 Z" fill="url(#hillFar)"/>
+    <path d="M -20 270 Q 170 218 360 264 Q 520 302 660 256 L 660 500 L -20 500 Z" fill="url(#hillMid)"/>
+    <path d="M -20 316 Q 200 286 420 320 Q 550 340 660 316 L 660 500 L -20 500 Z" fill="url(#ground)"/>
+    ${friendlyDoor(502, 318, 0.4)}
+    <path d="M 26 492 Q 96 424 214 384 Q 340 342 458 322 L 502 316 L 502 336 Q 372 358 258 402 Q 152 444 122 492 Z" fill="url(#shoreSand)" opacity="0.92"/>
+    ${pebble(206, 390, 21, 8)}
+    ${pebble(306, 366, 17, 7)}
+    ${pebble(396, 344, 14, 6)}
+    <ellipse cx="72" cy="452" rx="70" ry="25" fill="${P.hopGreenLight}" opacity="0.55"/>
+    ${pebble(20, 448, 17, 8)}
+    ${pebble(126, 460, 14, 7)}
+    <g fill="${P.hopGreenInk}" opacity="0.2">
+      <path d="${blade(24, 424, 62, 16, 10)}"/><path d="${blade(52, 430, 44, -12, 8)}"/>
+      <path d="${blade(624, 452, 68, -18, 11)}"/><path d="${blade(596, 458, 48, 14, 9)}"/>
+      <path d="${blade(470, 466, 40, -12, 8)}"/>
+    </g>
+    ${flower(70, 396, 19, { fill: 'url(#yellowBall)', core: P.sunshineSoft, stemH: 34 })}
+    ${flower(580, 396, 18, { fill: 'url(#peachBall)', core: P.peachSoft, petals: 6, stemH: 32 })}
+    ${g('translate(404 206) scale(0.46)', `
+      ${butterflyHalf(P.lavender, P.lavenderSoft, '#FFFFFF')}
+      ${g('scale(-1 1)', butterflyHalf(P.lavender, P.lavenderSoft, '#FFFFFF'))}
+      <ellipse cx="0" cy="4" rx="5" ry="28" fill="${P.night600}" opacity="0.8"/>
+      <circle cx="0" cy="-26" r="7.4" fill="${P.night600}" opacity="0.8"/>`)}`,
+
+  /** Bathroom Match: a quiet room. Everything sits on the two side walls or on
+   *  the floor, so the two columns of picture cards have the whole middle. */
+  'games-bathroomMatch': () => `
+    ${bathroom({ floorY: 392, wall: P.lavenderSoft })}
+    <rect x="0" y="300" width="${SW}" height="82" fill="#FFFFFF" opacity="0.34"/>
+    <g stroke="${P.lavenderDeep}" stroke-width="3" opacity="0.16" stroke-linecap="round">
+      <path d="M 0 341 h ${SW}"/>
+      <path d="M 80 302 v 37 M 240 302 v 37 M 400 302 v 37 M 560 302 v 37"/>
+      <path d="M 160 343 v 37 M 320 343 v 37 M 480 343 v 37"/>
+    </g>
+    <circle cx="118" cy="104" r="80" fill="none" stroke="${P.sand300}" stroke-width="10"/>
+    <path d="M 74 62 a 80 80 0 0 0 -26 62" stroke="#FFFFFF" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.75"/>
+    <rect x="0" y="226" width="170" height="13" rx="6" fill="${P.sand300}"/>
+    <path d="M 30 239 v 18 M 138 239 v 18" stroke="${P.sand400}" stroke-width="7" stroke-linecap="round"/>
+    <g>
+      <rect x="18" y="210" width="84" height="16" rx="8" fill="url(#towelGrad)"/>
+      <rect x="24" y="194" width="72" height="16" rx="8" fill="${P.peachSoft}"/>
+      <rect x="30" y="178" width="60" height="16" rx="8" fill="${P.sunshineSoft}"/>
+      <path d="M 22 218 h 76" stroke="#FFFFFF" stroke-width="3" opacity="0.6" stroke-linecap="round"/>
+    </g>
+    ${soapPump(136, 226, 0.55)}
+    ${towelOnRail(566, 176, 0.95)}
+    ${pottedPlant(584, 396, 0.66)}
+    <ellipse cx="320" cy="432" rx="164" ry="30" fill="${P.sand200}" opacity="0.55"/>
+    <rect x="168" y="406" width="304" height="54" rx="27" fill="${P.peachSoft}"/>
+    <rect x="188" y="418" width="264" height="30" rx="15" fill="#FFFFFF" opacity="0.6"/>
+    <g stroke="${P.peach}" stroke-width="4" opacity="0.45" stroke-linecap="round">
+      <path d="M 178 400 v -8 M 214 400 v -8 M 250 400 v -8 M 286 400 v -8 M 322 400 v -8 M 358 400 v -8 M 394 400 v -8 M 430 400 v -8 M 462 400 v -8"/>
     </g>`,
 };
 

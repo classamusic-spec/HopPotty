@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" width="640" height="480">
+<defs><linearGradient id="fernGreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD9AF"/><stop offset="1" stop-color="#2F8C57"/></linearGradient><radialGradient id="lavenderBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#D6D0F7"/><stop offset="1" stop-color="#6F63C0"/></radialGradient><radialGradient id="peachBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B2"/><stop offset="1" stop-color="#C96755"/></radialGradient><radialGradient id="softShadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#243047" stop-opacity="0.14"/><stop offset="1" stop-color="#243047" stop-opacity="0"/></radialGradient><linearGradient id="towelGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A8DCF2"/><stop offset="1" stop-color="#6FC0E2"/></linearGradient></defs>
+<g id="games-bathroomMatch">
+    
+    <rect x="0" y="0" width="640" height="480" fill="#EFEDFB"/>
+    <circle cx="118" cy="104" r="80" fill="#FFFFFF" opacity="0.45"/>
+    <circle cx="556" cy="82" r="54" fill="#FFF3D4" opacity="0.75"/>
+    <rect x="0" y="392" width="640" height="88" fill="#F7F1E9"/>
+    <rect x="0" y="382" width="640" height="14" rx="7" fill="#EBE3D8"/>
+    <rect x="0" y="300" width="640" height="82" fill="#FFFFFF" opacity="0.34"/>
+    <g stroke="#6F63C0" stroke-width="3" opacity="0.16" stroke-linecap="round">
+      <path d="M 0 341 h 640"/>
+      <path d="M 80 302 v 37 M 240 302 v 37 M 400 302 v 37 M 560 302 v 37"/>
+      <path d="M 160 343 v 37 M 320 343 v 37 M 480 343 v 37"/>
+    </g>
+    <circle cx="118" cy="104" r="80" fill="none" stroke="#D8CEC1" stroke-width="10"/>
+    <path d="M 74 62 a 80 80 0 0 0 -26 62" stroke="#FFFFFF" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.75"/>
+    <rect x="0" y="226" width="170" height="13" rx="6" fill="#D8CEC1"/>
+    <path d="M 30 239 v 18 M 138 239 v 18" stroke="#AFA69B" stroke-width="7" stroke-linecap="round"/>
+    <g>
+      <rect x="18" y="210" width="84" height="16" rx="8" fill="url(#towelGrad)"/>
+      <rect x="24" y="194" width="72" height="16" rx="8" fill="#FFE8E3"/>
+      <rect x="30" y="178" width="60" height="16" rx="8" fill="#FFF3D4"/>
+      <path d="M 22 218 h 76" stroke="#FFFFFF" stroke-width="3" opacity="0.6" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(136 226) scale(0.55)">
+    <ellipse cx="0" cy="3" rx="40" ry="8" fill="url(#softShadow)"/>
+    <path d="M -26 0 q -8 -58 26 -58 q 34 0 26 58 Z" fill="url(#lavenderBall)"/>
+    <path d="M -26 0 q -8 -58 26 -58 q -14 24 -12 58 Z" fill="#FFFFFF" opacity="0.3"/>
+    <rect x="-20" y="-34" width="40" height="13" rx="6.5" fill="#FFFFFF" opacity="0.55"/>
+    <rect x="-11" y="-76" width="22" height="20" rx="7" fill="#AFA69B"/>
+    <path d="M 0 -82 h 20 q 9 0 9 9 v 7" stroke="#AFA69B" stroke-width="10" fill="none" stroke-linecap="round"/></g>
+    <g transform="translate(566 176) scale(0.95)">
+    <rect x="-52" y="0" width="104" height="12" rx="6" fill="#D8CEC1"/>
+    <path d="M -38 5 h 76 q 8 0 8 10 v 56 q 0 8 -9 8 q -10 -10 -18 0 q -10 10 -20 0 q -10 -10 -18 0 q -9 7 -15 0 v -64 q 0 -10 8 -10 Z" fill="url(#towelGrad)"/>
+    <path d="M -38 5 h 26 v 74 q -10 5 -19 -2 q -13 2 -13 -9 v -53 q 0 -10 8 -10 Z" fill="#FFFFFF" opacity="0.32"/>
+    <rect x="-42" y="34" width="84" height="11" rx="5.5" fill="#FFFFFF" opacity="0.8"/></g>
+    <g transform="translate(584 396) scale(0.66)">
+    <ellipse cx="0" cy="4" rx="52" ry="10" fill="url(#softShadow)"/>
+    <g transform="translate(-14 -50) scale(0.46)"><path d="M -11.25 0 Q -22.55 -11.63 -19.38 -23.27 Q -32.34 -34.59 -26.89 -45.92 Q -40.2 -56.94 -33.58 -67.96 Q -46.07 -78.67 -39.57 -89.39 Q -50.31 -99.8 -45.23 -110.2 Q -53.68 -120.31 -51.17 -130.41 Q -57.2 -140.2 -58.11 -150 Q -42 -140.2 -35.23 -130.41 Q -21.52 -120.31 -18.77 -110.2 Q -4.09 -99.8 -5.23 -89.39 Q 9.27 -78.67 4.78 -67.96 Q 17.8 -56.94 10.89 -45.92 Q 21.14 -34.59 12.98 -23.27 Q 19.35 -11.63 11.25 0 Z" fill="url(#fernGreen)"/>
+    <path d="M 0 0 Q -8.4 -82.5 -56 -150" fill="none" stroke="#E3F5EA" stroke-width="2.6" stroke-linecap="round" opacity="0.4"/></g>
+    <g transform="translate(16 -52) scale(0.5)"><path d="M -11.25 0 Q -19.46 -12.25 -13.2 -24.51 Q -21.54 -36.44 -11.46 -48.37 Q -18.6 -59.98 -5.81 -71.58 Q -10.58 -82.87 3.63 -94.16 Q 2.15 -105.12 16.48 -116.08 Q 18.83 -126.72 32.15 -137.36 Q 38.46 -147.68 49.89 -158 Q 53.65 -147.68 48.08 -137.36 Q 51 -126.72 42.95 -116.08 Q 48.37 -105.12 37.97 -94.16 Q 44.75 -82.87 32.55 -71.58 Q 39.4 -59.98 26.31 -48.37 Q 31.94 -36.44 19.15 -24.51 Q 22.43 -12.25 11.25 0 Z" fill="url(#fernGreen)"/>
+    <path d="M 0 0 Q 7.8 -86.9 52 -158" fill="none" stroke="#E3F5EA" stroke-width="2.6" stroke-linecap="round" opacity="0.4"/></g>
+    <g transform="translate(0 -56) scale(0.58)"><path d="M -11.25 0 Q -21.06 -11.79 -16.4 -23.58 Q -27.14 -35.05 -19.46 -46.53 Q -29.8 -57.7 -20.21 -68.87 Q -28.98 -79.72 -18.77 -90.58 Q -25.05 -101.13 -15.52 -111.67 Q -18.77 -121.91 -11.05 -132.15 Q -11.14 -142.07 -6.11 -152 Q 4.05 -142.07 4.88 -132.15 Q 13.4 -121.91 10.95 -111.67 Q 21.17 -101.13 15.57 -90.58 Q 26.35 -79.72 18.15 -68.87 Q 28.2 -57.7 18.31 -46.53 Q 26.34 -35.05 15.95 -23.58 Q 20.83 -11.79 11.25 0 Z" fill="url(#fernGreen)"/>
+    <path d="M 0 0 Q -0.6 -83.6 -4 -152" fill="none" stroke="#E3F5EA" stroke-width="2.6" stroke-linecap="round" opacity="0.4"/></g>
+    <path d="M -36 -44 h 72 l -9 44 q -2 6 -10 6 h -34 q -8 0 -10 -6 Z" fill="url(#peachBall)"/>
+    <path d="M -36 -44 h 22 l -5 50 h -7 q -8 0 -10 -6 Z" fill="#FFFFFF" opacity="0.26"/>
+    <rect x="-42" y="-54" width="84" height="15" rx="7.5" fill="#FF9F8F"/>
+    <rect x="-42" y="-54" width="30" height="15" rx="7.5" fill="#FFFFFF" opacity="0.3"/></g>
+    <ellipse cx="320" cy="432" rx="164" ry="30" fill="#EBE3D8" opacity="0.55"/>
+    <rect x="168" y="406" width="304" height="54" rx="27" fill="#FFE8E3"/>
+    <rect x="188" y="418" width="264" height="30" rx="15" fill="#FFFFFF" opacity="0.6"/>
+    <g stroke="#FF9F8F" stroke-width="4" opacity="0.45" stroke-linecap="round">
+      <path d="M 178 400 v -8 M 214 400 v -8 M 250 400 v -8 M 286 400 v -8 M 322 400 v -8 M 358 400 v -8 M 394 400 v -8 M 430 400 v -8 M 462 400 v -8"/>
+    </g></g>
+</svg>

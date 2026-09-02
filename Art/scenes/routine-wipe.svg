@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" width="640" height="480">
 <defs><linearGradient id="porcelainGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.6" stop-color="#F4F1EC"/><stop offset="1" stop-color="#E4DFD8"/></linearGradient><radialGradient id="softShadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#243047" stop-opacity="0.14"/><stop offset="1" stop-color="#243047" stop-opacity="0"/></radialGradient></defs>
-<g id="step-wipe">
+<g id="routine-wipe">
     
     <rect x="0" y="0" width="640" height="480" fill="#E0F4FC"/>
     <circle cx="118" cy="104" r="80" fill="#FFFFFF" opacity="0.45"/>

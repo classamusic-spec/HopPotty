@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" width="640" height="480">
 <defs><radialGradient id="bubbleFill" cx="0.36" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/><stop offset="0.55" stop-color="#E0F4FC" stop-opacity="0.7"/><stop offset="1" stop-color="#9BDCF1" stop-opacity="0.55"/></radialGradient><linearGradient id="handGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFDCC9"/><stop offset="1" stop-color="#F5C4A9"/></linearGradient><linearGradient id="handGradDeep" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#F5C4A9"/><stop offset="1" stop-color="#DCA084"/></linearGradient><linearGradient id="waterStream" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BDCF1" stop-opacity="0.95"/><stop offset="1" stop-color="#6FC7E8" stop-opacity="0.75"/></linearGradient></defs>
-<g id="step-wash">
+<g id="routine-wash">
     
     <rect x="0" y="0" width="640" height="480" fill="#E0F4FC"/>
     <circle cx="118" cy="104" r="80" fill="#FFFFFF" opacity="0.45"/>

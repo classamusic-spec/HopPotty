@@ -56,8 +56,12 @@ services, and feature surfaces, on top of a completed and tested core.
 - **Rewards + pond progression.** Append-only ledger with crash-safe idempotency
   keys derived only from already-durable data. 41 pond items, deterministic
   curve, exhaustive at compile time. Stars are structurally impossible to remove.
-- **Hop character art.** Eight poses generated from one parameterised anatomy
-  definition, reviewed and iterated against rendered output.
+- **Hop character art.** Redrawn to the product owner's approved reference
+  (`hop_mascot.svg`), recoloured from its #64C157 onto the brand ramp. The
+  reference is one fused outline, so the generator rebuilds it as articulated
+  parts in the reference's own 150×160 space; eleven states (idle, blink, talk,
+  wave, walk, wait, jump, land, cheer, sleep, face) are parameter sets over
+  those parts and interpolate rather than cut. Reviewed against rendered output.
 - **Screen render harness.** Renders screens from the *exported design tokens*,
   so a render cannot drift from what the app compiles against.
 
