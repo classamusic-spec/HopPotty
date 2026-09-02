@@ -69,8 +69,7 @@ public struct HopCharacterView: View {
     private var character: some View {
         ZStack {
             pack
-            fill(.legs, HopCharacterPalette.body)
-            stroke(.toeCreases, HopCharacterPalette.bodyDeep.opacity(0.8), width: HopAnatomy.creaseStroke)
+            legs
             fill(.torso, HopCharacterPalette.body)
             fill(.belly, HopCharacterPalette.belly)
             fill(.arms, HopCharacterPalette.body)
@@ -80,6 +79,19 @@ public struct HopCharacterView: View {
             sleepMarks
         }
         .frame(width: size, height: size)
+    }
+
+    /// One whole leg, then the other — shin, sole and toes in body green, then
+    /// that foot's two darker creases — because that is the order `figure()`
+    /// draws them in, and it is the order that keeps a crease under the far
+    /// foot when a pose brings the feet together.
+    private var legs: some View {
+        ZStack {
+            fill(.legLeft, HopCharacterPalette.body)
+            stroke(.toeCreasesLeft, HopCharacterPalette.bodyDeep.opacity(0.8), width: HopAnatomy.creaseStroke)
+            fill(.legRight, HopCharacterPalette.body)
+            stroke(.toeCreasesRight, HopCharacterPalette.bodyDeep.opacity(0.8), width: HopAnatomy.creaseStroke)
+        }
     }
 
     private var face: some View {

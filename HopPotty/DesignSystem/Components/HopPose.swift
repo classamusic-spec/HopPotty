@@ -227,14 +227,14 @@ struct HopPoseGeometry: Equatable {
         squash: Double = 0,
         tilt: Double = 0,
         lean: Double = 0,
-        armL: CGPoint = CGPoint(x: 10, y: 97),
-        armR: CGPoint = CGPoint(x: 140, y: 97),
-        legL: HopLegGeometry = HopLegGeometry(hip: CGPoint(x: 55, y: 122), ankle: CGPoint(x: 54, y: 148)),
-        legR: HopLegGeometry = HopLegGeometry(hip: CGPoint(x: 95, y: 122), ankle: CGPoint(x: 96, y: 148)),
+        armL: CGPoint = CGPoint(x: 8, y: 90),
+        armR: CGPoint = CGPoint(x: 142, y: 90),
+        legL: HopLegGeometry = HopLegGeometry(hip: CGPoint(x: 56, y: 124), ankle: CGPoint(x: 52, y: 146)),
+        legR: HopLegGeometry = HopLegGeometry(hip: CGPoint(x: 94, y: 124), ankle: CGPoint(x: 98, y: 146)),
         eyes: HopEyeGeometry = HopEyeGeometry(),
         mouth: HopMouthKind = .open,
         bellyScale: Double = 1,
-        torsoWidth: Double = 60,
+        torsoWidth: Double = 58,
         tongueTo: CGPoint? = nil,
         withPack: Bool = false,
         wiggling: Bool = false,
@@ -520,7 +520,7 @@ extension HopPoseGeometry {
             mouthOpenScale = newValue.value(23)
             mouthSmileDepth = newValue.value(24, default: 12)
             bellyScale = newValue.value(25, default: 1)
-            torsoWidth = newValue.value(26, default: 60)
+            torsoWidth = newValue.value(26, default: 58)
             tongueTip = CGPoint(
                 x: newValue.value(27, default: HopPoseGeometry.tongueOrigin.x),
                 y: newValue.value(28, default: HopPoseGeometry.tongueOrigin.y)

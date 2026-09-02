@@ -55,31 +55,38 @@ enum HopAnatomy {
     static let eyeL = CGPoint(x: 42.4, y: 25.7)
     static let eyeR = CGPoint(x: 108.4, y: 25.7)
     /// The socket is the bump in the head silhouette, drawn in body green.
-    static let socketRadius: CGFloat = 19.5
-    static let whiteRadius: CGFloat = 15.5
-    static let pupilRadius: CGFloat = 11.5
+    static let socketRadius: CGFloat = 20.5
+    static let whiteRadius: CGFloat = 16.5
+    static let pupilRadius: CGFloat = 12.3
     static let highlightRadius: CGFloat = 3.4
     /// The pupil sits a unit below the socket centre; the catchlight above it.
     static let pupilOffset = CGSize(width: 0, height: 1)
     static let highlightOffset = CGSize(width: 3.2, height: -4)
 
     /// Shoulders are fixed: the pose moves the hand and the arm follows.
-    static let shoulderL = CGPoint(x: 50, y: 90)
-    static let shoulderR = CGPoint(x: 100, y: 90)
-    static let armWidth: CGFloat = 13
-    static let palmRadius: CGFloat = 8.4
-    static let fingerLength: CGFloat = 11
-    static let fingerWidth: CGFloat = 9
+    static let shoulderL = CGPoint(x: 48, y: 86)
+    static let shoulderR = CGPoint(x: 102, y: 86)
+    static let armWidth: CGFloat = 15
+    static let palmRadius: CGFloat = 9.5
+    static let fingerLength: CGFloat = 12
+    static let fingerWidth: CGFloat = 10.5
     /// Three fingers, fanned about the arm's own direction.
     static let fingerAngles: [Double] = [-50, 0, 50]
 
-    static let legWidth: CGFloat = 16
-    static let soleRadii = CGSize(width: 9.5, height: 7)
+    static let legWidth: CGFloat = 26
+    static let soleRadii = CGSize(width: 14, height: 8.5)
     /// Toe angle (relative to the foot's outward direction) and half-width.
+    /// The generator strokes each toe at `r * 2`, so the radius *is* `r`.
     static let toes: [(angle: Double, radius: CGFloat)] = [
-        (angle: -8, radius: 5.4), (angle: -46, radius: 5.4), (angle: -84, radius: 5),
+        (angle: -6, radius: 6), (angle: -44, radius: 6), (angle: -82, radius: 5.6),
     ]
+    /// How far a toe reaches from the sole centre: the horizontal reach is
+    /// multiplied by the pose's toe spread, the vertical one is not.
+    static let toeReach = CGSize(width: 15, height: 11)
     static let creaseAngles: [Double] = [-30, -70]
+    /// A crease runs from just inside the sole to just short of the toe tips.
+    static let creaseInnerReach: Double = 5
+    static let creaseReach = CGSize(width: 14, height: 12)
 
     /// The point the head rotates about, and the mouth scales about.
     static let faceCentre = CGPoint(x: 75, y: 50)
@@ -88,10 +95,10 @@ enum HopAnatomy {
     /// Where a tongue leaves the mouth.
     static let tongueOrigin = HopPoseGeometry.tongueOrigin
 
-    static let crownCentre = CGPoint(x: 75, y: 42)
-    static let crownRadii = CGSize(width: 46, height: 31)
-    static let jawCentre = CGPoint(x: 75, y: 54)
-    static let jawRadii = CGSize(width: 65, height: 26)
+    static let crownCentre = CGPoint(x: 75, y: 40)
+    static let crownRadii = CGSize(width: 44, height: 33)
+    static let jawCentre = CGPoint(x: 75, y: 56)
+    static let jawRadii = CGSize(width: 61, height: 27)
 
     /// The head's bounding box in reference space: the jaw sets the width, the
     /// eye sockets the top, the jaw the bottom.
@@ -271,12 +278,21 @@ struct HopFigureShape: Shape {
 
     /// In `figure`'s draw order: shadow, pack, legs, torso, belly, arms, head,
     /// face, tongue, wiggle.
+    ///
+    /// Each leg is two cases rather than one, and the pair is not a single
+    /// case, because the generator finishes a whole leg — shin, sole, toes,
+    /// then the darker creases over them — before it starts the other one. Any
+    /// pose that crosses the feet (`full` brings them together) depends on
+    /// that: with both sets of creases stacked last they would draw over the
+    /// far foot instead of under it.
     enum Part {
         case shadow
         case pack
         case packStrap
-        case legs
-        case toeCreases
+        case legLeft
+        case toeCreasesLeft
+        case legRight
+        case toeCreasesRight
         case torso
         case belly
         case arms
@@ -325,8 +341,10 @@ struct HopFigureShape: Shape {
         case .shadow: shadow(&path)
         case .pack: pack(&path)
         case .packStrap: packStrap(&path)
-        case .legs: legs(&path)
-        case .toeCreases: toeCreases(&path)
+        case .legLeft: leg(geometry.legL, side: -1, into: &path)
+        case .toeCreasesLeft: toeCreases(geometry.legL, side: -1, into: &path)
+        case .legRight: leg(geometry.legR, side: 1, into: &path)
+        case .toeCreasesRight: toeCreases(geometry.legR, side: 1, into: &path)
         case .torso: torso(&path)
         case .belly: belly(&path)
         case .arms: arms(&path)
@@ -365,43 +383,47 @@ struct HopFigureShape: Shape {
 
     /// A leg is the shin capsule, the sole, and three toes fanned outward and
     /// down. `side` −1 is Hop's right, the viewer's left.
-    private func legs(_ path: inout Path) {
-        for (leg, side) in [(geometry.legL, -1.0), (geometry.legR, 1.0)] as [(HopLegGeometry, Double)] {
-            let foot = footCentre(for: leg, side: side)
-            path.addHopCapsule(from: leg.hip, to: leg.ankle, radius: HopAnatomy.legWidth / 2)
-            path.addHopEllipse(centre: foot, radii: HopAnatomy.soleRadii)
-            for toe in HopAnatomy.toes {
-                let angle = toeAngle(toe.angle, side: side) * .pi / 180
-                path.addHopCapsule(
-                    from: foot,
-                    to: CGPoint(
-                        x: foot.x + cos(angle) * 12 * leg.toeSpread,
-                        y: foot.y + sin(angle) * 10
-                    ),
-                    radius: toe.radius
-                )
-            }
+    private func leg(_ shape: HopLegGeometry, side: Double, into path: inout Path) {
+        let foot = footCentre(for: shape, side: side)
+        let reachX = Double(HopAnatomy.toeReach.width)
+        let reachY = Double(HopAnatomy.toeReach.height)
+        path.addHopCapsule(from: shape.hip, to: shape.ankle, radius: HopAnatomy.legWidth / 2)
+        path.addHopEllipse(centre: foot, radii: HopAnatomy.soleRadii)
+        for toe in HopAnatomy.toes {
+            let angle = toeAngle(toe.angle, side: side) * .pi / 180
+            path.addHopCapsule(
+                from: foot,
+                to: CGPoint(
+                    x: Double(foot.x) + cos(angle) * reachX * shape.toeSpread,
+                    y: Double(foot.y) + sin(angle) * reachY
+                ),
+                radius: toe.radius
+            )
         }
     }
 
     /// The two creases between the toes. Stroked, and the only place in the
     /// drawing where a second green appears on the body.
-    private func toeCreases(_ path: inout Path) {
-        for (leg, side) in [(geometry.legL, -1.0), (geometry.legR, 1.0)] as [(HopLegGeometry, Double)] {
-            let foot = footCentre(for: leg, side: side)
-            for crease in HopAnatomy.creaseAngles {
-                let angle = toeAngle(crease, side: side) * .pi / 180
-                path.move(to: CGPoint(x: foot.x + cos(angle) * 5, y: foot.y + sin(angle) * 5))
-                path.addLine(to: CGPoint(
-                    x: foot.x + cos(angle) * 14 * leg.toeSpread,
-                    y: foot.y + sin(angle) * 12
-                ))
-            }
+    private func toeCreases(_ shape: HopLegGeometry, side: Double, into path: inout Path) {
+        let foot = footCentre(for: shape, side: side)
+        let inner = HopAnatomy.creaseInnerReach
+        let reachX = Double(HopAnatomy.creaseReach.width)
+        let reachY = Double(HopAnatomy.creaseReach.height)
+        for crease in HopAnatomy.creaseAngles {
+            let angle = toeAngle(crease, side: side) * .pi / 180
+            path.move(to: CGPoint(
+                x: Double(foot.x) + cos(angle) * inner,
+                y: Double(foot.y) + sin(angle) * inner
+            ))
+            path.addLine(to: CGPoint(
+                x: Double(foot.x) + cos(angle) * reachX * shape.toeSpread,
+                y: Double(foot.y) + sin(angle) * reachY
+            ))
         }
     }
 
-    private func footCentre(for leg: HopLegGeometry, side: Double) -> CGPoint {
-        CGPoint(x: leg.ankle.x - side * 2, y: leg.ankle.y + 3)
+    private func footCentre(for shape: HopLegGeometry, side: Double) -> CGPoint {
+        CGPoint(x: Double(shape.ankle.x) - side * 2, y: Double(shape.ankle.y) + 3)
     }
 
     private func toeAngle(_ degrees: Double, side: Double) -> Double {
@@ -415,8 +437,8 @@ struct HopFigureShape: Shape {
         let x0 = 75 - width / 2
         let x1 = 75 + width / 2
         let top = 58 + geometry.squash * 4
-        let bottom = 130 - geometry.squash * 4
-        let r = min(27, width / 2)
+        let bottom = 127 - geometry.squash * 4
+        let r = min(26, width / 2)
         guard bottom - top > r else { return }
         let radii = CGSize(width: r, height: r)
         path.move(to: CGPoint(x: x0, y: top))
@@ -446,14 +468,15 @@ struct HopFigureShape: Shape {
         ] {
             path.addHopCapsule(from: shoulder, to: hand, radius: HopAnatomy.armWidth / 2)
             path.addHopCircle(centre: hand, radius: HopAnatomy.palmRadius)
-            let direction = atan2(hand.y - shoulder.y, hand.x - shoulder.x)
+            let direction = atan2(Double(hand.y - shoulder.y), Double(hand.x - shoulder.x))
+            let reach = Double(HopAnatomy.fingerLength)
             for spread in HopAnatomy.fingerAngles {
                 let angle = direction + spread * .pi / 180
                 path.addHopCapsule(
                     from: hand,
                     to: CGPoint(
-                        x: hand.x + cos(angle) * HopAnatomy.fingerLength,
-                        y: hand.y + sin(angle) * HopAnatomy.fingerLength
+                        x: Double(hand.x) + cos(angle) * reach,
+                        y: Double(hand.y) + sin(angle) * reach
                     ),
                     radius: HopAnatomy.fingerWidth / 2
                 )
