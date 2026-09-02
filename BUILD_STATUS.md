@@ -1,11 +1,14 @@
 # HopPotty — Build Status
 
-**Updated:** 2026-09-01 (integration pass)
+**Updated:** 2026-09-02 (first compile)
 **Branch:** `claude/hoppotty-ios-build-6zzfjf`
 
-> **Read this first.** This environment has **no Xcode, no iOS simulator, and no
-> physical device.** Below, "tested" means a test was executed and passed.
-> Everything requiring Xcode is listed as unverified, with what to run.
+> **Read this first.** This repository now has a **macOS CI job** that generates
+> the Xcode project and builds the app and all four extensions with a real
+> Xcode on every push (`.github/workflows/ci.yml`, job "App and extensions").
+> There is still no simulator run and no physical device here, so "tested" below
+> still means a test was executed and passed, and anything needing a device is
+> still listed as unobserved.
 
 ---
 
@@ -13,23 +16,29 @@
 
 | Layer | Compiles | Tests run | How |
 | --- | --- | --- | --- |
-| `HopPottyCore` (domain, scheduling, rewards, state machine, insights, content) | ✅ Yes | ✅ Yes | Swift 6.2 on Linux — **464 tests, 34 suites, all passing** |
+| `HopPottyCore` (domain, scheduling, rewards, state machine, insights, content) | ✅ Yes | ✅ Yes | Swift 6.2 and 6.0 on Linux — **464 tests, 34 suites, all passing** |
 | `HopPottyDesignTokens` | ✅ Yes | ✅ Yes | Same — includes WCAG contrast assertions |
-| `HopPotty` app target (SwiftUI) | ❌ **Unverified** | ❌ No | Needs Xcode |
-| Four app extensions (three Screen Time, one WidgetKit/ActivityKit) | ❌ **Unverified** | ❌ No | Needs Xcode |
+| Four app extensions (three Screen Time, one WidgetKit/ActivityKit) | ✅ Yes | ❌ No | Xcode 26.3 / iOS 26.2 SDK on `macos-15`, Swift 6 language mode with complete strict concurrency and warnings-as-errors |
+| `HopPotty` app target (SwiftUI, 182 files) | ⚠️ **In progress** | ❌ No | Same job. Type-checked repeatedly; see `Docs/FirstBuild.md` for every diagnostic found and fixed, and for whatever the last run still reports |
 | Screen Time runtime behaviour | ❌ **Unobserved** | ❌ No | Needs a physical device + entitlement |
 
-**No Screen Time behaviour has been observed on hardware. No entitlement has
-been requested or approved. The Xcode project has not been generated or built.**
+**No Screen Time behaviour has been observed on hardware, and no entitlement has
+been requested or approved.** Nothing about the CI job changes that: it builds
+the mock scheme, which swaps the whole Family Controls layer out at compile
+time, and it never signs — so it can prove nothing about entitlements,
+provisioning or App Groups either. `Docs/FirstBuild.md` has a table of the
+failures it structurally cannot catch.
 
 ---
 
 ## Current phase
 
-Feature-complete on paper: every surface in the brief plus the additions
-(eight mini-games, Quick Reminder, home-screen widget and Live Activity,
-child mode behind the Hop tab, pond-as-background Home) is written, drawn and
-rendered. The next phase is the first Xcode compile and a device.
+**The first compile.** `Docs/FirstBuild.md` is the record: what the compiler
+found, layer by layer, in the order it surfaced, and why each fix is the right
+one. The headline numbers are that the four extensions now build, and the app
+target went from never having been type-checked to a short and shrinking list.
+
+The phase after this is a device.
 
 ## Completed
 
