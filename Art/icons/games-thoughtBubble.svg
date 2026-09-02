@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><radialGradient id="blueBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#BDE9F8"/><stop offset="1" stop-color="#2A87AC"/></radialGradient></defs>
+<g id="games-thoughtBubble">
+    <circle cx="30" cy="102" r="7" fill="#FFFFFF" opacity="0.95"/>
+    <circle cx="30" cy="102" r="7" fill="none" stroke="#9BDCF1" stroke-width="2.5"/>
+    <circle cx="44" cy="88" r="11" fill="#FFFFFF" opacity="0.95"/>
+    <circle cx="44" cy="88" r="11" fill="none" stroke="#9BDCF1" stroke-width="2.5"/>
+    <g opacity="1"><path d="
+    M 14.16 58.56
+    a 20.8 20.8 0 0 1 6.24 -39.52
+    a 27.04 27.04 0 0 1 43.68 -14.56
+    a 22.88 22.88 0 0 1 41.6 16.64
+    a 18.72 18.72 0 0 1 -4.16 37.44
+    Z" fill="#FFFFFF"/></g>
+    <g opacity="0.9"><g opacity="1"><path d="
+    M 14.16 58.56
+    a 20.8 20.8 0 0 1 6.24 -39.52
+    a 27.04 27.04 0 0 1 43.68 -14.56
+    a 22.88 22.88 0 0 1 41.6 16.64
+    a 18.72 18.72 0 0 1 -4.16 37.44
+    Z" fill="none"/></g></g>
+    <path d="M 14 58 a 21 21 0 0 1 6 -40 a 27 27 0 0 1 44 -15 a 23 23 0 0 1 42 17 a 19 19 0 0 1 -4 38 Z"
+      fill="none" stroke="#9BDCF1" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M 60 18
+    C 67.5 30 75 41.5 75 43
+    A 15 15 0 1 1 45 43
+    C 45 41.5 52.5 30 60 18 Z" fill="url(#blueBall)"/>
+    <path d="M 52 44 q 1 -10 6 -16" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/></g>
+</svg>

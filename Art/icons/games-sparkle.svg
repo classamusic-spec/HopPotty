@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><radialGradient id="glowWarm" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD769" stop-opacity="0.75"/><stop offset="0.5" stop-color="#FFD769" stop-opacity="0.28"/><stop offset="1" stop-color="#FFD769" stop-opacity="0"/></radialGradient></defs>
+<g id="games-sparkle">
+    <circle cx="58" cy="54" r="42" fill="url(#glowWarm)" opacity="0.7"/>
+    <path d="M 58 16 q 10.64 27.36 38 38 q -27.36 10.64 -38 38 q -10.64 -27.36 -38 -38 q 27.36 -10.64 38 -38 Z" fill="#FFC53D"/>
+    <path d="M 58 30 q 6.72 17.28 24 24 q -17.28 6.72 -24 24 q -6.72 -17.28 -24 -24 q 17.28 -6.72 24 -24 Z" fill="#FFD769"/>
+    <path d="M 58 43 q 3.08 7.92 11 11 q -7.92 3.08 -11 11 q -3.08 -7.92 -11 -11 q 7.92 -3.08 11 -11 Z" fill="#FFFDF2"/>
+    <path d="M 100 77 q 4.2 10.8 15 15 q -10.8 4.2 -15 15 q -4.2 -10.8 -15 -15 q 10.8 -4.2 15 -15 Z" fill="#FFD769"/>
+    <path d="M 22 83 q 3.08 7.92 11 11 q -7.92 3.08 -11 11 q -3.08 -7.92 -11 -11 q 7.92 -3.08 11 -11 Z" fill="#FFC53D"/>
+    <path d="M 102 15 q 2.52 6.48 9 9 q -6.48 2.52 -9 9 q -2.52 -6.48 -9 -9 q 6.48 -2.52 9 -9 Z" fill="#FFF3D4"/></g>
+</svg>

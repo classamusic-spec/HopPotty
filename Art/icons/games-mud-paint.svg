@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><radialGradient id="mudPaint" cx="0.34" cy="0.3" r="0.85"><stop offset="0" stop-color="#DCD6FA"/><stop offset="0.55" stop-color="#AFA5EF"/><stop offset="1" stop-color="#6F63C0"/></radialGradient></defs>
+<g id="games-mud-paint">
+    <path d="M 18 58 C 14 36 32 20 52 24 C 70 28 78 16 94 22 C 110 28 112 50 102 64 C 94 76 100 90 84 98 C 66 106 42 102 30 92 C 20 84 20 70 18 58 Z" fill="#453B85" opacity="0.22" transform="translate(2 4)"/>
+    <path d="M 18 58 C 14 36 32 20 52 24 C 70 28 78 16 94 22 C 110 28 112 50 102 64 C 94 76 100 90 84 98 C 66 106 42 102 30 92 C 20 84 20 70 18 58 Z" fill="url(#mudPaint)"/>
+    <ellipse cx="46" cy="42" rx="15" ry="9" transform="rotate(-22 46 42)" fill="#FFFFFF" opacity="0.3"/>
+    <ellipse cx="72" cy="72" rx="9" ry="6" transform="rotate(14 72 72)" fill="#FFFFFF" opacity="0.16"/>
+    <circle cx="104" cy="82" r="6" fill="url(#mudPaint)"/><circle cx="16" cy="34" r="5" fill="url(#mudPaint)"/><circle cx="66" cy="108" r="4.5" fill="url(#mudPaint)"/></g>
+</svg>

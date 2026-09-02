@@ -76,7 +76,9 @@ enum HopAnatomy {
     static let legWidth: CGFloat = 16
     static let soleRadii = CGSize(width: 9.5, height: 7)
     /// Toe angle (relative to the foot's outward direction) and half-width.
-    static let toes: [(angle: Double, radius: CGFloat)] = [(-8, 5.4), (-46, 5.4), (-84, 5)]
+    static let toes: [(angle: Double, radius: CGFloat)] = [
+        (angle: -8, radius: 5.4), (angle: -46, radius: 5.4), (angle: -84, radius: 5),
+    ]
     static let creaseAngles: [Double] = [-30, -70]
 
     /// The point the head rotates about, and the mouth scales about.
@@ -105,9 +107,9 @@ enum HopAnatomy {
 
     /// The three forehead spots, exactly where the reference puts them.
     static let spots: [(centre: CGPoint, radii: CGSize)] = [
-        (CGPoint(x: 75.3, y: 19.4), CGSize(width: 4.4, height: 2.6)),
-        (CGPoint(x: 72.8, y: 26.2), CGSize(width: 2.6, height: 1.9)),
-        (CGPoint(x: 80.6, y: 24.6), CGSize(width: 3.0, height: 1.6)),
+        (centre: CGPoint(x: 75.3, y: 19.4), radii: CGSize(width: 4.4, height: 2.6)),
+        (centre: CGPoint(x: 72.8, y: 26.2), radii: CGSize(width: 2.6, height: 1.9)),
+        (centre: CGPoint(x: 80.6, y: 24.6), radii: CGSize(width: 3.0, height: 1.6)),
     ]
     static let nostrils = [CGPoint(x: 67.4, y: 41), CGPoint(x: 82.6, y: 41)]
     static let nostrilRadius: CGFloat = 2.1
@@ -361,7 +363,7 @@ struct HopFigureShape: Shape {
     /// A leg is the shin capsule, the sole, and three toes fanned outward and
     /// down. `side` −1 is Hop's right, the viewer's left.
     private func legs(_ path: inout Path) {
-        for (leg, side) in [(geometry.legL, -1.0), (geometry.legR, 1.0)] {
+        for (leg, side) in [(geometry.legL, -1.0), (geometry.legR, 1.0)] as [(HopLegGeometry, Double)] {
             let foot = footCentre(for: leg, side: side)
             path.addHopCapsule(from: leg.hip, to: leg.ankle, radius: HopAnatomy.legWidth / 2)
             path.addHopEllipse(centre: foot, radii: HopAnatomy.soleRadii)
@@ -382,7 +384,7 @@ struct HopFigureShape: Shape {
     /// The two creases between the toes. Stroked, and the only place in the
     /// drawing where a second green appears on the body.
     private func toeCreases(_ path: inout Path) {
-        for (leg, side) in [(geometry.legL, -1.0), (geometry.legR, 1.0)] {
+        for (leg, side) in [(geometry.legL, -1.0), (geometry.legR, 1.0)] as [(HopLegGeometry, Double)] {
             let foot = footCentre(for: leg, side: side)
             for crease in HopAnatomy.creaseAngles {
                 let angle = toeAngle(crease, side: side) * .pi / 180
@@ -591,10 +593,10 @@ struct HopFigureShape: Shape {
     /// Soft motion marks either side of the body, for the "I need to go" wiggle.
     private func wiggle(_ path: inout Path) {
         let marks: [(start: CGPoint, control: CGSize, end: CGSize)] = [
-            (CGPoint(x: 36, y: 96), CGSize(width: -5, height: 6), CGSize(width: 0, height: 12)),
-            (CGPoint(x: 30, y: 92), CGSize(width: -7, height: 9), CGSize(width: 0, height: 18)),
-            (CGPoint(x: 114, y: 96), CGSize(width: 5, height: 6), CGSize(width: 0, height: 12)),
-            (CGPoint(x: 120, y: 92), CGSize(width: 7, height: 9), CGSize(width: 0, height: 18)),
+            (start: CGPoint(x: 36, y: 96), control: CGSize(width: -5, height: 6), end: CGSize(width: 0, height: 12)),
+            (start: CGPoint(x: 30, y: 92), control: CGSize(width: -7, height: 9), end: CGSize(width: 0, height: 18)),
+            (start: CGPoint(x: 114, y: 96), control: CGSize(width: 5, height: 6), end: CGSize(width: 0, height: 12)),
+            (start: CGPoint(x: 120, y: 92), control: CGSize(width: 7, height: 9), end: CGSize(width: 0, height: 18)),
         ]
         for mark in marks {
             path.move(to: mark.start)

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><clipPath id="cardClip"><rect x="16" y="14" width="88" height="88" rx="18"/></clipPath><linearGradient id="cardFace" x1="0.2" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFFCF8"/></linearGradient><linearGradient id="cardPanel" x1="0.2" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#E0F4FC"/><stop offset="1" stop-color="#EFF8FC"/></linearGradient><radialGradient id="greenBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#2F8C57"/></radialGradient><linearGradient id="padGreenLight" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#63C88A"/></linearGradient><radialGradient id="softShadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#243047" stop-opacity="0.14"/><stop offset="1" stop-color="#243047" stop-opacity="0"/></radialGradient></defs>
+<g id="games-card-sit">
+  <rect x="9" y="11" width="102" height="102" rx="24" fill="#243047" opacity="0.1"/>
+  <rect x="8" y="6" width="104" height="104" rx="24" fill="url(#cardFace)"/>
+  <rect x="8" y="6" width="104" height="104" rx="24" fill="none" stroke="#EBE3D8" stroke-width="3"/>
+  <rect x="16" y="14" width="88" height="88" rx="18" fill="url(#cardPanel)"/>
+  <g clip-path="url(#cardClip)">
+    <g transform="translate(60 94) scale(0.36)">
+    <ellipse cx="0" cy="4" rx="128" ry="22" fill="url(#softShadow)"/>
+    <path d="M -86 -70 q -8 -60 86 -60 q 94 0 86 60 q -86 -20 -172 0 Z" fill="#2F8C57"/>
+    <path d="M -72 -82 q -6 -38 72 -38 q 78 0 72 38 q -72 -14 -144 0 Z" fill="url(#greenBall)"/>
+    <path d="M -84 -64 C -88 -6 -70 20 -58 26 Q 0 44 58 26 C 70 20 88 -6 84 -64 Z" fill="url(#greenBall)"/>
+    <path d="M -84 -64 C -88 -6 -70 20 -58 26 Q -36 34 -20 36 Q -54 12 -54 -64 Z" fill="#FFFFFF" opacity="0.2"/>
+    <ellipse cx="0" cy="-58" rx="96" ry="28" fill="#2F8C57"/>
+    <ellipse cx="0" cy="-64" rx="96" ry="28" fill="url(#padGreenLight)"/>
+    <ellipse cx="0" cy="-64" rx="52" ry="14" fill="#1B5E39" opacity="0.5"/>
+    <ellipse cx="0" cy="-67" rx="52" ry="14" fill="#E0F4FC"/>
+    <ellipse cx="-26" cy="-72" rx="23" ry="6" fill="#FFFFFF" opacity="0.5"/></g>
+    <path d="M 60 22 q 22 4 22 22" stroke="#2F8C57" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.6"/>
+    <path d="M 74 46 l 8 10 l 8 -10 Z" fill="#2F8C57" opacity="0.6"/>
+    <path d="M 34 21 q 2.52 6.48 9 9 q -6.48 2.52 -9 9 q -2.52 -6.48 -9 -9 q 6.48 -2.52 9 -9 Z" fill="#FFD769"/>
+    <path d="M 48 14 q 1.68 4.32 6 6 q -4.32 1.68 -6 6 q -1.68 -4.32 -6 -6 q 4.32 -1.68 6 -6 Z" fill="#FFC53D"/></g></g>
+</svg>

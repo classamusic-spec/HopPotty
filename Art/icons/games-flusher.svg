@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><radialGradient id="blueBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#BDE9F8"/><stop offset="1" stop-color="#2A87AC"/></radialGradient><linearGradient id="porcelainGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.6" stop-color="#F4F1EC"/><stop offset="1" stop-color="#E4DFD8"/></linearGradient></defs>
+<g id="games-flusher">
+    <ellipse cx="60" cy="108" rx="36" ry="6.12" fill="#243047" opacity="0.11"/>
+    <rect x="14" y="18" width="92" height="80" rx="24" fill="#D8CEC1"/>
+    <rect x="14" y="14" width="92" height="80" rx="24" fill="url(#porcelainGrad)"/>
+    <rect x="14" y="14" width="34" height="80" rx="17" fill="#FFFFFF" opacity="0.5"/>
+    <circle cx="60" cy="54" r="30" fill="#2A87AC" opacity="0.3"/>
+    <circle cx="60" cy="50" r="30" fill="url(#blueBall)"/>
+    <circle cx="60" cy="50" r="19" fill="#E0F4FC" opacity="0.85"/>
+    <ellipse cx="51" cy="40" rx="11" ry="7" transform="rotate(-24 51 40)" fill="#FFFFFF" opacity="0.7"/>
+    <path d="M 60 50 m -11 0 a 11 5 0 1 1 16 4" fill="none" stroke="#2A87AC" stroke-width="4" stroke-linecap="round" opacity="0.55"/></g>
+</svg>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><radialGradient id="bubbleFill" cx="0.36" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/><stop offset="0.55" stop-color="#E0F4FC" stop-opacity="0.7"/><stop offset="1" stop-color="#9BDCF1" stop-opacity="0.55"/></radialGradient><clipPath id="cardClip"><rect x="16" y="14" width="88" height="88" rx="18"/></clipPath><linearGradient id="cardFace" x1="0.2" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFFCF8"/></linearGradient><linearGradient id="cardPanel" x1="0.2" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#E0F4FC"/><stop offset="1" stop-color="#EFF8FC"/></linearGradient><linearGradient id="handGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#FFDCC9"/><stop offset="1" stop-color="#F5C4A9"/></linearGradient><linearGradient id="waterStream" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BDCF1" stop-opacity="0.95"/><stop offset="1" stop-color="#6FC7E8" stop-opacity="0.75"/></linearGradient></defs>
+<g id="games-card-wash">
+  <rect x="9" y="11" width="102" height="102" rx="24" fill="#243047" opacity="0.1"/>
+  <rect x="8" y="6" width="104" height="104" rx="24" fill="url(#cardFace)"/>
+  <rect x="8" y="6" width="104" height="104" rx="24" fill="none" stroke="#EBE3D8" stroke-width="3"/>
+  <rect x="16" y="14" width="88" height="88" rx="18" fill="url(#cardPanel)"/>
+  <g clip-path="url(#cardClip)">
+    <path d="M 78 26 h -22 q -12 0 -12 12 v 8" stroke="#D8CEC1" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 78 26 h -22 q -12 0 -12 12 v 8" stroke="#EBE3D8" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="76" y="19" width="16" height="14" rx="6" fill="#AFA69B"/>
+    <path d="M 44 48 q -2 16 -1 26" stroke="url(#waterStream)" stroke-width="14" stroke-linecap="round" fill="none"/>
+    <g transform="translate(0 6) scale(0.94) translate(4 0)"><g transform="translate(34 90) scale(1 1)">
+      <path d="M -20 0 q -8 -34 6 -46 q 16 -14 30 -2 q 12 10 10 30 q -2 22 -22 22 q -20 0 -24 -4 Z" fill="url(#handGrad)"/>
+      <rect x="-22" y="-56" width="13" height="26" rx="6.5" fill="url(#handGrad)"/>
+      <rect x="-9" y="-62" width="13" height="32" rx="6.5" fill="url(#handGrad)"/>
+      <rect x="4" y="-60" width="13" height="30" rx="6.5" fill="url(#handGrad)"/>
+      <rect x="16" y="-50" width="12" height="22" rx="6" fill="url(#handGrad)"/>
+      <path d="M -24 -34 q 22 8 42 -2" stroke="#DCA084" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.4"/></g><g transform="translate(86 90) scale(-1 1)">
+      <path d="M -20 0 q -8 -34 6 -46 q 16 -14 30 -2 q 12 10 10 30 q -2 22 -22 22 q -20 0 -24 -4 Z" fill="url(#handGrad)"/>
+      <rect x="-22" y="-56" width="13" height="26" rx="6.5" fill="url(#handGrad)"/>
+      <rect x="-9" y="-62" width="13" height="32" rx="6.5" fill="url(#handGrad)"/>
+      <rect x="4" y="-60" width="13" height="30" rx="6.5" fill="url(#handGrad)"/>
+      <rect x="16" y="-50" width="12" height="22" rx="6" fill="url(#handGrad)"/>
+      <path d="M -24 -34 q 22 8 42 -2" stroke="#DCA084" stroke-width="3.4" fill="none" stroke-linecap="round" opacity="0.4"/></g></g>
+    <circle cx="30" cy="44" r="9" fill="url(#bubbleFill)"/>
+    <circle cx="88" cy="56" r="7" fill="url(#bubbleFill)"/>
+    <circle cx="24" cy="66" r="5" fill="url(#bubbleFill)"/>
+    <circle cx="96" cy="36" r="5" fill="url(#bubbleFill)"/></g></g>
+</svg>

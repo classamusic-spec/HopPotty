@@ -1513,7 +1513,8 @@ const quizIcons = {
     ${iconShadow(60, 80, 19, P.sunshineDeep, 0.24)}
     ${g('rotate(-7 60 58)', `
       <path d="M 45 48 h 30 v 16 l -7.5 6 l -7.5 -6 l -7.5 6 l -7.5 -6 Z" fill="${P.sand400}" opacity="0.55" transform="translate(0 4)"/>
-      <path d="M 45 48 h 30 v 16 l -7.5 6 l -7.5 -6 l -7.5 6 l -7.5 -6 Z" fill="url(#paperSheet)" stroke="${P.sand400}" stroke-width="2.6" stroke-linejoin="round"/>`)}`,
+      <path d="M 45 48 h 30 v 16 l -7.5 6 l -7.5 -6 l -7.5 6 l -7.5 -6 Z" fill="url(#paperStack)" stroke="${P.sand400}" stroke-width="2.6" stroke-linejoin="round"/>
+      <path d="M 45 56 h 30" stroke="${P.sand300}" stroke-width="2" fill="none"/>`)}`,
 
   paperFewSquares: () => `${disc(P.sunshineSoft)}
     ${iconShadow(60, 88, 34, P.sunshineDeep, 0.14)}

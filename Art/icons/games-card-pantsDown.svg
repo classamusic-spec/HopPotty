@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><clipPath id="cardClip"><rect x="16" y="14" width="88" height="88" rx="18"/></clipPath><linearGradient id="cardFace" x1="0.2" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFFCF8"/></linearGradient><linearGradient id="cardPanel" x1="0.2" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#E0F4FC"/><stop offset="1" stop-color="#EFF8FC"/></linearGradient><linearGradient id="denimGrad" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#A8D9F0"/><stop offset="1" stop-color="#4FA5CC"/></linearGradient><radialGradient id="greenBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#2F8C57"/></radialGradient><linearGradient id="padGreenLight" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#A7E6C2"/><stop offset="1" stop-color="#63C88A"/></linearGradient><radialGradient id="softShadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#243047" stop-opacity="0.14"/><stop offset="1" stop-color="#243047" stop-opacity="0"/></radialGradient></defs>
+<g id="games-card-pantsDown">
+  <rect x="9" y="11" width="102" height="102" rx="24" fill="#243047" opacity="0.1"/>
+  <rect x="8" y="6" width="104" height="104" rx="24" fill="url(#cardFace)"/>
+  <rect x="8" y="6" width="104" height="104" rx="24" fill="none" stroke="#EBE3D8" stroke-width="3"/>
+  <rect x="16" y="14" width="88" height="88" rx="18" fill="url(#cardPanel)"/>
+  <g clip-path="url(#cardClip)">
+    <g transform="translate(84 92) scale(0.24)">
+    <ellipse cx="0" cy="4" rx="128" ry="22" fill="url(#softShadow)"/>
+    <path d="M -86 -70 q -8 -60 86 -60 q 94 0 86 60 q -86 -20 -172 0 Z" fill="#2F8C57"/>
+    <path d="M -72 -82 q -6 -38 72 -38 q 78 0 72 38 q -72 -14 -144 0 Z" fill="url(#greenBall)"/>
+    <path d="M -84 -64 C -88 -6 -70 20 -58 26 Q 0 44 58 26 C 70 20 88 -6 84 -64 Z" fill="url(#greenBall)"/>
+    <path d="M -84 -64 C -88 -6 -70 20 -58 26 Q -36 34 -20 36 Q -54 12 -54 -64 Z" fill="#FFFFFF" opacity="0.2"/>
+    <ellipse cx="0" cy="-58" rx="96" ry="28" fill="#2F8C57"/>
+    <ellipse cx="0" cy="-64" rx="96" ry="28" fill="url(#padGreenLight)"/>
+    <ellipse cx="0" cy="-64" rx="52" ry="14" fill="#1B5E39" opacity="0.5"/>
+    <ellipse cx="0" cy="-67" rx="52" ry="14" fill="#E0F4FC"/>
+    <ellipse cx="-26" cy="-72" rx="23" ry="6" fill="#FFFFFF" opacity="0.5"/></g>
+    <ellipse cx="44" cy="94" rx="24" ry="6" fill="#243047" opacity="0.1"/>
+    <path d="M 24 52 h 40 q 6 0 6 7 l -3 22 q -1 6 -7 6 h -8 q -6 0 -7 -6 l -1 -10 l -1 10 q -1 6 -7 6 h -8 q -6 0 -7 -6 l -3 -22 q 0 -7 6 -7 Z" fill="url(#denimGrad)"/>
+    <path d="M 24 52 h 14 l -1 35 h -6 q -6 0 -7 -6 l -3 -22 q 0 -7 3 -7 Z" fill="#FFFFFF" opacity="0.25"/>
+    <rect x="22" y="46" width="46" height="10" rx="5" fill="#2A87AC"/>
+    <rect x="22" y="44" width="46" height="10" rx="5" fill="#6FC7E8"/>
+    <g stroke="#FFFFFF" stroke-width="2.4" opacity="0.45" stroke-linecap="round">
+      <path d="M 27 64 h 15 M 27 72 h 13 M 51 64 h 15 M 53 72 h 13"/>
+    </g>
+    <path d="M 74 40 q 10 8 8 18" stroke="#2F8C57" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M 78 60 l 5 -6 l 5 6 Z" fill="#2F8C57" opacity="0.5"/></g></g>
+</svg>
