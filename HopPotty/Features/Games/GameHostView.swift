@@ -96,7 +96,15 @@ struct GameHostView<Board: View>: View {
             theme.color.scrim.ignoresSafeArea()
 
             VStack(spacing: theme.spacing.xl) {
-                HopCharacterStage(pose: .cheer, size: ChildStage.characterSize(for: horizontalSizeClass))
+                // The round is over and Hop noticed. Deliberately the *small*
+                // beat rather than the celebration hop: every ending here is
+                // the same ending, and one that cheered would make the round a
+                // thing to be won.
+                HopCharacterStage(act: .delighted(.cheer), size: celebrationSide)
+                    .frame(
+                        height: celebrationSide + HopJump.headroom(for: celebrationSide),
+                        alignment: .bottom
+                    )
                     .accessibilityHidden(true)
 
                 // The game's own closing line where it wrote one, and the shared
@@ -138,6 +146,12 @@ struct GameHostView<Board: View>: View {
         .hopTransition(.childCelebrate)
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isModal)
+    }
+
+    /// How big Hop is drawn on the ending, and the number the headroom above
+    /// him is derived from.
+    private var celebrationSide: CGFloat {
+        ChildStage.characterSize(for: horizontalSizeClass)
     }
 
     /// What Hop says over the ending. A hand-off round says where everyone is

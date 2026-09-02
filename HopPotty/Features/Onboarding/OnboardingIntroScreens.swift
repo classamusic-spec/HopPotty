@@ -17,7 +17,14 @@ struct MeetHopScreen: View {
             onPrimary: model.advance
         ) {
             VStack(spacing: theme.spacing.l) {
-                HopCharacterStage(pose: .wave, size: 200)
+                // The first thing a caregiver sees Hop do. He waves once, on
+                // arrival, and then stands there breathing — a mascot that keeps
+                // waving is a mascot asking to be looked at.
+                HopCharacterStage(
+                    act: .greeting,
+                    size: 200,
+                    describedAs: HopPose.wave.accessibilityDescription
+                )
                 Text(hop: HopCopy.onboarding.welcomeTagline)
                     .font(theme.font(.parentTitle))
                     .foregroundStyle(theme.color.brandPrimary)

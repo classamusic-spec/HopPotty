@@ -94,8 +94,14 @@ struct HopHubView: View {
         }
         .hopParentGated(isPresented: $isGatePresented) { onLeaveToGrownUps() }
         .fullScreenCover(item: $destination, onDismiss: handleCoverDismissed) { place in
-            cover(for: place)
-                .childContext(model.context)
+            // The cover's own presentation is the arrival; this is what happens
+            // when one place hands straight over to another underneath it —
+            // Fly Snack ending at the potty — so the swap reads as a child page
+            // change rather than as a cut.
+            HopPageSwitch(.childPage, value: place) { place in
+                cover(for: place)
+            }
+            .childContext(model.context)
         }
     }
 
@@ -220,14 +226,23 @@ struct HopHubView: View {
             .accessibilityAddTraits(.isHeader)
     }
 
-    /// Hop himself: idle, breathing, blinking on an irregular beat — and
-    /// perfectly still under Reduce Motion, because `HopCharacterView` routes
-    /// both through the ambient modifiers and those stop entirely rather than
-    /// slowing down. Nothing in this view asks whether Reduce Motion is on.
+    /// Hop himself: he waves hello **once**, when the child arrives on his
+    /// screen, and then stands there breathing and blinking on an irregular
+    /// beat. The wave is a one-shot beat, not a loop, and nothing here starts a
+    /// second one when nobody taps — a mascot that keeps waving is a mascot
+    /// asking to be looked at (`Docs/ChildSafety.md` §1.4).
+    ///
+    /// Perfectly still under Reduce Motion, because `HopCharacterView` routes
+    /// both the act and the ambient life through the motion tokens and those
+    /// stop entirely rather than slowing down. Nothing in this view asks
+    /// whether Reduce Motion is on.
     private var hopStage: some View {
         HopCharacterStage(
-            pose: .idle,
+            act: .greeting,
             size: ChildStage.characterSize(for: horizontalSizeClass),
+            // He is above the four doors, so looking down is looking at the
+            // thing the child is being invited to touch.
+            gaze: .down,
             describedAs: HopCopy.a11y.hopCharacter.localized
         )
     }

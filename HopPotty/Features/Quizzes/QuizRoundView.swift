@@ -27,6 +27,8 @@ struct QuizRoundView: View {
 
     @State private var model: QuizRoundModel
     @State private var promptPulse = 0
+    /// True while Hop is delivering the prompt, so his mouth moves with it.
+    @State private var isAsking = false
 
     init(model: QuizRoundModel = QuizRoundModel(), onFinish: @escaping (QuizRoundResult) -> Void) {
         self.onFinish = onFinish
@@ -39,13 +41,25 @@ struct QuizRoundView: View {
         VStack(spacing: 0) {
             header
             if model.isFinished {
+                // No transition of its own: Hop hopping into the ending *is*
+                // its arrival, and a page slide underneath him would be two
+                // animations saying the same thing.
                 finished
             } else if let question = model.currentQuestion {
                 round(question)
+                    .id(page)
+                    .hopScreenTransition(.childPage)
             }
         }
         .hopBackground(.secondary)
-        .hopAnimation(.childArrive, value: model.index)
+        .hopScreenChange(.childPage, value: page)
+    }
+
+    /// Which page of the round is on screen: a question by its index, or the
+    /// ending. `model.index` alone cannot say — it stops moving on the last
+    /// question and `isFinished` is what changes instead.
+    private var page: Int {
+        model.isFinished ? model.questions.count : model.index
     }
 
     // MARK: - Chrome
@@ -97,8 +111,14 @@ struct QuizRoundView: View {
 
     private func prompt(_ question: QuizQuestion) -> some View {
         VStack(spacing: theme.spacing.m) {
-            HopCharacterStage(pose: .idle, size: ChildStage.characterSize(for: horizontalSizeClass) * 0.7)
-                .accessibilityHidden(true)
+            HopCharacterStage(
+                act: promptAct,
+                size: ChildStage.characterSize(for: horizontalSizeClass) * 0.7,
+                // The three pictures are below him, and they are what the child
+                // is being asked to touch.
+                gaze: .down
+            )
+            .accessibilityHidden(true)
 
             HopSpokenLine(question.prompt, style: .childTitle, pulse: promptPulse)
 
@@ -112,6 +132,24 @@ struct QuizRoundView: View {
         // is what VoiceOver should land on when a new question arrives.
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text(verbatim: question.prompt.localizedCaption))
+        // Hop asks the question when it arrives, and asks it again when the
+        // child taps the replay button. Nothing repeats it on its own.
+        .task(id: [page, promptPulse]) {
+            isAsking = true
+            try? await Task.sleep(for: .seconds(question.prompt.spokenDuration))
+            guard !Task.isCancelled else { return }
+            isAsking = false
+        }
+    }
+
+    /// What Hop is doing over the question.
+    ///
+    /// Finding the answer gets the small warm beat — *he noticed you* — and a
+    /// pick that is not the one being taught gets nothing extra, because it is
+    /// not a wrong answer and Hop has already said the one warm line about it.
+    private var promptAct: HopAct {
+        if model.hasAnswered { return .delighted() }
+        return isAsking ? .speaking() : .idle
     }
 
     @ViewBuilder
@@ -170,8 +208,18 @@ struct QuizRoundView: View {
     // MARK: - The end of a round
 
     private var finished: some View {
-        VStack(spacing: theme.spacing.xl) {
-            HopCharacterStage(pose: .cheer, size: ChildStage.characterSize(for: horizontalSizeClass))
+        let side = ChildStage.characterSize(for: horizontalSizeClass)
+        return VStack(spacing: theme.spacing.xl) {
+            // Hop hops into the ending rather than fading up in it. The frame
+            // reserves the arc he travels through — the height he reaches and
+            // the width he leans across — so the arrival never pushes the
+            // sentence under him around or clips his head.
+            HopCharacterStage(act: .entering(from: .left, restingOn: .cheer), size: side)
+                .frame(
+                    width: side + HopJump.sideroom(for: side) * 2,
+                    height: side + HopJump.headroom(for: side),
+                    alignment: .bottom
+                )
                 .accessibilityHidden(true)
 
             Text(HopCopy.quizzes.finishedTitle.localized)

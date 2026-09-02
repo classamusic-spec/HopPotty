@@ -51,7 +51,12 @@ struct PottyRoutineView: View {
     var body: some View {
         VStack(spacing: 0) {
             chrome
+            // `PottyRoutineModel.Stage` is Equatable but not Hashable, so the
+            // stage cannot go through `HopPageSwitch` — the transition and the
+            // spring are wired by hand instead, and they are the same two the
+            // switch would have paired.
             stage
+                .hopScreenChange(.childPage, value: model.stage)
         }
         .hopBackground(.secondary)
         .routineTicker(isRunning: model.showsTimerRing) { model.tick($0) }
@@ -120,7 +125,7 @@ struct PottyRoutineView: View {
             if let step = model.currentStep {
                 stepStage(step)
                     .id(step.id)
-                    .hopTransition(.childArrive)
+                    .hopScreenTransition(.childPage)
             }
         case .celebration:
             RoutineCelebrationView(
@@ -131,7 +136,7 @@ struct PottyRoutineView: View {
                 onSeeThePond: onOpenPond,
                 onFinish: { model.finishCelebration() }
             )
-            .hopTransition(.childCelebrate)
+            .hopScreenTransition(.celebration)
         case .finished:
             // The caller has been told; hold the ground colour for the one frame
             // before it dismisses us rather than flashing an empty screen.
@@ -149,7 +154,11 @@ struct PottyRoutineView: View {
             // three answers get the same hop; only the direction differs.
             hop: model.isAcknowledgingOutcome
                 ? RoutineOutcomeChoices.acknowledgementHop(for: model.outcome)
-                : nil
+                : nil,
+            // Every step after the first was arrived at by the child finishing
+            // the one before, so Hop notices it — the small warm beat, not a
+            // celebration, and never on the step the routine opens on.
+            notices: !model.isAcknowledgingOutcome && model.currentStepNumber > 1
         ) {
             VStack(spacing: theme.spacing.l) {
                 if model.isAwaitingOutcome {

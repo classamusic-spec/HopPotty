@@ -152,11 +152,11 @@ function pond(w, h, unlocked = []) {
    * an anchor, not a behaviour — but renaming one silently stops a layer
    * moving, so treat them as published names.
    *
-   * `sway` also writes the pivot into the element, because a reed has to rotate
-   * about the point it grows from and that point is only known here.
+   * Each reed gets a wrapper of its own because they sway out of phase; the
+   * pivot is the foot of the clump, which the motion layer finds for itself
+   * with `transform-box: fill-box`.
    */
   const anchor = (id, inner) => `<g id="${id}">${inner}</g>`;
-  const sway = (x, y, inner) => `<g style="transform-origin:${x}px ${y}px">${inner}</g>`;
   const id = 'p' + Math.random().toString(36).slice(2, 7);
   const SKY = h * 0.28, WATER = h * 0.40, SHORE = h * 0.735;
   const at = (fx, fy) => [w * fx, h * fy];
@@ -237,7 +237,7 @@ function pond(w, h, unlocked = []) {
     ${has('lilyFlower') ? `<g id="pond-lily-3"><g transform="translate(${w * 0.78} ${h * 0.545})">
         ${[0, 60, 120, 180, 240, 300].map((a) => `<ellipse cx="0" cy="-8" rx="5" ry="10" fill="#FFFFFF" transform="rotate(${a})"/>`).join('')}
         <circle r="4.4" fill="${P.sunshine}"/></g></g>` : ''}
-    ${has('fishOrange') ? `<g id="pond-fish"><g transform="translate(${w * 0.72} ${h * 0.64})">
+    ${has('fishOrange') ? `<g id="pond-fish-1"><g transform="translate(${w * 0.72} ${h * 0.64})">
         <ellipse rx="17" ry="10" fill="${P.peachPop}"/><path d="M15 0 L28 -9 L28 9 Z" fill="${P.peachPop}"/>
         <circle cx="-7" cy="-2" r="2.6" fill="${INK_}"/></g></g>` : ''}
     ${has('fishBlue') ? `<g id="pond-fish-2"><g transform="translate(${w * 0.24} ${h * 0.7}) scale(-1 1)">
@@ -256,9 +256,9 @@ function pond(w, h, unlocked = []) {
     <path d="M 0 ${SHORE + 12} C ${w * 0.26} ${SHORE - 26}, ${w * 0.68} ${SHORE - 22}, ${w} ${SHORE + 6} L ${w} ${h} L 0 ${h} Z"
           fill="url(#${id}bank)"/>
     <g id="pond-reeds">
-      ${has('reedsLeft') ? sway(w * 0.08, SHORE + 16, reeds(w * 0.08, SHORE + 16, 1.15, true)) : ''}
-      ${has('reedsRight') ? sway(w * 0.93, SHORE + 10, reeds(w * 0.93, SHORE + 10, 1.0, true)) : ''}
-      ${has('cattails') ? sway(w * 0.19, SHORE + 30, reeds(w * 0.19, SHORE + 30, 0.85, true)) : ''}
+      ${has('reedsLeft') ? `<g>${reeds(w * 0.08, SHORE + 16, 1.15, true)}</g>` : ''}
+      ${has('reedsRight') ? `<g>${reeds(w * 0.93, SHORE + 10, 1.0, true)}</g>` : ''}
+      ${has('cattails') ? `<g>${reeds(w * 0.19, SHORE + 30, 0.85, true)}</g>` : ''}
     </g>
     ${has('stoneSmall') ? `<ellipse cx="${w * 0.3}" cy="${SHORE + 6}" rx="21" ry="13" fill="${P.sand300}"/>` : ''}
     ${has('stoneStack') ? `<g transform="translate(${w * 0.1} ${h * 0.94})">

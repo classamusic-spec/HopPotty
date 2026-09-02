@@ -35,18 +35,27 @@ struct ParentGateView: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: theme.spacing.l) {
                 header
+                // The gate is a modal, and its steps replace each other inside
+                // it: the hold gives way to the sum, the sum to the device
+                // check. Each one belongs *here*, over what was already on
+                // screen, so each arrives in place rather than sliding in from
+                // somewhere it was never coming from.
                 Group {
                     switch phase {
                     case .holding:
                         holdStep
+                            .hopScreenTransition(.modal)
                     case .answering, .retrying, .fellBackToArithmetic:
                         arithmeticStep
+                            .hopScreenTransition(.modal)
                     case .authenticating:
                         HopLoadingState(message: HopCopy.parentGate.deviceOwnerReason.localized)
+                            .hopScreenTransition(.modal)
                     case .passed:
                         EmptyView()
                     }
                 }
+                .hopScreenChange(.modal, value: phase)
                 Spacer(minLength: 0)
             }
             .padding(theme.spacing.l)

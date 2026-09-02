@@ -51,16 +51,25 @@ struct DestructiveConfirmationSheet: View {
 
                 Spacer(minLength: 0)
 
+                // Confirming swaps the two buttons for the spinner in place.
+                // The modal arrival is the right shape for it: nothing has
+                // travelled anywhere, the sheet is simply showing something
+                // else in the same spot.
                 VStack(spacing: theme.spacing.s) {
                     if isWorking {
                         HopLoadingState(message: nil)
+                            .hopScreenTransition(.modal)
                     } else {
-                        HopDestructiveButton(HopCopy.parentGate.deleteConfirm.localized, action: onConfirm)
-                        // Cancel is a full-width, equally reachable control. It
-                        // is not a small grey word in a corner.
-                        HopSecondaryButton(HopCopy.common.cancel.localized) { dismiss() }
+                        VStack(spacing: theme.spacing.s) {
+                            HopDestructiveButton(HopCopy.parentGate.deleteConfirm.localized, action: onConfirm)
+                            // Cancel is a full-width, equally reachable control.
+                            // It is not a small grey word in a corner.
+                            HopSecondaryButton(HopCopy.common.cancel.localized) { dismiss() }
+                        }
+                        .hopScreenTransition(.modal)
                     }
                 }
+                .hopScreenChange(.modal, value: isWorking)
             }
             .padding(theme.spacing.l)
             .hopReadableWidth()

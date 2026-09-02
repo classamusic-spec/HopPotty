@@ -356,64 +356,103 @@ ${on('.hop-ov[data-v="talkShut"].hp-talking')}{animation:hp-talk .3s steps(1,end
    Seven periods, none a multiple of another, so the layers never resynchronise
    into one visible pulse. Slow and small on purpose: a pond that reads as calm
    is doing its job, and nothing in it is a reward, so nothing demands watching.
-   Every selector matches a *suffix* because build-prototype.js namespaces every
-   id per screen. An id that does not exist simply matches nothing. */
+
+   Three deliberate choices here:
+
+   * Selectors match an id *suffix*, because build-prototype.js namespaces every
+     id per screen. An id the drawing does not expose simply matches nothing,
+     which is what lets this ship before the art does.
+   * The individual 'translate' and 'rotate' properties, never 'transform'. In
+     SVG the 'transform' *attribute* and the 'transform' *property* are the same
+     thing, so animating 'transform' would throw away the placement the artist
+     wrote into the drawing ('pond-dragonfly' carries one). 'translate' and
+     'rotate' compose with it instead.
+   * Distances as a percentage of the scene, not pixels. The pond has been
+     drawn at 393x852 and at 786x1704 and will be redrawn again; a percentage of
+     the viewBox means the same distance in all of them. At the pond's reference
+     size the lily bob below is 3.5pt and the reed sway 2.4 degrees, which are
+     HopMotion.pondBobDistance and HopMotion.pondSwayDegrees. */
 @keyframes hp-ripple{
-  0%,100%{transform:translateX(0);opacity:.85}
-  50%{transform:translateX(7px);opacity:1}
+  0%,100%{translate:-.9% 0;opacity:.85}
+  50%{translate:.9% 0;opacity:1}
 }
 @keyframes hp-bob{
-  0%,100%{transform:translateY(-${bob}px)}
-  50%{transform:translateY(${bob}px)}
+  0%,100%{translate:0 -${(bob / 852 * 100).toFixed(3)}%}
+  50%{translate:0 ${(bob / 852 * 100).toFixed(3)}%}
 }
 @keyframes hp-sway{
-  0%,100%{transform:rotate(-${sway}deg)}
-  50%{transform:rotate(${sway}deg)}
+  0%,100%{rotate:-${sway}deg}
+  50%{rotate:${sway}deg}
 }
 @keyframes hp-cloud{
-  0%,100%{transform:translateX(-14px)}
-  50%{transform:translateX(14px)}
+  0%,100%{translate:-3.6% 0}
+  50%{translate:3.6% 0}
 }
 @keyframes hp-fish{
-  0%,100%{transform:translate(24px,2px)}
-  46%{transform:translate(-26px,-3px)}
-  52%{transform:translate(-27px,-2px)}
+  0%,100%{translate:5.5% .2%}
+  46%{translate:-6.5% -.35%}
+  52%{translate:-6.8% -.25%}
 }
 @keyframes hp-dragonfly{
-  0%,100%{transform:translate(-18px,3px)}
-  30%{transform:translate(6px,-7px)}
-  62%{transform:translate(20px,2px)}
+  0%,100%{translate:-4% .35%}
+  30%{translate:1.5% -.8%}
+  62%{translate:4.5% .2%}
+}
+@keyframes hp-birds{
+  0%,100%{translate:-2.6% 0}
+  50%{translate:2.6% 0}
 }
 @keyframes hp-shimmer{0%,100%{opacity:.82}50%{opacity:1}}
 
-${on('[id$="pond-ripples"] path')}{animation:hp-ripple ${M.pondRipplePeriod}s ease-in-out infinite}
-${on('[id$="pond-ripples"] path:nth-child(2)')}{animation-delay:-1.9s;animation-duration:${(M.pondRipplePeriod * 1.19).toFixed(2)}s}
-${on('[id$="pond-ripples"] path:nth-child(3)')}{animation-delay:-3.7s;animation-duration:${(M.pondRipplePeriod * 0.87).toFixed(2)}s}
-${on('[id$="pond-ripples"] path:nth-child(4)')}{animation-delay:-5.2s;animation-duration:${(M.pondRipplePeriod * 1.34).toFixed(2)}s}
+/* Ripples. The drawing groups them as pond-ripple-N; a flatter drawing that
+   puts the paths straight inside pond-ripples is animated too. */
+${on('[id$="pond-ripple-1"]')},
+${on('[id$="pond-ripple-2"]')},
+${on('[id$="pond-ripple-3"]')},
+${on('[id$="pond-ripple-4"]')},
+${on('[id$="pond-ripples"] > path')}{animation:hp-ripple ${M.pondRipplePeriod}s ease-in-out infinite}
+${on('[id$="pond-ripple-2"]')},
+${on('[id$="pond-ripples"] > path:nth-child(2)')}{animation-delay:-1.9s;animation-duration:${(M.pondRipplePeriod * 1.19).toFixed(2)}s}
+${on('[id$="pond-ripple-3"]')},
+${on('[id$="pond-ripples"] > path:nth-child(3)')}{animation-delay:-3.7s;animation-duration:${(M.pondRipplePeriod * 0.87).toFixed(2)}s}
+${on('[id$="pond-ripple-4"]')},
+${on('[id$="pond-ripples"] > path:nth-child(4)')}{animation-delay:-5.2s;animation-duration:${(M.pondRipplePeriod * 1.34).toFixed(2)}s}
 
+/* Lily pads, out of phase — in phase they read as one raft. */
 ${on('[id$="pond-lily-1"]')},
 ${on('[id$="pond-lily-2"]')},
 ${on('[id$="pond-lily-3"]')},
 ${on('[id$="pond-lily-4"]')}{animation:hp-bob ${M.pondLilyBobPeriod}s ease-in-out infinite}
-/* Out of phase, or the pads read as one raft. */
 ${on('[id$="pond-lily-2"]')}{animation-delay:-2.3s;animation-duration:${(M.pondLilyBobPeriod * 1.21).toFixed(2)}s}
 ${on('[id$="pond-lily-3"]')}{animation-delay:-4.1s;animation-duration:${(M.pondLilyBobPeriod * 0.84).toFixed(2)}s}
-${on('[id$="pond-lily-4"]')}{animation-delay:-1.1s}
+${on('[id$="pond-lily-4"]')}{animation-delay:-1.1s;animation-duration:${(M.pondLilyBobPeriod * 1.07).toFixed(2)}s}
 
-${on('[id$="pond-reeds"] > g')}{animation:hp-sway ${M.pondReedSwayPeriod}s ease-in-out infinite}
+/* Reeds bend from the mud, so the pivot is the foot of each clump — which is
+   what fill-box buys: the origin is the reed's own box, not the pond's. */
+${on('[id$="pond-reeds"] > g')}{transform-box:fill-box;transform-origin:50% 100%;
+  animation:hp-sway ${M.pondReedSwayPeriod}s ease-in-out infinite}
 ${on('[id$="pond-reeds"] > g:nth-child(2)')}{animation-delay:-2.6s;animation-duration:${(M.pondReedSwayPeriod * 1.16).toFixed(2)}s}
 ${on('[id$="pond-reeds"] > g:nth-child(3)')}{animation-delay:-4.4s;animation-duration:${(M.pondReedSwayPeriod * 0.88).toFixed(2)}s}
+${on('[id$="pond-reeds"] > g:nth-child(4)')}{animation-delay:-1.3s;animation-duration:${(M.pondReedSwayPeriod * 1.07).toFixed(2)}s}
+${on('[id$="pond-reeds"] > g:nth-child(5)')}{animation-delay:-5.5s;animation-duration:${(M.pondReedSwayPeriod * 0.93).toFixed(2)}s}
+${on('[id$="pond-reeds"] > g:nth-child(6)')}{animation-delay:-3.1s;animation-duration:${(M.pondReedSwayPeriod * 1.24).toFixed(2)}s}
 
-${on('[id$="pond-clouds"] > g')}{animation:hp-cloud ${M.pondCloudDriftPeriod}s ease-in-out infinite}
-${on('[id$="pond-clouds"] > g:nth-child(2)')}{animation-delay:-17s;animation-duration:${(M.pondCloudDriftPeriod * 1.32).toFixed(2)}s}
 ${on('[id$="pond-cloud-1"]')},
-${on('[id$="pond-cloud-2"]')}{animation:hp-cloud ${M.pondCloudDriftPeriod}s ease-in-out infinite}
+${on('[id$="pond-cloud-2"]')},
+${on('[id$="pond-cloud-3"]')}{animation:hp-cloud ${M.pondCloudDriftPeriod}s ease-in-out infinite}
+${on('[id$="pond-cloud-2"]')}{animation-delay:-17s;animation-duration:${(M.pondCloudDriftPeriod * 1.32).toFixed(2)}s}
+${on('[id$="pond-cloud-3"]')}{animation-delay:-29s;animation-duration:${(M.pondCloudDriftPeriod * 0.81).toFixed(2)}s}
 
-${on('[id$="pond-fish"]')}{animation:hp-fish ${M.pondFishPeriod}s ease-in-out infinite}
-${on('[id$="pond-fish-2"]')}{animation:hp-fish ${(M.pondFishPeriod * 1.28).toFixed(2)}s ease-in-out infinite;animation-delay:-6s}
+${on('[id$="pond-fish-1"]')},
+${on('[id$="pond-fish-2"]')},
+${on('[id$="pond-fish-3"]')}{animation:hp-fish ${M.pondFishPeriod}s ease-in-out infinite}
+${on('[id$="pond-fish-2"]')}{animation-delay:-6s;animation-duration:${(M.pondFishPeriod * 1.28).toFixed(2)}s}
+${on('[id$="pond-fish-3"]')}{animation-delay:-11s;animation-duration:${(M.pondFishPeriod * 0.86).toFixed(2)}s}
+
 ${on('[id$="pond-dragonfly"]')}{animation:hp-dragonfly ${M.pondDragonflyPeriod}s ease-in-out infinite}
 ${on('[id$="pond-butterfly"]')}{animation:hp-dragonfly ${(M.pondDragonflyPeriod * 1.21).toFixed(2)}s ease-in-out infinite}
 ${on('[id$="pond-butterfly-2"]')}{animation:hp-dragonfly ${(M.pondDragonflyPeriod * 0.79).toFixed(2)}s ease-in-out infinite;animation-delay:-4s}
+${on('[id$="pond-birds"]')}{animation:hp-birds ${(M.pondCloudDriftPeriod * 0.72).toFixed(2)}s ease-in-out infinite}
 ${on('[id$="pond-shimmer"]')}{animation:hp-shimmer ${M.pondShimmerPeriod}s ease-in-out infinite}
 
 /* ---- Press --------------------------------------------------------------

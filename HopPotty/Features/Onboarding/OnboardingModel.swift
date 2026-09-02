@@ -14,6 +14,12 @@ final class OnboardingModel {
     private(set) var failure: ParentFailure?
     /// Set when the flow finished and the app should show the dashboard.
     private(set) var isFinished = false
+    /// Which way through the flow the last move went.
+    ///
+    /// The host needs it to pick the push or the pop transition, and only this
+    /// object knows: `OnboardingState.goBack()` retraces `visited`, so the step
+    /// alone cannot say whether it was reached by going on or by coming back.
+    private(set) var isGoingBack = false
 
     private let environment: ParentEnvironment
     private let store: OnboardingStateStore
@@ -37,11 +43,13 @@ final class OnboardingModel {
     // MARK: Navigation
 
     func advance() {
+        isGoingBack = false
         state.advance()
         persist()
     }
 
     func goBack() {
+        isGoingBack = true
         state.goBack()
         persist()
     }

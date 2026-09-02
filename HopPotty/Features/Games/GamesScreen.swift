@@ -31,16 +31,16 @@ struct GamesScreen: View {
     @State private var playing: MiniGameID?
 
     var body: some View {
-        ZStack {
-            if let playing {
-                runner(for: playing)
-                    .hopTransition(.childArrive)
+        // Picking a game and coming back out of one are the two screen changes
+        // this surface has, and they get the child-facing page transition: one
+        // picture hands over to another rather than cutting.
+        HopPageSwitch(.childPage, value: playing) { game in
+            if let game {
+                runner(for: game)
             } else {
                 menu
-                    .hopTransition(.childArrive)
             }
         }
-        .hopAnimation(.childArrive, value: playing)
         .hopBackground(.secondary)
     }
 

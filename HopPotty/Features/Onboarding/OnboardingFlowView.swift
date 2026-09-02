@@ -22,11 +22,16 @@ struct OnboardingFlowView: View {
     var body: some View {
         VStack(spacing: 0) {
             indicator
-            content
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            // Forward through setup pushes; "Back" pops. The direction is the
+            // whole point of the transition — a caregiver who taps Back and
+            // watches the page slide the same way it did on the way in has been
+            // told nothing.
+            HopPageSwitch(model.isGoingBack ? .parentPop : .parentPush, value: model.step, alignment: .top) { _ in
+                content
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .hopBackground(.primary)
-        .animation(theme.animation(.parentTransition), value: model.step)
         .onChange(of: scenePhase) { _, phase in
             // Authorization can be granted or revoked in the Settings app while
             // HopPotty is in the background. The flow re-reads it on return so a

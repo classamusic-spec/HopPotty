@@ -22,24 +22,31 @@ struct TodayMetricsRow: View {
     }
 
     var body: some View {
+        // The three tiles lift into place left to right, once, when the day
+        // first draws. The stagger is what makes them read as one row arriving
+        // rather than three tiles appearing at once — and the accident tile is
+        // in it on exactly the same terms as the other two.
         LazyVGrid(columns: columns, spacing: theme.spacing.s) {
             HopMetricCard(
                 value: ParentFormat.count(snapshot.participationToday),
                 label: HopCopy.parentHome.summaryTriesLabel.localized,
                 glyph: .tried,
-                tint: theme.color.eventTried
+                tint: theme.color.eventTried,
+                arrivalIndex: 0
             )
             HopMetricCard(
                 value: ParentFormat.count(snapshot.starsToday),
                 label: HopCopy.parentHome.summaryStarsLabel.localized,
                 glyph: .star,
-                tint: theme.color.celebration
+                tint: theme.color.celebration,
+                arrivalIndex: 1
             )
             HopMetricCard(
                 value: ParentFormat.count(snapshot.accidentsToday),
                 label: PottyEventKind.accident.parentLabel,
                 glyph: .accident,
-                tint: theme.color.eventAccident
+                tint: theme.color.eventAccident,
+                arrivalIndex: 2
             )
         }
         .accessibilityElement(children: .contain)
@@ -70,7 +77,15 @@ struct TodayTimelineSection: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(events.enumerated()), id: \.element.id) { index, event in
-                        HopTimelineRow(event: event, isLast: index == events.count - 1)
+                        // Each row arrives once, on its own beat down the list.
+                        // A row logged later arrives on its own rather than
+                        // replaying the whole timeline, because the arrival is
+                        // keyed to the row's identity.
+                        HopTimelineRow(
+                            event: event,
+                            isLast: index == events.count - 1,
+                            arrivalIndex: index
+                        )
                     }
                 }
                 .background(
@@ -99,7 +114,7 @@ struct HomeInsightSection: View {
             HopSectionHeader(HopCopy.parentHome.insightsTitle.localized)
 
             if let insight {
-                HopInsightCard(insight: insight, onAction: onAction)
+                HopInsightCard(insight: insight, onAction: onAction, arrivalIndex: 0)
                 // Attached here as well as inside the card: no surface showing
                 // an observation may omit it.
                 InsightDisclaimerLabel()

@@ -32,6 +32,23 @@ extension HopPottyCore.HopVoiceLine {
     }
 }
 
+extension HopPottyCore.HopVoiceLine {
+    /// Roughly how long Hop is delivering this line for.
+    ///
+    /// Every line is `.planned`, so there is no recording whose length could be
+    /// read — the words on screen *are* the delivery. The estimate is therefore
+    /// made from the caption at an unhurried pace, and it is bounded at both
+    /// ends: a two-word line still gets a beat of mouth movement, and a long one
+    /// cannot leave Hop talking at a child who has already moved on.
+    ///
+    /// It drives ``HopAct/speaking(for:pose:)`` and nothing else. When a voice
+    /// bundle ships, this is the one place that has to start asking the asset.
+    var spokenDuration: TimeInterval {
+        let words = localizedCaption.split(whereSeparator: { $0.isWhitespace }).count
+        return min(6, max(1.2, Double(words) * 0.38))
+    }
+}
+
 /// Delivers a line again when a child asks to hear it.
 ///
 /// Every `HopVoiceLine` in HopPotty is `.planned`, so `HopVoiceResolver`

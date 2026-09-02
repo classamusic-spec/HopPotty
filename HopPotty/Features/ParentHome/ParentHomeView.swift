@@ -32,19 +32,30 @@ struct ParentHomeView: View {
     @State private var route: ParentHomeRoute?
 
     var body: some View {
+        // Loading, empty and failed are all one card-shaped surface in the
+        // middle of the screen, so they arrive the way a card arrives. The
+        // loaded state deliberately does not: it is a full-bleed pond with a
+        // stack of cards on it, and it arrives by *staggering those cards*
+        // (`arrivalIndex:` in `ParentHomeSections`) rather than by lifting the
+        // whole pond fourteen points. Doing both would be the same motion
+        // twice, which is worse than either.
         Group {
             switch model?.state {
             case .loaded(let snapshot):
                 content(snapshot)
             case .empty, .none:
                 emptyFamilyState
+                    .hopScreenTransition(.cardArrival)
             case .failed(let failure):
                 failureState(failure)
+                    .hopScreenTransition(.cardArrival)
             case .firstLoad, .loading:
                 HopLoadingState(message: nil)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .hopScreenTransition(.cardArrival)
             }
         }
+        .hopScreenChange(.cardArrival, value: model?.state)
         .navigationTitle(Text(hop: HopCopy.parentHome.title))
         // The pond needs the top of the display, so the dashboard's own title
         // bar goes away once there is a pond to show. It comes back for every

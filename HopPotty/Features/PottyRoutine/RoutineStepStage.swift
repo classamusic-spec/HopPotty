@@ -21,11 +21,21 @@ struct RoutineStepStage<Actions: View>: View {
     /// cannot hold anyone anywhere. All three answers get the same hop
     /// (`RoutineOutcomeChoices.acknowledgementHop(for:)`).
     var hop: HopJump? = nil
+    /// Whether the child arrived here by finishing the step before.
+    ///
+    /// Drives one short beat — Hop's eyes squeeze up and he lifts an inch —
+    /// before he says the line. It is *noticing*, not celebrating: the
+    /// celebration belongs to the end of the run, and a step that cheered would
+    /// leave it nowhere to go.
+    var notices: Bool = false
     /// The action row. The try step passes its three answers; every other step
     /// passes a single "Next".
     @ViewBuilder var actions: () -> Actions
 
     @State private var replayPulse = 0
+    /// Which beat Hop is on. One value, changed by one task, so the acts cannot
+    /// end up fighting over him.
+    @State private var beat: StepBeat = .arriving
 
     var body: some View {
         GeometryReader { proxy in
@@ -53,6 +63,51 @@ struct RoutineStepStage<Actions: View>: View {
             // noise on an illustrated stage the rest of the time.
             .scrollIndicators(.hidden)
         }
+        // One task owns the whole beat, and it is keyed on the replay count so
+        // asking to hear the line again makes Hop say it again. The step itself
+        // cannot change under this view — the caller gives each step its own
+        // identity — so the first run is the arrival.
+        .task(id: replayPulse) {
+            if notices, replayPulse == 0 {
+                beat = .noticing
+                try? await Task.sleep(
+                    for: .seconds(HopAct.delighted(pose).duration(reduceMotion: theme.reduceMotion))
+                )
+                guard !Task.isCancelled else { return }
+            }
+            beat = .speaking
+            try? await Task.sleep(for: .seconds(step.voice.spokenDuration))
+            guard !Task.isCancelled else { return }
+            beat = .resting
+        }
+    }
+
+    // MARK: - What Hop is doing
+
+    /// The beats one step of the routine has, in the order they happen.
+    private enum StepBeat {
+        /// Before anything has run — and, when the child has just finished the
+        /// step before, the moment Hop notices it.
+        case arriving
+        case noticing
+        case speaking
+        case resting
+    }
+
+    /// Hop's act on this step.
+    ///
+    /// The acknowledgement hop wins outright: the child has just answered "How
+    /// did it go?", and nothing may interrupt or shorten the answer to that.
+    /// Below it the beat runs — notice, speak, rest — and every one of them
+    /// rests on the step's own contextual pose, so Hop is doing the step
+    /// alongside the child rather than standing in a neutral drawing.
+    private var act: HopAct {
+        if let hop { return HopAct(pose: pose, beat: .hop(hop)) }
+        switch beat {
+        case .noticing: return .delighted(pose)
+        case .speaking: return .speaking(pose: pose)
+        case .arriving, .resting: return .holding(pose)
+        }
     }
 
     // MARK: - Parts
@@ -77,7 +132,7 @@ struct RoutineStepStage<Actions: View>: View {
                 // The headroom is reserved on every step, not only the hopping
                 // one, so answering the try step does not shove the card's
                 // contents around on the way out.
-                HopCharacterStage(pose: pose, size: characterSide, jumping: hop, gaze: gaze)
+                HopCharacterStage(act: act, size: characterSide, gaze: gaze)
                     .frame(
                         height: characterSide + HopJump.headroom(for: characterSide),
                         alignment: .bottom
@@ -144,7 +199,7 @@ struct RoutineStepStage<Actions: View>: View {
         case .tryIt: .wait
         case .wipe: .idle
         case .flush: .wave
-        case .wash: .idle
+        case .wash: .scrub
         case .highFive: .cheer
         }
     }
