@@ -68,6 +68,20 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 
+	<!-- Live Activities. Required before ActivityKit will accept
+	     Activity.request; without it every request throws and the lock screen
+	     stays empty with no other symptom (Docs/Widgets.md §8).
+
+	     The key belongs to the APP, not to the widget extension: the app is what
+	     starts and ends an activity, the extension only draws it. There is
+	     deliberately no NSSupportsLiveActivitiesFrequentUpdates — that key asks
+	     for a raised update budget, and HopPotty pushes no updates at all. The
+	     countdown is rendered by the system from a date range
+	     (LiveActivityController), so the only updates it ever sends are a routine
+	     step advancing and the activity ending. -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+
 	<!-- No storyboard. The colour comes from the asset catalog so the launch
 	     surface matches the first frame SwiftUI draws in both appearances. -->
 	<key>UILaunchScreen</key>

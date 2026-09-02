@@ -43,7 +43,28 @@ final class HopPottyDeviceActivityMonitorExtension: DeviceActivityMonitor {
     // whose construction is two `FileManager` calls.
     private var store: AppGroupStore { AppGroupStore.shared }
 
+    /// The widget's own corner of the App Group.
+    ///
+    /// A second store rather than more methods on the first, because the two
+    /// boundaries have nothing in common: `AppGroupStore` carries the pause
+    /// record that decides whether a shield stands, and this carries a countdown
+    /// somebody might glance at. See the note at the top of
+    /// `WidgetSnapshotStore.swift`.
+    private var widgets: WidgetSnapshotStore { WidgetSnapshotStore.shared }
+
     private func now() -> Date { Date() }
+
+    /// Tell the widget the pause it is about to draw is over.
+    ///
+    /// Called on every path that clears a shield from inside this process. Both
+    /// calls are best-effort and neither is allowed to fail the clear: this runs
+    /// *after* `ShieldReconciler` has done the thing that matters, and a widget
+    /// left showing a stale countdown is a cosmetic defect, while a shield left
+    /// standing is not.
+    private func widgetPauseEnded() {
+        widgets.markPauseEnded(now: now())
+        widgets.reloadTimelines()
+    }
 
     /// Stamp, reconcile, and report where we were woken from.
     ///
@@ -133,12 +154,14 @@ final class HopPottyDeviceActivityMonitorExtension: DeviceActivityMonitor {
             // trust about whether a shield should still be up.
             ShieldReconciler.forceClear(reason: .backstopElapsed, store: store, source: .monitor)
             DeviceActivityCenter().stopMonitoring([activity])
+            widgetPauseEnded()
 
         case .clock, .usage:
             // The caregiver's active window closed. A pause must not outlive it —
             // a shield that persists past bedtime is exactly the "indefinite
             // lockout" this layer exists to prevent.
             ShieldReconciler.forceClear(reason: .scheduleDisabled, store: store, source: .monitor)
+            widgetPauseEnded()
 
         case .unrecognised:
             stopOrphan(activity)
@@ -179,6 +202,7 @@ final class HopPottyDeviceActivityMonitorExtension: DeviceActivityMonitor {
         // safe, and neither can extend a pause.
         ShieldReconciler.forceClear(reason: .pauseEnded, store: store, source: .monitor)
         DeviceActivityCenter().stopMonitoring([activity])
+        widgetPauseEnded()
     }
 
     override func eventWillReachThresholdWarning(
@@ -301,6 +325,20 @@ final class HopPottyDeviceActivityMonitorExtension: DeviceActivityMonitor {
                 activityRole: trigger
             )
         )
+
+        // 8. Last of all, the widget. This process is often the only HopPotty
+        //    code that will run for hours — a clock schedule fires at 10:00 with
+        //    the app closed and stays closed until bedtime — so without this the
+        //    home screen would count down to a pause that already happened, and
+        //    keep counting down through the pause itself.
+        //
+        //    `WidgetCenter` is available to app extensions, which is what makes
+        //    this possible at all. It is a *request* for a redraw, and the system
+        //    decides whether to honour it; nothing above depends on the answer,
+        //    and this is deliberately the last statement in the method so that a
+        //    failure here cannot cost a pause its backstop or its report.
+        widgets.markPauseStarted(endingAt: record.plannedEndAt, now: instant)
+        widgets.reloadTimelines()
     }
 
     /// Register the 15-minute backstop from inside the extension.

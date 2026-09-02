@@ -66,6 +66,8 @@ for f in \
     Extensions/HopPottyShieldConfiguration/HopPottyShieldConfiguration.entitlements \
     Extensions/HopPottyShieldAction/Info.plist \
     Extensions/HopPottyShieldAction/HopPottyShieldAction.entitlements \
+    Extensions/HopPottyWidgets/Info.plist \
+    Extensions/HopPottyWidgets/HopPottyWidgets.entitlements \
     HopPottyKit/Package.swift
 do
     [ -f "$f" ] && pass "$f" || fail "missing: $f"
@@ -114,12 +116,25 @@ else
         *)       fail "App Group '$GROUP' must begin with 'group.'" ;;
     esac
 
-    for ext_id in "$MONITOR_ID" "$SHIELDCFG_ID" "$SHIELDACT_ID"; do
+    WIDGETS_ID="$(expand "$(setting "$BASE" HOPPOTTY_WIDGETS_BUNDLE_ID)")"
+
+    for ext_id in "$MONITOR_ID" "$SHIELDCFG_ID" "$SHIELDACT_ID" "$WIDGETS_ID"; do
         case "$ext_id" in
             "$APP_ID".*) : ;;
             *) fail "extension id '$ext_id' is not prefixed by the app id '$APP_ID', which Apple requires" ;;
         esac
     done
+
+    # The widget extension does not link the Screen Time layer, so it cannot see
+    # ScreenTimeIdentifiers.appGroupID and re-declares the constant instead. That
+    # duplication is only safe while something checks it, and this is that thing:
+    # a drift here is silent, total, and looks exactly like a broken widget.
+    WIDGET_STORE=HopPotty/Services/Widgets/WidgetSnapshotStore.swift
+    if [ -f "$WIDGET_STORE" ]; then
+        compare "widget App Group" "$GROUP" "$(swift_literal "$WIDGET_STORE" widgetAppGroupID)"
+    else
+        warn "$WIDGET_STORE not found — skipping the widget App Group comparison"
+    fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -208,6 +223,84 @@ check_principal HopPottyShieldConfiguration
 check_principal HopPottyShieldAction
 
 # ---------------------------------------------------------------------------
+section "Widget extension"
+# ---------------------------------------------------------------------------
+#
+# The widget target is the odd one out, in three ways that all fail silently:
+#
+#  * It is entered through @main on a WidgetBundle, NOT through a principal
+#    class. A principal class here would be ignored; more to the point, someone
+#    adding one by analogy with the other three would be papering over a missing
+#    @main, and the extension would never be instantiated.
+#  * Its extension point identifier is WidgetKit's. Wrong value, no widget in the
+#    gallery, no error anywhere.
+#  * It must NOT hold the Family Controls entitlement (Docs/Widgets.md §5). That
+#    is checked in the Entitlements section below, which is where the
+#    corresponding positive check for the other three lives.
+
+WIDGET_DIR=Extensions/HopPottyWidgets
+WIDGET_PLIST="$WIDGET_DIR/Info.plist"
+
+if [ -f "$WIDGET_PLIST" ]; then
+    if grep -q '<string>com.apple.widgetkit-extension</string>' "$WIDGET_PLIST"; then
+        pass "HopPottyWidgets: extension point is com.apple.widgetkit-extension"
+    else
+        fail "HopPottyWidgets: Info.plist does not declare NSExtensionPointIdentifier com.apple.widgetkit-extension"
+    fi
+
+    if grep -q '<key>NSExtensionPrincipalClass</key>' "$WIDGET_PLIST"; then
+        fail "HopPottyWidgets: declares NSExtensionPrincipalClass — a WidgetKit extension is entered through @main on a WidgetBundle"
+    else
+        pass "HopPottyWidgets: no principal class, as a WidgetKit extension requires"
+    fi
+else
+    warn "$WIDGET_PLIST not found — skipping the widget extension point checks"
+fi
+
+if ls "$WIDGET_DIR"/*.swift >/dev/null 2>&1; then
+    if grep -qE '^@main' "$WIDGET_DIR"/*.swift; then
+        pass "HopPottyWidgets: an @main entry point is declared"
+    else
+        fail "HopPottyWidgets: no @main in $WIDGET_DIR — the extension would never start"
+    fi
+
+    if grep -qE ': *WidgetBundle' "$WIDGET_DIR"/*.swift; then
+        pass "HopPottyWidgets: a WidgetBundle is declared"
+    else
+        fail "HopPottyWidgets: no WidgetBundle in $WIDGET_DIR"
+    fi
+
+    # The Live Activity's attributes are compiled into two targets. If the app
+    # stops compiling them, Activity.request has no type to request and the whole
+    # Live Activity silently disappears.
+    ATTRS="$WIDGET_DIR/PottyPauseActivityAttributes.swift"
+    if [ -f "$ATTRS" ]; then
+        if grep -q "path: $ATTRS" project.yml; then
+            pass "PottyPauseActivityAttributes.swift is listed for the app target too"
+        else
+            fail "PottyPauseActivityAttributes.swift exists but project.yml does not add it to the app target — ActivityKit needs both processes to compile the same type"
+        fi
+    else
+        warn "$ATTRS not found — skipping the Live Activity attributes check"
+    fi
+else
+    warn "$WIDGET_DIR has no Swift sources yet"
+fi
+
+# NSSupportsLiveActivities belongs to the APP, not to the widget extension.
+# Without it every Activity.request throws and the lock screen simply stays
+# empty, which is indistinguishable from a family who switched the feature off.
+if grep -q '<key>NSSupportsLiveActivities</key>' HopPotty/App/Info.plist; then
+    pass "app Info.plist declares NSSupportsLiveActivities"
+else
+    fail "app Info.plist is missing NSSupportsLiveActivities — Activity.request would always throw"
+fi
+
+if grep -q '<key>NSSupportsLiveActivities</key>' "$WIDGET_PLIST" 2>/dev/null; then
+    fail "HopPottyWidgets/Info.plist declares NSSupportsLiveActivities — that key belongs to the app, which is what starts an activity"
+fi
+
+# ---------------------------------------------------------------------------
 section "Developer-only sources are guarded"
 # ---------------------------------------------------------------------------
 #
@@ -261,6 +354,27 @@ do
         fail "$(basename "$ent"): declares the app-and-website-usage entitlement, deliberately declined in Docs/Entitlements.md §1"
     fi
 done
+
+# The widget extension is the one target that must NOT hold Family Controls.
+# It draws a countdown from a JSON file; granting it the capability would put a
+# fifth App ID into the distribution request and hand the entitlement to the one
+# HopPotty target rendered on a locked screen. Docs/Widgets.md §5.
+WIDGET_ENT=Extensions/HopPottyWidgets/HopPottyWidgets.entitlements
+if [ -f "$WIDGET_ENT" ]; then
+    if grep -q '<key>com.apple.security.application-groups</key>' "$WIDGET_ENT"; then
+        pass "$(basename "$WIDGET_ENT"): App Group"
+    else
+        fail "$(basename "$WIDGET_ENT"): missing com.apple.security.application-groups — the widget would find no snapshot"
+    fi
+    if grep -q '<key>com.apple.developer.family-controls</key>' "$WIDGET_ENT"; then
+        fail "$(basename "$WIDGET_ENT"): declares Family Controls, which the widget neither needs nor should have"
+    else
+        pass "$(basename "$WIDGET_ENT"): no Family Controls, as intended"
+    fi
+    if grep -q '<key>aps-environment</key>' "$WIDGET_ENT"; then
+        fail "$(basename "$WIDGET_ENT"): declares aps-environment — HopPotty pushes nothing, Live Activities included"
+    fi
+fi
 
 # ---------------------------------------------------------------------------
 section "StoreKit product identifier"
@@ -322,6 +436,23 @@ do
         warn "$shared is listed in project.yml but does not exist (renamed? not written yet?)"
     fi
 done
+
+# WidgetSnapshotStore.swift is a fifth shared file with a different membership:
+# the app (implicitly, through `path: HopPotty`), the widget extension, and the
+# DeviceActivity monitor — which is often the only HopPotty code that runs for
+# hours, and is therefore the process that has to tell the home screen a pause
+# started. Two explicit listings, and the app's is implicit, so the expected
+# count is two.
+WIDGET_SHARED=HopPotty/Services/Widgets/WidgetSnapshotStore.swift
+if [ -f "$WIDGET_SHARED" ]; then
+    if [ "$(grep -c "path: $WIDGET_SHARED" project.yml)" = "2" ]; then
+        pass "$(basename "$WIDGET_SHARED") is a member of the widget and monitor extensions"
+    else
+        fail "$(basename "$WIDGET_SHARED") must be listed for exactly two extension targets in project.yml (widgets, monitor)"
+    fi
+else
+    warn "$WIDGET_SHARED does not exist"
+fi
 
 # ---------------------------------------------------------------------------
 printf '\n'

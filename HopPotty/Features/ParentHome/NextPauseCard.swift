@@ -16,6 +16,17 @@ import HopPottyCore
 /// - a caregiver hold — skipping the next one, or paused until tomorrow;
 /// - gentle mode, which never pauses anything and says so plainly;
 /// - something that needs the caregiver, routed through the shared error mapping.
+///
+/// ## Standing on water
+///
+/// The card itself is unchanged: same content, same controls, same Dynamic Type
+/// behaviour, and `HopTimerCard` was already opaque and `.raised`, which is
+/// exactly what a countdown needs over a drawing. What did change is everything
+/// *below* it. A status pill and a tonal button are both washes of a tint, and a
+/// wash over a pond is a wash over whatever the pond happens to be doing there,
+/// so the footer gets its own opaque field. It appears only when there is
+/// something to say — in the ordinary counting case there is nothing under the
+/// card at all.
 struct NextPauseCard: View {
     @Environment(\.hopTheme) private var theme
 
@@ -36,14 +47,14 @@ struct NextPauseCard: View {
                 onStartNow: onStartNow
             )
 
-            statusLine
-
-            if let failure = snapshot.pauseState.failure {
-                errorFooter(failure)
-            } else if let resumeControl {
-                resumeControl
-            }
+            footer
         }
+        // One sentence for the whole card, so VoiceOver says "Next Potty Pause,
+        // in 28 minutes" on arrival instead of leaving a caregiver to assemble
+        // it from a heading, a dial and a caption. The controls inside stay
+        // individually reachable — `.contain` groups, it does not swallow.
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text(verbatim: spokenSummary))
     }
 
     // MARK: Display state
@@ -74,19 +85,50 @@ struct NextPauseCard: View {
         return snapshot.schedule.interval.duration
     }
 
-    // MARK: Status
+    // MARK: Footer
 
+    /// Everything that is not the card, on a surface of its own.
     @ViewBuilder
-    private var statusLine: some View {
-        if snapshot.schedule.mode == .gentle {
-            HopPill(HopCopy.timerSettings.modeGentle.localized, tint: theme.color.neutral, glyph: .play)
-        } else if let text = blockText {
-            HopPill(text, tint: theme.color.warning, glyph: .pause)
-        } else if let projection = snapshot.projection, projection.willBeSkipped {
-            HopPill(HopCopy.parentHome.heroSkippingNext.localized, tint: theme.color.neutral, glyph: .pause)
-        } else if remaining == nil, snapshot.schedule.triggerBasis == .screenActivity {
-            HopPill(HopCopy.parentHome.heroWaitingForActivity.localized, tint: theme.color.neutral, glyph: .timer)
+    private var footer: some View {
+        if let failure = snapshot.pauseState.failure {
+            errorFooter(failure)
+        } else if statusPill != nil || showsResume {
+            VStack(alignment: .leading, spacing: theme.spacing.s) {
+                if let pill = statusPill {
+                    HopPill(pill.text, tint: pill.tint, glyph: pill.glyph)
+                }
+                if showsResume {
+                    HopSecondaryButton(HopCopy.parentHome.actionResume.localized, action: onResume)
+                }
+            }
+            .padding(theme.spacing.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                RoundedRectangle(cornerRadius: theme.radius.l, style: .continuous)
+                    .fill(theme.color.surfaceElevated)
+            }
+            .modifier(theme.elevation(.resting))
         }
+    }
+
+    /// The one status token the card shows, in the order the states rank.
+    ///
+    /// A value rather than a view so the footer can ask whether there is
+    /// anything to draw before it draws a surface to draw it on.
+    private var statusPill: (text: String, tint: Color, glyph: HopGlyph)? {
+        if snapshot.schedule.mode == .gentle {
+            return (HopCopy.timerSettings.modeGentle.localized, theme.color.neutral, .play)
+        }
+        if let text = blockText {
+            return (text, theme.color.warning, .pause)
+        }
+        if let projection = snapshot.projection, projection.willBeSkipped {
+            return (HopCopy.parentHome.heroSkippingNext.localized, theme.color.neutral, .pause)
+        }
+        if remaining == nil, snapshot.schedule.triggerBasis == .screenActivity {
+            return (HopCopy.parentHome.heroWaitingForActivity.localized, theme.color.neutral, .timer)
+        }
+        return nil
     }
 
     /// The one sentence explaining why nothing is counting. Derived from
@@ -114,14 +156,12 @@ struct NextPauseCard: View {
         }
     }
 
-    /// "Resume Potty Pause", shown only when a caregiver hold is what is
+    /// "Resume Potty Pause" is offered only when a caregiver hold is what is
     /// stopping it — never when the schedule is simply outside its hours, where
     /// there is nothing to resume.
-    @ViewBuilder
-    private var resumeControl: some View {
-        if let reason = snapshot.blockReason, isCaregiverHold(reason) {
-            HopSecondaryButton(HopCopy.parentHome.actionResume.localized, action: onResume)
-        }
+    private var showsResume: Bool {
+        guard snapshot.pauseState.failure == nil, let reason = snapshot.blockReason else { return false }
+        return isCaregiverHold(reason)
     }
 
     private func isCaregiverHold(_ reason: PauseBlockReason) -> Bool {
@@ -132,6 +172,23 @@ struct NextPauseCard: View {
         case .inactiveDay, .outsideActiveWindow, .quietWindow, .cooldown:
             false
         }
+    }
+
+    // MARK: Accessibility
+
+    /// The card as one spoken sentence: the heading, then the countdown in words
+    /// (never "twenty-eight colon fourteen"), then whatever is holding it.
+    private var spokenSummary: String {
+        var parts = [HopCopy.parentHome.heroTitle.localized]
+        if let remaining {
+            parts.append(
+                HopCopy.parentHome.heroCountdown.localized(.text(ParentFormat.spelledDuration(remaining)))
+            )
+        }
+        if let pill = statusPill {
+            parts.append(pill.text)
+        }
+        return parts.joined(separator: ", ")
     }
 
     // MARK: Errors
@@ -163,9 +220,12 @@ struct NextPauseCard: View {
         }
         .padding(theme.spacing.m)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Opaque, because this sits over the pond like everything else the card
+        // carries.
         .background(
             RoundedRectangle(cornerRadius: theme.radius.l, style: .continuous)
-                .fill(theme.color.surfaceSunken)
+                .fill(theme.color.surfaceElevated)
         )
+        .modifier(theme.elevation(.resting))
     }
 }

@@ -57,6 +57,18 @@ public final class PottyPauseEffectExecutor {
     private let appGroup: AppGroupStore
     private weak var delegate: Delegate?
 
+    /// The widget and the Live Activity.
+    ///
+    /// Optional, defaulted to `nil`, and never consulted before an effect is
+    /// performed — only after. Both are conveniences: every method on either is
+    /// allowed to do nothing, neither can fail in a way this executor should
+    /// react to, and a build that injects neither behaves exactly as it did
+    /// before they existed. That is the whole reason they are wired here rather
+    /// than through `Delegate`: a `Delegate` method is something a pause needs,
+    /// and these are two things a pause merely tells.
+    private let widgets: (any WidgetRefreshing)?
+    private let liveActivities: (any LiveActivityControlling)?
+
     /// The ceiling timer. One at a time, always cancelled before a new one is
     /// armed, and never the only thing standing between a child and their apps —
     /// it dies with the process, which is why the backstop activity and
@@ -72,12 +84,16 @@ public final class PottyPauseEffectExecutor {
         screenTime: any ScreenTimeProviding,
         monitoring: any ActivityMonitoringProviding,
         appGroup: AppGroupStore = .shared,
-        delegate: Delegate? = nil
+        delegate: Delegate? = nil,
+        widgets: (any WidgetRefreshing)? = nil,
+        liveActivities: (any LiveActivityControlling)? = nil
     ) {
         self.screenTime = screenTime
         self.monitoring = monitoring
         self.appGroup = appGroup
         self.delegate = delegate
+        self.widgets = widgets
+        self.liveActivities = liveActivities
     }
 
     /// Perform a bundle, in order, and return the events it produced.
@@ -123,10 +139,14 @@ public final class PottyPauseEffectExecutor {
             case .failure:
                 pendingEvents.append(.monitoringRegistrationFailed)
             }
+            // Whatever happened, the schedule the widget draws has just been
+            // re-derived. Fire-and-forget: a widget must never make a pause wait.
+            widgets?.scheduleDidChange()
 
         case .cancelMonitoring:
             monitoring.cancelAllMonitoring()
             appGroup.clearGate()
+            widgets?.scheduleDidChange()
 
         // MARK: Warnings
 
@@ -154,6 +174,25 @@ public final class PottyPauseEffectExecutor {
                 // the logs, whereas a shield without a backstop is the thing worth
                 // avoiding by a matter of milliseconds.
                 monitoring.registerBackstop(for: record)
+
+                // The two courtesy surfaces, in that order and after the
+                // backstop. A pause that is real but unannounced is a small
+                // problem; an announcement of a pause that failed to start is a
+                // caregiver told their child's apps are held when they are not.
+                //
+                // `plannedEndAt`, not `backstopEndAt`: the backstop is the
+                // fifteen-minute ceiling under the worst case, and putting it on
+                // a lock screen would tell a family a three-minute pause lasts a
+                // quarter of an hour.
+                liveActivities?.start(
+                    sessionID: record.sessionID,
+                    isGuidedRoutine: delegate?.currentScheduleForMonitoring()?.schedule.mode == .routine,
+                    startedAt: record.startedAt,
+                    expectedEndAt: record.plannedEndAt,
+                    mood: .cheer
+                )
+                widgets?.pauseDidStart(endingAt: record.plannedEndAt)
+
                 pendingEvents.append(.shieldApplied)
             case .failure:
                 // Belt and braces. The apply may have half-succeeded — a partially
@@ -249,6 +288,20 @@ public final class PottyPauseEffectExecutor {
         pauseTimer?.cancel()
         pauseTimer = nil
         monitoring.cancelBackstop()
+
+        // Taken down *before* the clear is attempted, and unconditionally.
+        //
+        // The asymmetry with the start path is deliberate and is the same
+        // asymmetry the rest of this file is built on: an announcement is
+        // published only when a pause is certainly running, and it is retracted
+        // the moment a pause might be ending. A Live Activity that outlives its
+        // pause tells a family their child's apps are still held when they are
+        // not — and if the clear then fails, the caregiver is put in front of
+        // `errorRequiresParent` a few lines below, which is a screen with a
+        // "Restore Screen Access" button on it rather than a countdown.
+        liveActivities?.end(at: Date())
+        widgets?.pauseDidEnd()
+
         screenTime.clearShield(reason: reason)
 
         if screenTime.believesShieldIsUp {

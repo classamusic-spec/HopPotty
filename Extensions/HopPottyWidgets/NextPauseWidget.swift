@@ -319,35 +319,27 @@ struct NextPauseDisplayState {
         let reminder = snapshot.quickReminderAt.flatMap { $0 > now ? $0 : nil }
         let pause = snapshot.nextPauseAt.flatMap { $0 > now ? $0 : nil }
 
-        switch (pause, reminder) {
-        case let (pause?, reminder?) where reminder < pause:
+        if let reminder, pause == nil || reminder < pause! {
             headline = HopCopy.quickReminder.title.value
             kind = .counting(reminder)
-            // Both are coming and the reminder is first, so the pause is the
-            // second sentence rather than a competing headline.
-            subtitle = HopCopy.parentHome.heroTitle.value
+            // When both are coming and the reminder is first, the pause becomes
+            // the second sentence rather than a competing headline.
+            subtitle = pause == nil ? nil : HopCopy.parentHome.heroTitle.value
             accessibilityLabel = HopCopy.quickReminder.title.value
-
-        case let (pause?, _):
+        } else if let pause {
             headline = HopCopy.parentHome.heroTitle.value
             kind = .counting(pause)
             subtitle = nil
             accessibilityLabel = HopCopy.parentHome.heroTitle.value
-
-        case let (nil, reminder?):
-            headline = HopCopy.quickReminder.title.value
-            kind = .counting(reminder)
-            subtitle = nil
-            accessibilityLabel = HopCopy.quickReminder.title.value
-
-        case (nil, nil):
+        } else {
             // Nothing ahead. Two different silences, and they mean different
             // things to a caregiver: the schedule is switched off, or it is on
             // and simply has nothing to project today.
-            // "Nothing waiting right now." is true whatever the reason — a
-            // skipped pause, a closed active window, a quiet hour — and the
-            // snapshot deliberately does not carry the reason, because the reason
-            // is a fact about a family's day and the widget is on a lock screen.
+            //
+            // "Nothing waiting right now." is true whatever the second reason
+            // turns out to be — a skipped pause, a closed active window, a quiet
+            // hour — and the snapshot deliberately does not carry which, because
+            // that is a fact about a family's day and this is a lock screen.
             let word = snapshot.isScheduleEnabled
                 ? HopCopy.quickReminder.emptyState.value
                 : HopCopy.parentHome.heroDisabled.value

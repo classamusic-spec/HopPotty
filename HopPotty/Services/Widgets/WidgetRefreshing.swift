@@ -27,6 +27,15 @@ protocol WidgetRefreshing: AnyObject {
     /// business reaching into another feature's store to find one.
     func refresh(quickReminderAt: Date?) async
 
+    /// The schedule changed, and the caller cannot wait for a rebuild.
+    ///
+    /// The path from `PottyPauseEffectExecutor`, which performs a bundle of
+    /// effects synchronously and must not be made to `await` a widget. Carries
+    /// forward whatever Quick Reminder is already published, because the
+    /// executor has no reminder to hand and dropping one would take a caregiver's
+    /// timer off their lock screen for no reason.
+    func scheduleDidChange()
+
     /// A pause or routine has begun and is expected to end at `endingAt`.
     ///
     /// Cheap and synchronous: it edits the published snapshot in place rather
@@ -115,6 +124,14 @@ final class WidgetRefreshService: WidgetRefreshing {
         }
     }
 
+    func scheduleDidChange() {
+        // Read before the hop off, so the carried reminder is the one that was
+        // published at the moment the schedule changed rather than whatever is
+        // there when the task happens to run.
+        let carried = store.load()?.quickReminderAt
+        Task { [weak self] in await self?.refresh(quickReminderAt: carried) }
+    }
+
     func pauseDidStart(endingAt: Date) {
         store.markPauseStarted(endingAt: endingAt, now: clock.now)
         store.reloadTimelines()
@@ -181,6 +198,7 @@ final class NoOpWidgetRefresher: WidgetRefreshing {
     /// What the fake was last asked to do, so a test can assert on it.
     private(set) var published: [WidgetSnapshot] = []
     private(set) var refreshCount = 0
+    private(set) var scheduleChangeCount = 0
     private(set) var pauseStarts: [Date] = []
     private(set) var pauseEndCount = 0
     private(set) var clearCount = 0
@@ -189,6 +207,7 @@ final class NoOpWidgetRefresher: WidgetRefreshing {
 
     func publish(_ snapshot: WidgetSnapshot) { published.append(snapshot) }
     func refresh(quickReminderAt: Date?) async { refreshCount += 1 }
+    func scheduleDidChange() { scheduleChangeCount += 1 }
     func pauseDidStart(endingAt: Date) { pauseStarts.append(endingAt) }
     func pauseDidEnd() { pauseEndCount += 1 }
     func clear() { clearCount += 1 }

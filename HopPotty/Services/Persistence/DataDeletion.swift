@@ -390,6 +390,20 @@ final class DataDeletionService {
         }
         try await repositories.settings.reset()
         total.resetsSettings = true
+
+        // The widget snapshot lives in the App Group, outside every repository
+        // above, and it is the one piece of HopPotty a caregiver can still see
+        // after "Delete everything" — a countdown to a pause for a child who no
+        // longer exists, on their home screen. `Docs/PrivacyArchitecture.md` §7
+        // says no data is retained after deletion, so this is not optional.
+        //
+        // Reached through `.shared` rather than an injected service because this
+        // type is constructed from repositories alone, and because clearing a
+        // file that may not exist is total: an unreachable container is a no-op.
+        let widgets = WidgetSnapshotStore.shared
+        widgets.clear()
+        widgets.reloadTimelines()
+
         return total
     }
 }

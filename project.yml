@@ -93,19 +93,28 @@ targets:
       - path: HopPotty/Resources/HopPotty.storekit
         # Visible in the navigator, member of no build phase.
         buildPhase: none
+      # The Live Activity's attributes type. ActivityKit matches a running
+      # activity to its UI by this type, so the app that starts one and the
+      # widget extension that draws it must compile the same declaration. Only
+      # the attributes: the SwiftUI in PottyPauseActivity.swift belongs to the
+      # widget target alone.
+      - path: Extensions/HopPottyWidgets/PottyPauseActivityAttributes.swift
+        optional: true
     dependencies:
       - package: HopPottyKit
         product: HopPottyCore
       - package: HopPottyKit
         product: HopPottyDesignTokens
-      # Embedding is what puts the three .appex bundles in HopPotty.app/PlugIns.
+      # Embedding is what puts the four .appex bundles in HopPotty.app/PlugIns.
       # An extension that is built but not embedded is an extension the system
-      # never sees: no error, no shield, no callback.
+      # never sees: no error, no shield, no callback, no widget in the gallery.
       - target: HopPottyDeviceActivityMonitor
         embed: true
       - target: HopPottyShieldConfiguration
         embed: true
       - target: HopPottyShieldAction
+        embed: true
+      - target: HopPottyWidgets
         embed: true
     settings:
       base:
@@ -151,6 +160,13 @@ targets:
       - path: HopPotty/Services/ScreenTime/SharedPauseTypes.swift
         optional: true
       - path: HopPotty/Services/ScreenTime/ShieldReconciler.swift
+        optional: true
+      # The widget's corner of the App Group. Deliberately not one of the four
+      # above: it imports WidgetKit and nothing from ManagedSettings, and it is
+      # here because this extension is frequently the only HopPotty code that
+      # runs for hours — a pause it starts with the app closed has to reach the
+      # home screen somehow. Docs/Widgets.md §6.
+      - path: HopPotty/Services/Widgets/WidgetSnapshotStore.swift
         optional: true
     dependencies:
       - package: HopPottyKit
@@ -231,6 +247,58 @@ targets:
         INFOPLIST_FILE: Extensions/HopPottyShieldAction/Info.plist
         CODE_SIGN_ENTITLEMENTS: Extensions/HopPottyShieldAction/HopPottyShieldAction.entitlements
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+
+  # ---------------------------------------------------------------------------
+  # Extension 4 — Widgets (WidgetKit + ActivityKit)
+  #
+  # The home-screen and lock-screen countdown, and the Live Activity shown while
+  # a pause is running. Docs/Widgets.md is the whole story; three things about
+  # this target are worth stating where they are configured:
+  #
+  #  1. It is NOT a Screen Time extension. No Family Controls entitlement, no
+  #     ManagedSettings, no DeviceActivity, and no fifth App ID in the Family
+  #     Controls distribution request (Docs/Entitlements.md §2). Its only
+  #     privilege is membership of the App Group, and everything it draws was
+  #     resolved by the app and written to widget.json.
+  #
+  #  2. It gets HopPottyDesignTokens as well as HopPottyCore. Both are
+  #     platform-agnostic Swift packages with no UI framework in them, so this
+  #     buys the real palette without pulling the app's SwiftUI design system
+  #     into a memory-limited process. The frog is redrawn simply rather than
+  #     shared — see the note at the top of HopWidgetFace.swift.
+  #
+  #  3. Its Info.plist declares NO principal class. A WidgetKit extension is
+  #     entered through @main on a WidgetBundle. Scripts/verify-config.sh checks
+  #     for the ABSENCE of one here, and for its presence in the other three.
+  # ---------------------------------------------------------------------------
+  HopPottyWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Extensions/HopPottyWidgets
+        excludes:
+          - "Info.plist"
+          - "*.entitlements"
+      # Shared with the app and with the monitor extension. Not one of the four
+      # Screen Time files: see the comment on the monitor target above.
+      - path: HopPotty/Services/Widgets/WidgetSnapshotStore.swift
+        optional: true
+    dependencies:
+      - package: HopPottyKit
+        product: HopPottyCore
+      - package: HopPottyKit
+        product: HopPottyDesignTokens
+    settings:
+      base:
+        PRODUCT_NAME: HopPottyWidgets
+        PRODUCT_BUNDLE_IDENTIFIER: "$(HOPPOTTY_WIDGETS_BUNDLE_ID)"
+        INFOPLIST_FILE: Extensions/HopPottyWidgets/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Extensions/HopPottyWidgets/HopPottyWidgets.entitlements
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+        # A widget extension has a SwiftUI view hierarchy and an asset-less
+        # bundle. Naming the app's accent colour keeps the tint the system
+        # applies in the widget gallery consistent with the app's.
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 
   # ---------------------------------------------------------------------------
   # Tests

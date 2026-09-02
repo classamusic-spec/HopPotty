@@ -41,6 +41,13 @@ HOPPOTTY_MONITOR_BUNDLE_ID = $(HOPPOTTY_APP_BUNDLE_ID).monitor
 HOPPOTTY_SHIELD_CONFIG_BUNDLE_ID = $(HOPPOTTY_APP_BUNDLE_ID).shieldconfig
 HOPPOTTY_SHIELD_ACTION_BUNDLE_ID = $(HOPPOTTY_APP_BUNDLE_ID).shieldaction
 
+// The widget extension. Listed apart from the three above because it is not a
+// Screen Time extension: it holds no Family Controls entitlement, links neither
+// ManagedSettings nor DeviceActivity, and does not appear in the Family Controls
+// distribution request (Docs/Entitlements.md §2, Docs/Widgets.md §5). It is in
+// the same App Group, and that is the whole of its privilege.
+HOPPOTTY_WIDGETS_BUNDLE_ID = $(HOPPOTTY_APP_BUNDLE_ID).widgets
+
 // The App Group every target must be a member of. LOAD-BEARING: it must equal
 // ScreenTimeIdentifiers.appGroupID exactly. A mismatch is silent at build time
 // and total at runtime — UserDefaults(suiteName:) returns nil, the container URL

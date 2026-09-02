@@ -46,6 +46,17 @@ final class ServiceContainer {
     let export: DataExportService
     let deletion: DataDeletionService
 
+    /// Keeps the home-screen and lock-screen widget in step with the schedule.
+    ///
+    /// Built here rather than injected, because unlike the four services above
+    /// it has no configuration a caller could reasonably vary: the live one
+    /// writes a file into the App Group, and the fake writes nothing. Which of
+    /// the two exists is `AppBuildConfiguration`'s decision, made once, below.
+    let widgets: any WidgetRefreshing
+
+    /// The lock screen / Dynamic Island presentation of a pause in progress.
+    let liveActivities: any LiveActivityControlling
+
     init(
         configuration: AppBuildConfiguration,
         clock: any HopClock,
@@ -79,7 +90,25 @@ final class ServiceContainer {
             clock: clock
         )
         self.export = DataExportService(repositories: repositories, clock: clock)
-        self.deletion = DataDeletionService(repositories: repositories, clock: clock)
+        self.deletion = DataDeletionService(repositories: repositories, clock: clock, reminders: quickReminders)
+
+        // The widget and the Live Activity are conveniences: every method on
+        // both is allowed to do nothing, and nothing about a pause depends on
+        // either. A `.mock` build gets fakes so a preview canvas never writes
+        // into the developer's own App Group or puts a Live Activity on their
+        // lock screen.
+        switch configuration {
+        case .live:
+            self.widgets = WidgetRefreshService(
+                schedules: repositories.schedules,
+                profiles: repositories.profiles,
+                settings: repositories.settings,
+                clock: clock
+            )
+        case .mock:
+            self.widgets = NoOpWidgetRefresher()
+        }
+        self.liveActivities = LiveActivityControllerFactory.resolved(configuration)
 
         // One fan-out point for the settings that change how a service behaves.
         // Without it, every settings screen would have to remember to poke the
@@ -181,6 +210,12 @@ final class ServiceContainer {
                 "warning refresh failed at launch error=\(HopLog.safeDescription(error), privacy: .public)"
             )
         }
+
+        // Last, and deliberately so. Everything above decides what the widget
+        // will say; a refresh published before the schedule and the reminders
+        // have been read would publish the answer to a question nobody had
+        // finished asking.
+        await refreshWidget()
     }
 
     /// Foreground. Permission and entitlement can both change while the app is
@@ -201,11 +236,31 @@ final class ServiceContainer {
                 "warning refresh failed error=\(HopLog.safeDescription(error), privacy: .public)"
             )
         }
+        await refreshWidget()
     }
 
     /// Background. Audio stops; nothing else needs saying, because every write
     /// already happened at its own call site.
     func enterBackground() {
         audio.stopAll()
+    }
+
+    // MARK: - Widget
+
+    /// Rebuild and publish the widget snapshot for the active child.
+    ///
+    /// The one place the widget and the Quick Reminder feature meet. They are
+    /// joined here rather than inside `WidgetRefreshService` on purpose: the
+    /// widget layer should not reach into another feature's store to find a
+    /// reminder, and this container is already the place that knows both exist.
+    ///
+    /// Call after anything that changes what the widget would say: a schedule
+    /// edit, a suspension, a reminder set or cancelled, a child switched, a
+    /// pause ended. It is cheap — three small reads and a file write — and it is
+    /// idempotent.
+    func refreshWidget() async {
+        await widgets.refresh(
+            quickReminderAt: quickReminders.state.soonest(at: clock.now)?.fireAt
+        )
     }
 }

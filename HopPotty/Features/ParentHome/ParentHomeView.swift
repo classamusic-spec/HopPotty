@@ -3,13 +3,27 @@ import HopPottyCore
 
 /// The dashboard.
 ///
-/// On a regular width the hero and the day's detail sit side by side rather than
-/// stacked, because an iPad in landscape has room for both and a single column
-/// of cards down the middle of a 1024pt screen is a phone layout that was
-/// stretched. The measure is capped either way — see `HopLayout.readableWidth`.
+/// The screen *is* Hop's pond. The scene is the backdrop rather than an
+/// illustration placed on one, Hop sits in it, and the two things a caregiver
+/// opens the app for float over the water: who this is about, and when the next
+/// Potty Pause is. Everything else — today's numbers, today's entries, the one
+/// observation — lives on a panel that rises out of the pond and is pulled up
+/// with the same scroll that reveals it. There is no modal: a caregiver checking
+/// the timeline should never have to dismiss anything to get back to the timer.
+///
+/// On a regular width the panel splits into two columns and the card sits beside
+/// the water instead of across it, because an iPad in landscape has room for
+/// both and a single column down the middle of a 1024pt screen is a phone layout
+/// that was stretched. The measure is capped either way — see
+/// `HopLayout.readableWidth`.
+///
+/// Nothing about what the screen *does* moved: the same model call behind Skip,
+/// Start Now, Resume and Restore access; the same log sheet; the same two
+/// navigation destinations; the same failure alert.
 struct ParentHomeView: View {
     @Environment(\.hopTheme) private var theme
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.scenePhase) private var scenePhase
     @Environment(ParentEnvironment.self) private var parent
 
@@ -32,7 +46,12 @@ struct ParentHomeView: View {
             }
         }
         .navigationTitle(Text(hop: HopCopy.parentHome.title))
-        .navigationBarTitleDisplayMode(.large)
+        // The pond needs the top of the display, so the dashboard's own title
+        // bar goes away once there is a pond to show. It comes back for every
+        // other state, where a screen with no scene needs its heading.
+        .navigationBarTitleDisplayMode(isPondLayout ? .inline : .large)
+        .toolbar(navigationBarVisibility, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .hopBackground(.primary)
         .task(id: parent.activeChildID) { await ensureLoaded() }
         .onChange(of: scenePhase) { _, phase in
@@ -70,56 +89,122 @@ struct ParentHomeView: View {
         }
     }
 
+    // MARK: Chrome
+
+    /// Whether the pond is on screen. Only the loaded state has one.
+    private var isPondLayout: Bool {
+        guard let state = model?.state else { return false }
+        if case .loaded = state { return true }
+        return false
+    }
+
+    /// The navigation bar is hidden over the pond on a phone, and kept on iPad.
+    ///
+    /// Not a stylistic difference: on a regular width this view is the detail
+    /// column of `ParentRootView`'s split view, and the control that brings the
+    /// sidebar back when a caregiver has collapsed it lives in this bar. Losing
+    /// it would leave them with no way to reach Progress or Settings. Its
+    /// background is hidden either way, so the water runs under it.
+    private var navigationBarVisibility: Visibility {
+        guard isPondLayout else { return .visible }
+        return horizontalSizeClass == .regular ? .visible : .hidden
+    }
+
     // MARK: Layout
 
     @ViewBuilder
     private func content(_ snapshot: ParentHomeModel.Snapshot) -> some View {
-        ScrollView {
-            if horizontalSizeClass == .regular {
-                HStack(alignment: .top, spacing: theme.spacing.l) {
-                    VStack(alignment: .leading, spacing: theme.spacing.l) {
-                        header(snapshot)
-                        heroCard(snapshot)
-                        TodayMetricsRow(snapshot: snapshot)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        GeometryReader { proxy in
+            let metrics = HomePondMetrics(
+                size: proxy.size,
+                isRegular: horizontalSizeClass == .regular,
+                isAccessibilitySize: dynamicTypeSize.isAccessibilitySize
+            )
 
-                    VStack(alignment: .leading, spacing: theme.spacing.l) {
-                        HomeInsightSection(insight: snapshot.insight, onAction: handle)
-                        TodayTimelineSection(events: snapshot.todayEvents) {
-                            isLogSheetPresented = true
+            ZStack(alignment: .top) {
+                HomePondScene(metrics: metrics)
+
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // The water the screen opens on. Clear rather than a
+                        // spacer view so the pond behind it is what a caregiver
+                        // sees, and part of the scroll content so it is what
+                        // they push out of the way.
+                        Color.clear
+                            .frame(height: metrics.opening)
+                            .accessibilityHidden(true)
+
+                        heroCard(snapshot)
+                            .frame(maxWidth: metrics.cardMaxWidth, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .hopPageMargins()
+                            .padding(.bottom, theme.spacing.l)
+
+                        HomeSheetPanel(minimumHeight: metrics.sheetMinHeight) {
+                            panelContent(snapshot)
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .hopPageMargins()
-                .padding(.vertical, theme.spacing.l)
-            } else {
-                VStack(alignment: .leading, spacing: theme.spacing.l) {
-                    header(snapshot)
-                    heroCard(snapshot)
-                    TodayMetricsRow(snapshot: snapshot)
-                    HomeInsightSection(insight: snapshot.insight, onAction: handle)
-                    TodayTimelineSection(events: snapshot.todayEvents) {
-                        isLogSheetPresented = true
+                .scrollIndicators(.hidden)
+                .refreshable { await model?.load(childID: parent.activeChildID) }
+
+                HomeSceneTopBar(
+                    greeting: ParentGreeting.text(at: parent.clock.now, calendar: parent.clock.calendar),
+                    children: parent.children,
+                    child: snapshot.child,
+                    starsToday: snapshot.starsToday,
+                    onSelectChild: { childID in
+                        Task { await parent.selectChild(childID) }
                     }
-                }
+                )
                 .hopPageMargins()
-                .padding(.vertical, theme.spacing.l)
-                .hopReadableWidth()
+                .padding(.top, theme.spacing.xs)
+                // Drawn last so it floats, read first because it says whose
+                // screen this is. Z-order is the reading order in a `ZStack`
+                // otherwise, and "Maya" would arrive after the timeline.
+                .accessibilitySortPriority(1)
             }
         }
-        .refreshable { await model?.load(childID: parent.activeChildID) }
     }
 
-    private func header(_ snapshot: ParentHomeModel.Snapshot) -> some View {
-        VStack(alignment: .leading, spacing: theme.spacing.xxs) {
-            Text(verbatim: ParentGreeting.text(at: parent.clock.now, calendar: parent.clock.calendar))
-                .font(theme.font(.parentCallout))
-                .foregroundStyle(theme.color.textSecondary)
-            ChildSwitcher(children: parent.children, selected: snapshot.child) { childID in
-                Task { await parent.selectChild(childID) }
+    /// The panel's own content: the day, the entries, the observation.
+    ///
+    /// Two columns on iPad with the timeline given its own, because it is the
+    /// only block on this screen that grows without limit and a column that
+    /// grows should not push a fixed one down the page.
+    @ViewBuilder
+    private func panelContent(_ snapshot: ParentHomeModel.Snapshot) -> some View {
+        if horizontalSizeClass == .regular {
+            HStack(alignment: .top, spacing: theme.spacing.xl) {
+                VStack(alignment: .leading, spacing: theme.spacing.l) {
+                    todaySection(snapshot)
+                    HomeInsightSection(insight: snapshot.insight, onAction: handle)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                TodayTimelineSection(events: snapshot.todayEvents) {
+                    isLogSheetPresented = true
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .hopPageMargins()
+        } else {
+            VStack(alignment: .leading, spacing: theme.spacing.l) {
+                todaySection(snapshot)
+                TodayTimelineSection(events: snapshot.todayEvents) {
+                    isLogSheetPresented = true
+                }
+                HomeInsightSection(insight: snapshot.insight, onAction: handle)
+            }
+            .hopPageMargins()
+            .hopReadableWidth()
+        }
+    }
+
+    private func todaySection(_ snapshot: ParentHomeModel.Snapshot) -> some View {
+        VStack(alignment: .leading, spacing: theme.spacing.s) {
+            HopSectionHeader(HopCopy.parentHome.summaryTitle.localized)
+            TodayMetricsRow(snapshot: snapshot)
         }
     }
 
@@ -223,5 +308,19 @@ private func homePreview(_ environment: ParentEnvironment) -> some View {
 
 #Preview("Store unavailable") {
     homePreview(.preview(isStoreAvailable: false))
+}
+
+#Preview("Reduce Motion, still pond") {
+    NavigationStack { ParentHomeView() }
+        .environment(ParentEnvironment.preview())
+        .hopThemedRoot(reduceMotion: true)
+}
+
+#Preview("iPad, side by side") {
+    // The size class is set explicitly: a wide preview frame alone still
+    // reports `.compact`, and the two-column panel is the thing being checked.
+    homePreview(.preview())
+        .environment(\.horizontalSizeClass, .regular)
+        .frame(width: 1024, height: 768)
 }
 #endif

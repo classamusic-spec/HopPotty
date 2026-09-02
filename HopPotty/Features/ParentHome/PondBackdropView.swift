@@ -32,9 +32,12 @@ struct PondBackdropView: View {
         return Canvas(rendersAsynchronously: false) { context, size in
             ink.draw(into: &context, size: size, sceneHeight: box)
         }
-        // The strip behind the status bar is the sky's own top colour, already
-        // carrying the scrim in dark, so the bleed is invisible.
-        .background(ink.bleed.ignoresSafeArea(edges: .top))
+        // The strip behind the status bar is the sky's own top colour with the
+        // scrim already composited into it, so it matches the first stop of the
+        // gradient below and the bleed has no seam. The scrim itself stays
+        // inside the drawing's frame — laying it over the strip as well would
+        // darken that strip twice.
+        .background { ink.bleed.ignoresSafeArea(edges: .top) }
         .overlay { dusk }
         .accessibilityHidden(true)
     }
@@ -61,7 +64,6 @@ struct PondBackdropView: View {
                     endRadius: max(1, sceneHeight)
                 )
             }
-            .ignoresSafeArea(edges: .top)
             .allowsHitTesting(false)
         }
     }
@@ -81,7 +83,7 @@ struct PondBackdropView: View {
 /// between appearances would stop being the same pond. What does change with the
 /// appearance is the scrim above it, and the one token read here — the sky's
 /// bleed colour — is composited through it.
-private struct PondInk: Sendable {
+private struct PondInk {
     let bleed: Color
 
     private let skyTop: Color
@@ -402,7 +404,7 @@ private struct PondInk: Sendable {
 
     private func drawFlower(into context: inout GraphicsContext, at p: CGPoint, scale s: CGFloat) {
         for step in 0..<6 {
-            let angle = Double(step) * 60 * .pi / 180
+            let angle = CGFloat(step) * 60 * .pi / 180
             var petalPath = Path(ellipseIn: CGRect(x: -5 * s, y: -18 * s, width: 10 * s, height: 20 * s))
             petalPath = petalPath.applying(CGAffineTransform(rotationAngle: angle))
             petalPath = petalPath.applying(CGAffineTransform(translationX: p.x, y: p.y))
@@ -432,7 +434,7 @@ private struct PondInk: Sendable {
     }
 
     private func drawButterfly(into context: inout GraphicsContext, at p: CGPoint, scale s: CGFloat) {
-        func wing(_ dx: CGFloat, _ degrees: Double, _ colour: Color) {
+        func wing(_ dx: CGFloat, _ degrees: CGFloat, _ colour: Color) {
             var path = Path(ellipseIn: CGRect(x: -10 * s, y: -15 * s, width: 20 * s, height: 24 * s))
             path = path.applying(CGAffineTransform(rotationAngle: degrees * .pi / 180))
             path = path.applying(CGAffineTransform(translationX: p.x + dx * s, y: p.y - 3 * s))

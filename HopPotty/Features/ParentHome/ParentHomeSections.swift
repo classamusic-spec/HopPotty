@@ -1,6 +1,5 @@
 import SwiftUI
 import HopPottyCore
-import HopPottyDesignTokens
 
 /// Today's numbers.
 ///
@@ -124,12 +123,25 @@ struct HomeInsightSection: View {
 /// the point: over the pond the child's name sits under a greeting in a 17pt
 /// line, and a 17pt line is not a hit target — the 44pt capsule around it is.
 struct ChildSwitcher<Label: View>: View {
-    let children: [ChildProfile]
-    let selected: ChildProfile
-    let onSelect: (UUID) -> Void
-    /// Given the resolved display name, because the label almost always draws it
-    /// and the fallback for a child with no nickname belongs here, once.
-    @ViewBuilder var label: (String) -> Label
+    private let children: [ChildProfile]
+    private let selected: ChildProfile
+    private let onSelect: (UUID) -> Void
+    private let label: (String) -> Label
+
+    /// `label` is handed the resolved display name, because it almost always
+    /// draws it and the fallback for a child with no nickname belongs here,
+    /// once.
+    init(
+        children: [ChildProfile],
+        selected: ChildProfile,
+        onSelect: @escaping (UUID) -> Void,
+        @ViewBuilder label: @escaping (String) -> Label
+    ) {
+        self.children = children
+        self.selected = selected
+        self.onSelect = onSelect
+        self.label = label
+    }
 
     var body: some View {
         if children.count <= 1 {
