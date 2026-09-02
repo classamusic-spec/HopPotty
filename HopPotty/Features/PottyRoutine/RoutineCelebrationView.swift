@@ -33,7 +33,6 @@ struct RoutineCelebrationView: View {
     let onSeeThePond: () -> Void
     let onFinish: () -> Void
 
-    @State private var hasArrived = false
     @State private var isHopping = false
 
     /// The hop Hop does here. Only its *direction* comes from the outcome:
@@ -100,8 +99,10 @@ struct RoutineCelebrationView: View {
         // hop never pushes the rest of the screen around and never overruns the
         // space above it.
         .frame(height: characterSize + HopJump.headroom(for: characterSize), alignment: .bottom)
-        .scaleEffect(hasArrived ? 1 : 0.86)
-        .hopAnimation(.childCelebrate, value: hasArrived)
+        // No arrival scale here. The screen itself arrives on
+        // `HopScreenTransition.celebration`, which scales this whole view; a
+        // second scale on Hop multiplied with it and started him at roughly
+        // half size.
         // Hop cheering repeats what the headline says; one reading is enough.
         // The hop adds no announcement and takes no focus.
         .accessibilityHidden(true)
@@ -139,9 +140,7 @@ struct RoutineCelebrationView: View {
                 .hopTextStyle(.parentBody)
                 .foregroundStyle(theme.color.textSecondary)
         }
-        .scaleEffect(hasArrived ? 1 : 0.9)
-        .opacity(hasArrived ? 1 : 0)
-        .hopAnimation(.childArrive, value: hasArrived)
+        // Arrives with the screen, for the same reason Hop does.
     }
 
     private func unlockedRow(_ item: PondItem) -> some View {
@@ -176,11 +175,13 @@ struct RoutineCelebrationView: View {
 
     // MARK: - Sequencing
 
-    /// Two beats: Hop arrives, then Hop hops. The sleep is the theme's own
-    /// duration for the token, so Reduce Motion shortens it to a cross-fade
-    /// without this function knowing that Reduce Motion exists.
+    /// Two beats: the screen arrives, then Hop hops. The first beat is not
+    /// animated here — `HopScreenTransition.celebration` brings the whole view
+    /// in — so this function only waits out that arrival before the hop, using
+    /// the theme's own duration for the token, which means Reduce Motion
+    /// shortens it to a cross-fade without this function knowing Reduce Motion
+    /// exists.
     private func runSequence() async {
-        hasArrived = true
         let arrival = min(theme.duration(.childCelebrate), HopMotion.celebrationMaxDuration)
 
         #if DEBUG

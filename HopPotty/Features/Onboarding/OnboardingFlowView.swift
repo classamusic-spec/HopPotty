@@ -27,9 +27,12 @@ struct OnboardingFlowView: View {
             // watches the page slide the same way it did on the way in has been
             // told nothing.
             HopPageSwitch(model.isGoingBack ? .parentPop : .parentPush, value: model.step, alignment: .top) { _ in
+                // The fill goes on the page, not on the switch: the scaffold
+                // pins its footer to the bottom of whatever it is given, and a
+                // switch that sized itself to its content would take that away.
                 content
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .hopBackground(.primary)
         .onChange(of: scenePhase) { _, phase in

@@ -100,7 +100,7 @@ struct GameHostView<Board: View>: View {
                 // beat rather than the celebration hop: every ending here is
                 // the same ending, and one that cheered would make the round a
                 // thing to be won.
-                HopCharacterStage(act: .delighted(.cheer), size: celebrationSide)
+                HopCharacterStage(act: .delighted(endingPose), size: celebrationSide)
                     .frame(
                         height: celebrationSide + HopJump.headroom(for: celebrationSide),
                         alignment: .bottom
@@ -146,6 +146,16 @@ struct GameHostView<Board: View>: View {
         .hopTransition(.childCelebrate)
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isModal)
+    }
+
+    /// Where Hop comes to rest on the ending.
+    ///
+    /// A round that ends at the potty draws him already on his way there, which
+    /// is what the button under him says too. Every other round ends cheering.
+    /// The *beat* is the same either way — this changes the drawing, not the
+    /// size of the ending.
+    private var endingPose: HopPose {
+        handsOffToRoutine ? .walk : .cheer
     }
 
     /// How big Hop is drawn on the ending, and the number the headroom above

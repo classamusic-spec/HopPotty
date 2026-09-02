@@ -17,23 +17,33 @@ struct SettingsRootView: View {
 
     var body: some View {
         Form {
+            // The model is built in `task`, so the spinner is usually one frame
+            // — but it is a real state and it hands over to a real one, so it
+            // hands over visibly. `Group` passes the arrival to each section in
+            // turn rather than treating the whole form as one slab, which is
+            // also what keeps the sections sections.
             if let model {
-                if !model.isStoreAvailable { storeWarningSection }
-                childrenSection(model)
-                soundSection(model)
-                experienceSection(model)
-                notificationsSection(model)
-                pauseSection(model)
-                purchaseSection(model)
-                gateSection(model)
-                restoreSection(model)
-                privacySection(model)
-                aboutSection(model)
-                debugSection
+                Group {
+                    if !model.isStoreAvailable { storeWarningSection }
+                    childrenSection(model)
+                    soundSection(model)
+                    experienceSection(model)
+                    notificationsSection(model)
+                    pauseSection(model)
+                    purchaseSection(model)
+                    gateSection(model)
+                    restoreSection(model)
+                    privacySection(model)
+                    aboutSection(model)
+                    debugSection
+                }
+                .hopScreenTransition(.cardArrival)
             } else {
                 HopLoadingState(message: nil)
+                    .hopScreenTransition(.cardArrival)
             }
         }
+        .hopScreenChange(.cardArrival, value: model == nil)
         .navigationTitle(Text(hop: HopCopy.settings.title))
         .task { if model == nil { model = SettingsModel(environment: parent) } }
         // Applied *outside* the gate host so the host's own sheets read the
