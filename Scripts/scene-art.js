@@ -1389,6 +1389,12 @@ const contactShadow = (cx, cy, rx, ry = rx * 0.2) =>
   `<ellipse cx="${R(cx + rx * 0.05)}" cy="${R(cy + ry * 0.12)}" rx="${R(rx * 1.16)}" ry="${R(ry * 1.18)}" fill="url(#softShadow)"/>
    <ellipse cx="${R(cx + rx * 0.06)}" cy="${R(cy)}" rx="${R(rx * 0.66)}" ry="${R(ry * 0.6)}" fill="${P.sand600}" opacity="0.2"/>`;
 
+/** A cast shadow on a wall. Soft-edged and pushed down-right of its object,
+ *  because the key light in these rooms is a window at the top left. A flat
+ *  ellipse at low opacity reads as a stain; a radial one reads as shade. */
+const wallShadow = (cx, cy, rx, ry = rx, o = 0.62) =>
+  `<ellipse cx="${R(cx)}" cy="${R(cy)}" rx="${R(rx)}" ry="${R(ry)}" fill="url(#softShadow)" opacity="${o}"/>`;
+
 /** A crisp specular: the one hard highlight that says "glazed", as opposed to
  *  the broad soft one that only says "light". */
 const specular = (cx, cy, rx, ry, rot = -22, o = 0.9) =>
@@ -1425,7 +1431,7 @@ function pottyChair(cx, baseY, s = 1) {
 function toilet(cx, baseY, s = 1, { lidOpen = true } = {}) {
   return g(`translate(${cx} ${baseY}) scale(${s})`, `
     ${contactShadow(0, 6, 128, 24)}
-    <ellipse cx="128" cy="-244" rx="78" ry="96" fill="${P.sand500}" opacity="0.08"/>
+    ${wallShadow(140, -232, 96, 112, 0.55)}
     <path d="M 52 -318 q 0 -24 24 -24 h 68 q 24 0 24 24 v 122 q 0 22 -24 22 h -68 q -24 0 -24 -22 Z" fill="url(#porcelainGrad)"/>
     <path d="M 52 -318 q 0 -24 24 -24 h 18 v 166 h -18 q -24 0 -24 -22 Z" fill="#FFFFFF" opacity="0.55"/>
     <path d="M 168 -300 v 100 q 0 22 -24 22 h -20 q 34 -8 34 -40 Z" fill="${P.sand400}" opacity="0.28"/>
@@ -1474,7 +1480,7 @@ function hand(fill, shade) {
 /** A towel folded over a wall rail. Anchored at the centre of the rail. */
 function towelOnRail(cx, railY, s = 1) {
   return g(`translate(${cx} ${railY}) scale(${s})`, `
-    <ellipse cx="6" cy="46" rx="62" ry="56" fill="${P.sand500}" opacity="0.08"/>
+    ${wallShadow(12, 50, 76, 70, 0.55)}
     <rect x="-58" y="-2" width="10" height="9" rx="3" fill="${P.sand400}"/>
     <rect x="48" y="-2" width="10" height="9" rx="3" fill="${P.sand400}"/>
     <rect x="-52" y="0" width="104" height="12" rx="6" fill="url(#chromeGradV)"/>
@@ -1570,8 +1576,8 @@ const scenes = {
     <ellipse cx="330" cy="432" rx="202" ry="31" fill="${P.lavender}" opacity="0.45"/>
     <ellipse cx="330" cy="426" rx="198" ry="29" fill="${P.lavenderSoft}"/>
     <ellipse cx="318" cy="420" rx="150" ry="17" fill="#FFFFFF" opacity="0.55"/>
-    <g stroke="${P.lavender}" stroke-width="4" opacity="0.4" stroke-linecap="round">
-      <path d="M 146 434 l -8 9 M 200 446 l -6 10 M 268 453 l -3 11 M 340 455 l 0 11 M 412 450 l 4 11 M 476 440 l 7 10 M 522 428 l 9 9"/>
+    <g stroke="${P.lavender}" stroke-width="3.4" opacity="0.28" stroke-linecap="round">
+      <path d="M 204 448 l -4 7 M 272 455 l -2 8 M 340 457 l 0 8 M 408 452 l 3 8 M 472 442 l 5 7"/>
     </g>
     ${pottyChair(348, 400, 1)}
     ${g('translate(122 404) scale(0.47) translate(-256 -440)', `
@@ -1585,7 +1591,7 @@ const scenes = {
   // plant — is midground and stays soft.
   'routine-wipe': () => `
     ${bathroom()}
-    <ellipse cx="336" cy="288" rx="112" ry="112" fill="${P.sand500}" opacity="0.09"/>
+    ${wallShadow(344, 282, 148, 148, 0.6)}
     <rect x="128" y="118" width="344" height="20" rx="10" fill="url(#chromeGradV)"/>
     <rect x="134" y="121" width="332" height="4" rx="2" fill="#FFFFFF" opacity="0.75"/>
     <rect x="128" y="138" width="344" height="7" rx="3.5" fill="${P.sand400}" opacity="0.35"/>
@@ -1609,8 +1615,8 @@ const scenes = {
 
   'routine-flush': () => `
     ${bathroom()}
-    ${g('translate(566 214)', `
-      <ellipse cx="8" cy="40" rx="46" ry="48" fill="${P.sand500}" opacity="0.07"/>
+    ${g('translate(112 208)', `
+      ${wallShadow(14, 32, 58, 58, 0.5)}
       <rect x="-38" y="-4" width="15" height="40" rx="5" fill="${P.sand300}"/>
       <rect x="-36" y="-2" width="6" height="36" rx="3" fill="#FFFFFF" opacity="0.7"/>
       <path d="M -28 22 h 46" stroke="url(#chromeGrad)" stroke-width="9" stroke-linecap="round" fill="none"/>
@@ -1693,14 +1699,18 @@ const scenes = {
   /** Bubble Wash: the basin the scrubbing happens over. Props hug the counter
    *  and the two side walls so the upper middle stays open for bubbles. */
   'games-bubbleWash': () => `
-    ${bathroom({ floorY: 430 })}
-<path d="M 88 352 h 464 v 78 h -464 Z" fill="url(#woodGradV)"/>
-    <rect x="104" y="364" width="186" height="66" rx="12" fill="${P.woodLight}" opacity="0.5"/>
-    <rect x="350" y="364" width="186" height="66" rx="12" fill="${P.woodLight}" opacity="0.5"/>
-    <circle cx="278" cy="392" r="6.5" fill="${P.sand200}"/>
-    <circle cx="362" cy="392" r="6.5" fill="${P.sand200}"/>
-    <rect x="52" y="320" width="536" height="32" rx="16" fill="${P.sand300}"/>
-    <rect x="52" y="316" width="536" height="32" rx="16" fill="url(#porcelainGrad)"/>
+    ${bathroom({ floorY: 430, dado: 150 })}
+    <path d="M 88 352 h 464 v 78 h -464 Z" fill="url(#woodGradV)"/>
+    <path d="M 88 352 h 464 v 14 h -464 Z" fill="${P.woodDeep}" opacity="0.45"/>
+    <rect x="104" y="372" width="186" height="58" rx="12" fill="${P.woodLight}" opacity="0.5"/>
+    <rect x="350" y="372" width="186" height="58" rx="12" fill="${P.woodLight}" opacity="0.5"/>
+    <rect x="104" y="372" width="186" height="8" rx="4" fill="#FFFFFF" opacity="0.3"/>
+    <rect x="350" y="372" width="186" height="8" rx="4" fill="#FFFFFF" opacity="0.3"/>
+    <rect x="272" y="386" width="13" height="13" rx="6.5" fill="url(#chromeGrad)"/>
+    <rect x="356" y="386" width="13" height="13" rx="6.5" fill="url(#chromeGrad)"/>
+    <rect x="52" y="320" width="536" height="32" rx="16" fill="${P.sand400}" opacity="0.55"/>
+    <rect x="52" y="316" width="536" height="32" rx="16" fill="url(#porcelainTop)"/>
+    <rect x="60" y="318" width="520" height="9" rx="4.5" fill="#FFFFFF" opacity="0.7"/>
     ${towelOnRail(556, 168, 0.9)}
     ${soapPump(126, 320, 0.85)}
     ${basinAndTap(300, 318, 1)}
@@ -1757,34 +1767,37 @@ const scenes = {
   /** Bathroom Match: a quiet room. Everything sits on the two side walls or on
    *  the floor, so the two columns of picture cards have the whole middle. */
   'games-bathroomMatch': () => `
-    ${bathroom({ floorY: 392, wall: P.lavenderSoft })}
-    <rect x="0" y="300" width="${SW}" height="82" fill="#FFFFFF" opacity="0.5"/>
-    <rect x="0" y="292" width="${SW}" height="13" rx="6" fill="${P.sand300}"/>
-    <g stroke="${P.lavenderDeep}" stroke-width="3" opacity="0.22" stroke-linecap="round">
-      <path d="M 0 341 h ${SW}"/>
-      <path d="M 80 306 v 35 M 240 306 v 35 M 400 306 v 35 M 560 306 v 35"/>
-      <path d="M 160 343 v 37 M 320 343 v 37 M 480 343 v 37"/>
-    </g>
-    <circle cx="118" cy="104" r="74" fill="${P.pondBlueSoft}" opacity="0.75"/>
-    <circle cx="118" cy="104" r="80" fill="none" stroke="${P.sand300}" stroke-width="14"/>
-    <path d="M 78 56 a 78 78 0 0 0 -28 60" stroke="#FFFFFF" stroke-width="13" fill="none" stroke-linecap="round" opacity="0.8"/>
-    <rect x="0" y="262" width="170" height="13" rx="6" fill="${P.sand300}"/>
-    <path d="M 30 275 v 18 M 138 275 v 18" stroke="${P.sand400}" stroke-width="7" stroke-linecap="round"/>
+    ${bathroom({ floorY: 392, wall: P.lavenderSoft, dado: 150 })}
+    ${wallShadow(132, 120, 118, 118, 0.55)}
+    <circle cx="118" cy="104" r="80" fill="none" stroke="${P.sand300}" stroke-width="15"/>
+    <circle cx="118" cy="104" r="80" fill="none" stroke="#FFFFFF" stroke-width="5" opacity="0.6" transform="translate(-2 -2)"/>
+    <circle cx="118" cy="104" r="74" fill="${P.pondBlueSoft}"/>
+    <circle cx="118" cy="104" r="74" fill="url(#glassGrad)" opacity="0.6"/>
+    <path d="M 78 56 a 78 78 0 0 0 -28 60" stroke="#FFFFFF" stroke-width="13" fill="none" stroke-linecap="round" opacity="0.85"/>
+    <path d="M 150 42 L 62 166 h 34 L 184 42 Z" fill="#FFFFFF" opacity="0.3"/>
+    ${wallShadow(90, 292, 110, 30, 0.55)}
+    <rect x="0" y="262" width="170" height="14" rx="6" fill="url(#porcelainTop)"/>
+    <rect x="0" y="262" width="170" height="5" rx="2.5" fill="#FFFFFF" opacity="0.85"/>
+    <rect x="0" y="276" width="170" height="5" fill="${P.sand400}" opacity="0.4"/>
+    <path d="M 30 281 v 17 M 138 281 v 17" stroke="url(#chromeGradV)" stroke-width="8" stroke-linecap="round"/>
     <g>
       <rect x="18" y="246" width="84" height="16" rx="8" fill="url(#towelGrad)"/>
       <rect x="24" y="230" width="72" height="16" rx="8" fill="${P.peachSoft}"/>
       <rect x="30" y="214" width="60" height="16" rx="8" fill="${P.sunshineSoft}"/>
       <path d="M 22 254 h 76" stroke="#FFFFFF" stroke-width="3" opacity="0.6" stroke-linecap="round"/>
+      <path d="M 88 232 h 8 v 28 h -8 Z" fill="${P.peachDeep}" opacity="0.22"/>
     </g>
     ${soapPump(136, 262, 0.55)}
     ${towelOnRail(560, 172, 1.06)}
     ${pottedPlant(578, 398, 0.78)}
-    ${contactShadow(320, 438, 178, 30)}
-    <rect x="168" y="404" width="304" height="56" rx="28" fill="${P.peach}" opacity="0.55"/>
-    <rect x="182" y="414" width="276" height="36" rx="18" fill="${P.peachSoft}"/>
-    <path d="M 214 422 h 212 M 214 442 h 212" stroke="${P.peach}" stroke-width="6" opacity="0.38" stroke-linecap="round"/>
-    <g stroke="${P.peachDeep}" stroke-width="4" opacity="0.38" stroke-linecap="round">
-      <path d="M 180 402 v -9 M 216 402 v -9 M 252 402 v -9 M 288 402 v -9 M 324 402 v -9 M 360 402 v -9 M 396 402 v -9 M 432 402 v -9 M 462 402 v -9"/>
+    ${contactShadow(322, 444, 168, 26)}
+    <rect x="168" y="404" width="304" height="56" rx="28" fill="${P.peachDeep}" opacity="0.35"/>
+    <rect x="168" y="400" width="304" height="56" rx="28" fill="url(#matWeave)"/>
+    <rect x="182" y="410" width="276" height="36" rx="18" fill="${P.peachSoft}"/>
+    <path d="M 214 419 h 212 M 214 437 h 212" stroke="${P.peach}" stroke-width="6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M 182 410 h 276 q 0 6 -8 6 h -260 q -8 0 -8 -6 Z" fill="#FFFFFF" opacity="0.5"/>
+    <g stroke="${P.peachDeep}" stroke-width="4" opacity="0.4" stroke-linecap="round">
+      <path d="M 180 398 v -9 M 216 398 v -9 M 252 398 v -9 M 288 398 v -9 M 324 398 v -9 M 360 398 v -9 M 396 398 v -9 M 432 398 v -9 M 462 398 v -9"/>
     </g>`,
 };
 

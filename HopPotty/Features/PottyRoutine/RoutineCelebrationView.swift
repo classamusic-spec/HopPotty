@@ -34,6 +34,19 @@ struct RoutineCelebrationView: View {
     let onFinish: () -> Void
 
     @State private var hasArrived = false
+    @State private var isHopping = false
+
+    /// The hop Hop does here. Only its *direction* comes from the outcome:
+    /// `RoutineOutcomeChoices.celebrationHop(for:)` builds all three from one
+    /// constant, so "I tried" gets the same number of hops, the same height and
+    /// the same duration as "I peed". See `Docs/ChildSafety.md` §2.
+    private var celebrationHop: HopJump {
+        RoutineOutcomeChoices.celebrationHop(for: outcome)
+    }
+
+    private var characterSize: CGFloat {
+        ChildStage.characterSize(for: horizontalSizeClass)
+    }
 
     /// `producedOutput` picks the wording, never the reward. A child who sat
     /// down and nothing happened did the whole skill; `celebration.tried.title`
@@ -72,12 +85,26 @@ struct RoutineCelebrationView: View {
 
     // MARK: - Parts
 
+    /// Hop, arriving and then physically celebrating.
+    ///
+    /// The act is what changes, not a pile of modifiers: `HopCharacterView`'s
+    /// performer owns the crouch, the rise, the hang, the landing squash and
+    /// the settle, and it is cancel-safe — this screen going away lands him
+    /// rather than leaving him in the air.
     private var cheer: some View {
-        HopCharacterStage(pose: .cheer, size: ChildStage.characterSize(for: horizontalSizeClass))
-            .scaleEffect(hasArrived ? 1 : 0.86)
-            .hopAnimation(.childCelebrate, value: hasArrived)
-            // Hop cheering repeats what the headline says; one reading is enough.
-            .accessibilityHidden(true)
+        HopCharacterStage(
+            act: isHopping ? .celebrating(celebrationHop) : .holding(.cheer),
+            size: characterSize
+        )
+        // Headroom for the apex, reserved whether or not he is hopping, so the
+        // hop never pushes the rest of the screen around and never overruns the
+        // space above it.
+        .frame(height: characterSize + HopJump.headroom(for: characterSize), alignment: .bottom)
+        .scaleEffect(hasArrived ? 1 : 0.86)
+        .hopAnimation(.childCelebrate, value: hasArrived)
+        // Hop cheering repeats what the headline says; one reading is enough.
+        // The hop adds no announcement and takes no focus.
+        .accessibilityHidden(true)
     }
 
     private var headlineText: some View {
@@ -149,15 +176,29 @@ struct RoutineCelebrationView: View {
 
     // MARK: - Sequencing
 
-    /// Plays the arrival beat, then stops. The sleep is the theme's own duration
-    /// for the token, so Reduce Motion shortens it to a cross-fade without this
-    /// function knowing that Reduce Motion exists.
+    /// Two beats: Hop arrives, then Hop hops. The sleep is the theme's own
+    /// duration for the token, so Reduce Motion shortens it to a cross-fade
+    /// without this function knowing that Reduce Motion exists.
     private func runSequence() async {
         hasArrived = true
-        let beat = min(theme.duration(.childCelebrate), HopMotion.celebrationMaxDuration)
-        try? await Task.sleep(for: .seconds(beat))
-        // Nothing follows. The sequence has a last frame and holds it; there is
-        // no loop, no confetti that keeps falling and nothing that flashes.
+        let arrival = min(theme.duration(.childCelebrate), HopMotion.celebrationMaxDuration)
+
+        #if DEBUG
+        // The ceiling is the design (`Docs/ChildSafety.md`, `Docs/Accessibility.md`
+        // §3.8). Asserted rather than commented, so retuning a beat that pushes
+        // the celebration past 3.5s fails in a preview instead of shipping.
+        assert(
+            arrival + celebrationHop.duration(reduceMotion: theme.reduceMotion)
+                <= HopMotion.celebrationMaxDuration,
+            "The celebration must fit inside HopMotion.celebrationMaxDuration."
+        )
+        #endif
+
+        try? await Task.sleep(for: .seconds(arrival))
+        guard !Task.isCancelled else { return }
+        isHopping = true
+        // Nothing follows. The hop has a last frame and holds it; there is no
+        // loop, no confetti that keeps falling and nothing that flashes.
     }
 }
 
