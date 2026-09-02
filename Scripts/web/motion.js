@@ -43,6 +43,7 @@ const M = {
   jumpHeightRatio: 0.34,
   jumpStretch: 1.07,
   jumpSquash: 0.90,
+  jumpRepeatGap: 0.10,
 
   // Pond ambience. Deliberately non-harmonic: the layers never resynchronise.
   pondRipplePeriod: 7.3,
@@ -270,6 +271,154 @@ function waveFrames(name, rest = 0) {
   ${at(1.34, total)}{transform:rotate(3.4deg) translateY(-.4%)}
   ${at(WAVE, total)},100%{transform:rotate(0deg) translateY(0)}
 }`;
+}
+
+// ---------------------------------------------------------------------------
+// The launch animation
+// ---------------------------------------------------------------------------
+
+/**
+ * The splash, mirrored from `HopPotty/Features/Splash/HopSplashChoreography.swift`.
+ *
+ * Same rule as everything else in this file: the numbers are not invented here.
+ * Every duration is a `HopMotion` token and every derived time is the same
+ * arithmetic the Swift does, so the two can be read side by side —
+ * `leadIn`, `hold` and `clearance` are the only three constants the
+ * choreography adds, and they are the same three.
+ *
+ * `SPLASH.plan(container)` returns the whole timeline, because the one thing
+ * that cannot be a constant is how far off-screen a word starts: that depends
+ * on the width of the device and on how much of the lockup's box the word's own
+ * drawing occupies, which comes from `logo-metrics.json` — the file the layer
+ * generator writes for exactly this.
+ */
+const SPLASH = {
+  /** One frame before the first movement, so the opening state is rendered. */
+  leadIn: 0.02,
+  /** How long the finished lockup is held before it goes. */
+  hold: 0.10,
+  /** The hold when there is no arrival to watch. */
+  reducedHold: M.childArrive[0],
+  /** Extra travel past the screen edge, in logo widths. */
+  clearance: 0.04,
+  logoWidthFraction: 0.74,
+  logoMaxWidth: 360,
+
+  plan(container, metrics) {
+    const box = metrics.viewBox;
+    const logo = Math.min(container * SPLASH.logoWidthFraction, SPLASH.logoMaxWidth);
+    const gap = (container - logo) / 2 / logo;
+
+    const offstage = (layer, edge) => {
+      const b = metrics.layers[layer];
+      const extent = edge < 0 ? (b.x + b.width) / box.width : 1 - b.x / box.width;
+      return edge * (gap + extent + SPLASH.clearance);
+    };
+    const arc = (layer) => M.jumpHeightRatio * metrics.layers[layer].height / box.height;
+    const landing = (start) => start + M.jumpRise + M.jumpHang + M.jumpFall;
+
+    const hopStart = SPLASH.leadIn;
+    const pottyStart = SPLASH.leadIn + M.jumpRepeatGap;      // one hop's gap: one gesture
+    const pottyLands = landing(pottyStart);
+    const mascotStart = pottyLands - M.jumpCrouch;
+    const taglineStart = pottyLands + M.stagger;
+
+    const wordLength = M.jumpRise + M.jumpHang + M.jumpFall + M.jumpSettle;
+    const rest = Math.max(
+      hopStart + wordLength,
+      pottyStart + wordLength,
+      mascotStart + M.jumpCrouch + M.childArrive[0],
+      taglineStart + M.childArrive[0]
+    );
+    return {
+      logo,
+      hop: { start: hopStart, from: offstage('hop', -1), arc: arc('hop'), length: wordLength },
+      potty: { start: pottyStart, from: offstage('potty', 1), arc: arc('potty'), length: wordLength },
+      mascot: { start: mascotStart, length: M.jumpCrouch + M.childArrive[0] },
+      tagline: { start: taglineStart, length: M.childArrive[0] },
+      rest,
+      fadeOutAt: rest + SPLASH.hold,
+      total: rest + SPLASH.hold + M.reducedMotionFade,
+      reducedTotal: SPLASH.leadIn + M.reducedMotionFade + SPLASH.reducedHold + M.reducedMotionFade,
+    };
+  },
+};
+
+/**
+ * One word's arrival, as keyframes.
+ *
+ * The four beats of `HopMotion`'s jump minus the crouch — a word arriving from
+ * off-screen took off out there — and then the settle wobble, which is the same
+ * shape `jumpFrames` uses, because it is the same landing.
+ */
+function splashWordFrames(name, word) {
+  const total = word.length;
+  const apex = M.jumpRise;
+  const hangs = apex + M.jumpHang;
+  const lands = hangs + M.jumpFall;
+  const from = (word.from * 100).toFixed(2);
+  const mid = (word.from * 42).toFixed(2);           // 42% of the way across at the apex
+  const up = (word.arc * 100).toFixed(2);
+  const sq = M.jumpSquash, st = M.jumpStretch;
+  const sqX = (1 / sq).toFixed(3), stX = (1 / st).toFixed(3);
+  return `@keyframes ${name}{
+  0%{transform:translate(${from}%,0) scale(${stX},${st});animation-timing-function:${ease(0.12)}}
+  ${at(apex, total)}{transform:translate(${mid}%,-${up}%) scale(${stX},${st});animation-timing-function:linear}
+  ${at(hangs, total)}{transform:translate(${mid}%,-${up}%) scale(${stX},${st});animation-timing-function:${ease(0)}}
+  ${at(lands, total)}{transform:translate(0,0) scale(${sqX},${sq});animation-timing-function:${ease(0.46)}}
+  ${at(lands + M.jumpSettle * 0.26, total)}{transform:translate(0,-2.2%) scale(.972,1.046)}
+  ${at(lands + M.jumpSettle * 0.55, total)}{transform:translate(0,0) scale(1.016,.978)}
+  ${at(lands + M.jumpSettle * 0.8, total)}{transform:translate(0,-.6%) scale(.994,1.011)}
+  100%{transform:translate(0,0) scale(1,1)}
+}`;
+}
+
+/**
+ * The frog: a gather behind the wordmark, then up over it.
+ *
+ * It starts small *and* transparent. Small alone would leave a frog-coloured
+ * pebble sitting on an empty screen for half a second before there is any
+ * wordmark for it to be behind; transparent alone would make the arrival a
+ * fade, and the product owner asked for a pop.
+ */
+function splashMascotFrames(name, mascot) {
+  const total = mascot.length;
+  return `@keyframes ${name}{
+  0%{transform:translateY(5%) scale(.12);opacity:0;animation-timing-function:${ease(0)}}
+  ${at(M.jumpCrouch, total)}{transform:translateY(7%) scale(.09);opacity:1;animation-timing-function:${ease(M.childArrive[1])}}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}`;
+}
+
+function splashCSS(container, metrics) {
+  const plan = SPLASH.plan(container, metrics);
+  return `
+/* =========================================================================
+   THE SPLASH
+   Mirrored from HopPotty/Features/Splash/HopSplashChoreography.swift.
+   "Hop" hops in from the left, "Potty" from the right one jumpRepeatGap
+   behind it, and the frog pops up from behind the two of them once they
+   have landed. Total: ${plan.total.toFixed(3)}s.
+
+   The base state of every layer is the ASSEMBLED lockup and the movement
+   lives entirely in the keyframes, so a still render — and a reader with
+   prefers-reduced-motion, where the block at the bottom of this file turns
+   every animation off — sees the finished mark, never a word waiting
+   off-screen.
+   ========================================================================= */
+.hp-splash-logo,.hp-sl{will-change:transform}
+${splashWordFrames('hp-splash-hop', plan.hop)}
+${splashWordFrames('hp-splash-potty', plan.potty)}
+${splashMascotFrames('hp-splash-mascot', plan.mascot)}
+@keyframes hp-splash-tagline{
+  0%{transform:translateY(5%);opacity:0}
+  100%{transform:translateY(0);opacity:1}
+}
+${on('.hp-sl-hop')}{animation:hp-splash-hop ${plan.hop.length.toFixed(3)}s linear ${plan.hop.start.toFixed(3)}s both}
+${on('.hp-sl-potty')}{animation:hp-splash-potty ${plan.potty.length.toFixed(3)}s linear ${plan.potty.start.toFixed(3)}s both}
+${on('.hp-sl-mascot')}{animation:hp-splash-mascot ${plan.mascot.length.toFixed(3)}s linear ${plan.mascot.start.toFixed(3)}s both}
+${on('.hp-sl-tagline')}{animation:hp-splash-tagline ${plan.tagline.length.toFixed(3)}s ${ease(M.childArrive[1])} ${plan.tagline.start.toFixed(3)}s both}
+`;
 }
 
 function motionCSS() {
@@ -794,5 +943,5 @@ function galleryJS() {
 `;
 }
 
-module.exports = { M, JUMP, WAVE, ease, spring, FRAME, VARIANTS, POSE_FRAMES, POSE_ANIM,
-  motionCSS, hopRuntimeJS, galleryJS };
+module.exports = { M, JUMP, WAVE, SPLASH, ease, spring, FRAME, VARIANTS, POSE_FRAMES, POSE_ANIM,
+  motionCSS, splashCSS, hopRuntimeJS, galleryJS };

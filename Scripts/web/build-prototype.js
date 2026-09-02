@@ -34,6 +34,7 @@ const fs = require('fs');
 const path = require('path');
 const { T, c, baseCSS, ROOT } = require('../screens/ui');
 const registry = require('../screens/registry');
+const splashScreen = require('../screens/splash');
 const motion = require('./motion');
 
 const P = T.palette;
@@ -50,6 +51,7 @@ const slugOf = (key) => key.replace(/^\d+-/, '');
 
 /** Human captions. The registry keys are filenames; these are what a person reads. */
 const CAPTION = {
+  'splash': ['Launch', 'The first thing the app draws. “Hop” hops in from the left, “Potty” from the right, and Hop pops up behind them.'],
   'parent-home': ['Parent home', 'The dashboard a caregiver opens: next pause, today’s routine, one pattern.'],
   'onboarding-meet-hop': ['Meet Hop', 'First run. One idea, one action.'],
   'onboarding-idea': ['The idea', 'What the app actually does, before any permission is asked for.'],
@@ -99,6 +101,7 @@ const CAPTION = {
 
 /** Order of the walkthrough, used by the ◀ ▶ chrome and the screen list. */
 const FLOW_ALL = [
+  'splash',
   'onboarding-meet-hop', 'onboarding-idea', 'onboarding-screen-time-ask', 'onboarding-child-profile',
   'timer-settings', 'choose-apps', 'onboarding-first-pause-set',
   'parent-home', 'quick-reminder-sheet', 'hop-hub', 'potty-pause-shield',
@@ -212,7 +215,9 @@ const SHEET_SCREENS = ['quick-reminder-sheet', 'choose-apps', 'parent-gate'];
 const isChildScreen = (slug) =>
   /^(routine-|game-|games-hub)/.test(slug) || ['hops-pond', 'quiz', 'hop-hub', 'potty-pause-shield'].includes(slug);
 const kindOf = (slug) =>
-  SHEET_SCREENS.includes(slug) ? 'sheet' : (isChildScreen(slug) ? 'child' : 'parent');
+  slug === 'splash' ? 'fade'
+    : SHEET_SCREENS.includes(slug) ? 'sheet'
+    : (isChildScreen(slug) ? 'child' : 'parent');
 
 /**
  * What Hop does when a screen arrives.
@@ -633,6 +638,7 @@ footer.site{margin-top:56px;padding-top:22px;border-top:1px solid ${L.divider};
 .state .hop{position:relative;display:inline-block}
 .state .hop img{max-height:88px;width:auto;display:block}
 ${motion.motionCSS()}
+${motion.splashCSS(DEVICE.w, splashScreen.METRICS)}
 `;
 }
 
@@ -645,6 +651,7 @@ const RUNTIME = String.raw`
   var FLOW = __FLOW__, HOT = __HOT__, CAP = __CAP__, KIND = __KIND__, LIFE = __LIFE__;
   var W = __W__, H = __H__;
   var PRESS = __PRESS__, CHILD_PRESS = __CHILD_PRESS__, TAP_MS = __TAP_MS__, STEP = __STEP__, CAPD = __CAPD__;
+  var SPLASH_MS = __SPLASH_MS__, SPLASH_REDUCED_MS = __SPLASH_REDUCED_MS__;
   var body = document.body, viewport = document.getElementById('viewport');
   var device = document.querySelector('.device');
   var theme = localStorage.getItem('hp-theme') || 'light';
@@ -986,6 +993,19 @@ const RUNTIME = String.raw`
   fit();
   setTheme(theme);
   show(location.hash.slice(1) || FLOW[0], true, null);
+
+  /* --- the launch animation hands off, once ---------------------------
+     The splash is the app's first frame, not a screen anybody navigates to,
+     so the prototype opens on it and leaves it the way the app does: after
+     the choreography and its short hold, a cross-fade (dir 0) to the first
+     real screen. Only on load. Walking back to it with the arrows
+     replays the animation and stays there, because that is the only way to
+     watch it twice. */
+  if (cur === 'splash' && FLOW.length > 1) {
+    setTimeout(function () {
+      if (cur === 'splash') goTo(FLOW[1], 0);
+    }, reduced() ? SPLASH_REDUCED_MS : SPLASH_MS);
+  }
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(function () { show(cur, false, null); });  /* re-measure once type settles */
   }
@@ -993,6 +1013,7 @@ const RUNTIME = String.raw`
 `;
 
 function prototypePage(screens) {
+  const splashPlan = motion.SPLASH.plan(DEVICE.w, splashScreen.METRICS);
   // Only screens that exist at build time take part in the walkthrough.
   const FLOW = FLOW_ALL.filter((slug) => screens.some((s) => s.slug === slug));
   const layers = [];
@@ -1018,6 +1039,8 @@ function prototypePage(screens) {
     .replace('__TAP_MS__', String(Math.round(motion.M.childTap[0] * 1000)))
     .replace('__STEP__', String(Math.round(motion.M.stagger * 1000)))
     .replace('__CAPD__', String(Math.round(motion.M.staggerCap * 1000)))
+    .replace('__SPLASH_MS__', String(Math.round(splashPlan.total * 1000)))
+    .replace('__SPLASH_REDUCED_MS__', String(Math.round(splashPlan.reducedTotal * 1000)))
     .replace('__W__', String(DEVICE.w))
     .replace('__H__', String(DEVICE.h));
 
@@ -1424,6 +1447,36 @@ function copyArt() {
   return { icons, pondFile, frames };
 }
 
+/**
+ * The screens go into ONE document, so nothing a screen carries may be global.
+ *
+ * `nsIds` already handles SVG `id`s. Classes are the other half of the same
+ * problem and arrived with the brand lockup: the artwork the product owner
+ * delivered is styled with a `<style>` block of `.cls-0` \u2026 `.cls-18`, and
+ * inlined as-is those rules are not scoped to that drawing at all \u2014 `.cls-3`
+ * would repaint every third fill on the page, in every other screen.
+ *
+ * `Scripts/logo-art.js` resolves those classes to inline fills so no `<style>`
+ * and no `class="cls-*"` ever reaches a screen. This is the assertion that it
+ * stays that way: a re-export dropped straight into `Art/` fails the build here
+ * rather than silently recolouring the pond.
+ */
+function assertNoGlobalStyles(html, where) {
+  const problems = [];
+  if (/<style[\s>]/i.test(html)) problems.push('a <style> block');
+  const classes = new Set();
+  for (const m of html.matchAll(/class="([^"]*)"/g)) {
+    for (const name of m[1].split(/\s+/)) {
+      if (/^cls[-_]?\d/i.test(name)) classes.add(name);
+    }
+  }
+  if (classes.size) problems.push(`generic art classes: ${[...classes].sort().join(', ')}`);
+  for (const problem of problems) {
+    console.warn(`  ! ${where} carries ${problem} \u2014 it would apply to every screen in the document`);
+  }
+  return problems.length;
+}
+
 function dirSize(dir) {
   let total = 0;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -1455,7 +1508,27 @@ function build() {
 
   const screens = renderAll();
 
+  // Nothing a screen carries may escape it. See assertNoGlobalStyles.
+  let leaks = 0;
+  for (const s of screens) {
+    leaks += assertNoGlobalStyles(s.light, `${s.slug} (light)`);
+    leaks += assertNoGlobalStyles(s.dark, `${s.slug} (dark)`);
+  }
+
+  // The splash's four layers each name an animation; a layer with no rule
+  // behind it is a piece of the lockup that never moves, and nothing else
+  // would have failed.
+  for (const layer of splashScreen.METRICS.paintOrder) {
+    if (css.indexOf(`.hp-sl-${layer}{animation:hp-splash-`) < 0) {
+      console.warn(`  ! no splash animation for the ${layer} layer`);
+    }
+  }
+
   const proto = prototypePage(screens);
+  leaks += assertNoGlobalStyles(
+    proto.slice(proto.indexOf('<div class="screen'), proto.lastIndexOf('</div>')),
+    'the assembled prototype'
+  );
   fs.writeFileSync(path.join(DIST, 'index.html'), proto);
   fs.mkdirSync(path.join(DIST, 'app'), { recursive: true });
   fs.writeFileSync(path.join(DIST, 'app', 'index.html'), proto);
@@ -1527,6 +1600,7 @@ function build() {
   console.log(`   assets: ${icons.length} icons, ${HOP_STATES.length} Hop states, pond: ${pondFile || 'none'}`);
   console.log(`   motion: ${frames.written} derived Hop frames` +
     `${frames.checked ? ', blink derivation verified against hop-blink.svg' : ''}`);
+  console.log(`   scoping: ${leaks ? leaks + ' LEAK(S)' : 'no <style> blocks and no cls-* classes in any screen'}`);
   console.log(`   size:   ${(dirSize(DIST) / 1024 / 1024).toFixed(2)} MB`);
   return { screens, pages };
 }

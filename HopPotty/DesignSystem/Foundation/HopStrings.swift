@@ -134,3 +134,10 @@ extension HopStrings {
     static func celebrationUnlocked(_ name: String) -> String { "Your pond got \(name)" }
     static let celebrationContinue = "Back to your pond"
 }
+
+extension HopStrings {
+    // The brand mark. One label for the whole lockup — the frog, both words and
+    // the tagline pill are one image, and the name is the only thing in it a
+    // listener needs.
+    static let logo = "HopPotty"
+}

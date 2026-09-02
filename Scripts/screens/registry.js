@@ -1,3 +1,4 @@
+const splash = require('./splash');
 const parent = require('./parent');
 const onboarding = require('./onboarding');
 const settings = require('./settings');
@@ -6,6 +7,7 @@ const pond = require('./pond');
 const insights = require('./insights');
 
 module.exports = {
+  '00-splash': { render: splash.splash, appearance: 'light' },
   '01-parent-home': { render: parent.parentHome, appearance: 'light' },
   '02-onboarding-meet-hop': { render: onboarding.meetHop, appearance: 'light' },
   '03-onboarding-idea': { render: onboarding.theIdea, appearance: 'light' },

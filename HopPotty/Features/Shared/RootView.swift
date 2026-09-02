@@ -32,13 +32,12 @@ struct RootView: View {
 
     var body: some View {
         HopThemedRoot {
-            if let parent {
-                ParentAppRootView()
-                    .environment(parent)
-                    .environment(\.quickReminders, quickReminders)
-            } else {
-                HopLoadingState(message: nil)
-            }
+            // The launch animation goes *over* the tree, not in front of it.
+            // `content` — and the `.task` below that fills it — is live from
+            // the first frame, so the splash overlaps the launch work instead
+            // of gating it, and it leaves on its own timer whether or not the
+            // load has finished. See `Features/Splash/HopSplashView.swift`.
+            content.hopSplash()
         }
         .task {
             guard parent == nil else { return }
@@ -48,6 +47,19 @@ struct RootView: View {
             await services.quickReminders.refresh()
             quickReminders = services.quickReminders
             parent = environment
+        }
+    }
+
+    /// The app itself: the dashboard once the first load has finished, and the
+    /// loading state until then. Unchanged by the splash — which is the point.
+    @ViewBuilder
+    private var content: some View {
+        if let parent {
+            ParentAppRootView()
+                .environment(parent)
+                .environment(\.quickReminders, quickReminders)
+        } else {
+            HopLoadingState(message: nil)
         }
     }
 
