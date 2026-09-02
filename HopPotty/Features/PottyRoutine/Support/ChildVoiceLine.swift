@@ -162,21 +162,30 @@ struct HopReplayButton: View {
     }
 }
 
-#Preview("Spoken line and replay") {
-    struct Harness: View {
-        @State private var pulse = 0
-        var body: some View {
-            VStack(spacing: 24) {
-                HopReplayButton(
-                    PottyRoutineContent.tryStep.voice,
-                    label: HopCopy.routine.repeatButton.localized,
-                    pulse: $pulse
-                )
-                HopSpokenLine(PottyRoutineContent.tryStep.voice, pulse: pulse)
-            }
+/// The replay button owns the pulse and the spoken line reads it, so seeing
+/// them work needs something holding `@State` between them.
+///
+/// At file scope rather than inside the `#Preview`: that body is a
+/// `@ViewBuilder`, which takes views, not declarations — a nested `struct` in
+/// there does not compile, and neither does the `return` that used to make it
+/// a plain closure instead.
+private struct SpokenLineReplayPreview: View {
+    @State private var pulse = 0
+
+    var body: some View {
+        VStack(spacing: 24) {
+            HopReplayButton(
+                PottyRoutineContent.tryStep.voice,
+                label: HopCopy.routine.repeatButton.localized,
+                pulse: $pulse
+            )
+            HopSpokenLine(PottyRoutineContent.tryStep.voice, pulse: pulse)
         }
     }
-    Harness()
+}
+
+#Preview("Spoken line and replay") {
+    SpokenLineReplayPreview()
         .padding()
         .hopBackground()
         .hopThemedRoot()
