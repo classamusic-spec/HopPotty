@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<g transform="translate(16 0) scale(3.2)">
+  <ellipse cx="75" cy="160" rx="44" ry="4" fill="#243047" opacity="0.13999999999999999"/>
+  <g transform="translate(0 10) translate(75 100) rotate(0) translate(-75 -100)">
+    
+    <g>
+    <line x1="55" y1="120" x2="30" y2="134" stroke="#63C88A" stroke-width="16" stroke-linecap="round"/>
+    <ellipse cx="32" cy="137" rx="9.5" ry="7" fill="#63C88A"/>
+    <line x1="32" y1="137" x2="17.7" y2="138.4" stroke="#63C88A" stroke-width="10.8" stroke-linecap="round"/><line x1="32" y1="137" x2="22.0" y2="144.2" stroke="#63C88A" stroke-width="10.8" stroke-linecap="round"/><line x1="32" y1="137" x2="30.5" y2="146.9" stroke="#63C88A" stroke-width="10" stroke-linecap="round"/>
+    <line x1="27.7" y1="139.5" x2="17.5" y2="143.0" stroke="#45A971" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/><line x1="30.3" y1="141.7" x2="26.3" y2="148.3" stroke="#45A971" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/>
+  </g>
+    <g>
+    <line x1="95" y1="120" x2="120" y2="134" stroke="#63C88A" stroke-width="16" stroke-linecap="round"/>
+    <ellipse cx="118" cy="137" rx="9.5" ry="7" fill="#63C88A"/>
+    <line x1="118" y1="137" x2="132.3" y2="138.4" stroke="#63C88A" stroke-width="10.8" stroke-linecap="round"/><line x1="118" y1="137" x2="128.0" y2="144.2" stroke="#63C88A" stroke-width="10.8" stroke-linecap="round"/><line x1="118" y1="137" x2="119.5" y2="146.9" stroke="#63C88A" stroke-width="10" stroke-linecap="round"/>
+    <line x1="122.3" y1="139.5" x2="132.5" y2="143.0" stroke="#45A971" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/><line x1="119.7" y1="141.7" x2="123.7" y2="148.3" stroke="#45A971" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/>
+  </g>
+    <rect x="45" y="77.4" width="60" height="51.2" rx="27" fill="#63C88A"/>
+    <ellipse cx="75" cy="104" rx="24" ry="23" fill="#FFF3D4"/>
+    <g>
+    <line x1="50" y1="90" x2="50" y2="134" stroke="#63C88A" stroke-width="13" stroke-linecap="round"/>
+    <circle cx="50" cy="134" r="8.4" fill="#63C88A"/>
+    <line x1="50" y1="134" x2="58.4" y2="141.1" stroke="#63C88A" stroke-width="9" stroke-linecap="round"/><line x1="50" y1="134" x2="50.0" y2="145.0" stroke="#63C88A" stroke-width="9" stroke-linecap="round"/><line x1="50" y1="134" x2="41.6" y2="141.1" stroke="#63C88A" stroke-width="9" stroke-linecap="round"/>
+  </g>
+    <g>
+    <line x1="100" y1="90" x2="100" y2="134" stroke="#63C88A" stroke-width="13" stroke-linecap="round"/>
+    <circle cx="100" cy="134" r="8.4" fill="#63C88A"/>
+    <line x1="100" y1="134" x2="108.4" y2="141.1" stroke="#63C88A" stroke-width="9" stroke-linecap="round"/><line x1="100" y1="134" x2="100.0" y2="145.0" stroke="#63C88A" stroke-width="9" stroke-linecap="round"/><line x1="100" y1="134" x2="91.6" y2="141.1" stroke="#63C88A" stroke-width="9" stroke-linecap="round"/>
+  </g>
+    <g transform="rotate(0 75 50)">
+    <ellipse cx="75" cy="42" rx="46" ry="31" fill="#63C88A"/>
+    <ellipse cx="75" cy="54" rx="65" ry="26" fill="#63C88A"/>
+    <circle cx="42.4" cy="25.7" r="19.5" fill="#63C88A"/>
+    <circle cx="108.4" cy="25.7" r="19.5" fill="#63C88A"/>
+    <rect x="50" y="66" width="50" height="20" fill="#63C88A"/>
+  </g>
+    <g transform="rotate(0 75 50)">
+      
+    <ellipse cx="75.3" cy="19.4" rx="4.4" ry="2.6" fill="#45A971"/>
+    <ellipse cx="72.8" cy="26.2" rx="2.6" ry="1.9" fill="#45A971"/>
+    <ellipse cx="80.6" cy="24.6" rx="3.0" ry="1.6" fill="#45A971"/>
+      <g>
+      <clipPath id="eyeClip42"><circle cx="42.4" cy="25.7" r="15.5"/></clipPath>
+      <circle cx="42.4" cy="25.7" r="15.5" fill="#FFFFFF"/>
+      <g clip-path="url(#eyeClip42)">
+        <circle cx="45.4" cy="22.7" r="11.5" fill="#243047"/>
+        <circle cx="48.6" cy="17.7" r="3.4" fill="#FFFFFF"/>
+        
+      </g>
+    </g><g>
+      <clipPath id="eyeClip108"><circle cx="108.4" cy="25.7" r="15.5"/></clipPath>
+      <circle cx="108.4" cy="25.7" r="15.5" fill="#FFFFFF"/>
+      <g clip-path="url(#eyeClip108)">
+        <circle cx="111.4" cy="22.7" r="11.5" fill="#243047"/>
+        <circle cx="114.60000000000001" cy="17.7" r="3.4" fill="#FFFFFF"/>
+        
+      </g>
+    </g>
+      
+    <circle cx="32" cy="51" r="7.6" fill="#FF9F8F"/>
+    <circle cx="118" cy="51" r="7.6" fill="#FF9F8F"/>
+      
+    <circle cx="67.4" cy="41" r="2.1" fill="#1B5E39"/>
+    <circle cx="82.6" cy="41" r="2.1" fill="#1B5E39"/>
+      <g transform="translate(75 50) scale(1) translate(-75 -50)">
+    <clipPath id="mouthClipopen">
+      <path d="M 53 47.5 Q 75 52 97 47.5 C 96 60 88 69.5 75 69.5 C 62 69.5 54 60 53 47.5 Z"/>
+    </clipPath>
+    <path d="M 53 47.5 Q 75 52 97 47.5 C 96 60 88 69.5 75 69.5 C 62 69.5 54 60 53 47.5 Z" fill="#8A3F30"/>
+    <ellipse cx="75" cy="66" rx="15" ry="7.5" fill="#FF6F7D" clip-path="url(#mouthClipopen)"/>
+  </g>
+      <g>
+    <line x1="75" y1="60" x2="142" y2="34" stroke="#FF6F7D" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="142" cy="34" r="5.5" fill="#FF6F7D"/>
+  </g>
+    </g>
+    
+    
+  </g>
+</g>
+</svg>

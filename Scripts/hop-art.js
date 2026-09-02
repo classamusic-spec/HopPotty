@@ -132,13 +132,34 @@ function mouth(kind = 'open') {
 }
 
 /** Torso: a soft capsule. `squash` compresses vertically for landing frames. */
-function torso({ squash = 0 } = {}) {
+function torso({ squash = 0, width = 60 } = {}) {
   const h = 54 - squash * 8;
-  return `<rect x="45" y="${76 + squash * 4}" width="60" height="${h}" rx="27" fill="${C.body}"/>`;
+  return `<rect x="${75 - width / 2}" y="${76 + squash * 4}" width="${width}" height="${h}" rx="27" fill="${C.body}"/>`;
 }
 
-function belly() {
-  return `<ellipse cx="75" cy="104" rx="24" ry="23" fill="${C.belly}"/>`;
+function belly({ scale = 1 } = {}) {
+  return `<ellipse cx="75" cy="${104 + (scale - 1) * 4}" rx="${24 * scale}" ry="${23 * scale}" fill="${C.belly}"/>`;
+}
+
+/**
+ * A frog's tongue, out and reaching for something. A thick capsule from the
+ * mouth to `to`, with a rounder tip so it reads as a tongue and not a rope.
+ * Drawn after the face so it leaves the open mouth rather than sitting under it.
+ */
+function tongue(to = [128, 20]) {
+  const [tx, ty] = to;
+  return `<g>
+    <line x1="75" y1="60" x2="${tx}" y2="${ty}" stroke="${C.tongue}" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="${tx}" cy="${ty}" r="5.5" fill="${C.tongue}"/>
+  </g>`;
+}
+
+/** Soft motion marks either side of the body, for the "I need to go" wiggle. */
+function wiggle() {
+  return `<g fill="none" stroke="${C.bodyDeep}" stroke-width="2.4" stroke-linecap="round" opacity="0.6">
+    <path d="M 36 96 q -5 6 0 12"/><path d="M 30 92 q -7 9 0 18"/>
+    <path d="M 114 96 q 5 6 0 12"/><path d="M 120 92 q 7 9 0 18"/>
+  </g>`;
 }
 
 /**
@@ -224,6 +245,8 @@ function figure(p = {}) {
     legR = { hip: [95, 122], ankle: [96, 148], spread: 1 },
     eyes: eyeOpts = {}, mouth: mouthKind = 'open',
     withPack = false, sleeping = false, showShadow = true,
+    bellyScale = 1, tongueTo = null, wiggling = false,
+    torsoWidth = 60,
   } = p;
   const shoulderL = [50, 90], shoulderR = [100, 90];
   return `
@@ -232,8 +255,8 @@ function figure(p = {}) {
     ${withPack ? pack() : ''}
     ${leg(legL.hip, legL.ankle, -1, { toeSpread: legL.spread })}
     ${leg(legR.hip, legR.ankle, 1, { toeSpread: legR.spread })}
-    ${torso({ squash })}
-    ${belly()}
+    ${torso({ squash, width: torsoWidth })}
+    ${belly({ scale: bellyScale })}
     ${arm(shoulderL, armL)}
     ${arm(shoulderR, armR)}
     ${headShape({ tilt })}
@@ -243,7 +266,9 @@ function figure(p = {}) {
       ${cheeks()}
       ${nostrils()}
       ${mouth(mouthKind)}
+      ${tongueTo ? tongue(tongueTo) : ''}
     </g>
+    ${wiggling ? wiggle() : ''}
     ${sleeping ? zzz() : ''}
   </g>`;
 }
@@ -316,6 +341,45 @@ const poses = {
     legL: { hip: [55, 120], ankle: [46, 146], spread: 1.2 },
     legR: { hip: [95, 120], ankle: [104, 146], spread: 1.2 },
     eyes: { gaze: [0, 2] }, mouth: 'open',
+  })),
+
+  // ---- Mini-game states ----
+
+  /** Frog squat on a lily pad, watching the sky. Fly Snack's resting state. */
+  sit: () => wrap(figure({
+    lift: -10, squash: 0.35,
+    armL: [50, 134], armR: [100, 134],
+    legL: { hip: [55, 120], ankle: [30, 134], spread: 1.2 },
+    legR: { hip: [95, 120], ankle: [120, 134], spread: 1.2 },
+    eyes: { gaze: [0, -3] }, mouth: 'small',
+  })),
+
+  /** Tongue out for a fly. Same squat; the tongue reaches toward `tongueTo`. */
+  catch: () => wrap(figure({
+    lift: -10, squash: 0.35,
+    armL: [50, 134], armR: [100, 134],
+    legL: { hip: [55, 120], ankle: [30, 134], spread: 1.2 },
+    legR: { hip: [95, 120], ankle: [120, 134], spread: 1.2 },
+    eyes: { gaze: [3, -4] }, mouth: 'open', tongueTo: [142, 34],
+  })),
+
+  /**
+   * Tummy full, and the body saying so. Bigger belly, hand on it, knees
+   * together, a small bashful smile — kind, never distressed. This is the
+   * moment the child learns to notice.
+   */
+  full: () => wrap(figure({
+    squash: 0.1, bellyScale: 1.28, torsoWidth: 68, wiggling: true,
+    armL: [20, 104], armR: [88, 112],
+    legL: { hip: [55, 124], ankle: [66, 150], spread: 0.9 },
+    legR: { hip: [95, 124], ankle: [84, 150], spread: 0.9 },
+    eyes: { gaze: [0, 3], lidDrop: 0.15 }, mouth: 'small',
+  })),
+
+  /** Hands held out front, palms up, for washing and wiping games. */
+  scrub: () => wrap(figure({
+    armL: [50, 118], armR: [100, 118],
+    eyes: { gaze: [0, 4] }, mouth: 'talk',
   })),
 
   /** Head only, for avatars and the app icon. */

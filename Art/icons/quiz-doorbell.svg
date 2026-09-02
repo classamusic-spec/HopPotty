@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><linearGradient id="metalGrad" x1="0.15" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#F7F1E9"/><stop offset="1" stop-color="#AFA69B"/></linearGradient><radialGradient id="peachBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B2"/><stop offset="1" stop-color="#C96755"/></radialGradient></defs>
+<g id="quiz-doorbell"><circle cx="60" cy="60" r="58" fill="#FFE8E3"/>
+    <ellipse cx="60" cy="100" rx="22" ry="3.74" fill="#8A3F30" opacity="0.12"/>
+    <rect x="41" y="24" width="38" height="72" rx="17" fill="#AFA69B"/>
+    <rect x="41" y="21" width="38" height="72" rx="17" fill="url(#metalGrad)"/>
+    <rect x="50" y="70" width="20" height="9" rx="4.5" fill="#D8CEC1"/>
+    <circle cx="60" cy="47" r="15" fill="#C96755"/>
+    <circle cx="60" cy="45" r="15" fill="url(#peachBall)"/>
+    <circle cx="55" cy="40" r="5" fill="#FFFFFF" opacity="0.45"/>
+    <path d="M 90 36 q 8 13 0 26" stroke="#C96755" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.45"/>
+    <path d="M 30 36 q -8 13 0 26" stroke="#C96755" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.45"/></g>
+</svg>

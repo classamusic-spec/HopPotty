@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><radialGradient id="blueBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#BDE9F8"/><stop offset="1" stop-color="#2A87AC"/></radialGradient><radialGradient id="peachBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B2"/><stop offset="1" stop-color="#C96755"/></radialGradient><radialGradient id="yellowBall" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFE9A8"/><stop offset="1" stop-color="#FFC53D"/></radialGradient></defs>
+<g id="quiz-keepPlaying"><circle cx="60" cy="60" r="58" fill="#EFEDFB"/>
+    <ellipse cx="60" cy="100" rx="36" ry="6.12" fill="#453B85" opacity="0.12"/>
+    <rect x="20" y="62" width="35" height="35" rx="8" fill="url(#peachBall)"/>
+    <rect x="26" y="68" width="14" height="6" rx="3" fill="#FFFFFF" opacity="0.35"/>
+    <rect x="59" y="62" width="35" height="35" rx="8" fill="url(#blueBall)"/>
+    <rect x="65" y="68" width="14" height="6" rx="3" fill="#FFFFFF" opacity="0.35"/>
+    <rect x="39" y="23" width="35" height="35" rx="8" fill="url(#yellowBall)"/>
+    <rect x="45" y="29" width="14" height="6" rx="3" fill="#FFFFFF" opacity="0.4"/></g>
+</svg>

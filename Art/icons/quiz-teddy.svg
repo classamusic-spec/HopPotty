@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs><radialGradient id="furGrad" cx="0.36" cy="0.3" r="0.85"><stop offset="0" stop-color="#E0A472"/><stop offset="1" stop-color="#C98A5B"/></radialGradient><linearGradient id="furGradDeep" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#C98A5B"/><stop offset="1" stop-color="#A76F46"/></linearGradient></defs>
+<g id="quiz-teddy"><circle cx="60" cy="60" r="58" fill="#FFF3D4"/>
+    <ellipse cx="60" cy="104" rx="32" ry="5.44" fill="#A87A0C" opacity="0.14"/>
+    <ellipse cx="33" cy="74" rx="11" ry="15" fill="url(#furGradDeep)" transform="rotate(22 33 74)"/>
+    <ellipse cx="87" cy="74" rx="11" ry="15" fill="url(#furGradDeep)" transform="rotate(-22 87 74)"/>
+    <ellipse cx="46" cy="99" rx="13" ry="10" fill="url(#furGradDeep)"/>
+    <ellipse cx="74" cy="99" rx="13" ry="10" fill="url(#furGradDeep)"/>
+    <ellipse cx="60" cy="80" rx="26" ry="24" fill="url(#furGrad)"/>
+    <ellipse cx="60" cy="84" rx="15" ry="14" fill="#F7F1E9"/>
+    <circle cx="40" cy="37" r="11" fill="url(#furGradDeep)"/>
+    <circle cx="80" cy="37" r="11" fill="url(#furGradDeep)"/>
+    <circle cx="40" cy="37" r="5.5" fill="#FFE8E3"/>
+    <circle cx="80" cy="37" r="5.5" fill="#FFE8E3"/>
+    <circle cx="60" cy="48" r="22" fill="url(#furGrad)"/>
+    <ellipse cx="60" cy="56" rx="12" ry="9" fill="#F7F1E9"/>
+    <ellipse cx="60" cy="50" rx="5" ry="4" fill="#A76F46"/>
+    <circle cx="51" cy="43" r="2.8" fill="#243047"/>
+    <circle cx="69" cy="43" r="2.8" fill="#243047"/></g>
+</svg>
