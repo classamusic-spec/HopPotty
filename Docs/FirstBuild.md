@@ -560,11 +560,19 @@ builds a view. A file-scope function is nonisolated by default, while
 all main-actor isolated. Every call site is a `#Preview` body, which is
 main-actor anyway, so `@MainActor` on the helper states what was already true.
 
-**Six helpers in the app have this exact shape.** The compiler named four (one
-in run 60, three in run 66) and stopped. The other two — `PaywallView` and
-`ParentHomeView` — were found by searching for the shape instead of waiting to
-be told. All six are annotated, which is the second time in three layers that
-reading has beaten building to the rest of a class.
+**Seven helpers in the app have this shape**, and one — `sheetPreview` in
+`QuickReminderSheet` — was already annotated. Of the six that were not, the
+compiler named four (one in run 60, three in run 66) and stopped; `paywallPreview`
+and `homePreview` were found by searching for the shape instead of waiting to be
+told. That is the second time in three layers that reading has beaten building
+to the rest of a class.
+
+The sweep that found them also produced the one self-inflicted error in this
+whole exercise: it matched on the function signature without checking the line
+above, so the already-annotated `sheetPreview` got a second `@MainActor` and run
+67 came back with `declaration can not have multiple global actor attributes`.
+Worth recording rather than quietly fixing — a search that fixes a class of bug
+is still a change, and this one needed the same compiler check as any other.
 
 ### 11.2 The preview environment was calling constructors positionally — 7 errors
 

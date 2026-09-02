@@ -286,10 +286,11 @@ struct PottyPauseSettingsView: View {
 // themselves are all main-actor isolated. Every call site is a `#Preview` body,
 // which is main-actor anyway, so the annotation states what was already true.
 //
-// Six file-scope preview helpers across the app have this exact shape. The
-// compiler named four of them (one in run 60, three in run 66) and stopped;
-// the other two were found by looking for the shape rather than waiting to be
-// told. All six are annotated.
+// Seven file-scope preview helpers across the app have this shape. One
+// (`sheetPreview` in QuickReminderSheet) was already annotated. Of the six that
+// were not, the compiler named four -- one in run 60, three in run 66 -- and
+// stopped; `paywallPreview` and `homePreview` were found by looking for the
+// shape rather than waiting to be told.
 @MainActor
 private func timerPreview(_ environment: ParentEnvironment) -> some View {
     NavigationStack { PottyPauseSettingsView(childID: HopFixtures.mayaChildID) }
