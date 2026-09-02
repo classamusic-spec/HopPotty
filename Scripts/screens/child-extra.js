@@ -44,7 +44,9 @@ const ink = (appearance) => (appearance.startsWith('dark') ? c(appearance).textP
 function bgImage(rel) {
   const abs = path.join(ROOT, rel);
   if (!fs.existsSync(abs)) return null;
-  return `url("data:image/svg+xml;base64,${Buffer.from(fs.readFileSync(abs, 'utf8')).toString('base64')}")`;
+  // Single quotes: this value is interpolated into a double-quoted `style`
+  // attribute, and a double quote here would close the attribute early.
+  return `url('data:image/svg+xml;base64,${Buffer.from(fs.readFileSync(abs, 'utf8')).toString('base64')}')`;
 }
 
 // ---------------------------------------------------------------------------
@@ -58,7 +60,7 @@ function bgImage(rel) {
  * rather than as a second picture, then veiled back towards the page colour so
  * the type over it keeps its contrast.
  */
-function ambient(art, appearance, { veil = 0.34, blur = 42, glow = null } = {}) {
+function ambient(art, appearance, { veil = 0.3, blur = 42, glow = null } = {}) {
   const col = c(appearance);
   const url = bgImage(art);
   const dark = appearance.startsWith('dark');
@@ -68,7 +70,7 @@ function ambient(art, appearance, { veil = 0.34, blur = 42, glow = null } = {}) 
     <div style="position:absolute;inset:0;background:${alpha(col.backgroundPrimary, veil)}"></div>
     ${glow ? `<div style="position:absolute;left:${glow[0] - glow[2]}px;top:${glow[1] - glow[2]}px;
       width:${glow[2] * 2}px;height:${glow[2] * 2}px;border-radius:50%;
-      background:radial-gradient(circle, ${alpha('#FFFFFF', dark ? 0.08 : 0.62)} 0%, ${alpha('#FFFFFF', 0)} 70%)"></div>` : ''}
+      background:radial-gradient(circle, ${alpha('#FFFFFF', dark ? 0.07 : 0.3)} 0%, ${alpha('#FFFFFF', 0)} 72%)"></div>` : ''}
   </div>`;
 }
 
@@ -152,12 +154,8 @@ function fly(x, y, s, body, { rot = 0, trail = false } = {}) {
  * the same hand they high-five at the end of the routine.
  */
 function hopHand(x, y, s, { rot = 0, flip = false, fill = P.hopGreen } = {}) {
-  return `<g transform="translate(${x} ${y}) ${flip ? 'scale(-1 1) ' : ''}rotate(${rot}) scale(${s})">
-    <g opacity=".16" transform="translate(4 8)" fill="${P.hopGreenInk}">
-      <path d="M 0 0 q -10 -60 26 -80 q 38 -20 68 4 q 30 24 22 66 q -8 42 -58 44 q -48 2 -58 -34 Z"/>
-      <rect x="-6" y="-94" width="25" height="52" rx="12.5"/><rect x="23" y="-110" width="25" height="68" rx="12.5"/>
-      <rect x="52" y="-106" width="25" height="64" rx="12.5"/><rect x="80" y="-84" width="23" height="46" rx="11.5"/>
-    </g>
+  return `<g transform="translate(${x} ${y}) ${flip ? 'scale(-1 1) ' : ''}rotate(${rot}) scale(${s})"
+    style="filter:drop-shadow(0 5px 9px ${alpha(P.midnight, 0.24)})">
     <path d="M 0 0 q -10 -60 26 -80 q 38 -20 68 4 q 30 24 22 66 q -8 42 -58 44 q -48 2 -58 -34 Z" fill="${fill}"/>
     <rect x="-6" y="-94" width="25" height="52" rx="12.5" fill="${fill}"/>
     <rect x="23" y="-110" width="25" height="68" rx="12.5" fill="${fill}"/>
@@ -263,9 +261,10 @@ const PICT = {
     <rect x="-11" y="-2" width="22" height="7" rx="3.5" fill="#FFFFFF" opacity=".6"/>
     <rect x="-6" y="-25" width="12" height="11" rx="4" fill="${f}" opacity=".7"/>
     <path d="M 0 -28 h 11 q 5 0 5 5 v 4" stroke="${f}" stroke-width="5.5" fill="none" stroke-linecap="round" opacity=".7"/></g>`,
-  towel: (f) => `<g><rect x="-19" y="-17" width="38" height="35" rx="9" fill="${f}"/>
-    <rect x="-19" y="-3" width="38" height="7" rx="3.5" fill="#FFFFFF" opacity=".85"/>
-    <rect x="-21" y="-24" width="42" height="9" rx="4.5" fill="${f}" opacity=".5"/></g>`,
+  towel: (f) => `<g><rect x="-19" y="-20" width="38" height="40" rx="10" fill="${f}"/>
+    <rect x="-19" y="1" width="38" height="5" rx="2.5" fill="#FFFFFF" opacity=".9"/>
+    <rect x="-19" y="9" width="38" height="5" rx="2.5" fill="#FFFFFF" opacity=".6"/>
+    <path d="M 19 -20 v 13 h -13 Z" fill="#FFFFFF" opacity=".34"/></g>`,
   /** A tile still face down: the same quiet target the scene's empty slots use. */
   back: (f) => `<g fill="none" stroke="${f}" stroke-width="3.4"><circle r="14"/>
     <circle r="4.6" fill="${f}" stroke="none"/></g>`,
@@ -393,7 +392,7 @@ function routineStep(appearance, {
   const cardH = Math.round((cardW * 3) / 4);
   const overhang = 58;
 
-  return stage(ambient(art, appearance, { veil: 0.36, glow: [196, 440, 210] }), `
+  return stage(ambient(art, appearance, { veil: 0.3, glow: [196, 440, 210] }), `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
       ${routineTopRow(index)}
       ${routineHead(title, instruction)}
@@ -402,7 +401,7 @@ function routineStep(appearance, {
 
       <div style="flex:0 0 auto;position:relative;width:${cardW}px;height:${cardH + overhang}px;margin:0 auto">
         ${boardCard(appearance, { art, w: cardW })}
-        ${hopAt(pose, hopWidth, 'left:-16px;bottom:0')}
+        ${hopAt(pose, hopWidth, 'left:-6px;bottom:0')}
       </div>
       ${extra}
 
@@ -491,7 +490,7 @@ function routineTryTimer(appearance = 'light') {
   const col = c(appearance);
   const size = 262;
 
-  return stage(ambient('Art/scenes/routine-try.svg', appearance, { veil: 0.34, blur: 36, glow: [196, 410, 220] }), `
+  return stage(ambient('Art/scenes/routine-try.svg', appearance, { veil: 0.3, blur: 36, glow: [196, 410, 220] }), `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
       ${routineTopRow(0)}
       ${routineHead('Try', 'Sit down and give it a try.')}
@@ -622,7 +621,7 @@ function gameScreen(appearance, {
   primary = null, secondary = 'All done', tint = P.hopGreenDeep, titleSize = 32,
 }) {
   const col = c(appearance);
-  return stage(ambient(art, appearance, { veil: 0.4, glow: [196, 430, 230] }), `
+  return stage(ambient(art, appearance, { veil: 0.32, glow: [196, 430, 230] }), `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 12px 6px;overflow:hidden">
 
       <div style="flex:0 0 auto;text-align:center;padding:2px 12px 0">
@@ -656,9 +655,9 @@ function gamePottyPath(appearance = 'light') {
   const pads = [[92, 448], [206, 390], [306, 366], [396, 344], [472, 330]];
   const scale = [0.95, 0.85, 0.78, 0.7, 0.62];
   const done = 3;
-  const padMark = (fc, pale) => `<svg viewBox="0 0 40 40" width="27" height="27">
+  const padMark = (fc, notch) => `<svg viewBox="0 0 40 40" width="27" height="27">
     <ellipse cx="20" cy="21" rx="15" ry="7.4" fill="${fc}"/>
-    <path d="M20 21 L31.5 16.4 A15 7.4 0 0 0 27.4 15.2Z" fill="${pale}"/></svg>`;
+    <path d="M20 21 L34.1 18.5 A15 7.4 0 0 0 27.5 14.6 Z" fill="${notch}"/></svg>`;
 
   const layer = pads.map(([x, y], i) => {
     const tone = i < done ? mix(P.hopGreen, P.hopGreenDeep, 0.5) : mix(P.hopGreenLight, P.hopGreen, 0.35);
@@ -671,7 +670,7 @@ function gamePottyPath(appearance = 'light') {
     title: 'Potty Path',
     line: 'Hop along the lily pads all the way to the potty!',
     svgLayer: layer,
-    htmlLayer: hopAt('jump', 108, `left:${f.x(306) - 54}px;top:${f.y(366) - 14 - 108}px`),
+    htmlLayer: hopAt('jump', 108, `left:${f.x(306) - 54}px;top:${f.y(366) + 8 - 108}px`),
     trayH: 150,
     tray: marks(5, done, {
       tint: P.hopGreenDeep,
@@ -728,10 +727,10 @@ function gameFlySnack(appearance = 'light') {
     title: 'Fly Snack',
     line: 'Hop is on his lily pad. Tap the flies for a snack!',
     svgLayer: `
-      ${fly(f.x(140), f.y(152), 34, P.pondBlue, { rot: -8, trail: true })}
-      ${tapHint(f.x(470), f.y(112), 24, P.hopGreenInk, { rings: 2 })}
-      ${fly(f.x(470), f.y(112), 31, P.hopGreenDeep, { rot: 10 })}
-      ${sparkle(f.x(228), f.y(196), 7, P.sunshine, 0.9)}`,
+      ${fly(f.x(138), f.y(202), 34, P.pondBlue, { rot: -8, trail: true })}
+      ${tapHint(f.x(430), f.y(150), 30, P.pondBlueDeep, { rings: 2 })}
+      ${fly(f.x(430), f.y(150), 31, P.hopGreenDeep, { rot: 10 })}
+      ${sparkle(f.x(226), f.y(198), 7, P.sunshine, 0.9)}`,
     htmlLayer: `${hopAt('catch', 148, `left:${f.x(320) - 74}px;top:${f.y(412) - 142}px`)}
       <svg width="369" height="277" viewBox="0 0 369 277" style="position:absolute;left:0;top:0;display:block">
         ${fly(f.x(456), f.y(244), 28, P.sunshineBright, { rot: -18 })}
@@ -746,23 +745,18 @@ function gameFlySnack(appearance = 'light') {
 /** 25 — Mud Off. */
 function gameMudOff(appearance = 'light') {
   const f = frame(369);
-  const glowBlob = (x, y, rx, ry) =>
-    `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#FFFFFF" opacity=".34"/>`;
-
   return gameScreen(appearance, {
     art: 'Art/scenes/games-mudOff.svg',
     title: 'Mud Off',
     line: 'Hop played by the pond! Swipe each patch away.',
     svgLayer: `
-      ${glowBlob(f.x(240), f.y(400), f.x(96), f.y(84))}
-      ${glowBlob(f.x(400), f.y(400), f.x(96), f.y(84))}
-      ${hopHand(f.x(186), f.y(452), f.s * 1.02, { rot: -12 })}
-      ${hopHand(f.x(454), f.y(452), f.s * 1.02, { rot: -12, flip: true })}
-      ${mudPatch(f.x(224), f.y(401), f.x(23), MUD.brown, { rot: 16 })}
-      ${mudPatch(f.x(416), f.y(401), f.x(19), MUD.green, { rot: -24 })}
-      ${sparkleBurst(f.x(247), f.y(372), f.s * 1.1)}
-      ${sparkleBurst(f.x(393), f.y(370), f.s * 0.9)}
-      ${swipeHint(f.x(238), f.y(424), f.x(120), P.pondBlueDeep)}`,
+      ${hopHand(f.x(120), f.y(486), f.s * 1.7, { rot: -8 })}
+      ${hopHand(f.x(520), f.y(486), f.s * 1.7, { rot: -8, flip: true })}
+      ${mudPatch(f.x(193), f.y(397), f.x(32), MUD.brown, { rot: 16 })}
+      ${mudPatch(f.x(447), f.y(397), f.x(27), MUD.green, { rot: -24 })}
+      ${sparkleBurst(f.x(235), f.y(350), f.s * 1.3)}
+      ${sparkleBurst(f.x(405), f.y(350), f.s * 1.05)}
+      ${swipeHint(f.x(200), f.y(430), f.x(150), P.pondBlueDeep)}`,
     trayH: 160,
     tray: `${marks(4, 2, {
       tint: P.pondBlueDeep,
@@ -787,11 +781,11 @@ function gameBodySignal(appearance = 'light') {
     title: 'Listen to Your Body',
     titleSize: 29,
     line: 'Hop is bouncing his ball. Watch for his bubble!',
-    svgLayer: `${ball(f.x(168), f.y(404), f.x(30), P.peachPop, P.sunshine)}`,
+    svgLayer: `${ball(f.x(404), f.y(398), f.x(34), P.peachPop, P.sunshine)}`,
     htmlLayer: `${hopAt('full', 130, `left:${f.x(270) - 65}px;top:${f.y(366) - 130}px`)}
       <svg width="369" height="277" viewBox="0 0 369 277" style="position:absolute;left:0;top:0;display:block">
-        ${tapHint(f.x(492), f.y(122), f.x(118), P.pondBlueDeep, { rings: 2 })}
-        ${thoughtBubble(f.x(492), f.y(122), f.x(118), P.pondBlueDeep, `<g transform="scale(0.74)">${PICT.sit(P.pondBlueDeep)}</g>`)}
+        ${tapHint(f.x(486), f.y(150), f.x(132), P.pondBlueDeep, { rings: 1 })}
+        ${thoughtBubble(f.x(486), f.y(150), f.x(190), P.pondBlueDeep, `<g transform="scale(0.8)">${PICT.sit(P.pondBlueDeep)}</g>`)}
       </svg>`,
     trayH: 150,
     tray: marks(3, 1, {
@@ -814,10 +808,10 @@ function gameFlushWave(appearance = 'light') {
     line: 'Tap the flusher and watch the water swirl!',
     svgLayer: `
       ${tapHint(f.x(452), f.y(254), f.x(46), P.pondBlueDeep, { rings: 2 })}
-      ${swirl(f.x(452), f.y(330), f.x(46), '#FFFFFF', 0.95)}
-      ${swirl(f.x(452), f.y(330), f.x(26), P.pondBlueSoft, 0.9)}
+      ${swirl(f.x(452), f.y(332), f.x(40), '#FFFFFF', 0.95)}
+      ${swirl(f.x(452), f.y(332), f.x(22), P.pondBlueSoft, 0.9)}
       ${sparkle(f.x(536), f.y(288), 8, '#FFFFFF', .9)}${sparkle(f.x(372), f.y(296), 6, '#FFFFFF', .7)}`,
-    htmlLayer: hopAt('wave', 122, `left:${f.x(175) - 61}px;top:${f.y(372) - 122}px`),
+    htmlLayer: hopAt('wave', 122, `left:${f.x(250) - 61}px;top:${f.y(425) - 122}px`),
     trayH: 160,
     tray: `${marks(3, 2, {
       tint: P.pondBlueDeep,
@@ -896,7 +890,7 @@ function speechBubble(text, { maxWidth = 268 } = {}) {
 function gameFlySnackHandoff(appearance = 'light') {
   const col = c(appearance);
 
-  return stage(ambient('Art/scenes/games-flySnack.svg', appearance, { veil: 0.4, glow: [196, 400, 236] }), `
+  return stage(ambient('Art/scenes/games-flySnack.svg', appearance, { veil: 0.32, glow: [196, 400, 236] }), `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
 
       <div style="height:20px"></div>

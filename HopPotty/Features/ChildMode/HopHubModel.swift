@@ -85,20 +85,21 @@ final class HopHubModel {
 
     /// Writes the visit and offers the stars the run earned.
     ///
-    /// The event is written *first* so the star that belongs to it can be keyed
-    /// to a row that already exists on disk: `RewardScope.event` is only safe
-    /// because the UUID it names is durable before the award is attempted. The
-    /// other two reasons — finishing, and washing hands — have no row of their
-    /// own and are keyed to the run's session id instead, which the hub mints
-    /// when it opens the routine.
+    /// Every star is keyed to `session`, which the hub mints when it *opens* the
+    /// routine — before anything could have gone wrong — rather than to the
+    /// event row. That is the difference between a key derived from durable data
+    /// and one derived from this attempt: an event id minted here would be new on
+    /// every retry, so it would make a repeated finish look like a second visit
+    /// and pay for it twice. With the session as the scope, one run earns one
+    /// star per reason however many times this method is called.
     ///
-    /// Nothing here can pay twice. `RewardCoordinator` collapses a repeat on the
-    /// ledger's unique index, so a routine finished, backgrounded and finished
-    /// again produces one star per reason.
+    /// The star not carrying a `sourceEventID` costs the child nothing: deleting
+    /// an event never removes its star anyway (`RewardService.reconcile` breaks
+    /// the link and keeps the row), so the only difference is which line of the
+    /// deletion receipt the star appears on.
     func finishRoutine(_ result: PottyRoutineResult, session: UUID) async {
         guard let child else { return }
 
-        var eventID: UUID?
         // `isChildLoggable` is false only for `.accident`, which the routine has
         // no way to produce. Checked anyway: the one rule this app cannot get
         // wrong is that a child is never asked to record a failure state, and a
@@ -110,19 +111,14 @@ final class HopHubModel {
                 kind: kind,
                 source: .childRoutine
             )
-            if (try? await environment.repositories.events.save(event)) != nil {
-                eventID = event.id
-            }
+            // A failed write loses the timeline row, not the stars. The child
+            // did the thing; a full disk is not their problem and must not be
+            // their loss.
+            try? await environment.repositories.events.save(event)
         }
 
         for reason in result.earnedReasons {
-            let scope: RewardScope
-            if reason.isEventLinked, let eventID {
-                scope = .event(eventID)
-            } else {
-                scope = .session(session)
-            }
-            _ = try? await rewards.award(reason: reason, childID: child.id, scope: scope)
+            _ = try? await rewards.award(reason: reason, childID: child.id, scope: .session(session))
         }
 
         await load()
