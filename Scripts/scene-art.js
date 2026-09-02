@@ -18,7 +18,8 @@
  *                                   the same 200x200 unit box
  *   Art/pond/pond-preview.svg       every item composited at its PondCatalog
  *                                   anchor — a proof the set works as a scene
- *   Art/scenes/step-*.svg           the five routine step illustrations
+ *   Art/scenes/routine-*.svg        the five routine step illustrations
+ *   Art/scenes/games-*.svg          one backdrop per mini-game
  *   Art/scenes/shield-hero.svg      Potty Pause hero art
  *   Art/icons/quiz-*.svg            quiz answer objects
  *   Art/icons/event-*.svg           tried / pee / poop / accident, plus -mono
@@ -953,6 +954,88 @@ function hand(fill, shade) {
     <path d="M 16 -40 q 42 14 78 -6" stroke="${shade}" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.35"/>`;
 }
 
+// --- Props for the mini-game backdrops -------------------------------------
+// These three scenes are *backdrops*: the app composites the live SwiftUI
+// character and the interactive pieces (bubbles, lily pads, picture cards) on
+// top of them. So every prop below is deliberately pushed to an edge and the
+// middle of each frame is left open. A backdrop that competes with the pieces
+// standing on it is a backdrop that has to be redrawn.
+
+/** A towel folded over a wall rail. Anchored at the centre of the rail. */
+function towelOnRail(cx, railY, s = 1) {
+  return g(`translate(${cx} ${railY}) scale(${s})`, `
+    <rect x="-52" y="0" width="104" height="12" rx="6" fill="${P.sand300}"/>
+    <path d="M -38 5 h 76 q 8 0 8 10 v 56 q 0 8 -9 8 q -10 -10 -18 0 q -10 10 -20 0 q -10 -10 -18 0 q -9 7 -15 0 v -64 q 0 -10 8 -10 Z" fill="url(#towelGrad)"/>
+    <path d="M -38 5 h 26 v 74 q -10 5 -19 -2 q -13 2 -13 -9 v -53 q 0 -10 8 -10 Z" fill="#FFFFFF" opacity="0.32"/>
+    <rect x="-42" y="34" width="84" height="11" rx="5.5" fill="#FFFFFF" opacity="0.8"/>`);
+}
+
+/** A pump bottle of hand soap, standing on its base at the origin. */
+function soapPump(cx, baseY, s = 1) {
+  return g(`translate(${cx} ${baseY}) scale(${s})`, `
+    ${contactShadow(0, 3, 40, 8)}
+    <path d="M -26 0 q -8 -58 26 -58 q 34 0 26 58 Z" fill="url(#lavenderBall)"/>
+    <path d="M -26 0 q -8 -58 26 -58 q -14 24 -12 58 Z" fill="#FFFFFF" opacity="0.3"/>
+    <rect x="-20" y="-34" width="40" height="13" rx="6.5" fill="#FFFFFF" opacity="0.55"/>
+    <rect x="-11" y="-76" width="22" height="20" rx="7" fill="${P.sand400}"/>
+    <path d="M 0 -82 h 20 q 9 0 9 9 v 7" stroke="${P.sand400}" stroke-width="10" fill="none" stroke-linecap="round"/>`);
+}
+
+/** A potted fern. The pot is peach so it stays warm against a cool wall. */
+function pottedPlant(cx, baseY, s = 1) {
+  return g(`translate(${cx} ${baseY}) scale(${s})`, `
+    ${contactShadow(0, 4, 52, 10)}
+    ${g('translate(-14 -50) scale(0.46)', frond(150, -56))}
+    ${g('translate(16 -52) scale(0.5)', frond(158, 52))}
+    ${g('translate(0 -56) scale(0.58)', frond(152, -4))}
+    <path d="M -36 -44 h 72 l -9 44 q -2 6 -10 6 h -34 q -8 0 -10 -6 Z" fill="url(#peachBall)"/>
+    <path d="M -36 -44 h 22 l -5 50 h -7 q -8 0 -10 -6 Z" fill="#FFFFFF" opacity="0.26"/>
+    <rect x="-42" y="-54" width="84" height="15" rx="7.5" fill="${P.peach}"/>
+    <rect x="-42" y="-54" width="30" height="15" rx="7.5" fill="#FFFFFF" opacity="0.3"/>`);
+}
+
+/** The bathroom door at the end of Potty Path: a little gabled porch with a
+ *  lit arch window and a plaque, so the destination reads as *friendly* and as
+ *  *the bathroom* rather than as a generic house. Anchored at the threshold. */
+function friendlyDoor(cx, baseY, s = 1) {
+  return g(`translate(${cx} ${baseY}) scale(${s})`, `
+    ${contactShadow(0, 20, 140, 24)}
+    <path d="M -104 8 q 0 -14 14 -14 h 180 q 14 0 14 14 v 14 h -208 Z" fill="${P.sand200}"/>
+    <path d="M -92 0 v -162 q 0 -14 14 -14 h 156 q 14 0 14 14 V 0 Z" fill="url(#woodGradV)"/>
+    <path d="M 0 -278 L 126 -172 q 12 10 -4 10 H -122 q -16 0 -4 -10 Z" fill="url(#greenBall)"/>
+    <path d="M 0 -252 L 94 -174 H -94 Z" fill="#FFFFFF" opacity="0.14"/>
+    <path d="M -62 0 v -134 q 0 -62 62 -62 q 62 0 62 62 V 0 Z" fill="url(#woodGrad)"/>
+    <path d="M -50 0 v -130 q 0 -50 50 -50 q 50 0 50 50 V 0 Z" fill="${P.woodLight}" opacity="0.45"/>
+    <path d="M -28 -128 q 0 -32 28 -32 q 28 0 28 32 v 24 q 0 8 -8 8 h -40 q -8 0 -8 -8 Z" fill="${P.sunshineSoft}"/>
+    <path d="M -28 -128 q 0 -32 28 -32 q -13 12 -13 32 v 32 h -7 q -8 0 -8 -8 Z" fill="#FFFFFF" opacity="0.55"/>
+    <path d="M -28 -112 h 56 M 0 -160 v 64" stroke="${P.woodDeep}" stroke-width="5" opacity="0.5"/>
+    <circle cx="36" cy="-62" r="9" fill="${P.sunshineBright}"/>
+    <g transform="translate(0 -56)">
+      <rect x="-32" y="-16" width="64" height="34" rx="12" fill="${P.cloud}"/>
+      ${g('translate(0 6) scale(0.09)', `
+        <path d="M -104 -78 q 0 -22 22 -22 h 164 q 22 0 22 22 v 34 q 0 56 -104 56 q -104 0 -104 -56 Z" fill="url(#greenBall)"/>
+        <ellipse cx="0" cy="-100" rx="112" ry="34" fill="url(#padGreenLight)"/>
+        <ellipse cx="0" cy="-102" rx="62" ry="17" fill="${P.pondBlueSoft}"/>
+        <path d="M -96 -108 q -14 -66 34 -66 h 124 q 48 0 34 66 q -96 -20 -192 0 Z" fill="url(#greenBall)"/>`)}
+    </g>`);
+}
+
+/** A counter-top basin: a rim, a well you can see into, and a wall-mounted
+ *  gooseneck tap running into it. */
+function basinAndTap(cx, rimY, s = 1) {
+  return g(`translate(${cx} ${rimY}) scale(${s})`, `
+    <path d="M 92 6 V -58 q 0 -40 -48 -40 h -50 v 18" stroke="${P.sand300}" stroke-width="22" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 92 6 V -58 q 0 -40 -48 -40 h -50 v 18" stroke="${P.sand200}" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="104" y="-52" width="42" height="15" rx="7.5" fill="${P.sand400}"/>
+    <path d="M -6 -74 q -4 40 -2 66" stroke="url(#waterStream)" stroke-width="26" stroke-linecap="round" fill="none"/>
+    <path d="M -12 -62 q -3 30 -2 46" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.5"/>
+    <ellipse cx="0" cy="10" rx="124" ry="36" fill="${P.sand300}" opacity="0.75"/>
+    <ellipse cx="0" cy="0" rx="124" ry="36" fill="url(#porcelainGrad)"/>
+    <ellipse cx="0" cy="2" rx="96" ry="26" fill="${P.porcelainShade}"/>
+    <ellipse cx="0" cy="4" rx="92" ry="24" fill="${P.pondBlueLight}"/>
+    <ellipse cx="-34" cy="-4" rx="40" ry="9" fill="#FFFFFF" opacity="0.55"/>`);
+}
+
 const scenes = {
   'routine-try': () => `
     ${bathroom()}
@@ -1123,7 +1206,11 @@ const quizIcons = {
   toilet: () => `${disc(P.pondBlueSoft)}
     ${toilet(52, 108, 0.29, { lidOpen: false })}`,
 
-  'toilet-paper': () => `${disc(P.sunshineSoft)}
+  // Key is `icon.quiz.toiletPaper`, so the file must be `quiz-toiletPaper.svg`:
+  // `HopIllustrationKey.assetName` drops the family and joins the rest with
+  // hyphens, preserving case. Hyphenating the camelCase word here would emit
+  // `quiz-toilet-paper.svg`, which no key resolves to.
+  toiletPaper: () => `${disc(P.sunshineSoft)}
     <ellipse cx="60" cy="98" rx="30" ry="5" fill="${P.sunshineDeep}" opacity="0.12"/>
     <path d="M 42 34 h 30 q 20 0 20 22 v 34 q 0 12 -20 12 h -30 Z" fill="${P.porcelainMid}"/>
     <path d="M 72 34 q 20 0 20 22 v 34 q 0 12 -20 12 q -20 0 -20 -12 v -34 q 0 -22 20 -22 Z" fill="url(#porcelainGrad)"/>
