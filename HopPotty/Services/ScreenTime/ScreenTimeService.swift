@@ -47,7 +47,25 @@ public final class ScreenTimeService: ScreenTimeProviding {
     public private(set) var lastReconciliation: ShieldReconciler.Verdict?
 
     private let appGroup: AppGroupStore
-    private let center: AuthorizationCenter
+
+    /// `nonisolated(unsafe)` for the same reason `NotificationService` had to
+    /// move its boundary: `AuthorizationCenter` is not `Sendable`, so calling a
+    /// non-isolated framework method on a main-actor-isolated stored property
+    /// means the *center itself* leaves the actor —
+    ///
+    ///     error: sending 'self.center' risks causing data races
+    ///
+    /// The difference from that case is that there is no boundary to move here.
+    /// `requestAuthorization(for:)` and `revokeAuthorization` are Apple's, they
+    /// are not isolated, and this type has to call them. What is actually being
+    /// sent is a process-wide singleton (`AuthorizationCenter.shared`) whose
+    /// whole purpose is to be reached from anywhere in the app *and* from the
+    /// three extensions; HopPotty stores nothing in it and mutates nothing on
+    /// it. The annotation records that this is safe by construction rather than
+    /// by proof, which is exactly what `nonisolated(unsafe)` is for.
+    ///
+    /// It stays injectable so tests and the mock scheme can substitute it.
+    private nonisolated(unsafe) let center: AuthorizationCenter
     private let defaults: UserDefaults
     private var cancellables: Set<AnyCancellable> = []
     private var statusContinuations: [UUID: AsyncStream<ScreenTimeAuthorizationStatus>.Continuation] = [:]
