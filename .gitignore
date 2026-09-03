@@ -36,3 +36,9 @@ HopPotty/Resources/Assets.xcassets/Illustrations/
 # Web prototype build output and Vercel project link
 web/dist/
 .vercel/
+
+# React Native / JS
+node_modules/
+web-preview/dist/
+web-preview/.vercel/
+.vercel/

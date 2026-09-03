@@ -96,6 +96,16 @@ jobs:
       - name: Verify the art
         run: Scripts/check-art.sh
 
+      # The React Native design system and mascot are generated from the Swift
+      # design tokens and the art rig. If someone changes a colour in Swift or a
+      # pose in the rig and does not regenerate, React Native silently keeps
+      # drawing the old one — which is the whole class of drift the generators
+      # exist to prevent, so it fails the build rather than waiting to be noticed.
+      - name: Verify the React Native generated sources
+        run: |
+          node Scripts/rn/build-tokens.js --check
+          node Scripts/rn/build-mascot.js --check
+
   app:
     name: App and extensions (Xcode)
     runs-on: macos-15

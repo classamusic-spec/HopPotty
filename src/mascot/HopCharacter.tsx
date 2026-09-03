@@ -125,6 +125,14 @@ export interface HopCharacterProps {
   accessibilityLabel?: string;
   /** Hidden from assistive tech where Hop is pure decoration on a busy screen. */
   decorative?: boolean;
+  /**
+   * Draw a specific rig pose, bypassing the state map.
+   *
+   * For the pose gallery and visual QA only. Product screens ask for a *state*
+   * — see `hopStates.ts` — so that renaming a rig pose stays an art change
+   * rather than a feature change.
+   */
+  pose?: HopPoseName;
 }
 
 /** How far a pupil travels, in rig units, at full gaze deflection. */
@@ -141,8 +149,9 @@ export function HopCharacter({
   animated = true,
   accessibilityLabel,
   decorative = false,
+  pose: poseOverride,
 }: HopCharacterProps): React.ReactElement {
-  const pose: HopPoseName = hopPoseFor(state);
+  const pose: HopPoseName = poseOverride ?? hopPoseFor(state);
   const [blinking, setBlinking] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
