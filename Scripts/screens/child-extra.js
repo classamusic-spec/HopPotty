@@ -116,6 +116,28 @@ const frame = (w) => {
   return { s, x: (v) => +(v * s).toFixed(1), y: (v) => +(v * s).toFixed(1) };
 };
 
+/**
+ * The same mapping, for a band taller than the scene's own 4:3.
+ *
+ * `worldBand` paints the picture with `cover`, so past 295px tall the art
+ * scales up and its sides run off the screen. `frame(393)` assumes the picture
+ * is exactly 393 wide starting at the band's left edge, so on a taller band
+ * every sprite drifts off the feature it was placed on — the mud slides off the
+ * palm. This is `cover`'s own arithmetic, so a sprite stays put at any height.
+ *
+ * `x`/`y` carry the crop offset, so they are positions, not lengths: a radius
+ * or a stroke length is `f.s * n`.
+ */
+const boardFadeMask = (h, fade) =>
+  `linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,1) ${(((h - fade) / h) * 100).toFixed(1)}%, rgba(0,0,0,0) 100%)`;
+
+const bandFrame = (h) => {
+  const s = Math.max(393 / 640, h / 480);
+  const ox = (393 - 640 * s) / 2;
+  const oy = (h - 480 * s) / 2;
+  return { s, x: (v) => +(ox + v * s).toFixed(1), y: (v) => +(oy + v * s).toFixed(1) };
+};
+
 
 /**
  * The scene, bled edge to edge.
@@ -653,24 +675,37 @@ function gamesHub(appearance = 'light') {
  */
 function gameScreen(appearance, {
   art, title, line, svgLayer = '', htmlLayer = '', tray = '',
-  primary = null, secondary = 'All done', tint = P.hopGreenDeep, titleSize = 32, bandTop = 250,
+  primary = null, secondary = 'All done', tint = P.hopGreenDeep, titleSize = 32,
+  // The band is 295 tall by default — 393 wide at the scenes' own 4:3, so the
+  // whole picture shows. A game whose board *is* the picture can ask for more:
+  // past 295 the art scales up rather than letterboxing, trading the edges of
+  // the scene for size. `veilFrom` moves with it, so the wash that carries the
+  // tray and the buttons starts below the art rather than across it.
+  bandTop = 250, bandHeight = 295, veilFrom = 500, veilHeight = 352, boardFade = 0,
 }) {
   const col = c(appearance);
-  const BAND_H = 295;
   const ground = `<div style="position:absolute;inset:0;overflow:hidden">
     ${ambient(art, appearance, { veil: 0.26, blur: 48 })}
-    ${worldBand(art, { top: bandTop, height: BAND_H })}
+    ${worldBand(art, { top: bandTop, height: bandHeight })}
   </div>`;
 
-  // Sprites are positioned in the band's own coordinates, which are the scene's
-  // 640×480 scaled to the full 393 — `frame(393)`.
-  const board = `<div style="position:absolute;left:0;top:${bandTop}px;width:393px;height:${BAND_H}px">
-    ${svgLayer ? `<svg width="393" height="${BAND_H}" viewBox="0 0 393 ${BAND_H}"
+  // Sprites are positioned in the band's own coordinates — `frame(393)` at the
+  // default height, `bandFrame(bandHeight)` on a taller one.
+  //
+  // The board is clipped to the band, so a sprite that runs off the bottom ends
+  // on a hard horizontal line while the art behind it has already faded out.
+  // `boardFade` gives the sprites the same soft ending as the picture, so a
+  // hand rising out of frame melts away instead of being sliced.
+  const fade = boardFade
+    ? `-webkit-mask-image:${boardFadeMask(bandHeight, boardFade)};mask-image:${boardFadeMask(bandHeight, boardFade)};`
+    : '';
+  const board = `<div style="position:absolute;left:0;top:${bandTop}px;width:393px;height:${bandHeight}px;${fade}">
+    ${svgLayer ? `<svg width="393" height="${bandHeight}" viewBox="0 0 393 ${bandHeight}"
       style="position:absolute;left:0;top:0;display:block">${svgLayer}</svg>` : ''}
     ${htmlLayer}
   </div>`;
 
-  return stage(`${ground}${veil(appearance, { from: 500, height: 352, strength: 0.6 })}`, `
+  return stage(`${ground}${veil(appearance, { from: veilFrom, height: veilHeight, strength: 0.6 })}`, `
     <div class="fit" style="flex:1;display:flex;flex-direction:column;padding:0 22px 6px;overflow:hidden">
       ${grownUpRow()}
 
@@ -786,20 +821,31 @@ function gameFlySnack(appearance = 'light') {
 
 /** 25 — Mud Off. */
 function gameMudOff(appearance = 'light') {
-  const f = frame(393);
+  // The board here *is* the picture — a child swipes Hop's own hands — so the
+  // band runs from just under the instruction down to the tray and the art
+  // scales up to fill it, and the bottom wash starts below the band instead of
+  // halfway across the hands.
+  const BAND = { top: 216, height: 420, veilFrom: 616 };
+  const f = bandFrame(BAND.height);
+  const hand = (x, flip) =>
+    hopHand(f.x(x), f.y(398), f.s * 272 / hopArt.HAND.extent, { rot: -8, flip });
   return gameScreen(appearance, {
     art: 'Art/scenes/games-mudOff.svg',
     title: 'Mud Off',
     line: 'Hop played by the pond! Swipe each patch away.',
+    bandTop: BAND.top,
+    bandHeight: BAND.height,
+    veilFrom: BAND.veilFrom,
+    veilHeight: 852 - BAND.veilFrom,
+    boardFade: 44,
     svgLayer: `
-      ${hopHand(f.x(196), f.y(430), f.s * 330 / hopArt.HAND.extent, { rot: -8 })}
-      ${hopHand(f.x(444), f.y(430), f.s * 330 / hopArt.HAND.extent, {
-        rot: -8, flip: true, })}
-      ${mudPatch(f.x(193), f.y(397), f.x(32), MUD.brown, { rot: 16 })}
-      ${mudPatch(f.x(447), f.y(397), f.x(27), MUD.paint, { rot: -24 })}
-      ${sparkleBurst(f.x(235), f.y(350), f.s * 1.3)}
-      ${sparkleBurst(f.x(405), f.y(350), f.s * 1.05)}
-      ${swipeHint(f.x(200), f.y(430), f.x(150), P.pondBlueDeep)}`,
+      ${hand(213, false)}
+      ${hand(427, true)}
+      ${mudPatch(f.x(210), f.y(371), f.s * 27, MUD.brown, { rot: 16 })}
+      ${mudPatch(f.x(430), f.y(371), f.s * 23, MUD.paint, { rot: -24 })}
+      ${sparkleBurst(f.x(245), f.y(332), f.s * 1.1)}
+      ${sparkleBurst(f.x(395), f.y(332), f.s * 0.9)}
+      ${swipeHint(f.x(216), f.y(398), f.s * 124, P.pondBlueDeep)}`,
     tray: `${marks(4, 2, {
       tint: P.pondBlueDeep,
       soft: '#FFFFFF',
