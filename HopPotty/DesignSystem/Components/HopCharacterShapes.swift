@@ -191,10 +191,6 @@ enum HopAnatomy {
     /// How far a toe reaches from the sole centre: the horizontal reach is
     /// multiplied by the pose's toe spread, the vertical one is not.
     static let toeReach = CGSize(width: 15, height: 11)
-    static let creaseAngles: [Double] = [-30, -70]
-    /// A crease runs from just inside the sole to just short of the toe tips.
-    static let creaseInnerReach: Double = 5
-    static let creaseReach = CGSize(width: 14, height: 12)
 
     /// The point the head rotates about, and the mouth scales about.
     static let faceCentre = CGPoint(x: 75, y: 50)
@@ -246,7 +242,6 @@ enum HopAnatomy {
     // `HopCanvas.unit(for:)` at the one place they are used.
     static let closedEyeStroke: CGFloat = 3.2
     static let smileStroke: CGFloat = 3.4
-    static let creaseStroke: CGFloat = 1.6
     static let strapStroke: CGFloat = 4
     static let wiggleStroke: CGFloat = 2.4
     static let tongueStroke: CGFloat = 7
@@ -320,6 +315,67 @@ extension Path {
         addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
         addHopArc(centre: CGPoint(x: rect.maxX - r, y: rect.minY + r), radii: radii, from: 270, to: 360)
         closeSubpath()
+    }
+
+    /// A limb: round-capped, `rootWidth` across where it leaves the body and
+    /// `tipWidth` where it ends. The twin of `taperD` in `Scripts/hop-art.js`.
+    ///
+    /// The sides are the two end circles' external tangents, so the outline is
+    /// exact rather than a trapezoid poking out of the caps. The asymmetry
+    /// matters and is easy to get backwards: with `t` the angle whose sine is
+    /// the radius difference over the length, the tip sweeps `180° − 2t` (under
+    /// a semicircle) while the root sweeps `180° + 2t` (over one). Give the root
+    /// the short sweep and it cuts straight across the joint instead of bulging
+    /// behind it — the limb loses its root, and a wide root like a crouched
+    /// haunch collapses into a flat-topped slab.
+    mutating func addHopTaper(
+        from start: CGPoint,
+        to end: CGPoint,
+        rootWidth: CGFloat,
+        tipWidth: CGFloat
+    ) {
+        let r1 = rootWidth / 2
+        let r2 = tipWidth / 2
+        guard r1 > 0, r2 > 0 else { return }
+        let dx = end.x - start.x
+        let dy = end.y - start.y
+        let length = (dx * dx + dy * dy).squareRoot()
+        // One circle swallowing the other has no external tangent; the bigger
+        // circle is then the whole limb.
+        guard length > abs(r1 - r2) + 0.0001 else {
+            addHopCircle(centre: r1 >= r2 ? start : end, radius: max(r1, r2))
+            return
+        }
+        let t = asin(Double(r1 - r2) / Double(length)) * 180 / .pi
+        var local = Path()
+        let topAngle = t - 90
+        let bottomAngle = 90 - t
+        let tipCentre = CGPoint(x: length, y: 0)
+        local.move(to: CGPoint(
+            x: Double(r1) * cos(topAngle * .pi / 180),
+            y: Double(r1) * sin(topAngle * .pi / 180)
+        ))
+        local.addLine(to: CGPoint(
+            x: Double(length) + Double(r2) * cos(topAngle * .pi / 180),
+            y: Double(r2) * sin(topAngle * .pi / 180)
+        ))
+        local.addHopArc(
+            centre: tipCentre, radii: CGSize(width: r2, height: r2),
+            from: topAngle, to: bottomAngle
+        )
+        local.addLine(to: CGPoint(
+            x: Double(r1) * cos(bottomAngle * .pi / 180),
+            y: Double(r1) * sin(bottomAngle * .pi / 180)
+        ))
+        local.addHopArc(
+            centre: .zero, radii: CGSize(width: r1, height: r1),
+            from: bottomAngle, to: topAngle + 360
+        )
+        local.closeSubpath()
+        addPath(local.applying(
+            CGAffineTransform(rotationAngle: atan2(dy, dx))
+                .concatenating(CGAffineTransform(translationX: start.x, y: start.y))
+        ))
     }
 
     /// A round-capped segment, filled rather than stroked.
@@ -424,10 +480,8 @@ struct HopFigureShape: Shape {
         case packStrap
         case shinLeft
         case footLeft
-        case toeCreasesLeft
         case shinRight
         case footRight
-        case toeCreasesRight
         case torso
         case belly
         case armLeft
@@ -482,10 +536,8 @@ struct HopFigureShape: Shape {
         case .packStrap: packStrap(&path)
         case .shinLeft: shin(geometry.legL, into: &path)
         case .footLeft: foot(geometry.legL, side: -1, into: &path)
-        case .toeCreasesLeft: toeCreases(geometry.legL, side: -1, into: &path)
         case .shinRight: shin(geometry.legR, into: &path)
         case .footRight: foot(geometry.legR, side: 1, into: &path)
-        case .toeCreasesRight: toeCreases(geometry.legR, side: 1, into: &path)
         case .torso: torso(&path)
         case .belly: belly(&path)
         case .armLeft: arm(to: geometry.armL, from: HopAnatomy.shoulderL, into: &path)
@@ -559,9 +611,15 @@ struct HopFigureShape: Shape {
         path.addPath(crown.applying(geometry.headTilt))
     }
 
-    /// The shin: hip to ankle, one capsule.
+    /// The shin: hip to ankle, one tapered limb.
+    ///
+    /// The widths come from the pose, not from `HopAnatomy`, because the crouch
+    /// draws its folded back leg as this same shape with a much wider root.
     private func shin(_ shape: HopLegGeometry, into path: inout Path) {
-        path.addHopCapsule(from: shape.hip, to: shape.ankle, radius: HopAnatomy.legWidth / 2)
+        path.addHopTaper(
+            from: shape.hip, to: shape.ankle,
+            rootWidth: shape.rootWidth, tipWidth: shape.tipWidth
+        )
     }
 
     /// The foot: the sole, and three toes fanned outward and down. `side` −1 is
@@ -586,25 +644,6 @@ struct HopFigureShape: Shape {
         }
     }
 
-    /// The two creases between the toes. Stroked, and the only place in the
-    /// drawing where a second green appears on the body.
-    private func toeCreases(_ shape: HopLegGeometry, side: Double, into path: inout Path) {
-        let foot = footCentre(for: shape, side: side)
-        let inner = HopAnatomy.creaseInnerReach
-        let reachX = Double(HopAnatomy.creaseReach.width)
-        let reachY = Double(HopAnatomy.creaseReach.height)
-        for crease in HopAnatomy.creaseAngles {
-            let angle = toeAngle(crease, side: side) * .pi / 180
-            path.move(to: CGPoint(
-                x: Double(foot.x) + cos(angle) * inner,
-                y: Double(foot.y) + sin(angle) * inner
-            ))
-            path.addLine(to: CGPoint(
-                x: Double(foot.x) + cos(angle) * reachX * shape.toeSpread,
-                y: Double(foot.y) + sin(angle) * reachY
-            ))
-        }
-    }
 
     private func footCentre(for shape: HopLegGeometry, side: Double) -> CGPoint {
         CGPoint(x: Double(shape.ankle.x) - side * 2, y: Double(shape.ankle.y) + 3)
@@ -621,7 +660,7 @@ struct HopFigureShape: Shape {
         let x0 = 75 - width / 2
         let x1 = 75 + width / 2
         let top = 58 + geometry.squash * 4
-        let bottom = 127 - geometry.squash * 4
+        let bottom = geometry.torsoBottom ?? (127 - geometry.squash * 4)
         let r = min(26, width / 2)
         guard bottom - top > r else { return }
         let radii = CGSize(width: r, height: r)
@@ -635,6 +674,13 @@ struct HopFigureShape: Shape {
     }
 
     private func belly(_ path: inout Path) {
+        if let belly = geometry.belly {
+            path.addHopEllipse(
+                centre: CGPoint(x: 75, y: belly.cy),
+                radii: CGSize(width: belly.rx, height: belly.ry)
+            )
+            return
+        }
         let scale = geometry.bellyScale
         path.addHopEllipse(
             centre: CGPoint(x: 75, y: 104 + (scale - 1) * 4),
@@ -648,7 +694,10 @@ struct HopFigureShape: Shape {
     /// `translate(shoulder) rotate(θ)`; here the two ends are enough, because a
     /// `Path` has no group to hang a transform on. The geometry is the same one.
     private func arm(to hand: CGPoint, from shoulder: CGPoint, into path: inout Path) {
-        path.addHopCapsule(from: shoulder, to: hand, radius: HopAnatomy.armWidth / 2)
+        path.addHopTaper(
+            from: shoulder, to: hand,
+            rootWidth: geometry.armWidth, tipWidth: geometry.armTipWidth
+        )
     }
 
     /// The hand: a palm and three fingers fanned about the direction the arm
@@ -656,6 +705,37 @@ struct HopFigureShape: Shape {
     /// the hand is a part of its own so that it carries a rim against the arm,
     /// against the belly, and against the other hand.
     private func hand(at hand: CGPoint, from shoulder: CGPoint, into path: inout Path) {
+        // Planted: a sitting frog puts its forelimbs down the way it puts its
+        // hind ones down, so the hand becomes the foot's shape at 0.82 scale,
+        // fanned from the horizon rather than from the wrist. Hanging fingers
+        // off a vertical arm instead points the longest one straight at the
+        // floor, which reads as a spike and — measurably — was the ink that
+        // pushed the pose off the bottom of its canvas.
+        if geometry.pawSpread > 0 {
+            let side: Double = hand.x < 75 ? -1 : 1
+            let scale = 0.82
+            path.addHopEllipse(
+                centre: hand,
+                radii: CGSize(
+                    width: HopAnatomy.soleRadii.width * scale,
+                    height: HopAnatomy.soleRadii.height * scale
+                )
+            )
+            for toe in HopAnatomy.toes {
+                let angle = toeAngle(toe.angle, side: side) * .pi / 180
+                path.addHopCapsule(
+                    from: hand,
+                    to: CGPoint(
+                        x: Double(hand.x) + cos(angle)
+                            * Double(HopAnatomy.toeReach.width) * geometry.pawSpread * scale,
+                        y: Double(hand.y) + sin(angle)
+                            * Double(HopAnatomy.toeReach.height) * scale
+                    ),
+                    radius: toe.radius * scale
+                )
+            }
+            return
+        }
         path.addHopCircle(centre: hand, radius: HopAnatomy.palmRadius)
         let direction = atan2(Double(hand.y - shoulder.y), Double(hand.x - shoulder.x))
         let reach = Double(HopAnatomy.fingerLength)

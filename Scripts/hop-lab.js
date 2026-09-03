@@ -328,17 +328,42 @@ function swiftPose(text) {
     const m = one(text, new RegExp(`\\b${key}: (-?[\\d.]+)`));
     if (m) p[key] = num(m[1]);
   };
-  ['lift', 'squash', 'tilt', 'lean', 'armsForward', 'bellyScale', 'torsoWidth'].forEach(scalar);
+  ['lift', 'squash', 'tilt', 'lean', 'armsForward', 'bellyScale', 'torsoWidth',
+    'torsoBottom', 'pawSpread'].forEach(scalar);
+  // Swift spells these out; the generator's names are shorter.
+  const armW = one(text, /\barmWidth: (-?[\d.]+)/);
+  if (armW) p.armW = num(armW[1]);
+  const armWT = one(text, /\barmTipWidth: (-?[\d.]+)/);
+  if (armWT) p.armWTip = num(armWT[1]);
+  if (p.pawSpread !== undefined) { p.pawHands = p.pawSpread; delete p.pawSpread; }
+  const belly = one(text, /\bbelly: HopBellyGeometry\(cy: (-?[\d.]+), rx: (-?[\d.]+), ry: (-?[\d.]+)\)/);
+  if (belly) p.belly = { cy: num(belly[1]), rx: num(belly[2]), ry: num(belly[3]) };
   const point = (key) => {
     const m = one(text, new RegExp(`\\b${key}: CGPoint\\(x: (-?[\\d.]+), y: (-?[\\d.]+)\\)`));
     if (m) p[key] = [num(m[1]), num(m[2])];
   };
   point('armL'); point('armR'); point('tongueTo');
+  // Read each leg from its own argument list rather than one fixed-order
+  // regex: the leg has grown fields twice now, and a regex that spells out
+  // every field in order silently stops matching when one is added — which
+  // reports the *defaults* as Swift's answer and makes a real mismatch look
+  // like a different real mismatch.
   for (const side of ['legL', 'legR']) {
-    const m = one(text, new RegExp(
-      `\\b${side}: HopLegGeometry\\(hip: CGPoint\\(x: (-?[\\d.]+), y: (-?[\\d.]+)\\), ` +
-      `ankle: CGPoint\\(x: (-?[\\d.]+), y: (-?[\\d.]+)\\), toeSpread: (-?[\\d.]+)\\)`));
-    if (m) p[side] = { hip: [num(m[1]), num(m[2])], ankle: [num(m[3]), num(m[4])], spread: num(m[5]) };
+    const at = text.indexOf(`${side}: HopLegGeometry(`);
+    if (at < 0) continue;
+    const args = callArgs(text.slice(at), 'HopLegGeometry');
+    if (args === null) continue;
+    const hip = one(args, /hip: CGPoint\(x: (-?[\d.]+), y: (-?[\d.]+)\)/);
+    const ankle = one(args, /ankle: CGPoint\(x: (-?[\d.]+), y: (-?[\d.]+)\)/);
+    if (!hip || !ankle) continue;
+    const leg = { hip: [num(hip[1]), num(hip[2])], ankle: [num(ankle[1]), num(ankle[2])] };
+    const spread = one(args, /toeSpread: (-?[\d.]+)/);
+    if (spread) leg.spread = num(spread[1]);
+    const root = one(args, /rootWidth: (-?[\d.]+)/);
+    if (root) leg.w1 = num(root[1]);
+    const tip = one(args, /tipWidth: (-?[\d.]+)/);
+    if (tip) leg.w2 = num(tip[1]);
+    p[side] = leg;
   }
   const mouth = one(text, /\bmouth: \.(\w+)/);
   if (mouth) p.mouth = mouth[1];
@@ -366,8 +391,8 @@ function swiftPose(text) {
 const POSE_DEFAULTS = {
   lift: 0, squash: 0, tilt: 0, lean: 0, armsForward: 0,
   armL: [22, 103], armR: [128, 103],
-  legL: { hip: [56, 124], ankle: [52, 146], spread: 1 },
-  legR: { hip: [94, 124], ankle: [98, 146], spread: 1 },
+  legL: { hip: [56, 124], ankle: [52, 146], spread: 1, w1: 26, w2: 18 },
+  legR: { hip: [94, 124], ankle: [98, 146], spread: 1, w1: 26, w2: 18 },
   mouth: 'open', bellyScale: 1, torsoWidth: 58,
   withPack: false, wiggling: false, sleeping: false, tongueTo: null,
   eyes: { gaze: [0, 0], blink: 0, mood: 'happy', lidDrop: 0 },
@@ -378,7 +403,12 @@ function normalise(p) {
     hip: (l && l.hip) || d.hip,
     ankle: (l && l.ankle) || d.ankle,
     spread: (l && (l.spread ?? l.toeSpread)) ?? d.spread,
+    // A crouched haunch is a leg with a much wider root, so the widths are part
+    // of the pose and have to be compared like everything else in it.
+    w1: (l && (l.w1 ?? l.rootWidth)) ?? d.w1,
+    w2: (l && (l.w2 ?? l.tipWidth)) ?? d.w2,
   });
+  const bellyOf = (b) => (b ? { cy: b.cy, rx: b.rx, ry: b.ry } : null);
   const e = p.eyes || {};
   return {
     lift: p.lift ?? 0, squash: p.squash ?? 0, tilt: p.tilt ?? 0, lean: p.lean ?? 0,
@@ -386,6 +416,8 @@ function normalise(p) {
     armL: p.armL || POSE_DEFAULTS.armL, armR: p.armR || POSE_DEFAULTS.armR,
     legL: legOf(p.legL, POSE_DEFAULTS.legL), legR: legOf(p.legR, POSE_DEFAULTS.legR),
     mouth: p.mouth || 'open', bellyScale: p.bellyScale ?? 1, torsoWidth: p.torsoWidth ?? 58,
+    torsoBottom: p.torsoBottom ?? null, belly: bellyOf(p.belly),
+    armW: p.armW ?? 15, armWTip: p.armWTip ?? 11.5, pawHands: p.pawHands ?? 0,
     withPack: !!p.withPack, wiggling: !!p.wiggling, sleeping: !!p.sleeping,
     tongueTo: p.tongueTo || null,
     eyes: {

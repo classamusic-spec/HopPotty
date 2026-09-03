@@ -230,15 +230,16 @@ const PUPIL_R = 12.3;
 const SHOULDER_L = [48, 86];
 const SHOULDER_R = [102, 86];
 const ARM_W = 15;
+const ARM_W_TIP = 11.5;
 const PALM_R = 9.5;
 const FINGER_LEN = 12;
 const FINGER_W = 10.5;
 const FINGER_ANGLES = [-50, 0, 50];
 
 const LEG_W = 26;
+const LEG_W_TIP = 18;
 const SOLE = { rx: 14, ry: 8.5 };
 const TOES = [[-4, 6], [-34, 6], [-64, 5.6]];
-const CREASES = [-20, -50];
 
 // ---------------------------------------------------------------------------
 // Primitives
@@ -266,6 +267,52 @@ function roundRectD(x, y, w, h, r) {
     ` V ${n2(y + h - r)} A ${r} ${r} 0 0 1 ${n2(x + w - r)} ${n2(y + h)}` +
     ` H ${n2(x + r)} A ${r} ${r} 0 0 1 ${n2(x)} ${n2(y + h - r)}` +
     ` V ${n2(y + r)} A ${r} ${r} 0 0 1 ${n2(x + r)} ${n2(y)} Z`;
+}
+
+/**
+ * A limb: a capsule from (0,0) to (len,0) that is `w1` wide at the root and
+ * `w2` at the tip, with round caps at both ends.
+ *
+ * Why not a round-capped `<line>`, which is what every limb used to be: a line
+ * has one width, so an arm was a pipe of constant diameter bolted to the torso
+ * at one end and to a hand at the other. A real limb is thicker where it leaves
+ * the body. That single difference is most of what separated this drawing from
+ * the reference — the tone ramp and the outline were already right.
+ *
+ * The sides are the two circles' *external* tangents, so the silhouette is
+ * exact rather than a trapezoid that pokes out of the caps: with `t` the angle
+ * whose sine is the radius difference over the length, each tangent touches its
+ * circle at `90° − t` from the axis. When one circle swallows the other there is
+ * no external tangent, so the bigger circle is the whole shape.
+ */
+function taperD(len, w1, w2) {
+  const r1 = w1 / 2;
+  const r2 = w2 / 2;
+  if (len <= Math.abs(r1 - r2)) {
+    return r1 >= r2 ? ellipseD(0, 0, r1, r1) : ellipseD(len, 0, r2, r2);
+  }
+  const t = Math.asin((r1 - r2) / len);
+  const c = Math.cos(t);
+  const s1 = Math.sin(t);
+  const ax = n2(r1 * s1);
+  const ay = n2(-r1 * c);
+  const bx = n2(len + r2 * s1);
+  const by = n2(-r2 * c);
+  // Both caps sweep the same way (1 = clockwise with y down), so the outline
+  // runs root-top → tip-top → round the tip → tip-bottom → root-bottom → round
+  // the root, and closes in one winding.
+  //
+  // The root cap takes the LARGE arc and the tip cap the small one, and the
+  // difference is not cosmetic. Because the tangents touch each circle at
+  // `90° − t` from the axis, the tip cap spans `180° − 2t` (under a semicircle,
+  // so the minor arc) while the root cap spans `180° + 2t` (over one, so the
+  // major arc). Giving the root the minor arc makes it cut the chord *across*
+  // the joint instead of bulging behind it: the limb loses its root, and a wide
+  // root like a crouched haunch turns into a flat-topped slab.
+  return `M ${ax} ${ay} L ${bx} ${by}` +
+    ` A ${n2(r2)} ${n2(r2)} 0 0 1 ${bx} ${n2(-by)}` +
+    ` L ${ax} ${n2(-ay)}` +
+    ` A ${n2(r1)} ${n2(r1)} 0 1 1 ${ax} ${ay} Z`;
 }
 
 /** A shape as closed path data. Every sub-path winds the same way, so a list of
@@ -420,7 +467,7 @@ function headNode(tilt, face) {
  * one. It used to step to `#8FDCAC`, which was so far up that `scrub`'s cupped
  * hands read as a reflection rather than as hands.
  */
-function armNode(side, shoulder, hand, { front = false } = {}) {
+function armNode(side, shoulder, hand, { front = false, w1 = ARM_W, w2 = ARM_W_TIP, paw = null } = {}) {
   const [sx, sy] = shoulder;
   const [hx, hy] = hand;
   const dx = hx - sx;
@@ -438,14 +485,47 @@ function armNode(side, shoulder, hand, { front = false } = {}) {
     id: `${side}-arm`,
     transform: `translate(${n2(sx)} ${n2(sy)}) rotate(${n2(deg)})`,
     tone,
-    shapes: [{ t: 'l', x1: 0, y1: 0, x2: n2(len), y2: 0, w: ARM_W }],
-    children: [{
+    shapes: [{ t: 'p', d: taperD(len, w1, w2) }],
+    children: [paw ? {
+      // Planted: un-rotate the arm so the paw lies on the floor, exactly as the
+      // foot does inside the leg.
+      id: `${side}-hand`,
+      transform: `translate(${n2(len)} 0) rotate(${n2(-deg)})`,
+      tone,
+      shapes: pawShapes(paw.sign, paw.spread ?? 1, paw.scale ?? 0.82),
+    } : {
       id: `${side}-hand`,
       transform: `translate(${n2(len)} 0)`,
       tone,
       shapes: [{ t: 'c', cx: 0, cy: 0, r: PALM_R }, ...FINGER_ANGLES.map(finger)],
     }],
   };
+}
+
+/**
+ * A webbed paw, flat on the ground: a sole and three toes fanning outward.
+ *
+ * Shared by the back foot and the crouch's front paw. A sitting frog plants its
+ * forelimbs the same way it plants its hind ones — toes forward on the floor —
+ * so the two are one shape at two sizes. Drawn from the horizon rather than
+ * from the limb, which is why both callers un-rotate their limb first: a paw
+ * stays flat however the leg above it is angled.
+ */
+function pawShapes(sign, spread, scale = 1) {
+  const base = sign < 0 ? 180 : 0;
+  const out = (d) => (sign < 0 ? base + d : base - d);
+  return [
+    { t: 'e', cx: 0, cy: 0, rx: n2(SOLE.rx * scale), ry: n2(SOLE.ry * scale) },
+    ...TOES.map(([d, r]) => {
+      const a = (out(d) * Math.PI) / 180;
+      return {
+        t: 'l', x1: 0, y1: 0,
+        x2: n2(Math.cos(a) * 15 * spread * scale),
+        y2: n2(Math.sin(a) * 10 * scale),
+        w: n2(r * 2 * scale),
+      };
+    }),
+  ];
 }
 
 /**
@@ -462,35 +542,21 @@ function armNode(side, shoulder, hand, { front = false } = {}) {
  * hanging off the front of the foot. The steepest toe used to point almost
  * straight down at 82°, which put the lowest ink below the ground shadow.
  */
-function legNode(side, sign, hip, ankle, spread) {
+function legNode(side, sign, hip, ankle, spread, w1 = LEG_W, w2 = LEG_W_TIP) {
   const [hx, hy] = hip;
   const [ax, ay] = ankle;
   const len = Math.hypot(ax - hx, ay - hy) || 1;
   const deg = (Math.atan2(ay - hy, ax - hx) * 180) / Math.PI;
-  const base = sign < 0 ? 180 : 0;
-  const out = (d) => (sign < 0 ? base + d : base - d);
-  const toe = ([d, r]) => {
-    const a = (out(d) * Math.PI) / 180;
-    return {
-      t: 'l', x1: 0, y1: 0,
-      x2: n2(Math.cos(a) * 15 * spread), y2: n2(Math.sin(a) * 10), w: r * 2,
-    };
-  };
-  const crease = (d) => {
-    const a = (out(d) * Math.PI) / 180;
-    return `<line x1="${n2(Math.cos(a) * 5)}" y1="${n2(Math.sin(a) * 5)}" x2="${n2(Math.cos(a) * 14 * spread)}" y2="${n2(Math.sin(a) * 12)}" stroke="${T.fillDeep}" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/>`;
-  };
   return {
     id: `${side}-leg`,
     transform: `translate(${n2(hx)} ${n2(hy)}) rotate(${n2(deg)})`,
     tone: T.fillDeep,
-    shapes: [{ t: 'l', x1: 0, y1: 0, x2: n2(len), y2: 0, w: LEG_W }],
+    shapes: [{ t: 'p', d: taperD(len, w1, w2) }],
     children: [{
       id: `${side}-foot`,
       transform: `translate(${n2(len)} 0) rotate(${n2(-deg)}) translate(${-sign * 2} 3)`,
       tone: T.fillShadow,
-      shapes: [{ t: 'e', cx: 0, cy: 0, rx: SOLE.rx, ry: SOLE.ry }, ...TOES.map(toe)],
-      extra: CREASES.map(crease).join(''),
+      shapes: pawShapes(sign, spread),
     }],
   };
 }
@@ -500,11 +566,11 @@ function legNode(side, sign, hip, ankle, spread) {
  * A capsule with rounded top corners narrowed just below the jaw and read as a
  * neck; the reference has none — the body tucks straight up behind the head.
  */
-function bodyNode({ squash = 0, width = 58 } = {}) {
+function bodyNode({ squash = 0, width = 58, bottom: bottomAt = null } = {}) {
   const x0 = 75 - width / 2;
   const x1 = 75 + width / 2;
   const top = 58 + squash * 4;
-  const bottom = 127 - squash * 4;
+  const bottom = bottomAt === null ? 127 - squash * 4 : bottomAt;
   const r = Math.min(26, width / 2);
   return {
     id: 'body',
@@ -519,10 +585,13 @@ function bodyNode({ squash = 0, width = 58 } = {}) {
 /** The cream belly. Inside the torso, so it is neither outlined nor part of the
  *  silhouette: cream on green is already the strongest separation in the
  *  drawing, and a rim around it would read as a bib. */
-function bellyNode(scale) {
+function bellyNode(scale, at = null) {
+  const cy = at ? at.cy : 104 + (scale - 1) * 4;
+  const rx = at ? at.rx : 24 * scale;
+  const ry = at ? at.ry : 23 * scale;
   return {
     id: 'belly', tone: T.belly, rim: false, sil: false,
-    shapes: [{ t: 'e', cx: 75, cy: n2(104 + (scale - 1) * 4), rx: n2(24 * scale), ry: n2(23 * scale) }],
+    shapes: [{ t: 'e', cx: 75, cy: n2(cy), rx: n2(rx), ry: n2(ry) }],
   };
 }
 
@@ -699,7 +768,8 @@ function figure(p = {}) {
     eyes: eyeOpts = {}, mouth: mouthKind = 'open',
     withPack = false, sleeping = false, showShadow = true,
     bellyScale = 1, tongueTo = null, wiggling = false,
-    torsoWidth = 58,
+    torsoWidth = 58, torsoBottom = null, belly = null,
+    armW = ARM_W, armWTip = ARM_W_TIP, pawHands = 0,
   } = p;
 
   const face = [
@@ -713,12 +783,18 @@ function figure(p = {}) {
 
   const body = [
     withPack ? bagNode() : null,
-    legNode('left', -1, legL.hip, legL.ankle, legL.spread),
-    legNode('right', 1, legR.hip, legR.ankle, legR.spread),
-    bodyNode({ squash, width: torsoWidth }),
-    bellyNode(bellyScale),
-    armNode('left', SHOULDER_L, armL, { front: frontL }),
-    armNode('right', SHOULDER_R, armR, { front: frontR }),
+    legNode('left', -1, legL.hip, legL.ankle, legL.spread, legL.w1, legL.w2),
+    legNode('right', 1, legR.hip, legR.ankle, legR.spread, legR.w1, legR.w2),
+    bodyNode({ squash, width: torsoWidth, bottom: torsoBottom }),
+    bellyNode(bellyScale, belly),
+    armNode('left', SHOULDER_L, armL, {
+      front: frontL, w1: armW, w2: armWTip,
+      paw: pawHands ? { sign: -1, spread: pawHands } : null,
+    }),
+    armNode('right', SHOULDER_R, armR, {
+      front: frontR, w1: armW, w2: armWTip,
+      paw: pawHands ? { sign: 1, spread: pawHands } : null,
+    }),
     headNode(tilt, face),
   ].filter(Boolean);
 
@@ -873,18 +949,22 @@ const POSE_PARAMS = {
    */
   sit: {
     lift: -10, squash: 0.35,
-    armL: [54, 130], armR: [100, 134], frontL: true, frontR: true,
-    legL: { hip: [55, 120], ankle: [30, ANKLE - 10], spread: 1.2 },
-    legR: { hip: [95, 120], ankle: [120, ANKLE - 10], spread: 1.2 },
+    torsoWidth: 58, torsoBottom: 128, belly: { cy: 102, rx: 18, ry: 24 },
+    armW: 16, armWTip: 12, pawHands: 0.9,
+    armL: [52, 142], armR: [98, 142], frontL: true, frontR: true,
+    legL: { hip: [46, 110], ankle: [28, 132], spread: 1, w1: 46, w2: 24 },
+    legR: { hip: [104, 110], ankle: [122, 132], spread: 1, w1: 46, w2: 24 },
     eyes: { gaze: [0, -3] }, mouth: 'small',
   },
 
   /** Tongue out for a fly. Same squat; the tongue reaches toward `tongueTo`. */
   catch: {
     lift: -10, squash: 0.35,
-    armL: [54, 130], armR: [100, 134], frontL: true, frontR: true,
-    legL: { hip: [55, 120], ankle: [30, ANKLE - 10], spread: 1.2 },
-    legR: { hip: [95, 120], ankle: [120, ANKLE - 10], spread: 1.2 },
+    torsoWidth: 58, torsoBottom: 128, belly: { cy: 102, rx: 18, ry: 24 },
+    armW: 16, armWTip: 12, pawHands: 0.9,
+    armL: [52, 142], armR: [98, 142], frontL: true, frontR: true,
+    legL: { hip: [46, 110], ankle: [28, 132], spread: 1, w1: 46, w2: 24 },
+    legR: { hip: [104, 110], ankle: [122, 132], spread: 1, w1: 46, w2: 24 },
     // Out sideways at mouth height. Aimed up at the fly it crossed his own
     // eye, and a pink bar over the pupil reads as damage, not as a tongue.
     eyes: { gaze: [3, -4] }, mouth: 'open', tongueTo: [138, 53],

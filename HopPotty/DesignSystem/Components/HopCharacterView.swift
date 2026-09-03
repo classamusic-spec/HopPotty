@@ -343,10 +343,8 @@ public struct HopCharacterView: View {
         ZStack {
             part(.shinLeft, HopCharacterPalette.leg)
             part(.footLeft, HopCharacterPalette.foot)
-            stroke(.toeCreasesLeft, HopCharacterPalette.bodyDeep.opacity(0.8), width: HopAnatomy.creaseStroke)
             part(.shinRight, HopCharacterPalette.leg)
             part(.footRight, HopCharacterPalette.foot)
-            stroke(.toeCreasesRight, HopCharacterPalette.bodyDeep.opacity(0.8), width: HopAnatomy.creaseStroke)
         }
     }
 

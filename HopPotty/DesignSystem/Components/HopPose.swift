@@ -201,6 +201,27 @@ struct HopLegGeometry: Equatable {
     var ankle: CGPoint
     /// Multiplies the toe reach. Wider on a landing, narrower mid-stride.
     var toeSpread: Double = 1
+    /// The limb's width where it leaves the body, and where it meets the foot.
+    ///
+    /// A leg is not a pipe: it is thicker at the root. Carrying both widths is
+    /// also what lets a crouched haunch be a *leg* rather than a new part —
+    /// Hop's folded back leg is this same shape with a much wider root.
+    var rootWidth: Double = 26
+    var tipWidth: Double = 18
+}
+
+/// The cream belly's own ellipse, for the poses that place it explicitly.
+///
+/// `bellyScale` covers the common case — a full tummy is the standing belly,
+/// bigger. A crouch cannot use it: sitting makes the belly taller *and*
+/// narrower than the body it sits on, and "narrower than the body" is the whole
+/// point. Without it the belly grows to the torso's own width and there is no
+/// green left around it, which is precisely how the old crouch came to read as
+/// a cream patch floating between two pipes.
+struct HopBellyGeometry: Equatable {
+    var cy: Double
+    var rx: Double
+    var ry: Double
 }
 
 /// Which closed-eye line a blink draws.
@@ -315,6 +336,19 @@ struct HopPoseGeometry: Equatable {
     var bellyScale: Double
     /// The torso's width in reference units. Wider when the belly is full.
     var torsoWidth: Double
+    /// Where the torso's lower edge sits, or `nil` for the standing default
+    /// (which derives it from `squash`). A crouch sets it: the body has to end
+    /// above the ground so the forelimbs read below it.
+    var torsoBottom: Double?
+    /// The belly's own ellipse, or `nil` to derive it from `bellyScale`.
+    var belly: HopBellyGeometry?
+    /// The forelimb's root and tip widths, as `HopLegGeometry` carries the leg's.
+    var armWidth: Double
+    var armTipWidth: Double
+    /// Above 0, the hands are planted as webbed paws flat on the ground rather
+    /// than hanging fingers off the wrist, and the number is their toe spread.
+    /// A sitting frog plants its forelimbs the way it plants its hind ones.
+    var pawSpread: Double
     /// Where the tongue's tip reaches. Collapsed onto the mouth when the tongue
     /// is in, so `sit → catch` extends it rather than popping it into place.
     var tongueTip: CGPoint
@@ -348,6 +382,11 @@ struct HopPoseGeometry: Equatable {
         mouth: HopMouthKind = .open,
         bellyScale: Double = 1,
         torsoWidth: Double = 58,
+        torsoBottom: Double? = nil,
+        belly: HopBellyGeometry? = nil,
+        armWidth: Double = 15,
+        armTipWidth: Double = 11.5,
+        pawSpread: Double = 0,
         tongueTo: CGPoint? = nil,
         withPack: Bool = false,
         wiggling: Bool = false,
@@ -369,6 +408,11 @@ struct HopPoseGeometry: Equatable {
         self.mouthSmileDepth = mouth.smileDepth
         self.bellyScale = bellyScale
         self.torsoWidth = torsoWidth
+        self.torsoBottom = torsoBottom
+        self.belly = belly
+        self.armWidth = armWidth
+        self.armTipWidth = armTipWidth
+        self.pawSpread = pawSpread
         self.tongueTip = tongueTo ?? HopPoseGeometry.tongueOrigin
         self.tongueExtension = tongueTo == nil ? 0 : 1
         self.withPack = withPack
@@ -482,13 +526,18 @@ struct HopPoseGeometry: Equatable {
             HopPoseGeometry(
                 lift: -10,
                 squash: 0.35,
-                armL: CGPoint(x: 54, y: 130),
-                armR: CGPoint(x: 100, y: 134),
+                armL: CGPoint(x: 52, y: 142),
+                armR: CGPoint(x: 98, y: 142),
                 armsForward: 1,
-                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 120), ankle: CGPoint(x: 30, y: 136), toeSpread: 1.2),
-                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 120), ankle: CGPoint(x: 120, y: 136), toeSpread: 1.2),
+                legL: HopLegGeometry(hip: CGPoint(x: 46, y: 110), ankle: CGPoint(x: 28, y: 132), toeSpread: 1, rootWidth: 46, tipWidth: 24),
+                legR: HopLegGeometry(hip: CGPoint(x: 104, y: 110), ankle: CGPoint(x: 122, y: 132), toeSpread: 1, rootWidth: 46, tipWidth: 24),
                 eyes: HopEyeGeometry(gaze: CGSize(width: 0, height: -3)),
-                mouth: .small
+                mouth: .small,
+                torsoBottom: 128,
+                belly: HopBellyGeometry(cy: 102, rx: 18, ry: 24),
+                armWidth: 16,
+                armTipWidth: 12,
+                pawSpread: 0.9
             )
 
         // Deliberately identical to `sit` apart from the eyes, the mouth and the
@@ -498,13 +547,18 @@ struct HopPoseGeometry: Equatable {
             HopPoseGeometry(
                 lift: -10,
                 squash: 0.35,
-                armL: CGPoint(x: 54, y: 130),
-                armR: CGPoint(x: 100, y: 134),
+                armL: CGPoint(x: 52, y: 142),
+                armR: CGPoint(x: 98, y: 142),
                 armsForward: 1,
-                legL: HopLegGeometry(hip: CGPoint(x: 55, y: 120), ankle: CGPoint(x: 30, y: 136), toeSpread: 1.2),
-                legR: HopLegGeometry(hip: CGPoint(x: 95, y: 120), ankle: CGPoint(x: 120, y: 136), toeSpread: 1.2),
+                legL: HopLegGeometry(hip: CGPoint(x: 46, y: 110), ankle: CGPoint(x: 28, y: 132), toeSpread: 1, rootWidth: 46, tipWidth: 24),
+                legR: HopLegGeometry(hip: CGPoint(x: 104, y: 110), ankle: CGPoint(x: 122, y: 132), toeSpread: 1, rootWidth: 46, tipWidth: 24),
                 eyes: HopEyeGeometry(gaze: CGSize(width: 3, height: -4)),
                 mouth: .open,
+                torsoBottom: 128,
+                belly: HopBellyGeometry(cy: 102, rx: 18, ry: 24),
+                armWidth: 16,
+                armTipWidth: 12,
+                pawSpread: 0.9,
                 tongueTo: CGPoint(x: 138, y: 53)
             )
 

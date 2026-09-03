@@ -1381,8 +1381,11 @@ private struct PondHopStage: View {
     var body: some View {
         ZStack {
             pad
+            // Sitting, not standing: he is on a lily pad. The greeting still
+            // stands him up to wave — an arm raised from a crouch reads as a
+            // frog losing its balance — and settles back to the crouch after.
             HopCharacterStage(
-                act: activations > 0 ? .greeting : .idle,
+                act: activations > 0 ? .greeting : HopAct(pose: .sit),
                 size: side,
                 gaze: gaze
             )
