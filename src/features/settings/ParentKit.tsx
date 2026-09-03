@@ -350,11 +350,12 @@ export function HopFaceDisc({
   const top = size * FACE_CENTRE - (drawn * artboardRatio) / 2;
 
   return (
+    // The inner character is already marked decorative, so an unlabelled disc
+    // is silent without the wrapper having to hide anything.
     <View
-      accessible={accessibilityLabel !== undefined}
+      accessible={accessibilityLabel !== undefined ? true : undefined}
       accessibilityRole={accessibilityLabel !== undefined ? 'image' : undefined}
       accessibilityLabel={accessibilityLabel}
-      importantForAccessibility={accessibilityLabel === undefined ? 'no-hide-descendants' : 'yes'}
       style={{
         width: size,
         height: size,
