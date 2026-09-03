@@ -173,6 +173,14 @@ function PondGround({ width, height }: { width: number; height: number }): React
   const theme = useHopTheme();
   const p = theme.palette;
   const box = pondStageBox(width, height);
+  // Gradient ids are global to the document, so two ponds on one screen — the
+  // hub's backdrop and its pond door's thumbnail — would capture each other's
+  // sky. The same collision the art generator namespaces for.
+  const ns = React.useId().replace(/[^A-Za-z0-9]/g, '');
+  const skyId = `pondSky${ns}`;
+  const fieldId = `pondField${ns}`;
+  const waterId = `pondWater${ns}`;
+  const sunId = `pondSun${ns}`;
 
   const horizon = box.y + box.height * 0.44;
   const water = pondPoint(box, 0.5, 0.62);
@@ -183,34 +191,34 @@ function PondGround({ width, height }: { width: number; height: number }): React
   return (
     <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={StyleSheet.absoluteFill}>
       <Defs>
-        <LinearGradient id="pondSky" x1="0" y1="0" x2="0" y2="1">
+        <LinearGradient id={skyId} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={p.pondBlue} />
           <Stop offset="0.72" stopColor={p.pondBlueLight} />
           <Stop offset="1" stopColor={p.pondBlueSoft} />
         </LinearGradient>
-        <LinearGradient id="pondField" x1="0" y1="0" x2="0" y2="1">
+        <LinearGradient id={fieldId} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={p.hopGreenLight} />
           <Stop offset="1" stopColor={p.hopGreen} />
         </LinearGradient>
-        <LinearGradient id="pondWater" x1="0" y1="0" x2="0" y2="1">
+        <LinearGradient id={waterId} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={p.pondBlueLight} />
           <Stop offset="0.34" stopColor={p.pondBlue} />
           <Stop offset="1" stopColor={p.pondBlueDeep} />
         </LinearGradient>
-        <RadialGradient id="pondSun" cx="0.5" cy="0.5" r="0.5">
+        <RadialGradient id={sunId} cx="0.5" cy="0.5" r="0.5">
           <Stop offset="0" stopColor={p.sunshine} stopOpacity={0.45} />
           <Stop offset="1" stopColor={p.sunshine} stopOpacity={0} />
         </RadialGradient>
       </Defs>
 
       {/* sky, continuing above the stage so a tall phone reads as more air */}
-      <Rect x={0} y={0} width={width} height={horizon + 2} fill="url(#pondSky)" />
+      <Rect x={0} y={0} width={width} height={horizon + 2} fill={`url(#${skyId})`} />
       <Ellipse
         cx={width * 0.18}
         cy={box.y + box.height * 0.2}
         rx={width * 0.42}
         ry={width * 0.42}
-        fill="url(#pondSun)"
+        fill={`url(#${sunId})`}
       />
 
       {/* the far bank, and the bushes standing on it */}
@@ -233,7 +241,7 @@ function PondGround({ width, height }: { width: number; height: number }): React
           `M 0 ${horizon + 30} C ${width * 0.26} ${horizon + 12}, ${width * 0.66} ${horizon + 14}, ` +
           `${width} ${horizon + 34} L ${width} ${height} L 0 ${height} Z`
         }
-        fill="url(#pondField)"
+        fill={`url(#${fieldId})`}
       />
 
       {/* the water, with the sandy rim the app draws around it */}
@@ -244,7 +252,7 @@ function PondGround({ width, height }: { width: number; height: number }): React
         ry={waterRy + box.height * 0.016}
         fill={p.sand200}
       />
-      <Ellipse cx={water.x} cy={water.y} rx={waterRx} ry={waterRy} fill="url(#pondWater)" />
+      <Ellipse cx={water.x} cy={water.y} rx={waterRx} ry={waterRy} fill={`url(#${waterId})`} />
       <Path
         d={`M ${water.x - waterRx * 0.62} ${water.y - waterRy * 0.2} q ${waterRx * 0.2} ${-waterRy * 0.16} ${waterRx * 0.4} 0`}
         fill="none"

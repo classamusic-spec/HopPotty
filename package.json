@@ -10,7 +10,7 @@
     "start": "react-native start",
     "ios": "react-native run-ios",
     "android": "react-native run-android",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -p tsconfig.check.json --noEmit",
     "lint": "eslint src specs",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"specs/**/*.ts\"",
     "test": "jest",

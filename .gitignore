@@ -39,6 +39,9 @@ web/dist/
 
 # React Native / JS
 node_modules/
+# ...and the root symlink into web-preview/node_modules that the type-check
+# uses. The trailing-slash form above does not match a symlink.
+node_modules
 web-preview/dist/
 web-preview/.vercel/
 .vercel/

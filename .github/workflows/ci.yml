@@ -107,6 +107,16 @@ jobs:
           node Scripts/rn/build-mascot.js --check
           node Scripts/rn/build-art.js --check
 
+      # A green bundle does not mean the screens compile: the bundler only
+      # reaches what an entry point imports, so a screen nothing has wired up
+      # yet is never looked at. This checks every source file against the real
+      # React Native types, which is what the iOS build will use.
+      - name: Type-check the React Native sources
+        run: |
+          npm --prefix web-preview ci --no-audit --no-fund
+          ln -sfn web-preview/node_modules node_modules
+          ./web-preview/node_modules/.bin/tsc -p tsconfig.check.json --noEmit
+
   app:
     name: App and extensions (Xcode)
     runs-on: macos-15

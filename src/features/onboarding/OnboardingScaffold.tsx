@@ -255,7 +255,7 @@ export function OnboardingScaffold({
           { paddingHorizontal: layout.pagePadding, paddingBottom: theme.spacing.l },
         ]}
       >
-        <View style={layout.column}>
+        <View style={[layout.column, styles.column]}>
           {onBack || skipLabel ? (
             <View style={styles.topRow}>
               {onBack ? <OnboardingBackButton onPress={onBack} /> : <View />}
@@ -337,6 +337,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1, alignItems: 'stretch' },
+  column: { flexGrow: 1 },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',

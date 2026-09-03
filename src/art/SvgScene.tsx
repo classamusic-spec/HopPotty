@@ -70,7 +70,10 @@ export function renderSceneNode(
     return null;
   }
 
-  const Component = ELEMENTS[effective.t];
+  // The lookup yields a union of component types, which TypeScript will not
+  // treat as callable. Every member takes the same shape of SVG props, so the
+  // cast is at the table rather than at each element.
+  const Component = ELEMENTS[effective.t] as React.ComponentType<Record<string, unknown>>;
   const props: Record<string, string | number> = { ...effective.p };
 
   const offset = id ? options.offsets?.[id] : undefined;

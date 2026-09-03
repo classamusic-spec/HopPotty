@@ -39,6 +39,9 @@ export interface SceneFrame {
   y(v: number): number;
   /** A scene length — a radius, a sprite size — in board points. */
   len(v: number): number;
+  /** A board point, back in scene coordinates. The inverse of `x`/`y`. */
+  sceneX(p: number): number;
+  sceneY(p: number): number;
 }
 
 export function sceneFrame(width: number, height: number): SceneFrame {
@@ -52,6 +55,8 @@ export function sceneFrame(width: number, height: number): SceneFrame {
     x: (v) => ox + v * scale,
     y: (v) => oy + v * scale,
     len: (v) => v * scale,
+    sceneX: (p) => (p - ox) / scale,
+    sceneY: (p) => (p - oy) / scale,
   };
 }
 
