@@ -76,6 +76,15 @@ export default defineConfig({
   },
   build: {
     commonjsOptions: { transformMixedEsModules: true },
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        // A developer page that draws every illustration, so a broken
+        // gradient or a clip path react-native-svg does not honour is
+        // visible rather than discovered screen by screen.
+        art: path.resolve(__dirname, 'art-gallery.html'),
+      },
+    },
     outDir: path.resolve(__dirname, 'dist'),
     emptyOutDir: true,
     target: 'es2022',
