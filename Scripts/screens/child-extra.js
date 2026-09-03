@@ -28,6 +28,7 @@ const { T, c, type, svg, statusBar, homeIndicator, alpha, mix, elevation, artOr,
 const { childButton, MARK } = require('./kit');
 const { stage, room, skipRow, grownUpRow, words, veil, bubbleWashStage } = require('./child');
 const scenes = require('./scenes');
+const hopArt = require('../hop-art');
 
 const P = T.palette;
 
@@ -175,16 +176,15 @@ function fly(x, y, s, body, { rot = 0, trail = false } = {}) {
  * the same hand they high-five at the end of the routine.
  */
 function hopHand(x, y, s, { rot = 0, flip = false, fill = P.hopGreen } = {}) {
+  // The same hand Bubble Wash draws, from the same anatomy: Mud Off is the
+  // other close-up of these hands and they were two different creatures.
+  const pieces = hopArt.handShapes();
+  const grown = hopArt.grownEls(pieces, 5);
+  const filled = pieces.map((sh) => hopArt.fillEl(sh, fill)).join('');
   return `<g transform="translate(${x} ${y}) ${flip ? 'scale(-1 1) ' : ''}rotate(${rot}) scale(${s})"
-    style="filter:drop-shadow(0 0 2.4px ${alpha('#FFFFFF', 0.95)}) drop-shadow(0 0 2.4px ${alpha('#FFFFFF', 0.9)})
-      drop-shadow(0 8px 12px ${alpha(P.midnight, 0.26)})">
-    <path d="M 0 0 q -10 -60 26 -80 q 38 -20 68 4 q 30 24 22 66 q -8 42 -58 44 q -48 2 -58 -34 Z" fill="${fill}"/>
-    <rect x="-6" y="-94" width="25" height="52" rx="12.5" fill="${fill}"/>
-    <rect x="23" y="-110" width="25" height="68" rx="12.5" fill="${fill}"/>
-    <rect x="52" y="-106" width="25" height="64" rx="12.5" fill="${fill}"/>
-    <rect x="80" y="-84" width="23" height="46" rx="11.5" fill="${fill}"/>
-    <path d="M 16 -40 q 42 14 78 -6" stroke="${P.hopGreenInk}" stroke-width="6" fill="none"
-      stroke-linecap="round" opacity="0.3"/>
+    style="filter:drop-shadow(0 8px 12px ${alpha(P.midnight, 0.26)})">
+    <g fill="${P.cloud}" stroke="${P.cloud}" stroke-linejoin="round" stroke-linecap="round">${grown}</g>
+    ${filled}
   </g>`;
 }
 
@@ -797,8 +797,8 @@ function gameMudOff(appearance = 'light') {
     title: 'Mud Off',
     line: 'Hop played by the pond! Swipe each patch away.',
     svgLayer: `
-      ${hopHand(f.x(120), f.y(486), f.s * 1.7, { rot: -8 })}
-      ${hopHand(f.x(520), f.y(486), f.s * 1.7, { rot: -8, flip: true })}
+      ${hopHand(f.x(160), f.y(452), f.s * 152 / hopArt.HAND.extent, { rot: -8 })}
+      ${hopHand(f.x(480), f.y(452), f.s * 152 / hopArt.HAND.extent, { rot: -8, flip: true })}
       ${mudPatch(f.x(193), f.y(397), f.x(32), MUD.brown, { rot: 16 })}
       ${mudPatch(f.x(447), f.y(397), f.x(27), MUD.paint, { rot: -24 })}
       ${sparkleBurst(f.x(235), f.y(350), f.s * 1.3)}

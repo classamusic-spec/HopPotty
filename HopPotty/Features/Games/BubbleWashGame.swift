@@ -352,43 +352,67 @@ private struct BubbleWashFoam: View {
 /// onto whatever rectangle the caller gives it, so no call site carries a magic
 /// number for the aspect.
 struct HopHandShape: Shape {
-    private static let design = CGRect(x: -12, y: -115, width: 127, height: 160)
+    /// The drawing's natural bounds, derived from the anatomy so it cannot fall
+    /// out of step with it.
+    private static var design: CGRect {
+        let h = HopAnatomy.Hand.self
+        let widest = h.angles.map { abs(sin($0 * .pi / 180)) }.max() ?? 1
+        let halfWidth = h.fingerLength * widest + h.fingerHalfWidth
+        let top = -h.fingerLength
+        let bottom = h.wristLength + h.wristHalfWidth
+        return CGRect(x: -halfWidth, y: top, width: halfWidth * 2, height: bottom - top)
+    }
 
     func path(in rect: CGRect) -> Path {
-        let sx = rect.width / Self.design.width
-        let sy = rect.height / Self.design.height
-        func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
-            CGPoint(x: rect.minX + (x - Self.design.minX) * sx, y: rect.minY + (y - Self.design.minY) * sy)
+        let h = HopAnatomy.Hand.self
+        let design = Self.design
+        let scale = min(rect.width / design.width, rect.height / design.height)
+        // Centred in the frame at a uniform scale: a hand stretched to fill a
+        // non-matching box is a hand with the wrong fingers.
+        let originX = rect.midX - (design.midX) * scale
+        let originY = rect.midY - (design.midY) * scale
+        func at(_ degrees: Double, _ radius: CGFloat) -> CGPoint {
+            let a = (degrees - 90) * .pi / 180
+            return CGPoint(
+                x: originX + cos(a) * radius * scale,
+                y: originY + sin(a) * radius * scale
+            )
         }
+        let centre = CGPoint(x: originX, y: originY)
 
         var path = Path()
-        path.move(to: p(0, 0))
-        path.addQuadCurve(to: p(26, -80), control: p(-10, -60))
-        path.addQuadCurve(to: p(94, -76), control: p(64, -100))
-        path.addQuadCurve(to: p(116, -10), control: p(124, -52))
-        path.addQuadCurve(to: p(58, 34), control: p(108, 32))
-        path.addQuadCurve(to: p(0, 0), control: p(10, 36))
+        path.addHopCircle(centre: centre, radius: h.palmRadius * scale)
+        // The wrist, so the hand joins a forearm instead of ending in mid-air.
+        path.addHopCapsule(
+            from: centre,
+            to: CGPoint(x: originX, y: originY + h.wristLength * scale),
+            radius: h.wristHalfWidth * scale
+        )
+
+        // The web: a fan out to `webFraction` of the reach, scalloped between
+        // the finger axes, wound the same way as every other piece so the union
+        // fills. This is the detail that makes it a frog's hand at a glance.
+        let webRadius = h.fingerLength * h.webFraction
+        path.move(to: at(h.angles[0], webRadius))
+        for index in 0..<(h.angles.count - 1) {
+            let mid = (h.angles[index] + h.angles[index + 1]) / 2
+            path.addQuadCurve(
+                to: at(h.angles[index + 1], webRadius),
+                control: at(mid, webRadius * h.webScallop)
+            )
+        }
+        path.addLine(to: centre)
         path.closeSubpath()
 
-        for finger in Self.fingers {
-            let box = CGRect(
-                x: rect.minX + (finger.minX - Self.design.minX) * sx,
-                y: rect.minY + (finger.minY - Self.design.minY) * sy,
-                width: finger.width * sx,
-                height: finger.height * sy
+        for angle in h.angles {
+            path.addHopCapsule(
+                from: centre,
+                to: at(angle, h.fingerLength - h.fingerHalfWidth),
+                radius: h.fingerHalfWidth * scale
             )
-            path.addRoundedRect(in: box, cornerSize: CGSize(width: box.width / 2, height: box.width / 2))
         }
         return path
     }
-
-    /// Four fingers, in the drawing's own coordinates.
-    private static let fingers: [CGRect] = [
-        CGRect(x: -6, y: -94, width: 25, height: 52),
-        CGRect(x: 23, y: -110, width: 25, height: 68),
-        CGRect(x: 52, y: -106, width: 25, height: 64),
-        CGRect(x: 80, y: -84, width: 23, height: 46),
-    ]
 }
 
 // MARK: - The room

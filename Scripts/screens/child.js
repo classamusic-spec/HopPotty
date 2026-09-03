@@ -28,6 +28,7 @@
  */
 const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation, artOr } = require('./ui');
 const { childButton, MARK } = require('./kit');
+const hopArt = require('../hop-art');
 const scenes = require('./scenes');
 const P = T.palette;
 
@@ -475,30 +476,23 @@ function routineComplete(appearance = 'light') {
  * "this hand's middle is here" and the gutter between the pair becomes a number
  * that can be checked rather than a thing that looked fine once.
  */
-const HAND_C = { x: 51, y: -35 };
+const HAND_C = { x: 0, y: 0 };
 /** Half-extent of the drawing about that centre, before scaling. */
 const HAND_HALF = { w: 64, h: 80 };
 
 function hopHand(cx, cy, s, { flip = false, rot = 0, fill = P.hopGreen, rim = P.cloud } = {}) {
   const crease = mix(fill, P.hopGreenInk, 0.42);
-  const inner = mix(fill, P.hopGreenInk, 0.24);
-  return `<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${flip ? -s : s} ${s})
-      translate(${-HAND_C.x} ${-HAND_C.y})"
+  const pieces = hopArt.handShapes();
+  // Rim first, as one grown silhouette behind the fill, then the fill on top.
+  // Stroking the pieces individually instead would draw a line between every
+  // finger and the palm, which is what made the old hand read as four bars
+  // resting on a blob rather than as one webbed hand.
+  const grown = hopArt.grownEls(pieces, 5);
+  const filled = pieces.map((sh) => hopArt.fillEl(sh, fill)).join('');
+  return `<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${flip ? -s : s} ${s})"
     style="filter:drop-shadow(0 8px 12px ${alpha(INK, 0.22)})">
-    <!-- The rim is the boundary that survives foam being drawn over the top of
-         it, and it is why two green hands on a green character do not merge. -->
-    <g fill="${fill}" stroke="${rim}" stroke-width="6" stroke-linejoin="round">
-      <path d="M 0 0 q -10 -60 26 -80 q 38 -20 68 4 q 30 24 22 66 q -8 42 -58 44 q -48 2 -58 -34 Z"/>
-      <rect x="-6" y="-94" width="25" height="52" rx="12.5"/>
-      <rect x="23" y="-110" width="25" height="68" rx="12.5"/>
-      <rect x="52" y="-106" width="25" height="64" rx="12.5"/>
-      <rect x="80" y="-84" width="23" height="46" rx="11.5"/>
-    </g>
-    <!-- The palm pad is a shade deeper than the fingers, so a hand has an inside
-         as well as an outline and the four fingers stay countable. -->
-    <ellipse cx="52" cy="-12" rx="44" ry="38" fill="${inner}" opacity="0.11"/>
-    <path d="M 16 -40 q 42 14 78 -6" stroke="${crease}" stroke-width="6" fill="none"
-      stroke-linecap="round" opacity="0.26"/>
+    <g fill="${rim}" stroke="${rim}" stroke-linejoin="round" stroke-linecap="round">${grown}</g>
+    ${filled}
   </g>`;
 }
 
@@ -685,9 +679,12 @@ function bubbleWashStage(appearance, { line, beat = 'rub' } = {}) {
   const soaping = beat === 'soap';
   const clean = beat === 'clean';
 
-  const HAND_S = 1.22;
-  const LEFT = { x: 98, y: 690 };
-  const RIGHT = { x: 295, y: 690 };
+  // Scaled to the hand's own reach (`HAND.extent`) rather than to a number
+  // tuned against the old drawing's box, so redrawing the hand cannot silently
+  // resize it off the basin.
+  const HAND_S = 88 / hopArt.HAND.extent;
+  const LEFT = { x: 112, y: 706 };
+  const RIGHT = { x: 281, y: 706 };
 
   const leftTrail = [[50, 726], [84, 706], [118, 722], [148, 700]];
   const rightTrail = [[244, 704], [278, 724], [312, 704], [344, 722]];

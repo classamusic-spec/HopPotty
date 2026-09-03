@@ -458,6 +458,57 @@ function checkPoseTables() {
   return bad;
 }
 
+/**
+ * The close-up hand against `HopAnatomy.Hand`.
+ *
+ * Bubble Wash and Mud Off draw Hop's hands filling the screen, and until now
+ * each did it from its own hand-written copy — three drawings of one hand, all
+ * four-fingered, none of them his. There is one definition now, and this is
+ * what keeps it one.
+ */
+function checkHandShape() {
+  const src = fs.readFileSync(
+    path.join(ROOT, 'HopPotty', 'DesignSystem', 'Components', 'HopCharacterShapes.swift'), 'utf8');
+  const block = /enum Hand \{([\s\S]*?)\n    \}/.exec(src);
+  if (!block) {
+    console.log('  FAIL HopCharacterShapes.swift has no `enum Hand` to compare');
+    return 1;
+  }
+  const body = block[1];
+  const scalar = (name) => {
+    const m = new RegExp(`static let ${name}: CGFloat = (-?[\\d.]+)`).exec(body);
+    return m ? Number(m[1]) : undefined;
+  };
+  const angles = /static let angles: \[Double\] = \[([^\]]+)\]/.exec(body);
+  const swift = {
+    palmR: scalar('palmRadius'),
+    fingerLen: scalar('fingerLength'),
+    fingerHalf: scalar('fingerHalfWidth'),
+    webFraction: scalar('webFraction'),
+    webScallop: scalar('webScallop'),
+    wristLen: scalar('wristLength'),
+    wristHalf: scalar('wristHalfWidth'),
+    angles: angles ? angles[1].split(',').map((n) => Number(n.trim())) : undefined,
+  };
+  let bad = 0;
+  for (const key of Object.keys(swift)) {
+    const mine = art.HAND[key];
+    if (JSON.stringify(mine) !== JSON.stringify(swift[key])) {
+      console.log(`  FAIL hand.${key}: hop-art.js says ${JSON.stringify(mine)}, ` +
+        `HopAnatomy.Hand says ${JSON.stringify(swift[key])}`);
+      bad++;
+    }
+  }
+  // The web has to clear the palm or it draws nothing at all, which is a
+  // silent failure: the hand still renders, as three stubs on a disc.
+  if (art.HAND.fingerLen * art.HAND.webFraction <= art.HAND.palmR) {
+    console.log('  FAIL the web falls inside the palm — raise webFraction');
+    bad++;
+  }
+  if (!bad) console.log("  ok   the close-up hand matches HopAnatomy.Hand, and its web clears the palm");
+  return bad;
+}
+
 /** The outline levels against `HopOutlineStyle`, for the same reason. */
 function checkOutlineLevels() {
   const src = fs.readFileSync(
@@ -578,6 +629,7 @@ function checkContracts() {
   bad += checkCanvas();
   bad += checkPoseTables();
   bad += checkOutlineLevels();
+  bad += checkHandShape();
   bad += checkTokens();
   return bad ? 1 : 0;
 }

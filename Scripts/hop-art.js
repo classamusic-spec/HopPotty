@@ -365,6 +365,90 @@ function grownEls(shapes, d) {
 }
 
 // ---------------------------------------------------------------------------
+// The close-up hand
+//
+// Bubble Wash and Mud Off show Hop's hands filling the screen, far larger than
+// the pose art ever draws them, so they are drawn from these numbers rather
+// than by scaling `hop-idle.svg` up eight times. But they are *his* hands: the
+// finger count and the fan angles are `FINGER_ANGLES`, not a second opinion.
+//
+// The three games used to draw a four-fingered human hand — a palm blob with
+// four rounded-rectangle bars laid on top — in three separate hand-written
+// copies. Hop is a three-fingered frog, the bars never merged with the palm,
+// and nothing webbed them, so the hands read as oven mitts belonging to nobody.
+// ---------------------------------------------------------------------------
+
+/**
+ * The close-up hand's proportions, in its own units, palm centred on the
+ * origin and the fingers fanned about straight up.
+ *
+ * `webFraction` is what makes it a frog's hand rather than a mitten: skin
+ * fills the fan out to that fraction of the finger's reach, and the fingers
+ * carry on past it. The scallop between them is the concave edge you only get
+ * from webbing, and it is the single detail that reads at a glance.
+ */
+const HAND = {
+  palmR: 36,
+  fingerLen: 76,
+  fingerHalf: 15,
+  // Three fingers, because Hop has three — the count is his and is not a
+  // choice here. The *fan* is this drawing's own: the pose art splays to
+  // `FINGER_ANGLES` (±50°) because at twenty pixels across a narrower fan is
+  // one green blob, and a close-up does not have that problem. At this size
+  // ±50° reads as a trident instead of a hand.
+  angles: [-40, 0, 40],
+  // Above `palmR / fingerLen`, or the web falls inside the palm and draws
+  // nothing — which leaves three stubs on a disc, and is why one pass read as
+  // a clover leaf and the next as a starfish. Here it clears the palm by 22
+  // and the free tips are 18 long: a webbed paddle with three notches, which
+  // is what a frog's hand is.
+  webFraction: 0.76,
+  webScallop: 0.9,
+  wristLen: 42,
+  wristHalf: 26,
+};
+
+/**
+ * The hand as shape descriptors, so `fillEl` draws it and `grownEls` grows it.
+ *
+ * Growing matters more here than anywhere else in the drawing: a green hand on
+ * a green frog in front of green scenery needs one clean rim around the whole
+ * silhouette, and stroking each piece separately would instead draw a line
+ * between every finger and the palm — which is exactly what made the old hands
+ * read as separate bars.
+ */
+function handShapes(h = HAND) {
+  const rad = (deg) => ((deg - 90) * Math.PI) / 180;
+  const at = (deg, r) => [n2(Math.cos(rad(deg)) * r), n2(Math.sin(rad(deg)) * r)];
+
+  const shapes = [
+    { t: 'c', cx: 0, cy: 0, r: h.palmR },
+    // The wrist, so the hand joins an arm instead of ending in mid-air.
+    { t: 'l', x1: 0, y1: 0, x2: 0, y2: h.wristLen, w: h.wristHalf * 2 },
+  ];
+
+  // The web: a fan out to `webFraction` of the reach, scalloped between the
+  // finger axes. Wound like every other closed shape here so the union fills.
+  const wr = h.fingerLen * h.webFraction;
+  let d = `M ${at(h.angles[0], wr).join(' ')}`;
+  for (let i = 0; i < h.angles.length - 1; i++) {
+    const mid = (h.angles[i] + h.angles[i + 1]) / 2;
+    d += ` Q ${at(mid, wr * h.webScallop).join(' ')} ${at(h.angles[i + 1], wr).join(' ')}`;
+  }
+  d += ' L 0 0 Z';
+  shapes.push({ t: 'p', d });
+
+  for (const a of h.angles) {
+    const [tx, ty] = at(a, h.fingerLen - h.fingerHalf);
+    shapes.push({ t: 'l', x1: 0, y1: 0, x2: tx, y2: ty, w: h.fingerHalf * 2 });
+  }
+  return shapes;
+}
+
+/** How far the hand reaches from the palm centre, for callers sizing a box. */
+HAND.extent = HAND.fingerLen;
+
+// ---------------------------------------------------------------------------
 // The scene graph
 //
 // node = { id, transform, tone, shapes, children, extra, rim, sil }
@@ -1046,6 +1130,7 @@ const POSE_NAMES = [...Object.keys(poses), 'face'];
 module.exports = {
   T, OUTLINE, CANVAS, STAGE, GROUND, ANKLE, SCALE, OX, OY, FEET_FRACTION,
   poses, POSE_PARAMS, POSE_NAMES, poseSVG,
+  HAND, handShapes, fillEl, grownEls,
 };
 
 // ---------------------------------------------------------------------------

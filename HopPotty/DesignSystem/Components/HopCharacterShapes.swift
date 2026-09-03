@@ -181,6 +181,29 @@ enum HopAnatomy {
     /// Three fingers, fanned about the arm's own direction.
     static let fingerAngles: [Double] = [-50, 0, 50]
 
+    /// The close-up hand Bubble Wash and Mud Off fill the screen with, in its
+    /// own units, palm on the origin and the fingers fanned about straight up.
+    ///
+    /// Its own numbers rather than the pose art's, because it is drawn ten times
+    /// larger — but the same three fingers, because Hop has three. The games
+    /// used to draw a four-fingered human hand in three separate hand-written
+    /// copies, and `HAND` in `Scripts/hop-art.js` is the one definition now;
+    /// `hop-lab.js --contracts` compares this against it.
+    enum Hand {
+        static let palmRadius: CGFloat = 36
+        static let fingerLength: CGFloat = 76
+        static let fingerHalfWidth: CGFloat = 15
+        /// Wider than `fingerAngles` would splay: ±50° is what twenty pixels of
+        /// frog needs to read at all, and at this size it reads as a trident.
+        static let angles: [Double] = [-40, 0, 40]
+        /// Must exceed `palmRadius / fingerLength`, or the web falls inside the
+        /// palm and draws nothing — three stubs on a disc rather than a hand.
+        static let webFraction: CGFloat = 0.76
+        static let webScallop: CGFloat = 0.9
+        static let wristLength: CGFloat = 42
+        static let wristHalfWidth: CGFloat = 26
+    }
+
     static let legWidth: CGFloat = 26
     static let soleRadii = CGSize(width: 14, height: 8.5)
     /// Toe angle (relative to the foot's outward direction) and half-width.
