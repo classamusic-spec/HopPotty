@@ -105,6 +105,7 @@ jobs:
         run: |
           node Scripts/rn/build-tokens.js --check
           node Scripts/rn/build-mascot.js --check
+          node Scripts/rn/build-art.js --check
 
   app:
     name: App and extensions (Xcode)

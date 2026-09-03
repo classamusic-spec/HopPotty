@@ -1,14 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Svg, {
-  Circle,
-  ClipPath,
-  Ellipse,
-  G,
-  Line,
-  Path,
-  Rect,
-  Text as SvgText,
-} from 'react-native-svg';
+import Svg from 'react-native-svg';
 
 import {
   HOP_POSES,
@@ -18,6 +9,7 @@ import {
   type HopPoseName,
 } from './poses.generated';
 import { hopPoseFor, type HopAnimationState } from './hopStates';
+import { renderSceneNode } from '../art/SvgScene';
 
 /**
  * Hop, drawn from the art rig.
@@ -29,73 +21,8 @@ import { hopPoseFor, type HopAnimationState } from './hopStates';
  * redraw the character.
  */
 
-// react-native-svg has no generic element factory, so the tags the rig emits
-// are mapped explicitly. An unknown tag is a generator change that this file
-// has not caught up with, and drawing nothing silently would lose a limb.
-const ELEMENTS = {
-  g: G,
-  path: Path,
-  circle: Circle,
-  ellipse: Ellipse,
-  line: Line,
-  rect: Rect,
-  text: SvgText,
-  clipPath: ClipPath,
-} as const;
-
-type TagName = keyof typeof ELEMENTS;
-
-const isKnownTag = (t: string): t is TagName => t in ELEMENTS;
-
 /** Parts whose subtree may be swapped for another pose's version of it. */
 export type HopPartOverrides = Partial<Record<HopPartId, HopNode>>;
-
-interface RenderContext {
-  readonly overrides: HopPartOverrides;
-  /** Extra transform appended to a part, e.g. pupils following a gaze. */
-  readonly offsets: Partial<Record<HopPartId, { x: number; y: number }>>;
-}
-
-function renderNode(node: HopNode, key: string, ctx: RenderContext): React.ReactNode {
-  const id = node.p.id as HopPartId | undefined;
-
-  // A part override replaces the whole subtree — how a blink swaps in the
-  // blink pose's eyes without re-rendering the other hundred-odd elements.
-  const effective = id && ctx.overrides[id] ? (ctx.overrides[id] as HopNode) : node;
-
-  if (!isKnownTag(effective.t)) {
-    if (__DEV__) {
-      console.warn(`HopCharacter: unknown element "${effective.t}" — regenerate the mascot?`);
-    }
-    return null;
-  }
-
-  const Component = ELEMENTS[effective.t];
-  const { ...props } = effective.p as Record<string, string | number>;
-
-  const offset = id ? ctx.offsets[id] : undefined;
-  if (offset) {
-    const base = typeof props.transform === 'string' ? `${props.transform} ` : '';
-    props.transform = `${base}translate(${offset.x} ${offset.y})`;
-  }
-
-  const children = effective.c?.map((child, i) => renderNode(child, `${key}.${i}`, ctx));
-
-  // `Text` is the one element that carries a string body rather than children.
-  if (effective.t === 'text') {
-    return (
-      <SvgText key={key} {...props}>
-        {effective.x}
-      </SvgText>
-    );
-  }
-
-  return (
-    <Component key={key} {...props}>
-      {children}
-    </Component>
-  );
-}
 
 /** How large Hop is drawn, in points. Named rather than numeric at call sites. */
 export type HopSize = 'small' | 'medium' | 'hero' | 'pond';
@@ -196,7 +123,7 @@ export function HopCharacter({
     return {
       'left-pupil': { x: dx, y: dy },
       'right-pupil': { x: dx, y: dy },
-    } as RenderContext['offsets'];
+    } as Partial<Record<HopPartId, { x: number; y: number }>>;
   }, [lookTarget, animated]);
 
   const side = typeof size === 'number' ? size : SIZES[size];
@@ -213,7 +140,7 @@ export function HopCharacter({
       accessibilityLabel={decorative ? undefined : accessibilityLabel}
       importantForAccessibility={decorative ? 'no-hide-descendants' : 'yes'}
     >
-      {renderNode(tree, 'hop', { overrides, offsets })}
+      {renderSceneNode(tree, 'hop', { overrides, offsets })}
     </Svg>
   );
 }

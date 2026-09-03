@@ -2,7 +2,7 @@
   "name": "hoppotty",
   "version": "0.1.0",
   "private": true,
-  "description": "HopPotty — React Native product layer over the native iOS Screen Time infrastructure.",
+  "description": "HopPotty \u2014 React Native product layer over the native iOS Screen Time infrastructure.",
   "engines": {
     "node": ">= 22.13.0"
   },
@@ -14,8 +14,8 @@
     "lint": "eslint src specs",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"specs/**/*.ts\"",
     "test": "jest",
-    "generate": "node Scripts/rn/build-tokens.js && node Scripts/rn/build-mascot.js",
-    "generate:check": "node Scripts/rn/build-tokens.js --check && node Scripts/rn/build-mascot.js --check",
+    "generate": "node Scripts/rn/build-tokens.js && node Scripts/rn/build-mascot.js && node Scripts/rn/build-art.js",
+    "generate:check": "node Scripts/rn/build-tokens.js --check && node Scripts/rn/build-mascot.js --check && node Scripts/rn/build-art.js --check",
     "web": "vite --config web-preview/vite.config.ts",
     "web:build": "vite build --config web-preview/vite.config.ts"
   },
