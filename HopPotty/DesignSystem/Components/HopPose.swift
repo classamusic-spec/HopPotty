@@ -759,6 +759,18 @@ enum HopCharacterPalette {
     static let ink = Color(HopPalette.hopGreenInk)
     /// `HopPalette.sunshineSoft` — the warm cream belly.
     static let belly = Color(HopPalette.sunshineSoft)
+
+    /// The child's hand in the close-up games, and its pair.
+    ///
+    /// Character-only, like the tongue and the spots: skin is not a brand
+    /// colour and does not belong in `HopPalette`. Two tones so a pair of hands
+    /// side by side reads as two hands rather than one shape, and a third,
+    /// deeper, for the knuckle creases and for an unwashed patch — which used
+    /// to be tinted green, and on a tan hand a green patch reads as something
+    /// growing rather than as dirt.
+    static let skin = Color(HopColorValue(hex: 0xF0C39C))
+    static let skinLight = Color(HopColorValue(hex: 0xFBD8BC))
+    static let skinDeep = Color(HopColorValue(hex: 0xD9A176))
     /// `HopPalette.peachPop` — cheeks.
     static let cheek = Color(HopPalette.peachPop)
     static let eyeWhite = Color(HopPalette.white)

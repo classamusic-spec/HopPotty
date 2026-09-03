@@ -475,27 +475,34 @@ function checkHandShape() {
     return 1;
   }
   const body = block[1];
-  const scalar = (name) => {
-    const m = new RegExp(`static let ${name}: CGFloat = (-?[\\d.]+)`).exec(body);
-    return m ? Number(m[1]) : undefined;
-  };
-  const pairs = (text) =>
-    [...text.matchAll(/\((-?[\d.]+), (-?[\d.]+)\)/g)].map((m) => ({
-      angle: Number(m[1]), len: Number(m[2]),
+  const num = (x) => Number(x);
+  // `(CGPoint(x: a, y: b), CGPoint(x: c, y: d), half)` — base, tip, half-width.
+  const digits = (text) =>
+    [...text.matchAll(
+      /\(CGPoint\(x: (-?[\d.]+), y: (-?[\d.]+)\), CGPoint\(x: (-?[\d.]+), y: (-?[\d.]+)\), (-?[\d.]+)\)/g
+    )].map((m) => ({
+      base: [num(m[1]), num(m[2])], tip: [num(m[3]), num(m[4])], half: num(m[5]),
     }));
-  const fingerBlock = /static let fingers: \[\(angle: Double, length: CGFloat\)\] = \[([\s\S]*?)\]/.exec(body);
-  const thumbLine = /static let thumb: \(angle: Double, length: CGFloat\) = (\([^)]*\))/.exec(body);
+
+  const fingerBlock = /static let fingers: \[\(base: CGPoint, tip: CGPoint, half: CGFloat\)\] = \[([\s\S]*?)\n        \]/.exec(body);
+  // The thumb's value sits on the line *after* its declaration, so match from
+  // the declaration onward rather than to the next newline.
+  const thumbAt = body.indexOf('static let thumb:');
+  const wrist = /static let wrist: \(from: CGPoint, to: CGPoint, half: CGFloat\) =\s*\n?\s*\(CGPoint\(x: (-?[\d.]+), y: (-?[\d.]+)\), CGPoint\(x: (-?[\d.]+), y: (-?[\d.]+)\), (-?[\d.]+)\)/.exec(body);
+  const palm = /static let palm = CGRect\(x: (-?[\d.]+), y: (-?[\d.]+), width: (-?[\d.]+), height: (-?[\d.]+)\)/.exec(body);
+  const palmR = /static let palmRadius: CGFloat = (-?[\d.]+)/.exec(body);
+
   const swift = {
-    palmR: scalar('palmRadius'),
-    fingerHalf: scalar('fingerHalfWidth'),
-    padScale: scalar('padScale'),
-    webFraction: scalar('webFraction'),
-    webScallop: scalar('webScallop'),
-    wristLen: scalar('wristLength'),
-    wristHalf: scalar('wristHalfWidth'),
-    fingers: fingerBlock ? pairs(fingerBlock[1]) : undefined,
-    thumb: thumbLine ? pairs(thumbLine[1])[0] : undefined,
+    palm: palm
+      ? { x: num(palm[1]), y: num(palm[2]), w: num(palm[3]), h: num(palm[4]), r: palmR ? num(palmR[1]) : undefined }
+      : undefined,
+    fingers: fingerBlock ? digits(fingerBlock[1]) : undefined,
+    thumb: thumbAt < 0 ? undefined : digits(body.slice(thumbAt, thumbAt + 220))[0],
+    wrist: wrist
+      ? { from: [num(wrist[1]), num(wrist[2])], to: [num(wrist[3]), num(wrist[4])], half: num(wrist[5]) }
+      : undefined,
   };
+
   let bad = 0;
   for (const key of Object.keys(swift)) {
     if (JSON.stringify(art.HAND[key]) !== JSON.stringify(swift[key])) {
@@ -504,24 +511,14 @@ function checkHandShape() {
       bad++;
     }
   }
-  // The web has to clear the palm on the *shortest* finger or it draws nothing
-  // there at all — a silent failure, because the hand still renders, as stubs
-  // on a disc. Two passes were lost to it.
-  const shortest = Math.min(...art.HAND.fingers.map((f) => f.len));
-  if (shortest * art.HAND.webFraction <= art.HAND.palmR) {
-    console.log(`  FAIL the web (${(shortest * art.HAND.webFraction).toFixed(1)}) falls inside the palm ` +
-      `(${art.HAND.palmR}) — raise webFraction`);
+  // Five digits, and it is worth asserting rather than assuming: the drawing
+  // has been a four-fingered human hand and a three-fingered frog paw, and the
+  // count is the one thing a glance checks first.
+  if (art.HAND.fingers.length !== 4) {
+    console.log(`  FAIL a hand has four fingers and a thumb; this one has ${art.HAND.fingers.length}`);
     bad++;
   }
-  // A pad narrower than its own finger is not a pad.
-  if (art.HAND.padScale <= 1) {
-    console.log('  FAIL padScale must exceed 1 or the fingertips have no pads');
-    bad++;
-  }
-  if (!bad) {
-    console.log('  ok   the close-up hand matches HopAnatomy.Hand, its web clears the palm, ' +
-      'and its pads are pads');
-  }
+  if (!bad) console.log('  ok   the close-up hand matches HopAnatomy.Hand, four fingers and a thumb');
   return bad;
 }
 

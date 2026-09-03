@@ -181,41 +181,36 @@ enum HopAnatomy {
     /// Three fingers, fanned about the arm's own direction.
     static let fingerAngles: [Double] = [-50, 0, 50]
 
-    /// The close-up hand Bubble Wash and Mud Off fill the screen with, in its
-    /// own units, palm on the origin and the digits fanned about straight up.
+    /// The close-up hand Bubble Wash and Mud Off fill the screen with — the
+    /// *child's* hand, not Hop's.
     ///
-    /// Its own numbers rather than the pose art's, because it is drawn ten
-    /// times larger — but the same three fingers, because Hop has three. The
-    /// games used to draw a four-fingered human hand in three separate
-    /// hand-written copies; `HAND` in `Scripts/hop-art.js` is the one
-    /// definition now and `hop-lab.js --contracts` compares this against it.
+    /// That is the point of both games: the child washes their own hands while
+    /// Hop watches from the mirror. So five fingers, human proportions, tan
+    /// skin. It sits in `HopAnatomy` because that is where the shared drawing
+    /// constants and the cross-language contract already live, not because the
+    /// hand belongs to the frog. `HAND` in `Scripts/hop-art.js` is the one
+    /// definition; `hop-lab.js --contracts` compares this against it.
+    ///
+    /// Knuckles on the origin, fingers up, palm and wrist below. Unflipped is a
+    /// left hand — thumb to the left — and the right is the mirror, which is
+    /// what a pair held up side by side actually looks like.
     enum Hand {
-        static let palmRadius: CGFloat = 33
-        /// Three fingers and a thumb, each at its own angle from straight up
-        /// and its own reach. Positive angles are the thumb side.
-        ///
-        /// Deliberately uneven. Three fingers of one length radiating evenly is
-        /// a paddle, or a crown — the eye reads the regularity before it reads
-        /// the hand — and it also leaves the silhouette mirror-symmetric, so
-        /// flipping it for the other hand is a cheat rather than a left and a
-        /// right. The thumb sits low and wide, which fixes both.
-        static let fingers: [(angle: Double, length: CGFloat)] = [
-            (-46, 72), (-13, 85), (20, 75),
+        static let palm = CGRect(x: -38, y: -10, width: 76, height: 80)
+        static let palmRadius: CGFloat = 26
+        /// Base and tip, because human fingers leave the knuckles along a row
+        /// rather than radiating from one point — which is the difference
+        /// between a hand and a starfish. The row is slightly arched, and the
+        /// lengths run index < middle > ring > pinky with the pinky thinner.
+        static let fingers: [(base: CGPoint, tip: CGPoint, half: CGFloat)] = [
+            (CGPoint(x: -25, y: 2), CGPoint(x: -34, y: -74), 12.5),
+            (CGPoint(x: -8, y: -4), CGPoint(x: -11, y: -88), 13),
+            (CGPoint(x: 9, y: -3), CGPoint(x: 14, y: -80), 12.5),
+            (CGPoint(x: 24, y: 4), CGPoint(x: 34, y: -60), 11),
         ]
-        static let thumb: (angle: Double, length: CGFloat) = (74, 55)
-        static let fingerHalfWidth: CGFloat = 14
-        /// The toe pad, as a multiple of the finger's half-width. This is the
-        /// detail that says *frog* rather than *mitten*: a tree frog's digits
-        /// end in discs wider than the digit, and nothing else about a hand is
-        /// as diagnostic.
-        static let padScale: CGFloat = 1.16
-        /// Must exceed `palmRadius / shortestFinger`, or the web falls inside
-        /// the palm and draws nothing — three stubs on a disc. The failure is
-        /// silent: the hand still renders.
-        static let webFraction: CGFloat = 0.76
-        static let webScallop: CGFloat = 0.92
-        static let wristLength: CGFloat = 38
-        static let wristHalfWidth: CGFloat = 25
+        static let thumb: (base: CGPoint, tip: CGPoint, half: CGFloat) =
+            (CGPoint(x: -27, y: 28), CGPoint(x: -70, y: -28), 14.5)
+        static let wrist: (from: CGPoint, to: CGPoint, half: CGFloat) =
+            (CGPoint(x: 0, y: 58), CGPoint(x: 0, y: 96), 26)
     }
 
     static let legWidth: CGFloat = 26

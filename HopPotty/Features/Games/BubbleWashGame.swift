@@ -59,8 +59,9 @@ struct BubbleWashGameView: View {
 
                 soapTarget(layout)
 
-                hand(.left, in: layout.left, flipped: false, tint: theme.color.brandPrimary)
-                hand(.right, in: layout.right, flipped: true, tint: HopColors.wash(theme.color.brandPrimary, isDark: theme.isDark))
+                // Skin, not the brand colour: these are the child's hands.
+                hand(.left, in: layout.left, flipped: false, tint: HopCharacterPalette.skin)
+                hand(.right, in: layout.right, flipped: true, tint: HopCharacterPalette.skinLight)
 
                 if session.beat == .rinse || session.beat == .done {
                     rinseSparkle(layout)
@@ -229,15 +230,15 @@ private struct BubbleWashHand: View {
         GeometryReader { proxy in
             let size = proxy.size
             ZStack {
-                HopHandShape()
+                WashHandShape()
                     .fill(fill)
-                HopHandShape()
+                WashHandShape()
                     .fill(theme.color.textPrimary.opacity(0.08))
                     .mask { palmPad(in: size) }
                 // The rim runs round the fingers as well as the silhouette, so
                 // the four fingers stay countable against the palm and the
                 // boundary survives foam drawn over the top of it.
-                HopHandShape()
+                WashHandShape()
                     .stroke(rim, style: StrokeStyle(lineWidth: max(3, size.width * 0.035), lineJoin: .round))
 
                 ForEach(patches) { patch in
@@ -351,26 +352,30 @@ private struct BubbleWashFoam: View {
 /// The design box is the drawing's own bounds — x −12…115, y −115…45 — mapped
 /// onto whatever rectangle the caller gives it, so no call site carries a magic
 /// number for the aspect.
-struct HopHandShape: Shape {
+/// The child's hand, drawn from `HopAnatomy.Hand`.
+///
+/// Named for what it is. It was `HopHandShape` while it drew a green
+/// three-fingered frog paw, which was the right anatomy for the wrong
+/// character: these are the hands the child is being asked to wash.
+struct WashHandShape: Shape {
     private typealias H = HopAnatomy.Hand
-
-    /// Every digit, fingers and thumb, so the shape never forgets one.
-    private static var digits: [(angle: Double, length: CGFloat)] { H.fingers + [H.thumb] }
 
     /// The drawing's natural bounds, derived from the anatomy so it cannot fall
     /// out of step with it.
     private static var design: CGRect {
-        let pad = H.fingerHalfWidth * H.padScale
-        var minX = -H.palmRadius, maxX = H.palmRadius
-        var minY = -H.palmRadius
-        for digit in digits {
-            let a = (digit.angle - 90) * .pi / 180
-            minX = min(minX, cos(a) * digit.length - pad)
-            maxX = max(maxX, cos(a) * digit.length + pad)
-            minY = min(minY, sin(a) * digit.length - pad)
+        var box = H.palm
+        for digit in H.fingers + [H.thumb] {
+            box = box.union(CGRect(
+                x: min(digit.base.x, digit.tip.x) - digit.half,
+                y: min(digit.base.y, digit.tip.y) - digit.half,
+                width: abs(digit.tip.x - digit.base.x) + digit.half * 2,
+                height: abs(digit.tip.y - digit.base.y) + digit.half * 2
+            ))
         }
-        let maxY = H.wristLength + H.wristHalfWidth
-        return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+        return box.union(CGRect(
+            x: -H.wrist.half, y: H.wrist.from.y,
+            width: H.wrist.half * 2, height: H.wrist.to.y - H.wrist.from.y + H.wrist.half
+        ))
     }
 
     func path(in rect: CGRect) -> Path {
@@ -380,43 +385,23 @@ struct HopHandShape: Shape {
         let scale = min(rect.width / design.width, rect.height / design.height)
         let originX = rect.midX - design.midX * scale
         let originY = rect.midY - design.midY * scale
-        let centre = CGPoint(x: originX, y: originY)
-        func at(_ degrees: Double, _ radius: CGFloat) -> CGPoint {
-            let a = (degrees - 90) * .pi / 180
-            return CGPoint(x: originX + cos(a) * radius * scale, y: originY + sin(a) * radius * scale)
+        func at(_ point: CGPoint) -> CGPoint {
+            CGPoint(x: originX + point.x * scale, y: originY + point.y * scale)
         }
-        let pad = H.fingerHalfWidth * H.padScale
 
         var path = Path()
-        path.addHopCircle(centre: centre, radius: H.palmRadius * scale)
-        // The wrist, so the hand joins a forearm instead of ending in mid-air.
-        path.addHopCapsule(
-            from: centre,
-            to: CGPoint(x: originX, y: originY + H.wristLength * scale),
-            radius: H.wristHalfWidth * scale
+        path.addHopRoundedRect(
+            CGRect(
+                x: originX + H.palm.minX * scale, y: originY + H.palm.minY * scale,
+                width: H.palm.width * scale, height: H.palm.height * scale
+            ),
+            radius: H.palmRadius * scale
         )
-
-        // The web, across the three fingers only — a thumb webbed to the hand
-        // is a flipper. Wound like every other piece so the union fills.
-        let webAt = { (finger: (angle: Double, length: CGFloat)) in finger.length * H.webFraction }
-        path.move(to: at(H.fingers[0].angle, webAt(H.fingers[0])))
-        for index in 0..<(H.fingers.count - 1) {
-            let a = H.fingers[index]
-            let b = H.fingers[index + 1]
-            path.addQuadCurve(
-                to: at(b.angle, webAt(b)),
-                control: at((a.angle + b.angle) / 2, (webAt(a) + webAt(b)) / 2 * H.webScallop)
-            )
-        }
-        path.addLine(to: centre)
-        path.closeSubpath()
-
-        // Each digit: a shaft to just short of the tip, then the pad as a disc
-        // whose outer edge lands exactly on the digit's reach.
-        for digit in Self.digits {
-            let tip = at(digit.angle, digit.length - pad)
-            path.addHopCapsule(from: centre, to: tip, radius: H.fingerHalfWidth * scale)
-            path.addHopCircle(centre: tip, radius: pad * scale)
+        path.addHopCapsule(
+            from: at(H.wrist.from), to: at(H.wrist.to), radius: H.wrist.half * scale
+        )
+        for digit in H.fingers + [H.thumb] {
+            path.addHopCapsule(from: at(digit.base), to: at(digit.tip), radius: digit.half * scale)
         }
         return path
     }

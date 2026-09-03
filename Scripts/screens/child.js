@@ -480,19 +480,18 @@ const HAND_C = { x: 0, y: 0 };
 /** Half-extent of the drawing about that centre, before scaling. */
 const HAND_HALF = { w: 64, h: 80 };
 
-function hopHand(cx, cy, s, { flip = false, rot = 0, fill = P.hopGreen, rim = P.cloud } = {}) {
-  const crease = mix(fill, P.hopGreenInk, 0.42);
+function hopHand(cx, cy, s, { flip = false, rot = 0, fill = hopArt.HAND.skin, rim = P.cloud } = {}) {
   const pieces = hopArt.handShapes();
-  // Rim first, as one grown silhouette behind the fill, then the fill on top.
-  // Stroking the pieces individually instead would draw a line between every
-  // finger and the palm, which is what made the old hand read as four bars
-  // resting on a blob rather than as one webbed hand.
+  // Rim first, as one grown silhouette behind the fill, then the fill, then the
+  // knuckle creases. Stroking the pieces individually instead draws a line
+  // between every finger and the palm, which reads as bars on a blob.
   const grown = hopArt.grownEls(pieces, 5);
   const filled = pieces.map((sh) => hopArt.fillEl(sh, fill)).join('');
   return `<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${flip ? -s : s} ${s})"
     style="filter:drop-shadow(0 8px 12px ${alpha(INK, 0.22)})">
     <g fill="${rim}" stroke="${rim}" stroke-linejoin="round" stroke-linecap="round">${grown}</g>
     ${filled}
+    ${hopArt.handCreases(hopArt.HAND.skinDeep)}
   </g>`;
 }
 
@@ -529,7 +528,9 @@ function foamTrail(points, r) {
  */
 function unwashed(x, y, r) {
   return `<g transform="translate(${x} ${y})">
-    <ellipse rx="${r}" ry="${r * 0.86}" fill="${mix(P.hopGreen, P.hopGreenInk, 0.3)}" opacity="0.44"/>
+    <!-- Deeper skin, not green. When the hands were a green frog's a green
+         patch read as shadow; on a tan hand it reads as something growing. -->
+    <ellipse rx="${r}" ry="${r * 0.86}" fill="${hopArt.HAND.skinDeep}" opacity="0.55"/>
     <ellipse rx="${r}" ry="${r * 0.86}" fill="none" stroke="${P.cloud}" stroke-width="3.4"
       stroke-dasharray="8 9" opacity="0.95"/>
   </g>`;
@@ -682,16 +683,16 @@ function bubbleWashStage(appearance, { line, beat = 'rub' } = {}) {
   // Scaled to the hand's own reach (`HAND.extent`) rather than to a number
   // tuned against the old drawing's box, so redrawing the hand cannot silently
   // resize it off the basin.
-  const HAND_S = 88 / hopArt.HAND.extent;
-  const LEFT = { x: 112, y: 706 };
-  const RIGHT = { x: 281, y: 706 };
+  const HAND_S = 76 / hopArt.HAND.extent;
+  const LEFT = { x: 118, y: 712 };
+  const RIGHT = { x: 275, y: 712 };
 
   const leftTrail = [[50, 726], [84, 706], [118, 722], [148, 700]];
   const rightTrail = [[244, 704], [278, 724], [312, 704], [344, 722]];
 
   const hands = `
-    ${hopHand(LEFT.x, LEFT.y, HAND_S, { rot: -7, fill: P.hopGreen })}
-    ${hopHand(RIGHT.x, RIGHT.y, HAND_S, { rot: -7, flip: true, fill: mix(P.hopGreen, P.hopGreenLight, 0.55) })}`;
+    ${hopHand(LEFT.x, LEFT.y, HAND_S, { rot: -7, fill: hopArt.HAND.skin })}
+    ${hopHand(RIGHT.x, RIGHT.y, HAND_S, { rot: -7, flip: true, fill: hopArt.HAND.skinLight })}`;
 
   const onHands = soaping ? '' : `
     ${foamTrail(leftTrail, 23)}

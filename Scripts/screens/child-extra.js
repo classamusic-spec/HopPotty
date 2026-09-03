@@ -175,9 +175,9 @@ function fly(x, y, s, body, { rot = 0, trail = false } = {}) {
  * Copied rather than re-invented, so the hand a child wipes clean in Mud Off is
  * the same hand they high-five at the end of the routine.
  */
-function hopHand(x, y, s, { rot = 0, flip = false, fill = P.hopGreen } = {}) {
-  // The same hand Bubble Wash draws, from the same anatomy: Mud Off is the
-  // other close-up of these hands and they were two different creatures.
+function hopHand(x, y, s, { rot = 0, flip = false, fill = hopArt.HAND.skin } = {}) {
+  // The same hand Bubble Wash draws, from the same definition: Mud Off is the
+  // other close-up of the child's hands and they were two different drawings.
   const pieces = hopArt.handShapes();
   const grown = hopArt.grownEls(pieces, 5);
   const filled = pieces.map((sh) => hopArt.fillEl(sh, fill)).join('');
@@ -185,6 +185,7 @@ function hopHand(x, y, s, { rot = 0, flip = false, fill = P.hopGreen } = {}) {
     style="filter:drop-shadow(0 8px 12px ${alpha(P.midnight, 0.26)})">
     <g fill="${P.cloud}" stroke="${P.cloud}" stroke-linejoin="round" stroke-linecap="round">${grown}</g>
     ${filled}
+    ${hopArt.handCreases(hopArt.HAND.skinDeep)}
   </g>`;
 }
 
@@ -797,8 +798,10 @@ function gameMudOff(appearance = 'light') {
     title: 'Mud Off',
     line: 'Hop played by the pond! Swipe each patch away.',
     svgLayer: `
-      ${hopHand(f.x(160), f.y(452), f.s * 152 / hopArt.HAND.extent, { rot: -8 })}
-      ${hopHand(f.x(480), f.y(452), f.s * 152 / hopArt.HAND.extent, { rot: -8, flip: true })}
+      ${hopHand(f.x(196), f.y(430), f.s * 118 / hopArt.HAND.extent, { rot: -8 })}
+      ${hopHand(f.x(444), f.y(430), f.s * 118 / hopArt.HAND.extent, {
+        rot: -8, flip: true, fill: hopArt.HAND.skinLight,
+      })}
       ${mudPatch(f.x(193), f.y(397), f.x(32), MUD.brown, { rot: 16 })}
       ${mudPatch(f.x(447), f.y(397), f.x(27), MUD.paint, { rot: -24 })}
       ${sparkleBurst(f.x(235), f.y(350), f.s * 1.3)}

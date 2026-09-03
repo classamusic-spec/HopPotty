@@ -367,118 +367,99 @@ function grownEls(shapes, d) {
 // ---------------------------------------------------------------------------
 // The close-up hand
 //
-// Bubble Wash and Mud Off show Hop's hands filling the screen, far larger than
-// the pose art ever draws them, so they are drawn from these numbers rather
-// than by scaling `hop-idle.svg` up eight times. But they are *his* hands: the
-// finger count and the fan angles are `FINGER_ANGLES`, not a second opinion.
+// Bubble Wash and Mud Off show a pair of hands filling the screen — and they
+// are the *child's* hands, not Hop's. That is the whole point of both games:
+// the child is washing their own hands, and Hop is watching from the mirror.
+// So: five fingers, human proportions, tan skin. An earlier pass made them
+// three-fingered green frog paws, which is the right anatomy for the wrong
+// character.
 //
-// The three games used to draw a four-fingered human hand — a palm blob with
-// four rounded-rectangle bars laid on top — in three separate hand-written
-// copies. Hop is a three-fingered frog, the bars never merged with the palm,
-// and nothing webbed them, so the hands read as oven mitts belonging to nobody.
+// It lives in this file because this is where the shared art primitives and
+// the cross-language contract machinery already are, not because the hand
+// belongs to the frog.
 // ---------------------------------------------------------------------------
 
 /**
- * The close-up hand's proportions, in its own units, palm centred on the
- * origin and the fingers fanned about straight up.
+ * The close-up hand, in its own units: knuckles on the origin, fingers up, palm
+ * and wrist below. The unflipped drawing is a left hand — thumb to the left —
+ * and the right is the mirror, which is correct for a pair held up side by side.
  *
- * `webFraction` is what makes it a frog's hand rather than a mitten: skin
- * fills the fan out to that fraction of the finger's reach, and the fingers
- * carry on past it. The scallop between them is the concave edge you only get
- * from webbing, and it is the single detail that reads at a glance.
+ * Fingers are authored base-to-tip rather than as a fan from one point, because
+ * that is the difference between a hand and a starfish: human fingers leave the
+ * knuckles along a row, and the row is slightly arched (the middle knuckle sits
+ * highest). Lengths run index < middle > ring > pinky, and the pinky is thinner
+ * as well as shorter.
  */
 const HAND = {
-  palmR: 33,
-  /**
-   * Three fingers and a thumb, each at its own angle from straight up and its
-   * own reach. Positive angles are the thumb side.
-   *
-   * Varied lengths, and deliberately not a symmetric fan. Three fingers of one
-   * length radiating evenly is a paddle, or a crown — the eye reads the
-   * regularity before it reads the hand. The middle finger is longest, the
-   * outer two fall away unevenly, and the thumb sits low and wide, which is
-   * what makes the silhouette left-handed or right-handed rather than mirror
-   * symmetric. Flipping it for the other hand is then correct rather than lazy.
-   */
+  palm: { x: -38, y: -10, w: 76, h: 80, r: 26 },
   fingers: [
-    { angle: -46, len: 72 },
-    { angle: -13, len: 85 },
-    { angle: 20, len: 75 },
+    { base: [-25, 2], tip: [-34, -74], half: 12.5 },
+    { base: [-8, -4], tip: [-11, -88], half: 13 },
+    { base: [9, -3], tip: [14, -80], half: 12.5 },
+    { base: [24, 4], tip: [34, -60], half: 11 },
   ],
-  thumb: { angle: 74, len: 55 },
-  fingerHalf: 14,
-  /**
-   * The toe pad, as a multiple of the finger's half-width.
-   *
-   * This is the single detail that says *frog* rather than *mitten*. A tree
-   * frog's digits end in discs wider than the digit, and nothing else about a
-   * hand is as diagnostic — get the pads right and the silhouette reads as an
-   * amphibian before anyone counts the fingers.
-   */
-  padScale: 1.16,
-  // Must exceed `palmR / (shortest finger)`, or the web falls inside the palm
-  // and draws nothing: three stubs on a disc. Silent — the hand still renders.
-  webFraction: 0.76,
-  webScallop: 0.92,
-  wristLen: 38,
-  wristHalf: 25,
+  thumb: { base: [-27, 28], tip: [-70, -28], half: 14.5 },
+  wrist: { from: [0, 58], to: [0, 96], half: 26 },
+  /** Tan. Two tones so the pair reads as two hands rather than one shape. */
+  skin: '#F0C39C',
+  skinLight: '#FBD8BC',
+  skinDeep: '#D9A176',
 };
 
 /**
  * The hand as shape descriptors, so `fillEl` draws it and `grownEls` grows it.
  *
- * Growing matters more here than anywhere else in the drawing: a green hand on
- * a green frog in front of green scenery needs one clean rim around the whole
- * silhouette, and stroking each piece separately would instead draw a line
- * between every finger and the palm — which is exactly what made the old hands
- * read as separate bars.
+ * Growing matters here: the rim has to run round the whole silhouette as one
+ * clean edge. Stroking each piece separately draws a line between every finger
+ * and the palm, which is what made an earlier version read as bars resting on
+ * a blob.
  */
 function handShapes(h = HAND) {
-  const rad = (deg) => ((deg - 90) * Math.PI) / 180;
-  const at = (deg, r) => [n2(Math.cos(rad(deg)) * r), n2(Math.sin(rad(deg)) * r)];
-  const padR = h.fingerHalf * h.padScale;
-
-  const shapes = [
-    { t: 'c', cx: 0, cy: 0, r: h.palmR },
-    // The wrist, so the hand joins a forearm instead of ending in mid-air.
-    { t: 'l', x1: 0, y1: 0, x2: 0, y2: h.wristLen, w: h.wristHalf * 2 },
+  const digit = (d) => ({
+    t: 'l', x1: d.base[0], y1: d.base[1], x2: d.tip[0], y2: d.tip[1], w: d.half * 2,
+  });
+  return [
+    { t: 'p', d: roundRectD(h.palm.x, h.palm.y, h.palm.w, h.palm.h, h.palm.r) },
+    { t: 'l', x1: h.wrist.from[0], y1: h.wrist.from[1], x2: h.wrist.to[0], y2: h.wrist.to[1], w: h.wrist.half * 2 },
+    ...h.fingers.map(digit),
+    digit(h.thumb),
   ];
+}
 
-  // The web, across the three fingers only — a thumb that is webbed to the
-  // hand is a flipper. Scalloped between the finger axes, wound like every
-  // other closed shape here so the union fills.
-  const webAt = (f) => f.len * h.webFraction;
-  let d = `M ${at(h.fingers[0].angle, webAt(h.fingers[0])).join(' ')}`;
+/**
+ * The knuckle creases: one short line down from between each pair of fingers.
+ *
+ * The one interior mark the drawing keeps. Without it four parallel fingers of
+ * one colour merge into a mitten the moment they touch, and the outline cannot
+ * help — it runs round the silhouette, not between two fingers that are side by
+ * side. Kept short and faint: it is a seam, not a drawn-on line.
+ */
+function handCreases(deep, h = HAND) {
+  const gaps = [];
   for (let i = 0; i < h.fingers.length - 1; i++) {
     const a = h.fingers[i];
     const b = h.fingers[i + 1];
-    const mid = (a.angle + b.angle) / 2;
-    const dip = ((webAt(a) + webAt(b)) / 2) * h.webScallop;
-    d += ` Q ${at(mid, dip).join(' ')} ${at(b.angle, webAt(b)).join(' ')}`;
+    const x = (a.base[0] + b.base[0]) / 2;
+    const y = (a.base[1] + b.base[1]) / 2;
+    // Up between the two fingers, a third of the shorter one's length.
+    const reach = Math.min(
+      Math.hypot(a.tip[0] - a.base[0], a.tip[1] - a.base[1]),
+      Math.hypot(b.tip[0] - b.base[0], b.tip[1] - b.base[1])
+    ) * 0.34;
+    const mx = (a.tip[0] + b.tip[0]) / 2 - x;
+    const my = (a.tip[1] + b.tip[1]) / 2 - y;
+    const len = Math.hypot(mx, my) || 1;
+    gaps.push(`<line x1="${n2(x)}" y1="${n2(y)}" x2="${n2(x + (mx / len) * reach)}"
+      y2="${n2(y + (my / len) * reach)}" stroke="${deep}" stroke-width="4"
+      stroke-linecap="round" opacity="0.3"/>`);
   }
-  d += ' L 0 0 Z';
-  shapes.push({ t: 'p', d });
-
-  // Each digit: a shaft to just short of the tip, then the pad as a disc whose
-  // outer edge lands exactly on the digit's reach.
-  for (const f of [...h.fingers, h.thumb]) {
-    const [sx, sy] = at(f.angle, f.len - padR);
-    shapes.push({ t: 'l', x1: 0, y1: 0, x2: sx, y2: sy, w: h.fingerHalf * 2 });
-    shapes.push({ t: 'c', cx: sx, cy: sy, r: n2(padR) });
-  }
-  return shapes;
+  return gaps.join('');
 }
 
-// No interior shading, and that is a decision rather than an omission. The
-// reference this character is drawn to is flat colour with one outline, and
-// three attempts at giving the hand an inside all made it worse: rings inside
-// the pads read as warts, a stroke across the knuckles read as a bandage, and
-// a soft radial wash read as a smudge on one hand and vanished on the other.
-// The form is carried by the silhouette — the pads, the thumb, the uneven
-// finger lengths and the webbing — which is where it belongs in this style.
-
 /** How far the hand reaches from the palm centre, for callers sizing a box. */
-HAND.extent = Math.max(...HAND.fingers.map((f) => f.len));
+HAND.extent = Math.max(...[...HAND.fingers, HAND.thumb].map(
+  (d) => Math.hypot(d.tip[0], d.tip[1])
+));
 
 // ---------------------------------------------------------------------------
 // The scene graph
@@ -1162,7 +1143,7 @@ const POSE_NAMES = [...Object.keys(poses), 'face'];
 module.exports = {
   T, OUTLINE, CANVAS, STAGE, GROUND, ANKLE, SCALE, OX, OY, FEET_FRACTION,
   poses, POSE_PARAMS, POSE_NAMES, poseSVG,
-  HAND, handShapes, fillEl, grownEls,
+  HAND, handShapes, handCreases, fillEl, grownEls,
 };
 
 // ---------------------------------------------------------------------------
