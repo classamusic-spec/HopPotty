@@ -59,6 +59,9 @@ export function HopHubScreen({
   const { width, height } = useWindowDimensions();
   const isWide = width >= 768;
   const hopSide = isWide ? HOP_WIDTH * 1.25 : HOP_WIDTH;
+  // Gradient ids are global to the document; namespacing keeps this wash from
+  // capturing, or being captured by, the pond's own gradients.
+  const washId = `hubWash${React.useId().replace(/[^A-Za-z0-9]/g, '')}`;
 
   const greeting = childName ? `Hi, ${childName}!` : 'Hi!';
 
@@ -69,13 +72,13 @@ export function HopHubScreen({
       {/* the wash that lets four large doors sit on a drawing without cards */}
       <Svg width={width} height={height} style={StyleSheet.absoluteFill} pointerEvents="none">
         <Defs>
-          <LinearGradient id="hubWash" x1="0" y1="0" x2="0" y2="1">
+          <LinearGradient id={washId} x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0.42" stopColor={theme.color.backgroundPrimary} stopOpacity={0} />
             <Stop offset="0.7" stopColor={theme.color.backgroundPrimary} stopOpacity={0.55} />
             <Stop offset="1" stopColor={theme.color.backgroundPrimary} stopOpacity={0.9} />
           </LinearGradient>
         </Defs>
-        <Rect x={0} y={0} width={width} height={height} fill="url(#hubWash)" />
+        <Rect x={0} y={0} width={width} height={height} fill={`url(#${washId})`} />
       </Svg>
 
       <View
@@ -138,7 +141,7 @@ export function HopHubScreen({
               },
             ]}
           >
-            <HandGlyph color={theme.palette.sand500} size={16} />
+            <HandGlyph color={theme.color.textSecondary} size={16} />
             <HopText variant="parentCallout" tone="secondary">
               Grown-ups
             </HopText>
@@ -256,7 +259,7 @@ function HubDoor({
       </View>
 
       <ChevronGlyph
-        color={primary ? theme.color.textOnBrand : theme.palette.sand500}
+        color={primary ? theme.color.textOnBrand : theme.color.textTertiary}
         size={22}
       />
     </Pressable>

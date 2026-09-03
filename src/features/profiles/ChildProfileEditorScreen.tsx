@@ -4,6 +4,8 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { HopButton, HopText } from '../../design-system/components';
 import { textStyle, useHopTheme } from '../../design-system/theme';
 import {
+  BORDER_WIDTH,
+  Eyebrow,
   HopFaceDisc,
   ParentIcon,
   ParentPage,
@@ -96,13 +98,7 @@ export function ChildProfileEditorScreen({
         >
           <ParentIcon name="chevronLeft" color={theme.color.brandAction} size={g.m} />
         </Pressable>
-        <HopText
-          variant="parentFootnote"
-          tone="brand"
-          style={[styles.eyebrow, { marginTop: theme.spacing.s }]}
-        >
-          YOUR CHILD
-        </HopText>
+        <Eyebrow text="Your child" tone="brand" style={{ marginTop: theme.spacing.s }} />
         <HopText variant="parentLargeTitle" style={{ marginTop: theme.spacing.xxs }}>
           What can Hop call your child?
         </HopText>
@@ -112,7 +108,7 @@ export function ChildProfileEditorScreen({
         style={{
           minHeight: theme.hitTarget.parentMinimum + theme.spacing.m,
           borderRadius: theme.radius.m,
-          borderWidth: StyleSheet.hairlineWidth * 3,
+          borderWidth: BORDER_WIDTH.control,
           borderColor: theme.color.brandAction,
           backgroundColor: theme.color.surface,
           paddingHorizontal: theme.spacing.l,
@@ -164,9 +160,7 @@ export function ChildProfileEditorScreen({
       </View>
 
       <View>
-        <HopText variant="parentFootnote" tone="secondary" style={styles.eyebrow}>
-          CHARACTER
-        </HopText>
+        <Eyebrow text="Character" />
         <View
           accessibilityRole="radiogroup"
           accessibilityLabel="Character"
@@ -186,7 +180,7 @@ export function ChildProfileEditorScreen({
                   {
                     padding: theme.spacing.xxs,
                     borderRadius: theme.radius.hero,
-                    borderWidth: StyleSheet.hairlineWidth * 5,
+                    borderWidth: BORDER_WIDTH.selection,
                     borderColor: on ? theme.color.brandAction : 'transparent',
                   },
                 ]}
@@ -202,9 +196,7 @@ export function ChildProfileEditorScreen({
       </View>
 
       <View>
-        <HopText variant="parentFootnote" tone="secondary" style={styles.eyebrow}>
-          WHERE ARE YOU STARTING?
-        </HopText>
+        <Eyebrow text="Where are you starting?" />
         <View
           accessibilityRole="radiogroup"
           accessibilityLabel="Where are you starting?"
@@ -251,7 +243,7 @@ export function ChildProfileEditorScreen({
                       width: theme.spacing.xl,
                       height: theme.spacing.xl,
                       borderRadius: theme.spacing.m,
-                      borderWidth: StyleSheet.hairlineWidth * 3,
+                      borderWidth: BORDER_WIDTH.control,
                       borderColor: theme.color.divider,
                     }}
                   />
@@ -278,7 +270,6 @@ const styles = StyleSheet.create({
   grow: { flex: 1 },
   field: { flex: 1, paddingVertical: 0 },
   greeting: { flexDirection: 'row', alignItems: 'center' },
-  eyebrow: { textTransform: 'uppercase', letterSpacing: 0.5, paddingHorizontal: 0 },
   avatars: { flexDirection: 'row', alignItems: 'center' },
   avatarSlot: { alignItems: 'center', justifyContent: 'center' },
   backRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },

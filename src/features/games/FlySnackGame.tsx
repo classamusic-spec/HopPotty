@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import type { HopIllustrationKey } from '../../art/HopArtwork';
 import { ChildStage, GameHost, GrownUpButton, HopButton, HopText } from '../../design-system/components';
@@ -7,8 +7,7 @@ import { useHopTheme } from '../../design-system/theme';
 import { HopCharacter } from '../../mascot/HopCharacter';
 import { TummyMeter } from './boardTray';
 import { GameBoard } from './GameBoard';
-import { withAlpha } from './paint';
-import { boardFrame } from './sceneFrame';
+import { useBoardFrame } from './useBoardFrame';
 import { HopSprite, IconSprite, Sparkle, TapHint } from './sprites';
 
 /**
@@ -81,8 +80,7 @@ export function FlySnackGame({
   onDone,
   onGrownUp,
 }: FlySnackGameProps): React.ReactElement {
-  const { width } = useWindowDimensions();
-  const frame = useMemo(() => boardFrame(width), [width]);
+  const { frame, onSlotLayout } = useBoardFrame();
 
   if (phase === 'handOff') {
     return <FlySnackHandOff onStartRoutine={onStartRoutine} onDone={onDone} onGrownUp={onGrownUp} />;
@@ -97,7 +95,7 @@ export function FlySnackGame({
       onGrownUp={onGrownUp}
       board={
         <View style={styles.board} pointerEvents="box-none">
-          <View style={styles.bandSlot} pointerEvents="box-none">
+          <View style={styles.bandSlot} pointerEvents="box-none" onLayout={onSlotLayout}>
             <GameBoard scene="scene.games.flySnack" frame={frame}>
               <HopSprite
                 frame={frame}
@@ -217,15 +215,7 @@ function SpeechBubble({ text }: { text: string }): React.ReactElement {
           {text}
         </HopText>
       </View>
-      <View
-        style={[
-          styles.tail,
-          {
-            backgroundColor: theme.color.surface,
-            borderColor: withAlpha(theme.palette.midnight, 0),
-          },
-        ]}
-      />
+      <View style={[styles.tail, { backgroundColor: theme.color.surface }]} />
     </View>
   );
 }

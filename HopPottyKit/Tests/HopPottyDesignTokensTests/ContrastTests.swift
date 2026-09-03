@@ -58,6 +58,9 @@ struct ContrastTests {
         let p = HopSemanticPalette.resolved(for: appearance)
         let accents: [(String, HopColorValue)] = [
             ("success", p.success), ("warning", p.warning), ("celebration", p.celebration),
+            // A control that deletes a child's history has to be unmistakable
+            // as a mark, not only as a word.
+            ("destructive", p.destructive),
             ("eventTried", p.eventTried), ("eventPee", p.eventPee),
             ("eventPoop", p.eventPoop), ("eventAccident", p.eventAccident),
         ]

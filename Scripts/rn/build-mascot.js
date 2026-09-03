@@ -84,6 +84,38 @@ lines.push('export const HOP_POSES: Readonly<Record<HopPoseName, HopNode>> = ');
 lines.push(JSON.stringify(poses) + ';');
 lines.push('');
 
+/**
+ * Every rig pose must be reachable from a product state.
+ *
+ * Screens ask for a state, never a pose — that indirection is what keeps
+ * renaming a pose an art change. But it also means a pose no state maps to is
+ * a drawing the app can never show, which is invisible until someone notices
+ * the wrong frog. Two separate screen ports hit exactly that (`catch`, `full`,
+ * `face`, `walk`), so it is checked rather than remembered.
+ */
+function verifyStateCoverage() {
+  const statesFile = path.join(ROOT, 'src', 'mascot', 'hopStates.ts');
+  if (!fs.existsSync(statesFile)) return;
+  const src = fs.readFileSync(statesFile, 'utf8');
+  const body = src.slice(src.indexOf('const POSE_FOR'), src.indexOf('export function hopPoseFor'));
+  const mapped = new Set([...body.matchAll(/:\s*'([A-Za-z]+)'\s*,/g)].map((m) => m[1]));
+  const unreachable = art.POSE_NAMES.filter((p) => !mapped.has(p));
+  if (unreachable.length) {
+    console.error(
+      `build-mascot: ${unreachable.length} pose(s) no product state can reach: ${unreachable.join(', ')}`,
+    );
+    console.error('       add a state in src/mascot/hopStates.ts, or the app can never draw them.');
+    process.exit(1);
+  }
+  const unknown = [...mapped].filter((m) => !art.POSE_NAMES.includes(m));
+  if (unknown.length) {
+    console.error(`build-mascot: hopStates.ts maps to pose(s) the rig does not draw: ${unknown.join(', ')}`);
+    process.exit(1);
+  }
+  return mapped.size;
+}
+const posesReachable = verifyStateCoverage();
+
 const out = lines.join('\n');
 const check = process.argv.includes('--check');
 const existing = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : null;
@@ -95,6 +127,7 @@ if (check) {
     process.exit(1);
   }
   console.log(`react native mascot: current  (${art.POSE_NAMES.length} poses, ${partIds.length} named parts, ${elementCount} elements verified against the rig)`);
+  if (posesReachable) console.log(`  all ${posesReachable} poses reachable from a product state`);
 } else {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, out);

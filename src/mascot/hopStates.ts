@@ -24,7 +24,14 @@ export type HopAnimationState =
   | 'land'
   | 'sit'
   | 'sleep'
-  | 'wash';
+  | 'wash'
+  /** Tongue out, mid-catch. Fly Snack's whole point. */
+  | 'catch'
+  /** Fed and settled — the beat after a snack, not a cheer. */
+  | 'full'
+  /** Head and shoulders, for an avatar or a small inline portrait. */
+  | 'portrait'
+  | 'walk';
 
 const POSE_FOR: Readonly<Record<HopAnimationState, HopPoseName>> = {
   idle: 'idle',
@@ -46,6 +53,12 @@ const POSE_FOR: Readonly<Record<HopAnimationState, HopPoseName>> = {
   sit: 'sit',
   sleep: 'sleep',
   wash: 'scrub',
+  catch: 'catch',
+  full: 'full',
+  // The rig's `face` pose is the head alone on its own artboard, which is what
+  // a circular avatar crop wants.
+  portrait: 'face',
+  walk: 'walk',
 };
 
 export function hopPoseFor(state: HopAnimationState): HopPoseName {
@@ -63,6 +76,7 @@ export function hopStateForReducedMotion(state: HopAnimationState): HopAnimation
   switch (state) {
     case 'hop':
     case 'land':
+    case 'walk':
       return 'idle';
     default:
       return state;

@@ -50,45 +50,45 @@ export function RoutineTimerRing({
   const circumference = 2 * Math.PI * r;
 
   return (
-    <View
-      style={{ width: diameter, height: diameter }}
-      accessible
-      accessibilityRole="progressbar"
-      accessibilityLabel={accessibilityLabel}
-    >
-      <Svg
-        width={diameter}
-        height={diameter}
-        viewBox={`0 0 ${diameter} ${diameter}`}
-        style={StyleSheet.absoluteFill}
-      >
-        <Circle
-          cx={diameter / 2}
-          cy={diameter / 2}
-          r={r}
-          fill="none"
-          stroke={theme.palette.hopGreenSoft}
-          strokeWidth={stroke}
-        />
-        <Circle
-          cx={diameter / 2}
-          cy={diameter / 2}
-          r={r}
-          fill="none"
-          stroke={theme.palette.hopGreen}
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={`${circumference}`}
-          strokeDashoffset={circumference * (1 - clamped)}
-          // Starts at the top and grows clockwise, which is the direction a
-          // three-year-old has already seen on every timer in their house.
-          transform={`rotate(-90 ${diameter / 2} ${diameter / 2})`}
-        />
-      </Svg>
+    <View style={{ width: diameter, height: diameter }}>
       <View
-        style={[styles.inside, { paddingBottom: theme.spacing.xxxl }]}
-        pointerEvents="none"
+        style={StyleSheet.absoluteFill}
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel={accessibilityLabel}
       >
+        <Svg
+          width={diameter}
+          height={diameter}
+          viewBox={`0 0 ${diameter} ${diameter}`}
+          style={StyleSheet.absoluteFill}
+        >
+          <Circle
+            cx={diameter / 2}
+            cy={diameter / 2}
+            r={r}
+            fill="none"
+            stroke={theme.palette.hopGreenSoft}
+            strokeWidth={stroke}
+          />
+          <Circle
+            cx={diameter / 2}
+            cy={diameter / 2}
+            r={r}
+            fill="none"
+            stroke={theme.palette.hopGreen}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={`${circumference}`}
+            strokeDashoffset={circumference * (1 - clamped)}
+            // Starts at the top and grows clockwise, which is the direction a
+            // three-year-old has already seen on every timer in their house.
+            transform={`rotate(-90 ${diameter / 2} ${diameter / 2})`}
+          />
+        </Svg>
+      </View>
+
+      <View style={[styles.inside, { paddingBottom: theme.spacing.xxxl }]} pointerEvents="none">
         {children}
       </View>
     </View>

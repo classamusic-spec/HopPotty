@@ -5,6 +5,7 @@ import { HopButton, HopText } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
 import {
   HopFaceDisc,
+  IconTile,
   ParentIcon,
   SecondaryButton,
   SheetHeader,
@@ -166,19 +167,13 @@ export function PaywallScreen({
               const tint = tints[benefit.tint];
               return (
                 <View key={benefit.id} style={[styles.benefit, { columnGap: theme.spacing.m }]}>
-                  <View
-                    style={[
-                      styles.tile,
-                      {
-                        width: theme.spacing.xxxl,
-                        height: theme.spacing.xxxl,
-                        borderRadius: theme.radius.s,
-                        backgroundColor: softBacking(theme, tint.soft),
-                      },
-                    ]}
-                  >
-                    <ParentIcon name={benefit.icon} color={tint.ink} size={g.m} />
-                  </View>
+                  <IconTile
+                    name={benefit.icon}
+                    color={tint.ink}
+                    background={softBacking(theme, tint.soft)}
+                    size={theme.spacing.xxxl}
+                    glyphSize={g.m}
+                  />
                   <View style={styles.grow}>
                     <HopText variant="parentHeadline">{benefit.title}</HopText>
                     <HopText
@@ -248,5 +243,4 @@ const styles = StyleSheet.create({
   hero: { flexDirection: 'row', alignItems: 'center' },
   benefit: { flexDirection: 'row', alignItems: 'flex-start' },
   promise: { flexDirection: 'row', alignItems: 'flex-start' },
-  tile: { alignItems: 'center', justifyContent: 'center' },
 });

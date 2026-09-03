@@ -7,6 +7,7 @@ import {
   View,
   useWindowDimensions,
   type StyleProp,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
@@ -57,9 +58,11 @@ export function useParentLayout(): ParentLayout {
   return {
     isRegular,
     pageInset: isRegular ? theme.spacing.pageRegular : theme.spacing.pageCompact,
-    // Twenty-odd ems at parent body size. Full-bleed body text on an iPad is
-    // the definition of a stretched phone.
-    readingWidth: theme.type.parentBody.size * 26,
+    // About forty ems at parent body size — the readable width iOS gives a
+    // form. Full-bleed body text on an iPad is the definition of a stretched
+    // phone, and a grouped list stretched to 1024pt is unreadable in a
+    // different way: the value ends up a hand's width from its label.
+    readingWidth: theme.type.parentBody.size * 40,
   };
 }
 
@@ -71,14 +74,15 @@ export function parentPageGround(theme: HopTheme): string {
 /**
  * The tint of a control that destroys something.
  *
- * There is no destructive colour in the design tokens — the Swift side paints
- * these with `HopDestructiveButton`, whose tint the token export does not
- * carry. `warning` is the closest honest semantic the tokens have, and this
- * function exists so the day a `destructive` token lands there is exactly one
- * place to change. It is deliberately not a hex.
+ * Deliberately not the brand's peach accent: destructive controls use the
+ * platform's red so they carry the meaning a person already learned everywhere
+ * else on their phone. The value used to live as two literals inside
+ * `HopDestructiveButton`, which is why it was missing here — a colour that
+ * exists only inside one component cannot be exported. It is a semantic token
+ * now, so this reads the same value SwiftUI does.
  */
 export function destructiveTint(theme: HopTheme): string {
-  return theme.color.warning;
+  return theme.color.destructive;
 }
 
 /**
@@ -92,6 +96,22 @@ export function destructiveTint(theme: HopTheme): string {
 export function softBacking(theme: HopTheme, lightTint: string): string {
   return theme.isDark ? theme.color.surfaceElevated : lightTint;
 }
+
+/**
+ * Border widths for the two strokes that are not hairlines.
+ *
+ * The tokens carry no border scale — SwiftUI draws these with
+ * `.stroke(lineWidth:)` at the call site — so the two the parent surfaces
+ * need are named once here rather than typed into eight files. A hairline
+ * stays `StyleSheet.hairlineWidth`, which is the platform's answer and not
+ * ours to pick.
+ */
+export const BORDER_WIDTH = {
+  /** An outlined control: a secondary button, an unselected chip, a field. */
+  control: 1.5,
+  /** The ring around the thing that is chosen. */
+  selection: 2.5,
+} as const;
 
 /**
  * Glyph sizes, off the spacing scale.
@@ -292,21 +312,31 @@ export function IconTile({
   name,
   color,
   size,
+  glyphSize,
+  radius,
 }: {
   background: string;
   name: ParentIconName;
   color: string;
   size: number;
+  glyphSize?: number;
+  /** A disc rather than a squircle, where the mark is a status not a setting. */
+  radius?: number;
 }): React.ReactElement {
   const theme = useHopTheme();
   return (
     <View
       style={[
         styles.centre,
-        { width: size, height: size, borderRadius: theme.radius.s, backgroundColor: background },
+        {
+          width: size,
+          height: size,
+          borderRadius: radius ?? theme.radius.s,
+          backgroundColor: background,
+        },
       ]}
     >
-      <ParentIcon name={name} color={color} size={Math.round(size * 0.56)} />
+      <ParentIcon name={name} color={color} size={glyphSize ?? glyphSizes(theme).s} />
     </View>
   );
 }
@@ -361,7 +391,7 @@ export function HopFaceDisc({
         height: size,
         borderRadius: size / 2,
         backgroundColor: fill,
-        borderWidth: ring === undefined ? 0 : StyleSheet.hairlineWidth * 3,
+        borderWidth: ring === undefined ? 0 : BORDER_WIDTH.control,
         borderColor: ring ?? theme.color.divider,
         overflow: 'hidden',
       }}
@@ -460,7 +490,7 @@ function ListRow({ row }: { row: ParentListRowProps }): React.ReactElement {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={row.value === undefined ? row.label : `${row.label}, ${row.value}`}
+      accessibilityLabel={[row.label, row.sublabel, row.value].filter(Boolean).join(', ')}
       accessibilityHint={row.accessibilityHint}
       onPress={row.onPress}
       style={({ pressed }) => ({
@@ -479,7 +509,12 @@ export interface ListGroupProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/** A grouped-list section: an uppercase header, a card of rows, a footer. */
+/**
+ * A grouped-list section: a header, a card of rows, a footer.
+ *
+ * The header is uppercased by the style rather than by the string, so what a
+ * screen reader announces is still a word rather than five letters.
+ */
 export function ListGroup({ header, footer, rows, style }: ListGroupProps): React.ReactElement {
   const theme = useHopTheme();
   return (
@@ -493,7 +528,7 @@ export function ListGroup({ header, footer, rows, style }: ListGroupProps): Reac
             { paddingHorizontal: theme.spacing.l, paddingBottom: theme.spacing.xs },
           ]}
         >
-          {header.toUpperCase()}
+          {header}
         </HopText>
       )}
       <View
@@ -530,6 +565,30 @@ export function ListGroup({ header, footer, rows, style }: ListGroupProps): Reac
         </HopText>
       )}
     </View>
+  );
+}
+
+/**
+ * The small uppercase label above a block that is not a grouped list.
+ *
+ * Uppercased by the style, never by the string: a screen reader should hear
+ * "Character", not C-H-A-R-A-C-T-E-R. Tracking comes from the footnote type
+ * style rather than an eyebrow-specific nudge, because the tokens already have
+ * an answer for how this size is spaced.
+ */
+export function Eyebrow({
+  text,
+  tone = 'secondary',
+  style,
+}: {
+  text: string;
+  tone?: 'secondary' | 'brand';
+  style?: StyleProp<TextStyle>;
+}): React.ReactElement {
+  return (
+    <HopText variant="parentFootnote" tone={tone} style={[styles.eyebrow, style]}>
+      {text}
+    </HopText>
   );
 }
 
@@ -671,7 +730,7 @@ export function SecondaryButton({
         {
           minHeight: theme.hitTarget.parentMinimum + theme.spacing.s,
           borderRadius: theme.radius.xl,
-          borderWidth: destructive ? 0 : StyleSheet.hairlineWidth * 3,
+          borderWidth: destructive ? 0 : BORDER_WIDTH.control,
           borderColor: theme.color.divider,
           backgroundColor: destructive ? theme.color.surfaceSunken : 'transparent',
           opacity: pressed ? 0.7 : 1,
@@ -723,7 +782,7 @@ export function ChoiceChip({
           paddingHorizontal: theme.spacing.m,
           borderRadius: theme.hitTarget.parentMinimum / 2,
           backgroundColor: fill,
-          borderWidth: StyleSheet.hairlineWidth * 3,
+          borderWidth: BORDER_WIDTH.control,
           borderColor: border,
           opacity: pressed ? 0.8 : 1,
         },
@@ -1011,7 +1070,8 @@ const styles = StyleSheet.create({
   rowLabel: { flex: 1, minWidth: 0 },
   rowAccessory: { flexDirection: 'row', alignItems: 'center', flexShrink: 0 },
   rightText: { textAlign: 'right' },
-  groupHeader: { textTransform: 'uppercase', letterSpacing: 0.5 },
+  groupHeader: { textTransform: 'uppercase' },
+  eyebrow: { textTransform: 'uppercase' },
   sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   segmented: { flexDirection: 'row' },
   segment: { flex: 1, alignItems: 'center', justifyContent: 'center' },

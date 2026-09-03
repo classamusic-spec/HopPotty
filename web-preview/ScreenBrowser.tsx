@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
+import { DEVICE_FRAME } from './DeviceViewport';
+
 /**
  * A browser for every screen in the app.
  *
@@ -31,8 +33,10 @@ export interface ScreenGroup {
   screens: ScreenEntry[];
 }
 
-const PHONE = { width: 393, height: 852 };
-const IPAD = { width: 1024, height: 768 };
+// The same frames the screens themselves are told they are running in, so the
+// box the browser draws and the size a layout measures cannot drift apart.
+const PHONE = DEVICE_FRAME.phone;
+const IPAD = DEVICE_FRAME.ipad;
 
 export function ScreenBrowser({ groups }: { groups: ScreenGroup[] }): React.ReactElement {
   const flat = useMemo(() => groups.flatMap((g) => g.screens), [groups]);

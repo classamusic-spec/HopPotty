@@ -220,6 +220,8 @@ export function HandSprite({
  * the way the harness does, so the box is derived from it.
  */
 const SPARKLE_FILL = 76 / 120;
+/** The star sits a little above and left of its file's centre; the box shifts. */
+const SPARKLE_OFFSET = { x: 2 / 120, y: 6 / 120 };
 
 export function Sparkle({
   frame,
@@ -235,13 +237,14 @@ export function Sparkle({
   radius: number;
   opacity?: number;
 }): React.ReactElement {
+  const box = (radius * 2) / SPARKLE_FILL;
   return (
     <IconSprite
       artwork="icon.games.sparkle"
       frame={frame}
-      cx={cx}
-      cy={cy}
-      size={(radius * 2) / SPARKLE_FILL}
+      cx={cx + SPARKLE_OFFSET.x * box}
+      cy={cy + SPARKLE_OFFSET.y * box}
+      size={box}
       {...(opacity === undefined ? null : { opacity })}
     />
   );
@@ -296,7 +299,7 @@ export function TapHint({ frame, cx, cy, radius, rings = 3 }: TapHintProps): Rea
     { k: 1.86, sw: 2.4, o: 0.17 },
   ];
   return (
-    <View pointerEvents="none">
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {spec.slice(0, rings).map(({ k, sw, o }) => {
         const d = frame.len(radius * k * 2);
         return (
@@ -343,7 +346,7 @@ export function SwipeHint({
   const dot = frame.len(length * 0.023) * 2;
   const ring = frame.len(ringRadius) * 2;
   return (
-    <View pointerEvents="none">
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {Array.from({ length: dots }, (_, i) => {
         const t = i / (dots - 1);
         const x = cx - length / 2 + t * length;
@@ -407,7 +410,7 @@ export function Foam({
 }): React.ReactElement {
   const theme = useHopTheme();
   return (
-    <View pointerEvents="none">
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {PUFFS.map(({ dx, dy, r, o }, i) => {
         const d = frame.len(radius * r) * 2;
         return (

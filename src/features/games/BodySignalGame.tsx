@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import React from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { GameHost } from '../../design-system/components';
 import { GameBoard } from './GameBoard';
-import { boardFrame } from './sceneFrame';
+import { useBoardFrame } from './useBoardFrame';
 import { HopSprite, IconSprite, TapHint } from './sprites';
 
 /**
@@ -21,7 +21,7 @@ import { HopSprite, IconSprite, TapHint } from './sprites';
 
 export interface BodySignalGameProps {
   /** How many signals the child has noticed. Never shown as a number. */
-  noticed: number;
+  noticed?: number;
   /** Signals in a round. Three, with play between them. */
   signals?: number;
   /** Whether Hop's bubble is showing right now. */
@@ -39,12 +39,14 @@ const BUBBLE = { cx: 486, cy: 150, width: 190 } as const;
 
 /** How much of `icon.games.ball` its ball fills, and of the thought bubble its bubble. */
 const BALL_FILL = 88 / 120;
-const BUBBLE_FILL = 100 / 120;
+const BUBBLE_FILL = 95 / 120;
 /** The bubble sits above the middle of its own file; the box shifts to match. */
-const BUBBLE_RISE = 0.125;
+const BUBBLE_RISE = 15 / 120;
+/** The ball sits a shade below the middle of its own file. */
+const BALL_DROP = 2 / 120;
 
 export function BodySignalGame({
-  noticed,
+  noticed = 1,
   signals = 3,
   bubbleShowing = true,
   onTapBubble,
@@ -52,8 +54,7 @@ export function BodySignalGame({
   onDone,
   onGrownUp,
 }: BodySignalGameProps): React.ReactElement {
-  const { width } = useWindowDimensions();
-  const frame = useMemo(() => boardFrame(width), [width]);
+  const { frame, onSlotLayout } = useBoardFrame();
   const bubbleBox = BUBBLE.width / BUBBLE_FILL;
 
   return (
@@ -64,13 +65,13 @@ export function BodySignalGame({
       onDone={onDone}
       onGrownUp={onGrownUp}
       board={
-        <View style={styles.board} pointerEvents="box-none">
+        <View style={styles.board} pointerEvents="box-none" onLayout={onSlotLayout}>
           <GameBoard scene="scene.games.bodySignal" frame={frame}>
             <IconSprite
               artwork="icon.games.ball"
               frame={frame}
               cx={BALL.cx}
-              cy={BALL.cy}
+              cy={BALL.cy - (BALL_DROP * (BALL.radius * 2)) / BALL_FILL}
               size={(BALL.radius * 2) / BALL_FILL}
               label="Hop's ball"
             />

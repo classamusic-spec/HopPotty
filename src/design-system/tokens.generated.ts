@@ -17,6 +17,7 @@ export interface HopSemanticColors {
   readonly brandPrimary: string;
   readonly brandSecondary: string;
   readonly celebration: string;
+  readonly destructive: string;
   readonly divider: string;
   readonly eventAccident: string;
   readonly eventPee: string;
@@ -45,6 +46,7 @@ export const appearances: Readonly<Record<HopAppearance, HopSemanticColors>> = {
     brandPrimary: "#8FDCAC",
     brandSecondary: "#9BDCF1",
     celebration: "#FFD769",
+    destructive: "#FF6961",
     divider: "#33415C",
     eventAccident: "#9AA3B4",
     eventPee: "#9BDCF1",
@@ -71,6 +73,7 @@ export const appearances: Readonly<Record<HopAppearance, HopSemanticColors>> = {
     brandPrimary: "#A8E8C2",
     brandSecondary: "#B0E4F7",
     celebration: "#FFE49A",
+    destructive: "#FFA39D",
     divider: "#5A6780",
     eventAccident: "#C3CAD8",
     eventPee: "#B0E4F7",
@@ -97,6 +100,7 @@ export const appearances: Readonly<Record<HopAppearance, HopSemanticColors>> = {
     brandPrimary: "#63C88A",
     brandSecondary: "#6FC7E8",
     celebration: "#A87A0C",
+    destructive: "#C22121",
     divider: "#EBE3D8",
     eventAccident: "#7D766D",
     eventPee: "#2A87AC",
@@ -123,6 +127,7 @@ export const appearances: Readonly<Record<HopAppearance, HopSemanticColors>> = {
     brandPrimary: "#2F8C57",
     brandSecondary: "#2A87AC",
     celebration: "#7A5A08",
+    destructive: "#8E1010",
     divider: "#AFA69B",
     eventAccident: "#5A544D",
     eventPee: "#15566F",

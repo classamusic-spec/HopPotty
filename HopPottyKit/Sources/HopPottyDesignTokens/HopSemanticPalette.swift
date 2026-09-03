@@ -41,6 +41,12 @@ public struct HopSemanticPalette: Sendable, Hashable {
     // Status
     public let success: HopColorValue
     public let warning: HopColorValue
+    /// Deliberately not the brand's peach accent. Destructive controls use the
+    /// platform's red so they carry the meaning a person already learned
+    /// everywhere else on their phone. It lives here rather than inside the
+    /// button that draws it, so every surface — and React Native — reads the
+    /// same value.
+    public let destructive: HopColorValue
     public let neutral: HopColorValue
     public let celebration: HopColorValue
 
@@ -72,6 +78,7 @@ public struct HopSemanticPalette: Sendable, Hashable {
         brandAction: HopColorValue,
         success: HopColorValue,
         warning: HopColorValue,
+        destructive: HopColorValue,
         neutral: HopColorValue,
         celebration: HopColorValue,
         eventTried: HopColorValue,
@@ -97,6 +104,7 @@ public struct HopSemanticPalette: Sendable, Hashable {
         self.brandAction = brandAction
         self.success = success
         self.warning = warning
+        self.destructive = destructive
         self.neutral = neutral
         self.celebration = celebration
         self.eventTried = eventTried
@@ -145,6 +153,7 @@ public extension HopSemanticPalette {
         brandAction: HopColorValue(hex: 0x256F46),
         success: HopPalette.hopGreenDeep,
         warning: HopPalette.sunshineDeep,
+            destructive: HopColorValue(hex: 0xC22121),
         neutral: HopPalette.sand500,
         celebration: HopPalette.sunshineDeep,
         eventTried: HopPalette.lavenderDeep,
@@ -172,6 +181,7 @@ public extension HopSemanticPalette {
         brandAction: HopPalette.hopGreenLight,
         success: HopPalette.hopGreenLight,
         warning: HopPalette.sunshine,
+            destructive: HopColorValue(hex: 0xFF6961),
         neutral: HopColorValue(hex: 0x8B94A6),
         celebration: HopPalette.sunshine,
         eventTried: HopColorValue(hex: 0xC3BAFA),
@@ -201,6 +211,7 @@ public extension HopSemanticPalette {
         brandAction: HopPalette.hopGreenInk,
         success: HopPalette.hopGreenInk,
         warning: HopPalette.sunshineInk,
+            destructive: HopColorValue(hex: 0x8E1010),
         neutral: HopPalette.sand600,
         celebration: HopPalette.sunshineInk,
         eventTried: HopPalette.lavenderInk,
@@ -228,6 +239,7 @@ public extension HopSemanticPalette {
         brandAction: HopColorValue(hex: 0xA8E8C2),
         success: HopColorValue(hex: 0xA8E8C2),
         warning: HopColorValue(hex: 0xFFE49A),
+            destructive: HopColorValue(hex: 0xFFA39D),
         neutral: HopColorValue(hex: 0xB4BCCB),
         celebration: HopColorValue(hex: 0xFFE49A),
         eventTried: HopColorValue(hex: 0xD5CFFF),

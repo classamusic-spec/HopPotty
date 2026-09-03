@@ -5,11 +5,10 @@ import { HopButton, HopText } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
 import type { AuthorizationStatus, SelectionSummary } from '../../services/screen-time/types';
 import {
-  ParentIcon,
+  IconTile,
   ParentNavBar,
   ParentPage,
   SecondaryButton,
-  glyphSizes,
   softBacking,
 } from '../settings/ParentKit';
 import {
@@ -66,7 +65,6 @@ export function ChooseAppsScreen({
   onReviewSystemSettings,
 }: ChooseAppsScreenProps): React.ReactElement {
   const theme = useHopTheme();
-  const g = glyphSizes(theme);
   const notice = SCREEN_TIME_NOTICE[status];
 
   return (
@@ -113,19 +111,12 @@ export function ChooseAppsScreen({
           },
         ]}
       >
-        <View
-          style={[
-            styles.tile,
-            {
-              width: theme.spacing.xxxl,
-              height: theme.spacing.xxxl,
-              borderRadius: theme.radius.s,
-              backgroundColor: softBacking(theme, theme.palette.pondBlueSoft),
-            },
-          ]}
-        >
-          <ParentIcon name="lock" color={theme.color.eventPee} size={g.s} />
-        </View>
+        <IconTile
+          name="lock"
+          color={theme.color.eventPee}
+          background={softBacking(theme, theme.palette.pondBlueSoft)}
+          size={theme.spacing.xxxl}
+        />
         <View style={styles.grow}>
           <HopText variant="parentHeadline">{PRIVACY_TITLE}</HopText>
           <HopText variant="parentCaption" tone="secondary" style={{ marginTop: theme.spacing.xxs }}>
@@ -203,5 +194,4 @@ const styles = StyleSheet.create({
   tiles: { flexDirection: 'row', alignItems: 'stretch' },
   tileCell: { flex: 1, alignItems: 'center' },
   promise: { flexDirection: 'row', alignItems: 'flex-start' },
-  tile: { alignItems: 'center', justifyContent: 'center' },
 });

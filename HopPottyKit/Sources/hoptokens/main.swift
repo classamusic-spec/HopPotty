@@ -46,6 +46,7 @@ func colors(_ p: HopSemanticPalette) -> [String: String] {
         "brandAction": p.brandAction.hexString,
         "success": p.success.hexString,
         "warning": p.warning.hexString,
+        "destructive": p.destructive.hexString,
         "neutral": p.neutral.hexString,
         "celebration": p.celebration.hexString,
         "eventTried": p.eventTried.hexString,

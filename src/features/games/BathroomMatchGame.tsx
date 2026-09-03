@@ -1,12 +1,12 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import type { HopIllustrationKey } from '../../art/HopArtwork';
 import { GameHost } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
 import { MatchTile, type TileState } from './boardTray';
 import { GameBoard } from './GameBoard';
-import { boardFrame } from './sceneFrame';
+import { useBoardFrame } from './useBoardFrame';
 import { HopSprite } from './sprites';
 
 /**
@@ -64,8 +64,7 @@ export function BathroomMatchGame({
   onGrownUp,
 }: BathroomMatchGameProps): React.ReactElement {
   const theme = useHopTheme();
-  const { width } = useWindowDimensions();
-  const frame = useMemo(() => boardFrame(width), [width]);
+  const { frame, onSlotLayout } = useBoardFrame();
 
   const rows: BathroomMatchTile[][] = [];
   for (let i = 0; i < tiles.length; i += ROW) rows.push(tiles.slice(i, i + ROW));
@@ -78,7 +77,7 @@ export function BathroomMatchGame({
       onGrownUp={onGrownUp}
       board={
         <View style={styles.board} pointerEvents="box-none">
-          <View style={styles.bandSlot} pointerEvents="box-none">
+          <View style={styles.bandSlot} pointerEvents="box-none" onLayout={onSlotLayout}>
             <GameBoard scene="scene.games.bathroomMatch" frame={frame}>
               <HopSprite
                 frame={frame}

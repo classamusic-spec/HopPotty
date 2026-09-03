@@ -5,7 +5,9 @@ import { HopButton, HopText } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
 import {
   ChoiceChip,
+  Eyebrow,
   HopFaceDisc,
+  IconTile,
   ListGroup,
   ParentIcon,
   SheetHeader,
@@ -59,7 +61,7 @@ export interface QuickReminderSheetProps {
 }
 
 const SUBTITLE = 'One reminder, once. Nothing is paused and your schedule is untouched.';
-const REASON_HEADING = 'WHY, IF YOU LIKE';
+const REASON_HEADING = 'Why, if you like';
 
 const PRESETS: readonly { readonly id: ReminderPreset; readonly label: string }[] = [
   { id: 'minutes15', label: 'In 15 minutes' },
@@ -134,19 +136,12 @@ export function QuickReminderSheet({
                 id: 'time',
                 label: 'Remind me at',
                 leading: (
-                  <View
-                    style={[
-                      styles.tile,
-                      {
-                        width: theme.spacing.xxxl,
-                        height: theme.spacing.xxxl,
-                        borderRadius: theme.radius.s,
-                        backgroundColor: softBacking(theme, theme.palette.hopGreenSoft),
-                      },
-                    ]}
-                  >
-                    <ParentIcon name="clock" color={theme.color.brandAction} size={g.s} />
-                  </View>
+                  <IconTile
+                    name="clock"
+                    color={theme.color.brandAction}
+                    background={softBacking(theme, theme.palette.hopGreenSoft)}
+                    size={theme.spacing.xxxl}
+                  />
                 ),
                 onPress: onPickTime,
                 accessory: (
@@ -174,9 +169,7 @@ export function QuickReminderSheet({
           />
 
           <View>
-            <HopText variant="parentFootnote" tone="secondary" style={styles.eyebrow}>
-              {REASON_HEADING}
-            </HopText>
+            <Eyebrow text={REASON_HEADING} />
             <View
               style={[
                 styles.chipRow,
@@ -228,7 +221,5 @@ const styles = StyleSheet.create({
   chip: { flexBasis: '47%', flexGrow: 1 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap' },
   reasonChip: { flexGrow: 1, flexShrink: 1 },
-  eyebrow: { textTransform: 'uppercase', letterSpacing: 0.5 },
   note: { flexDirection: 'row', alignItems: 'flex-start' },
-  tile: { alignItems: 'center', justifyContent: 'center' },
 });

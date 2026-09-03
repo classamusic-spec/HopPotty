@@ -147,6 +147,14 @@ const STEPS: Readonly<Record<RoutineStepId, RoutineStepContent>> = {
   },
 };
 
+/**
+ * The width every size in the design renders is quoted at.
+ *
+ * Sizes taken from a render are true at this width; wider screens scale them
+ * rather than leaving a character stranded in a room that grew around it.
+ */
+const REFERENCE_WIDTH = 393;
+
 /** The question the try step's second beat asks, and its three peer answers. */
 const OUTCOMES: readonly { readonly id: PottyOutcome; readonly label: string }[] = [
   // "I tried" is first because a child who sat down and nothing happened did the
@@ -171,25 +179,57 @@ export function PottyRoutineScreen({
   const content = STEPS[step];
   const asking = step === 'try' && isAwaitingOutcome;
 
-  // The scene is drawn at its own 4:3, full width, so nothing in it is cropped —
-  // which is the whole reason it is a band rather than a full-bleed cover.
-  const bandHeight = width * 0.75;
-  const bandTop = height * 0.223;
+  // The scene is a band at its own 4:3 rather than a full-bleed cover: a 640×480
+  // room stretched over a phone would show a third of itself. The band is as
+  // wide as the screen on a phone, and on a tall-enough-to-be-square screen it
+  // is capped by the height and centred instead, so an iPad shows the whole room
+  // with air either side rather than a picture with its floor cropped off.
+  const bandHeight = Math.min(width * 0.75, height * 0.346);
+  const bandWidth = (bandHeight * 4) / 3;
+  const bandInset = Math.max(0, (width - bandWidth) / 2);
+  // Anchored so the room's own floor line lands where Hop's feet do. On the
+  // second beat the picture rides higher: Hop is the subject there, the three
+  // answers take the lower half, and the question needs clean ground to sit on.
+  const bandTop = height * (asking ? 0.1 : 0.223);
   const bandBottom = bandTop + bandHeight;
-  const fade = bandHeight * 0.17;
+  // The top edge melts away over a sixth of the picture, as the design renders
+  // mask it. The bottom edge takes longer because the sentence stands on it, and
+  // a title over a potty is the one place the picture has to give way. The sides
+  // only exist where the band is narrower than the screen.
+  const topFade = bandHeight * 0.17;
+  const bottomFade = bandHeight * 0.26;
+  const sideFade = bandInset > 0 ? bandWidth * 0.12 : 0;
+  const veilFrom = bandBottom - bottomFade;
 
   const showsRing = step === 'try' && !asking && timerFraction !== null;
-  const hopSide = asking ? 236 : content.hopWidth;
+  // Hop is quoted at the width the design renders are drawn at, and scales with
+  // the picture he is standing in — a character that stayed 236pt while the room
+  // grew would be standing in a doll's house.
+  const hopScale = bandWidth / REFERENCE_WIDTH;
+  const hopSide = (asking ? 236 : content.hopWidth) * hopScale;
 
   return (
     <ChildStage
       scene={content.scene}
-      sceneStyle={{ top: bandTop, bottom: Math.max(0, height - bandBottom) }}
-      veilFrom={bandBottom}
-      veilHeight={Math.max(0, height - bandBottom)}
+      sceneStyle={{
+        top: bandTop,
+        bottom: Math.max(0, height - bandBottom),
+        left: bandInset,
+        right: bandInset,
+      }}
+      veilFrom={veilFrom}
+      veilHeight={Math.max(0, height - veilFrom)}
       veilStrength={asking ? 0.9 : 0.74}
     >
-      <SceneBandEdges top={bandTop} height={bandHeight} fade={fade} width={width} />
+      <SceneBandEdges
+        left={bandInset}
+        top={bandTop}
+        width={bandWidth}
+        height={bandHeight}
+        topFade={topFade}
+        bottomFade={bottomFade}
+        sideFade={sideFade}
+      />
 
       <View
         style={[
@@ -213,11 +253,11 @@ export function PottyRoutineScreen({
           {showsRing && timerFraction !== null ? (
             <RoutineTimerRing
               fraction={timerFraction}
-              diameter={Math.min(300, width * 0.78)}
+              diameter={300 * hopScale}
               accessibilityLabel="Take all the time you need."
             >
               <HopCharacter
-                size={content.hopWidth}
+                size={hopSide}
                 state={content.hop}
                 accessibilityLabel={content.hopLabel}
               />
@@ -364,38 +404,56 @@ function OutcomeChoice({
  * the band's first and last sixth, which is what the mask was doing.
  */
 function SceneBandEdges({
+  left,
   top,
-  height,
-  fade,
   width,
+  height,
+  topFade,
+  bottomFade,
+  sideFade,
 }: {
+  readonly left: number;
   readonly top: number;
-  readonly height: number;
-  readonly fade: number;
   readonly width: number;
+  readonly height: number;
+  readonly topFade: number;
+  readonly bottomFade: number;
+  readonly sideFade: number;
 }): React.ReactElement {
   const theme = useHopTheme();
   const ns = React.useId().replace(/[^A-Za-z0-9]/g, '');
-  const id = `bandEdge${ns}`;
+  const downId = `bandEdgeY${ns}`;
+  const acrossId = `bandEdgeX${ns}`;
   const c = theme.color.backgroundPrimary;
-  const stop = height > 0 ? fade / height : 0;
+  const head = height > 0 ? topFade / height : 0;
+  const foot = height > 0 ? 1 - bottomFade / height : 1;
+  const flank = width > 0 ? sideFade / width : 0;
 
   return (
     <Svg
       width={width}
       height={height}
       pointerEvents="none"
-      style={{ position: 'absolute', left: 0, top, width, height }}
+      style={{ position: 'absolute', left, top, width, height }}
     >
       <Defs>
-        <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+        <LinearGradient id={downId} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={c} stopOpacity={1} />
-          <Stop offset={stop} stopColor={c} stopOpacity={0} />
-          <Stop offset={1 - stop} stopColor={c} stopOpacity={0} />
+          <Stop offset={head} stopColor={c} stopOpacity={0} />
+          <Stop offset={foot} stopColor={c} stopOpacity={0} />
+          <Stop offset="1" stopColor={c} stopOpacity={1} />
+        </LinearGradient>
+        <LinearGradient id={acrossId} x1="0" y1="0" x2="1" y2="0">
+          <Stop offset="0" stopColor={c} stopOpacity={1} />
+          <Stop offset={flank} stopColor={c} stopOpacity={0} />
+          <Stop offset={1 - flank} stopColor={c} stopOpacity={0} />
           <Stop offset="1" stopColor={c} stopOpacity={1} />
         </LinearGradient>
       </Defs>
-      <Rect x={0} y={0} width={width} height={height} fill={`url(#${id})`} />
+      <Rect x={0} y={0} width={width} height={height} fill={`url(#${downId})`} />
+      {sideFade > 0 ? (
+        <Rect x={0} y={0} width={width} height={height} fill={`url(#${acrossId})`} />
+      ) : null}
     </Svg>
   );
 }

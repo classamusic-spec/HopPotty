@@ -33,7 +33,10 @@ export default defineConfig({
     // never reaches `web-preview/node_modules`. Each shared package is pinned
     // to one resolved copy, which also guarantees a single React instance.
     alias: [
-      { find: /^react-native$/, replacement: pkg('react-native-web') },
+      // `react-native.ts` is react-native-web with `useWindowDimensions`
+      // answering with the device frame the browser is drawing rather than the
+      // browser window — see the note in that file.
+      { find: /^react-native$/, replacement: path.resolve(__dirname, 'react-native.ts') },
       { find: /^react-native-web$/, replacement: pkg('react-native-web') },
       { find: /^react-native-svg$/, replacement: pkg('react-native-svg') },
       { find: /^react$/, replacement: pkg('react') },

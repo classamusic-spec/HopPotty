@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 import { HopArtwork, type HopIllustrationKey } from '../../art/HopArtwork';
 import { HopText } from '../../design-system/components';
@@ -53,7 +53,18 @@ export interface GamesHubScreenProps {
 /** The tile geometry the render harness draws (`gamesHub`), in points. */
 const TILE = { height: 158, plate: 48, feather: 12, inset: 18, captionBottom: 11 } as const;
 const GRID_GAP = 11;
-const DOME_HEIGHT = 178;
+/**
+ * The green arch behind the title.
+ *
+ * The harness draws it 178 tall on a screen whose title row starts under a
+ * status bar; stated instead as a relationship to the row it sits behind, it
+ * lands in the same place whatever inset the row ends up with. The straight
+ * edge finishes just above the row, and the curve hangs below it.
+ */
+const DOME_ABOVE_ROW = 10;
+const DOME_LIP = 62;
+/** How far past its own box the arch's belly hangs. */
+const DOME_SAG = 10;
 const BACK_SIDE = 56;
 /** Past this width the hub is a wider grid, not a stretched phone. */
 const WIDE = 768;
@@ -72,7 +83,7 @@ export function GamesHubScreen({
 
   return (
     <View style={[styles.root, { backgroundColor: theme.color.backgroundPrimary }]}>
-      <Dome width={width} />
+      <Dome width={width} rowHeight={theme.hitTarget.childMinimum} />
 
       <View style={[styles.header, { paddingHorizontal: pad, height: theme.hitTarget.childMinimum }]}>
         <Pressable
@@ -134,9 +145,9 @@ export function GamesHubScreen({
 }
 
 /** The soft green arch the hub's title sits in. */
-function Dome({ width }: { width: number }): React.ReactElement {
+function Dome({ width, rowHeight }: { width: number; rowHeight: number }): React.ReactElement {
   const theme = useHopTheme();
-  const h = DOME_HEIGHT;
+  const h = rowHeight - DOME_ABOVE_ROW + DOME_LIP;
   const fill = theme.isDark
     ? withAlpha(theme.palette.hopGreen, 0.13)
     : theme.palette.hopGreenSoft;
@@ -144,7 +155,10 @@ function Dome({ width }: { width: number }): React.ReactElement {
     <View pointerEvents="none" style={[styles.dome, { height: h }]}>
       <Svg width={width} height={h} viewBox={`0 0 ${width} ${h}`}>
         <Path
-          d={`M 0 0 H ${width} V ${h - 62} C ${width * 0.78} ${h + 10}, ${width * 0.22} ${h + 10}, 0 ${h - 62} Z`}
+          d={
+            `M 0 0 H ${width} V ${h - DOME_LIP} ` +
+            `C ${width * 0.78} ${h + DOME_SAG}, ${width * 0.22} ${h + DOME_SAG}, 0 ${h - DOME_LIP} Z`
+          }
           fill={fill}
         />
       </Svg>
@@ -191,9 +205,18 @@ function GameDoor({
           right: 0,
           bottom: TILE.plate,
           height: TILE.feather,
-          backgroundColor: withAlpha(theme.palette.midnight, 0.4),
         }}
-      />
+      >
+        <Svg width="100%" height="100%">
+          <Defs>
+            <LinearGradient id="hopDoorFeather" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={theme.palette.midnight} stopOpacity={0} />
+              <Stop offset="1" stopColor={theme.palette.midnight} stopOpacity={0.78} />
+            </LinearGradient>
+          </Defs>
+          <Rect x="0" y="0" width="100%" height="100%" fill="url(#hopDoorFeather)" />
+        </Svg>
+      </View>
       <View
         pointerEvents="none"
         style={{

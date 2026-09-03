@@ -1,10 +1,8 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   PanResponder,
-  Pressable,
   StyleSheet,
   View,
-  useWindowDimensions,
   type GestureResponderEvent,
   type PanResponderGestureState,
 } from 'react-native';
@@ -13,7 +11,8 @@ import { GameHost } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
 import { HopCharacter } from '../../mascot/HopCharacter';
 import { GameBoard } from './GameBoard';
-import { boardFrame, type SceneFrame } from './sceneFrame';
+import type { SceneFrame } from './sceneFrame';
+import { useBoardFrame } from './useBoardFrame';
 import { IconSprite, Sparkle } from './sprites';
 
 /**
@@ -37,7 +36,7 @@ const HOP_ABSOLUTE_FILL = { position: 'absolute', top: 0, left: 0, right: 0, bot
 
 export interface PottyPathGameProps {
   /** How many pads Hop has already reached. Never shown as a number. */
-  reached: number;
+  reached?: number;
   onHopTo?: (pad: number) => void;
   onDone?: () => void;
   onGrownUp?: () => void;
@@ -60,19 +59,20 @@ const PADS: readonly { x: number; y: number; scale: number; name: string }[] = [
  * with the pad, so the box is that width divided by the fill.
  */
 const PAD_BOX = (scale: number): number => ((34 * (640 / 393)) / 0.68) * 2 * scale;
+/** The pad's own centre sits a little below the middle of its file. */
+const PAD_RISE = 6 / 200;
 
 /** Hop's box on this board, in scene units, and how far his feet sit past a pad. */
 const HOP_SIZE = 208;
 const HOP_DROP = 13;
 
 export function PottyPathGame({
-  reached,
+  reached = 3,
   onHopTo,
   onDone,
   onGrownUp,
 }: PottyPathGameProps): React.ReactElement {
-  const { width } = useWindowDimensions();
-  const frame = useMemo(() => boardFrame(width), [width]);
+  const { frame, onSlotLayout } = useBoardFrame();
   const at = Math.min(Math.max(reached - 1, 0), PADS.length - 1);
 
   return (
@@ -83,7 +83,7 @@ export function PottyPathGame({
       onDone={onDone}
       onGrownUp={onGrownUp}
       board={
-        <View style={styles.board} pointerEvents="box-none">
+        <View style={styles.board} pointerEvents="box-none" onLayout={onSlotLayout}>
           <GameBoard scene="scene.games.pottyPath" frame={frame}>
             {PADS.map((pad, i) => {
               const box = PAD_BOX(pad.scale);
@@ -94,7 +94,7 @@ export function PottyPathGame({
                     artwork="pond.lilyPadSmall"
                     frame={frame}
                     cx={pad.x}
-                    cy={pad.y - box * 0.01}
+                    cy={pad.y - box * PAD_RISE}
                     size={box}
                     label={pad.name}
                     opacity={done ? 1 : 0.58}
@@ -146,7 +146,6 @@ function DraggableHop({
 }): React.ReactElement {
   const theme = useHopTheme();
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null);
-  const dragging = useRef(false);
   const side = frame.len(HOP_SIZE);
 
   const responder = useMemo(
@@ -155,12 +154,8 @@ function DraggableHop({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: (_e: GestureResponderEvent, g: PanResponderGestureState) =>
           Math.abs(g.dx) + Math.abs(g.dy) > 4,
-        onPanResponderGrant: () => {
-          dragging.current = true;
-        },
         onPanResponderMove: (_e, g) => setDrag({ x: g.dx, y: g.dy }),
         onPanResponderRelease: (_e, g) => {
-          dragging.current = false;
           setDrag(null);
           if (!onDropAt) return;
           // Where the finger let go, back in the scene's own coordinates.
@@ -177,10 +172,7 @@ function DraggableHop({
           });
           onDropAt(best + 1);
         },
-        onPanResponderTerminate: () => {
-          dragging.current = false;
-          setDrag(null);
-        },
+        onPanResponderTerminate: () => setDrag(null),
       }),
     [cx, groundY, frame.scale, onDropAt],
   );
@@ -199,13 +191,9 @@ function DraggableHop({
         height: side,
       }}
     >
-      <HopCharacter
-        size={side}
-        state={drag ? 'hop' : 'idle'}
-        animated={!drag}
-        accessibilityLabel="Hop"
-        decorative
-      />
+      {/* The wrapper carries the name and the role: Hop is one element to a
+          screen reader, never a hundred and thirty-nine paths. */}
+      <HopCharacter size={side} state={drag ? 'hop' : 'idle'} animated={!drag} decorative />
       {drag ? (
         <View
           pointerEvents="none"

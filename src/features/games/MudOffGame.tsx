@@ -1,10 +1,10 @@
-import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import React, { useCallback } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import type { HopIllustrationKey } from '../../art/HopArtwork';
 import { GameHost } from '../../design-system/components';
 import { GameBoard } from './GameBoard';
-import { boardFrame } from './sceneFrame';
+import { useBoardFrame } from './useBoardFrame';
 import { HandSprite, IconSprite, SparkleBurst, SwipeHint } from './sprites';
 import { useSceneRub } from './useSceneRub';
 
@@ -92,8 +92,7 @@ export function MudOffGame({
   onDone,
   onGrownUp,
 }: MudOffGameProps): React.ReactElement {
-  const { width } = useWindowDimensions();
-  const frame = useMemo(() => boardFrame(width, BAND_RATIO), [width]);
+  const { frame, onSlotLayout } = useBoardFrame(BAND_RATIO);
 
   const rubAt = useCallback(
     (x: number, y: number) => {
@@ -123,8 +122,13 @@ export function MudOffGame({
       onDone={onDone}
       onGrownUp={onGrownUp}
       board={
-        <View style={styles.board} pointerEvents="box-none">
-          <View ref={rub.ref} onLayout={rub.onLayout} {...rub.panHandlers}>
+        <View style={styles.board} pointerEvents="box-none" onLayout={onSlotLayout}>
+          <View
+            ref={rub.ref}
+            onLayout={rub.onLayout}
+            style={styles.rubLayer}
+            {...rub.panHandlers}
+          >
             <GameBoard scene="scene.games.mudOff" frame={frame}>
               <HandSprite
                 side="left"
@@ -186,6 +190,9 @@ export function MudOffGame({
 
 const styles = StyleSheet.create({
   board: { flex: 1, justifyContent: 'center' },
+  // Hugs the band rather than stretching, so the finger's position maps
+  // straight into the picture's own coordinates with no centring offset.
+  rubLayer: { alignSelf: 'center' },
 });
 
 export default MudOffGame;

@@ -58,6 +58,7 @@ public struct HopColors: Equatable, Sendable {
     // Status
     public var success: Color { Color(values.success) }
     public var warning: Color { Color(values.warning) }
+    public var destructive: Color { Color(values.destructive) }
     public var neutral: Color { Color(values.neutral) }
     public var celebration: Color { Color(values.celebration) }
 

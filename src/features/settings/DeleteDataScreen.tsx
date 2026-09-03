@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { HopText } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
 import {
+  IconTile,
   ParentIcon,
   SecondaryButton,
   SheetHeader,
@@ -109,19 +110,12 @@ export function DeleteDataScreen({
               },
             ]}
           >
-            <View
-              style={[
-                styles.tile,
-                {
-                  width: theme.spacing.xxl,
-                  height: theme.spacing.xxl,
-                  borderRadius: theme.radius.s,
-                  backgroundColor: theme.color.surface,
-                },
-              ]}
-            >
-              <ParentIcon name="lock" color={theme.color.textSecondary} size={g.s} />
-            </View>
+            <IconTile
+              name="lock"
+              color={theme.color.textSecondary}
+              background={theme.color.surface}
+              size={theme.spacing.xxl}
+            />
             <HopText variant="parentCaption" tone="secondary" style={styles.grow}>
               {LOCAL_ONLY}
             </HopText>
@@ -151,5 +145,4 @@ const styles = StyleSheet.create({
   grow: { flex: 1 },
   line: { flexDirection: 'row', alignItems: 'flex-start' },
   note: { flexDirection: 'row', alignItems: 'flex-start' },
-  tile: { alignItems: 'center', justifyContent: 'center' },
 });

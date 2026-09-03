@@ -1,12 +1,13 @@
-import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import React, { useCallback } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { GameHost } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
 import { HopCharacter } from '../../mascot/HopCharacter';
 import { GameBoard } from './GameBoard';
 import { withAlpha } from './paint';
-import { boardFrame, type SceneFrame } from './sceneFrame';
+import type { SceneFrame } from './sceneFrame';
+import { useBoardFrame } from './useBoardFrame';
 import {
   Foam,
   HandSprite,
@@ -87,7 +88,7 @@ export interface BubbleWashGameProps {
  */
 const BAND_RATIO = 1.3;
 const HANDS = { left: 211, right: 389, cy: 360, height: 190, tilt: -7 } as const;
-const MIRROR = { cx: 300, cy: 118, size: 150 } as const;
+const MIRROR = { cx: 300, cy: 135, size: 120 } as const;
 
 /** Foam and unwashed lobes, as fractions of a hand's height from its centre. */
 const FOAM_TRAIL: Readonly<Record<HandSide, readonly { dx: number; dy: number; r: number }[]>> = {
@@ -129,10 +130,10 @@ export const BUBBLE_WASH_SPOTS: readonly WashSpot[] = [
 ];
 
 export const BUBBLE_WASH_BUBBLES: readonly WashBubble[] = [
-  { id: 'b1', x: 150, y: 150, size: 100, popped: false },
-  { id: 'b2', x: 470, y: 118, size: 78, popped: false },
-  { id: 'b3', x: 424, y: 232, size: 60, popped: false },
-  { id: 'b4', x: 176, y: 262, size: 54, popped: true },
+  { id: 'b1', x: 185, y: 150, size: 100, popped: false },
+  { id: 'b2', x: 455, y: 120, size: 78, popped: false },
+  { id: 'b3', x: 415, y: 235, size: 60, popped: false },
+  { id: 'b4', x: 200, y: 265, size: 54, popped: true },
 ];
 
 /** How close a finger has to come to a spot to take it away, in hand heights. */
@@ -147,8 +148,7 @@ export function BubbleWashGame({
   onDone,
   onGrownUp,
 }: BubbleWashGameProps): React.ReactElement {
-  const { width } = useWindowDimensions();
-  const frame = useMemo(() => boardFrame(width, BAND_RATIO), [width]);
+  const { frame, onSlotLayout } = useBoardFrame(BAND_RATIO);
 
   const soaping = stage === 'soap';
   const clean = stage === 'clean';
@@ -191,8 +191,13 @@ export function BubbleWashGame({
       onDone={onDone}
       onGrownUp={onGrownUp}
       board={
-        <View style={styles.board} pointerEvents="box-none">
-          <View ref={rub.ref} onLayout={rub.onLayout} {...rub.panHandlers}>
+        <View style={styles.board} pointerEvents="box-none" onLayout={onSlotLayout}>
+          <View
+            ref={rub.ref}
+            onLayout={rub.onLayout}
+            style={styles.rubLayer}
+            {...rub.panHandlers}
+          >
             <GameBoard scene="scene.games.bubbleWash" frame={frame}>
               <Mirror frame={frame} />
 
@@ -316,7 +321,7 @@ function Mirror({ frame }: { frame: SceneFrame }): React.ReactElement {
 function Droplets({ frame }: { frame: SceneFrame }): React.ReactElement {
   const theme = useHopTheme();
   return (
-    <View pointerEvents="none">
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {DROPLETS.map((drop) => {
         const d = frame.len(drop.r) * 2;
         return (
@@ -341,6 +346,9 @@ function Droplets({ frame }: { frame: SceneFrame }): React.ReactElement {
 
 const styles = StyleSheet.create({
   board: { flex: 1, justifyContent: 'center' },
+  // Hugs the band rather than stretching, so the finger's position maps
+  // straight into the picture's own coordinates with no centring offset.
+  rubLayer: { alignSelf: 'center' },
 });
 
 export default BubbleWashGame;

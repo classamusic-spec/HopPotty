@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import React from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { GameHost } from '../../design-system/components';
 import { GameBoard } from './GameBoard';
-import { boardFrame } from './sceneFrame';
+import { useBoardFrame } from './useBoardFrame';
 import { HopSprite, IconSprite, Sparkle, TapHint } from './sprites';
 
 /**
@@ -19,7 +19,7 @@ import { HopSprite, IconSprite, Sparkle, TapHint } from './sprites';
 
 export interface FlushWaveGameProps {
   /** How many times the water has gone round. Never shown as a number. */
-  flushes: number;
+  flushes?: number;
   /** Flushes drawn as dots. The round has no other length. */
   marks?: number;
   /** Whether the water is going round right now. */
@@ -34,19 +34,19 @@ const FLUSHER = { cx: 452, cy: 254, radius: 46 } as const;
 const SWIRL = { cx: 452, cy: 332, radius: 40 } as const;
 const HOP = { cx: 250, groundY: 425, size: 228 } as const;
 
-/** How much of `icon.games.swirl` the swirl itself fills. */
+/** How much of `icon.games.swirl` the swirl fills, and how high it sits in it. */
 const SWIRL_FILL = 100 / 120;
+const SWIRL_RISE = 5.7 / 120;
 
 export function FlushWaveGame({
-  flushes,
+  flushes = 2,
   marks = 3,
   swirling = true,
   onFlush,
   onDone,
   onGrownUp,
 }: FlushWaveGameProps): React.ReactElement {
-  const { width } = useWindowDimensions();
-  const frame = useMemo(() => boardFrame(width), [width]);
+  const { frame, onSlotLayout } = useBoardFrame();
   const reach = frame.len(FLUSHER.radius) * 2;
 
   return (
@@ -60,7 +60,7 @@ export function FlushWaveGame({
       onDone={onDone}
       onGrownUp={onGrownUp}
       board={
-        <View style={styles.board} pointerEvents="box-none">
+        <View style={styles.board} pointerEvents="box-none" onLayout={onSlotLayout}>
           <GameBoard scene="scene.games.flushWave" frame={frame}>
             <HopSprite
               frame={frame}
@@ -77,7 +77,7 @@ export function FlushWaveGame({
                   artwork="icon.games.swirl"
                   frame={frame}
                   cx={SWIRL.cx}
-                  cy={SWIRL.cy}
+                  cy={SWIRL.cy + (SWIRL_RISE * (SWIRL.radius * 2)) / SWIRL_FILL}
                   size={(SWIRL.radius * 2) / SWIRL_FILL}
                   label="The water, swirling"
                 />

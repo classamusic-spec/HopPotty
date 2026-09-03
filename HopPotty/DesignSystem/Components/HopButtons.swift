@@ -177,9 +177,11 @@ public struct HopDestructiveButton: View {
     /// Deliberately not the brand's peach accent: destructive controls use the
     /// platform's red so they carry the meaning a person already learned
     /// everywhere else on their phone.
-    private var destructive: Color {
-        theme.isDark ? Color(red: 1.0, green: 0.41, blue: 0.38) : Color(red: 0.76, green: 0.13, blue: 0.13)
-    }
+    ///
+    /// It used to be two literals here, which meant the value existed in this
+    /// file and nowhere else — so the token export could not see it and React
+    /// Native had nothing to read. It is a semantic colour now.
+    private var destructive: Color { theme.color.destructive }
 
     public var body: some View {
         Button {

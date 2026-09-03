@@ -4,7 +4,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { HopText } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
 import {
+  Eyebrow,
   HopFaceDisc,
+  IconTile,
   ListGroup,
   ParentIcon,
   ParentNavBar,
@@ -115,19 +117,12 @@ export function ChildProfilesScreen({
           },
         ]}
       >
-        <View
-          style={[
-            styles.centre,
-            {
-              width: theme.spacing.xxxl,
-              height: theme.spacing.xxxl,
-              borderRadius: theme.radius.s,
-              backgroundColor: softBacking(theme, theme.palette.sunshineSoft),
-            },
-          ]}
-        >
-          <ParentIcon name="star" color={theme.color.celebration} size={g.s} />
-        </View>
+        <IconTile
+          name="star"
+          color={theme.color.celebration}
+          background={softBacking(theme, theme.palette.sunshineSoft)}
+          size={theme.spacing.xxxl}
+        />
         <View style={styles.grow}>
           <View style={[styles.titleRow, { columnGap: theme.spacing.s }]}>
             <HopText variant="parentHeadline">HopPotty Family</HopText>
@@ -190,38 +185,26 @@ function ChildCard({
         <ParentIcon name="chevron" color={theme.color.textTertiary} size={g.s} />
       </View>
 
-      <HopText
-        variant="parentFootnote"
-        tone="secondary"
-        style={[
-          styles.eyebrow,
-          {
-            marginTop: theme.spacing.m,
-            paddingTop: theme.spacing.m,
-            borderTopWidth: StyleSheet.hairlineWidth,
-            borderTopColor: theme.color.divider,
-          },
-        ]}
-      >
-        TODAY
-      </HopText>
+      <Eyebrow
+        text="Today"
+        style={{
+          marginTop: theme.spacing.m,
+          paddingTop: theme.spacing.m,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: theme.color.divider,
+        }}
+      />
 
       <View style={[styles.stats, { columnGap: theme.spacing.xs, marginTop: theme.spacing.s }]}>
         {stats.map((stat) => (
           <View key={stat.key} style={[styles.stat, { columnGap: theme.spacing.s }]}>
-            <View
-              style={[
-                styles.centre,
-                {
-                  width: theme.spacing.xxl,
-                  height: theme.spacing.xxl,
-                  borderRadius: theme.spacing.m,
-                  backgroundColor: softBacking(theme, stat.soft),
-                },
-              ]}
-            >
-              <ParentIcon name={stat.icon} color={stat.tint} size={g.s} />
-            </View>
+            <IconTile
+              name={stat.icon}
+              color={stat.tint}
+              background={softBacking(theme, stat.soft)}
+              size={theme.spacing.xxl}
+              radius={theme.spacing.m}
+            />
             <View style={styles.shrink}>
               <HopText variant="parentHeadline">{String(stat.value)}</HopText>
               <HopText variant="parentFootnote" tone="secondary">
@@ -288,10 +271,8 @@ function Badge({ label }: { label: string }): React.ReactElement {
 const styles = StyleSheet.create({
   grow: { flex: 1 },
   shrink: { flexShrink: 1, minWidth: 0 },
-  centre: { alignItems: 'center', justifyContent: 'center' },
   header: { flexDirection: 'row', alignItems: 'center' },
   titleRow: { flexDirection: 'row', alignItems: 'center' },
-  eyebrow: { textTransform: 'uppercase', letterSpacing: 0.5 },
   stats: { flexDirection: 'row' },
   stat: { flex: 1, flexDirection: 'row', alignItems: 'center', minWidth: 0 },
   pond: { flexDirection: 'row', alignItems: 'center' },

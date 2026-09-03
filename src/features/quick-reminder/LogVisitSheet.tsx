@@ -4,12 +4,11 @@ import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { HopButton, HopText } from '../../design-system/components';
 import { textStyle, useHopTheme } from '../../design-system/theme';
 import {
+  IconTile,
   ListGroup,
-  ParentIcon,
   SecondaryButton,
   SegmentedControl,
   SheetHeader,
-  glyphSizes,
   softBacking,
   useParentLayout,
   type ParentIconName,
@@ -80,7 +79,6 @@ export function LogVisitSheet({
 }: LogVisitSheetProps): React.ReactElement {
   const theme = useHopTheme();
   const { pageInset, readingWidth, isRegular } = useParentLayout();
-  const g = glyphSizes(theme);
 
   // An accident is drawn in the palette's neutral grey, like every other
   // entry. Never a red, never a warning mark, never emphasis.
@@ -144,19 +142,12 @@ export function LogVisitSheet({
                 chevron: true,
                 onPress: onPickTime,
                 leading: (
-                  <View
-                    style={[
-                      styles.tile,
-                      {
-                        width: theme.spacing.xxxl,
-                        height: theme.spacing.xxxl,
-                        borderRadius: theme.radius.s,
-                        backgroundColor: softBacking(theme, KIND_SOFT[kind]),
-                      },
-                    ]}
-                  >
-                    <ParentIcon name={KIND_ICON[kind]} color={KIND_TINT[kind]} size={g.s} />
-                  </View>
+                  <IconTile
+                    name={KIND_ICON[kind]}
+                    color={KIND_TINT[kind]}
+                    background={softBacking(theme, KIND_SOFT[kind])}
+                    size={theme.spacing.xxxl}
+                  />
                 ),
               },
             ]}
@@ -216,5 +207,4 @@ export function LogVisitSheet({
 const styles = StyleSheet.create({
   page: { flex: 1 },
   field: { textAlignVertical: 'top' },
-  tile: { alignItems: 'center', justifyContent: 'center' },
 });

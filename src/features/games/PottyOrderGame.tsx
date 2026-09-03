@@ -1,12 +1,12 @@
-import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import React from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { HopIllustrationKey } from '../../art/HopArtwork';
 import { GameHost } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
 import { HandCard } from './boardTray';
 import { GameBoard } from './GameBoard';
-import { boardFrame } from './sceneFrame';
+import { useBoardFrame } from './useBoardFrame';
 import { IconSprite, Sparkle } from './sprites';
 
 /**
@@ -91,8 +91,7 @@ export function PottyOrderGame({
   onGrownUp,
 }: PottyOrderGameProps): React.ReactElement {
   const theme = useHopTheme();
-  const { width } = useWindowDimensions();
-  const frame = useMemo(() => boardFrame(width), [width]);
+  const { frame, onSlotLayout } = useBoardFrame();
   const cardBox = SLOT.width / CARD_FILL;
   const placed = cards.filter((c) => c.slot !== null);
 
@@ -105,7 +104,7 @@ export function PottyOrderGame({
       onGrownUp={onGrownUp}
       board={
         <View style={styles.board} pointerEvents="box-none">
-          <View style={styles.bandSlot} pointerEvents="box-none">
+          <View style={styles.bandSlot} pointerEvents="box-none" onLayout={onSlotLayout}>
             <GameBoard scene="scene.games.pottyOrder" frame={frame}>
               {/* Every slot is a target, so a card can be put down by tapping
                   as well as by dragging. */}

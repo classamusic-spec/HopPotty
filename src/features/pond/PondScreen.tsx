@@ -69,6 +69,7 @@ export function PondScreen({
   const isWide = width >= 768;
 
   const title = childName ? `${childName}'s pond` : 'Your pond';
+  const isEmpty = unlocked.length === 0 && nextUnlock === null;
   const nextLine = nextUnlock
     ? nextUnlock.starsNeeded === 1
       ? `1 more star and ${nextUnlock.name} hops in!`
@@ -183,23 +184,41 @@ export function PondScreen({
             </View>
           ) : null}
 
-          <View style={[styles.collectionHeader, { gap: theme.spacing.s, paddingTop: theme.spacing.m }]}>
-            <HopText variant="parentTitle">Your collection</HopText>
-            <HopText variant="parentCallout" tone="secondary">
-              {`${unlocked.length} of ${collectionTotal}`}
-            </HopText>
-          </View>
+          {isEmpty ? (
+            // Day one. Never "no decorations yet": the ledger only ever grows,
+            // so an empty pond reads as a beginning rather than as an absence.
+            <View style={{ paddingTop: theme.spacing.m, paddingBottom: theme.spacing.m }}>
+              <HopText variant="parentTitle">Your pond is ready</HopText>
+              <HopText variant="parentCallout" tone="secondary">
+                Every star adds something new.
+              </HopText>
+            </View>
+          ) : (
+            <>
+              <View
+                style={[styles.collectionHeader, { gap: theme.spacing.s, paddingTop: theme.spacing.m }]}
+              >
+                <HopText variant="parentTitle">Your collection</HopText>
+                <HopText variant="parentCallout" tone="secondary">
+                  {`${unlocked.length} of ${collectionTotal}`}
+                </HopText>
+              </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[styles.strip, { gap: theme.spacing.s, paddingTop: theme.spacing.s }]}
-          >
-            {unlocked.map((id) => (
-              <CollectionTile key={id} id={id} />
-            ))}
-            {nextUnlock ? <CollectionTile locked cost={nextUnlock.starCost} /> : null}
-          </ScrollView>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={[
+                  styles.strip,
+                  { gap: theme.spacing.s, paddingTop: theme.spacing.s },
+                ]}
+              >
+                {unlocked.map((id) => (
+                  <CollectionTile key={id} id={id} />
+                ))}
+                {nextUnlock ? <CollectionTile locked cost={nextUnlock.starCost} /> : null}
+              </ScrollView>
+            </>
+          )}
         </View>
       </View>
     </View>
@@ -260,7 +279,7 @@ function CollectionTile({
           </HopText>
         </View>
       ) : (
-        <HopText variant="parentFootnote" style={{ color: theme.palette.hopGreenInk }}>
+        <HopText variant="parentFootnote" tone="brand">
           Yours!
         </HopText>
       )}
@@ -286,7 +305,7 @@ function ProgressRing({
   readonly fill: string;
 }): React.ReactElement {
   const clamped = Math.min(1, Math.max(0, fraction));
-  const stroke = diameter * 0.3;
+  const stroke = diameter * 0.2;
   const r = (diameter - stroke) / 2;
   const circumference = 2 * Math.PI * r;
 

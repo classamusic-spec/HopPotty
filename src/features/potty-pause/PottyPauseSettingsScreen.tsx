@@ -48,6 +48,15 @@ export interface PottyPauseSettingsScreenProps {
   bedtime: string;
   /** "4 apps, 1 category" — counts, because that is all HopPotty may know. */
   appsSummary: string;
+  /**
+   * The sentence under the first group, already written out.
+   *
+   * It is a prop rather than a template because the attributive form of a
+   * duration ("a 2-minute heads-up") is not the standalone form ("2 minutes")
+   * in English and is a different word entirely in most other languages. The
+   * fallback below is composed to stay grammatical without one.
+   */
+  scheduleSummary?: string;
   screenTimeStatus: AuthorizationStatus;
   onBack?: () => void;
   onEditMode?: () => void;
@@ -74,7 +83,7 @@ function pauseFooter(childName: string, interval: string, warning: string | null
   const opening =
     warning === null
       ? `Hop invites ${childName} about every ${interval}.`
-      : `Hop invites ${childName} about every ${interval}, with a ${warning} heads-up.`;
+      : `Hop invites ${childName} about every ${interval}, with a heads-up ${warning} before.`;
   return `${opening} A pause always ends when its time is up, whatever happened in the bathroom.`;
 }
 
@@ -90,6 +99,7 @@ export function PottyPauseSettingsScreen({
   quietHours,
   bedtime,
   appsSummary,
+  scheduleSummary,
   screenTimeStatus,
   onBack,
   onEditMode,
@@ -113,7 +123,7 @@ export function PottyPauseSettingsScreen({
 
       <ListGroup
         header="Potty Pause"
-        footer={pauseFooter(childName, interval, warningBeforePause)}
+        footer={scheduleSummary ?? pauseFooter(childName, interval, warningBeforePause)}
         rows={[
           { id: 'mode', label: 'Mode', value: mode, chevron: true, onPress: onEditMode },
           { id: 'every', label: 'Every', value: interval, chevron: true, onPress: onEditInterval },
