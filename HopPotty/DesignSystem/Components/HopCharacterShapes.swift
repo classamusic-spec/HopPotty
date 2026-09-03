@@ -182,26 +182,40 @@ enum HopAnatomy {
     static let fingerAngles: [Double] = [-50, 0, 50]
 
     /// The close-up hand Bubble Wash and Mud Off fill the screen with, in its
-    /// own units, palm on the origin and the fingers fanned about straight up.
+    /// own units, palm on the origin and the digits fanned about straight up.
     ///
-    /// Its own numbers rather than the pose art's, because it is drawn ten times
-    /// larger — but the same three fingers, because Hop has three. The games
-    /// used to draw a four-fingered human hand in three separate hand-written
-    /// copies, and `HAND` in `Scripts/hop-art.js` is the one definition now;
-    /// `hop-lab.js --contracts` compares this against it.
+    /// Its own numbers rather than the pose art's, because it is drawn ten
+    /// times larger — but the same three fingers, because Hop has three. The
+    /// games used to draw a four-fingered human hand in three separate
+    /// hand-written copies; `HAND` in `Scripts/hop-art.js` is the one
+    /// definition now and `hop-lab.js --contracts` compares this against it.
     enum Hand {
-        static let palmRadius: CGFloat = 36
-        static let fingerLength: CGFloat = 76
-        static let fingerHalfWidth: CGFloat = 15
-        /// Wider than `fingerAngles` would splay: ±50° is what twenty pixels of
-        /// frog needs to read at all, and at this size it reads as a trident.
-        static let angles: [Double] = [-40, 0, 40]
-        /// Must exceed `palmRadius / fingerLength`, or the web falls inside the
-        /// palm and draws nothing — three stubs on a disc rather than a hand.
+        static let palmRadius: CGFloat = 33
+        /// Three fingers and a thumb, each at its own angle from straight up
+        /// and its own reach. Positive angles are the thumb side.
+        ///
+        /// Deliberately uneven. Three fingers of one length radiating evenly is
+        /// a paddle, or a crown — the eye reads the regularity before it reads
+        /// the hand — and it also leaves the silhouette mirror-symmetric, so
+        /// flipping it for the other hand is a cheat rather than a left and a
+        /// right. The thumb sits low and wide, which fixes both.
+        static let fingers: [(angle: Double, length: CGFloat)] = [
+            (-46, 72), (-13, 85), (20, 75),
+        ]
+        static let thumb: (angle: Double, length: CGFloat) = (74, 55)
+        static let fingerHalfWidth: CGFloat = 14
+        /// The toe pad, as a multiple of the finger's half-width. This is the
+        /// detail that says *frog* rather than *mitten*: a tree frog's digits
+        /// end in discs wider than the digit, and nothing else about a hand is
+        /// as diagnostic.
+        static let padScale: CGFloat = 1.16
+        /// Must exceed `palmRadius / shortestFinger`, or the web falls inside
+        /// the palm and draws nothing — three stubs on a disc. The failure is
+        /// silent: the hand still renders.
         static let webFraction: CGFloat = 0.76
-        static let webScallop: CGFloat = 0.9
-        static let wristLength: CGFloat = 42
-        static let wristHalfWidth: CGFloat = 26
+        static let webScallop: CGFloat = 0.92
+        static let wristLength: CGFloat = 38
+        static let wristHalfWidth: CGFloat = 25
     }
 
     static let legWidth: CGFloat = 26

@@ -479,33 +479,49 @@ function checkHandShape() {
     const m = new RegExp(`static let ${name}: CGFloat = (-?[\\d.]+)`).exec(body);
     return m ? Number(m[1]) : undefined;
   };
-  const angles = /static let angles: \[Double\] = \[([^\]]+)\]/.exec(body);
+  const pairs = (text) =>
+    [...text.matchAll(/\((-?[\d.]+), (-?[\d.]+)\)/g)].map((m) => ({
+      angle: Number(m[1]), len: Number(m[2]),
+    }));
+  const fingerBlock = /static let fingers: \[\(angle: Double, length: CGFloat\)\] = \[([\s\S]*?)\]/.exec(body);
+  const thumbLine = /static let thumb: \(angle: Double, length: CGFloat\) = (\([^)]*\))/.exec(body);
   const swift = {
     palmR: scalar('palmRadius'),
-    fingerLen: scalar('fingerLength'),
     fingerHalf: scalar('fingerHalfWidth'),
+    padScale: scalar('padScale'),
     webFraction: scalar('webFraction'),
     webScallop: scalar('webScallop'),
     wristLen: scalar('wristLength'),
     wristHalf: scalar('wristHalfWidth'),
-    angles: angles ? angles[1].split(',').map((n) => Number(n.trim())) : undefined,
+    fingers: fingerBlock ? pairs(fingerBlock[1]) : undefined,
+    thumb: thumbLine ? pairs(thumbLine[1])[0] : undefined,
   };
   let bad = 0;
   for (const key of Object.keys(swift)) {
-    const mine = art.HAND[key];
-    if (JSON.stringify(mine) !== JSON.stringify(swift[key])) {
-      console.log(`  FAIL hand.${key}: hop-art.js says ${JSON.stringify(mine)}, ` +
+    if (JSON.stringify(art.HAND[key]) !== JSON.stringify(swift[key])) {
+      console.log(`  FAIL hand.${key}: hop-art.js says ${JSON.stringify(art.HAND[key])}, ` +
         `HopAnatomy.Hand says ${JSON.stringify(swift[key])}`);
       bad++;
     }
   }
-  // The web has to clear the palm or it draws nothing at all, which is a
-  // silent failure: the hand still renders, as three stubs on a disc.
-  if (art.HAND.fingerLen * art.HAND.webFraction <= art.HAND.palmR) {
-    console.log('  FAIL the web falls inside the palm — raise webFraction');
+  // The web has to clear the palm on the *shortest* finger or it draws nothing
+  // there at all — a silent failure, because the hand still renders, as stubs
+  // on a disc. Two passes were lost to it.
+  const shortest = Math.min(...art.HAND.fingers.map((f) => f.len));
+  if (shortest * art.HAND.webFraction <= art.HAND.palmR) {
+    console.log(`  FAIL the web (${(shortest * art.HAND.webFraction).toFixed(1)}) falls inside the palm ` +
+      `(${art.HAND.palmR}) — raise webFraction`);
     bad++;
   }
-  if (!bad) console.log("  ok   the close-up hand matches HopAnatomy.Hand, and its web clears the palm");
+  // A pad narrower than its own finger is not a pad.
+  if (art.HAND.padScale <= 1) {
+    console.log('  FAIL padScale must exceed 1 or the fingertips have no pads');
+    bad++;
+  }
+  if (!bad) {
+    console.log('  ok   the close-up hand matches HopAnatomy.Hand, its web clears the palm, ' +
+      'and its pads are pads');
+  }
   return bad;
 }
 

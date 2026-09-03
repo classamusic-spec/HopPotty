@@ -352,64 +352,71 @@ private struct BubbleWashFoam: View {
 /// onto whatever rectangle the caller gives it, so no call site carries a magic
 /// number for the aspect.
 struct HopHandShape: Shape {
+    private typealias H = HopAnatomy.Hand
+
+    /// Every digit, fingers and thumb, so the shape never forgets one.
+    private static var digits: [(angle: Double, length: CGFloat)] { H.fingers + [H.thumb] }
+
     /// The drawing's natural bounds, derived from the anatomy so it cannot fall
     /// out of step with it.
     private static var design: CGRect {
-        let h = HopAnatomy.Hand.self
-        let widest = h.angles.map { abs(sin($0 * .pi / 180)) }.max() ?? 1
-        let halfWidth = h.fingerLength * widest + h.fingerHalfWidth
-        let top = -h.fingerLength
-        let bottom = h.wristLength + h.wristHalfWidth
-        return CGRect(x: -halfWidth, y: top, width: halfWidth * 2, height: bottom - top)
+        let pad = H.fingerHalfWidth * H.padScale
+        var minX = -H.palmRadius, maxX = H.palmRadius
+        var minY = -H.palmRadius
+        for digit in digits {
+            let a = (digit.angle - 90) * .pi / 180
+            minX = min(minX, cos(a) * digit.length - pad)
+            maxX = max(maxX, cos(a) * digit.length + pad)
+            minY = min(minY, sin(a) * digit.length - pad)
+        }
+        let maxY = H.wristLength + H.wristHalfWidth
+        return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
     }
 
     func path(in rect: CGRect) -> Path {
-        let h = HopAnatomy.Hand.self
         let design = Self.design
+        // Uniform scale, centred: a hand stretched to fill a box whose aspect
+        // does not match is a hand with the wrong fingers.
         let scale = min(rect.width / design.width, rect.height / design.height)
-        // Centred in the frame at a uniform scale: a hand stretched to fill a
-        // non-matching box is a hand with the wrong fingers.
-        let originX = rect.midX - (design.midX) * scale
-        let originY = rect.midY - (design.midY) * scale
+        let originX = rect.midX - design.midX * scale
+        let originY = rect.midY - design.midY * scale
+        let centre = CGPoint(x: originX, y: originY)
         func at(_ degrees: Double, _ radius: CGFloat) -> CGPoint {
             let a = (degrees - 90) * .pi / 180
-            return CGPoint(
-                x: originX + cos(a) * radius * scale,
-                y: originY + sin(a) * radius * scale
-            )
+            return CGPoint(x: originX + cos(a) * radius * scale, y: originY + sin(a) * radius * scale)
         }
-        let centre = CGPoint(x: originX, y: originY)
+        let pad = H.fingerHalfWidth * H.padScale
 
         var path = Path()
-        path.addHopCircle(centre: centre, radius: h.palmRadius * scale)
+        path.addHopCircle(centre: centre, radius: H.palmRadius * scale)
         // The wrist, so the hand joins a forearm instead of ending in mid-air.
         path.addHopCapsule(
             from: centre,
-            to: CGPoint(x: originX, y: originY + h.wristLength * scale),
-            radius: h.wristHalfWidth * scale
+            to: CGPoint(x: originX, y: originY + H.wristLength * scale),
+            radius: H.wristHalfWidth * scale
         )
 
-        // The web: a fan out to `webFraction` of the reach, scalloped between
-        // the finger axes, wound the same way as every other piece so the union
-        // fills. This is the detail that makes it a frog's hand at a glance.
-        let webRadius = h.fingerLength * h.webFraction
-        path.move(to: at(h.angles[0], webRadius))
-        for index in 0..<(h.angles.count - 1) {
-            let mid = (h.angles[index] + h.angles[index + 1]) / 2
+        // The web, across the three fingers only — a thumb webbed to the hand
+        // is a flipper. Wound like every other piece so the union fills.
+        let webAt = { (finger: (angle: Double, length: CGFloat)) in finger.length * H.webFraction }
+        path.move(to: at(H.fingers[0].angle, webAt(H.fingers[0])))
+        for index in 0..<(H.fingers.count - 1) {
+            let a = H.fingers[index]
+            let b = H.fingers[index + 1]
             path.addQuadCurve(
-                to: at(h.angles[index + 1], webRadius),
-                control: at(mid, webRadius * h.webScallop)
+                to: at(b.angle, webAt(b)),
+                control: at((a.angle + b.angle) / 2, (webAt(a) + webAt(b)) / 2 * H.webScallop)
             )
         }
         path.addLine(to: centre)
         path.closeSubpath()
 
-        for angle in h.angles {
-            path.addHopCapsule(
-                from: centre,
-                to: at(angle, h.fingerLength - h.fingerHalfWidth),
-                radius: h.fingerHalfWidth * scale
-            )
+        // Each digit: a shaft to just short of the tip, then the pad as a disc
+        // whose outer edge lands exactly on the digit's reach.
+        for digit in Self.digits {
+            let tip = at(digit.angle, digit.length - pad)
+            path.addHopCapsule(from: centre, to: tip, radius: H.fingerHalfWidth * scale)
+            path.addHopCircle(centre: tip, radius: pad * scale)
         }
         return path
     }
