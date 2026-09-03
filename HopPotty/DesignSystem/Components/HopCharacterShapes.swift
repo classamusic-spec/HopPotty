@@ -181,37 +181,10 @@ enum HopAnatomy {
     /// Three fingers, fanned about the arm's own direction.
     static let fingerAngles: [Double] = [-50, 0, 50]
 
-    /// The close-up hand Bubble Wash and Mud Off fill the screen with — the
-    /// *child's* hand, not Hop's.
-    ///
-    /// That is the point of both games: the child washes their own hands while
-    /// Hop watches from the mirror. So five fingers, human proportions, tan
-    /// skin. It sits in `HopAnatomy` because that is where the shared drawing
-    /// constants and the cross-language contract already live, not because the
-    /// hand belongs to the frog. `HAND` in `Scripts/hop-art.js` is the one
-    /// definition; `hop-lab.js --contracts` compares this against it.
-    ///
-    /// Knuckles on the origin, fingers up, palm and wrist below. Unflipped is a
-    /// left hand — thumb to the left — and the right is the mirror, which is
-    /// what a pair held up side by side actually looks like.
-    enum Hand {
-        static let palm = CGRect(x: -38, y: -10, width: 76, height: 80)
-        static let palmRadius: CGFloat = 26
-        /// Base and tip, because human fingers leave the knuckles along a row
-        /// rather than radiating from one point — which is the difference
-        /// between a hand and a starfish. The row is slightly arched, and the
-        /// lengths run index < middle > ring > pinky with the pinky thinner.
-        static let fingers: [(base: CGPoint, tip: CGPoint, half: CGFloat)] = [
-            (CGPoint(x: -25, y: 2), CGPoint(x: -34, y: -74), 12.5),
-            (CGPoint(x: -8, y: -4), CGPoint(x: -11, y: -88), 13),
-            (CGPoint(x: 9, y: -3), CGPoint(x: 14, y: -80), 12.5),
-            (CGPoint(x: 24, y: 4), CGPoint(x: 34, y: -60), 11),
-        ]
-        static let thumb: (base: CGPoint, tip: CGPoint, half: CGFloat) =
-            (CGPoint(x: -27, y: 28), CGPoint(x: -70, y: -28), 14.5)
-        static let wrist: (from: CGPoint, to: CGPoint, half: CGFloat) =
-            (CGPoint(x: 0, y: 58), CGPoint(x: 0, y: 96), 26)
-    }
+    // The close-up hand is no longer generated. It is the owner's drawing,
+    // `Art/source/wash-hands.svg`, shipped as two keyed assets — so there is
+    // one hand in the product rather than a drawing and a parameter table that
+    // have to be kept in step.
 
     static let legWidth: CGFloat = 26
     static let soleRadii = CGSize(width: 14, height: 8.5)

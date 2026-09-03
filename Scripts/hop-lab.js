@@ -467,58 +467,35 @@ function checkPoseTables() {
  * what keeps it one.
  */
 function checkHandShape() {
-  const src = fs.readFileSync(
-    path.join(ROOT, 'HopPotty', 'DesignSystem', 'Components', 'HopCharacterShapes.swift'), 'utf8');
-  const block = /enum Hand \{([\s\S]*?)\n    \}/.exec(src);
-  if (!block) {
-    console.log('  FAIL HopCharacterShapes.swift has no `enum Hand` to compare');
-    return 1;
-  }
-  const body = block[1];
-  const num = (x) => Number(x);
-  // `(CGPoint(x: a, y: b), CGPoint(x: c, y: d), half)` — base, tip, half-width.
-  const digits = (text) =>
-    [...text.matchAll(
-      /\(CGPoint\(x: (-?[\d.]+), y: (-?[\d.]+)\), CGPoint\(x: (-?[\d.]+), y: (-?[\d.]+)\), (-?[\d.]+)\)/g
-    )].map((m) => ({
-      base: [num(m[1]), num(m[2])], tip: [num(m[3]), num(m[4])], half: num(m[5]),
-    }));
-
-  const fingerBlock = /static let fingers: \[\(base: CGPoint, tip: CGPoint, half: CGFloat\)\] = \[([\s\S]*?)\n        \]/.exec(body);
-  // The thumb's value sits on the line *after* its declaration, so match from
-  // the declaration onward rather than to the next newline.
-  const thumbAt = body.indexOf('static let thumb:');
-  const wrist = /static let wrist: \(from: CGPoint, to: CGPoint, half: CGFloat\) =\s*\n?\s*\(CGPoint\(x: (-?[\d.]+), y: (-?[\d.]+)\), CGPoint\(x: (-?[\d.]+), y: (-?[\d.]+)\), (-?[\d.]+)\)/.exec(body);
-  const palm = /static let palm = CGRect\(x: (-?[\d.]+), y: (-?[\d.]+), width: (-?[\d.]+), height: (-?[\d.]+)\)/.exec(body);
-  const palmR = /static let palmRadius: CGFloat = (-?[\d.]+)/.exec(body);
-
-  const swift = {
-    palm: palm
-      ? { x: num(palm[1]), y: num(palm[2]), w: num(palm[3]), h: num(palm[4]), r: palmR ? num(palmR[1]) : undefined }
-      : undefined,
-    fingers: fingerBlock ? digits(fingerBlock[1]) : undefined,
-    thumb: thumbAt < 0 ? undefined : digits(body.slice(thumbAt, thumbAt + 220))[0],
-    wrist: wrist
-      ? { from: [num(wrist[1]), num(wrist[2])], to: [num(wrist[3]), num(wrist[4])], half: num(wrist[5]) }
-      : undefined,
-  };
-
+  // The close-up hand is no longer generated from a parameter table, so there
+  // is nothing to compare across languages: it is one drawing,
+  // `Art/source/wash-hands.svg`, which the renders inline and the app loads as
+  // two shipped assets. What can still drift is those two assets — they are
+  // derived files sitting in `Art/icons/` next to hand-drawn ones, and nothing
+  // else would notice if the source changed and they did not.
   let bad = 0;
-  for (const key of Object.keys(swift)) {
-    if (JSON.stringify(art.HAND[key]) !== JSON.stringify(swift[key])) {
-      console.log(`  FAIL hand.${key}: hop-art.js says ${JSON.stringify(art.HAND[key])}, ` +
-        `HopAnatomy.Hand says ${JSON.stringify(swift[key])}`);
+  for (const side of ['left', 'right']) {
+    const file = path.join(ROOT, 'Art', 'icons', art.washHandFile(side));
+    if (!fs.existsSync(file)) {
+      console.log(`  FAIL ${art.washHandFile(side)} is missing — run Scripts/hop-art.js`);
+      bad++;
+      continue;
+    }
+    if (fs.readFileSync(file, 'utf8') !== art.washHandAsset(side)) {
+      console.log(`  FAIL ${art.washHandFile(side)} is stale against Art/source/wash-hands.svg ` +
+        '— run Scripts/hop-art.js');
       bad++;
     }
   }
-  // Five digits, and it is worth asserting rather than assuming: the drawing
-  // has been a four-fingered human hand and a three-fingered frog paw, and the
-  // count is the one thing a glance checks first.
-  if (art.HAND.fingers.length !== 4) {
-    console.log(`  FAIL a hand has four fingers and a thumb; this one has ${art.HAND.fingers.length}`);
+  // The hands are Hop's, so they are painted in Hop's greens rather than in
+  // the drawing's own brighter lime. A second green that is nearly the
+  // character's is worse than either.
+  if (art.HAND.skin !== art.T.fill || art.HAND.outline !== art.T.outline) {
+    console.log(`  FAIL the wash hands are ${art.HAND.skin}/${art.HAND.outline}, ` +
+      `not Hop's ${art.T.fill}/${art.T.outline}`);
     bad++;
   }
-  if (!bad) console.log('  ok   the close-up hand matches HopAnatomy.Hand, four fingers and a thumb');
+  if (!bad) console.log("  ok   the wash-hand assets are current, and painted in Hop's greens");
   return bad;
 }
 

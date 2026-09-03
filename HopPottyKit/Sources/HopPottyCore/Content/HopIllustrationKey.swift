@@ -46,6 +46,22 @@ public struct HopIllustrationKey: RawRepresentable, Hashable, Sendable, Expressi
         rawValue.split(separator: ".").dropFirst().joined(separator: "-")
     }
 
+    /// Art that more than one surface draws, and that therefore belongs to no
+    /// single one of them.
+    ///
+    /// A mini-game's `sprites` cannot hold these: the catalog requires a
+    /// sprite to be keyed under `icon.games.` and forbids two games from
+    /// claiming the same key, and both rules are right — a sprite list says
+    /// *this game's* art. The child's hands are drawn by Bubble Wash and by
+    /// Mud Off, so they are declared here instead, which is also what
+    /// `Scripts/check-art.sh` reads to know they must exist.
+    public static let shared: [HopIllustrationKey] = [
+        // `Art/source/wash-hands.svg`, split and recoloured by
+        // `Scripts/hop-art.js`. A genuine left and right, not one mirrored.
+        "icon.wash.handLeft",
+        "icon.wash.handRight",
+    ]
+
     /// The directory under `Art/` that holds this key's source drawing.
     public var artDirectory: String {
         switch family {

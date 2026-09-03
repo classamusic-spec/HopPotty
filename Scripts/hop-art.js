@@ -367,136 +367,124 @@ function grownEls(shapes, d) {
 // ---------------------------------------------------------------------------
 // The close-up hand
 //
-// Bubble Wash and Mud Off show a pair of hands filling the screen — and they
-// are the *child's* hands, not Hop's. That is the whole point of both games:
-// the child is washing their own hands, and Hop is watching from the mirror.
-// So: five fingers, human proportions, tan skin. An earlier pass made them
-// three-fingered green frog paws, which is the right anatomy for the wrong
-// character.
+// Bubble Wash and Mud Off show a pair of hands filling the screen, and they are
+// the *child's* hands, not Hop's — that is the point of both games: the child
+// washes their own hands while Hop watches from the mirror.
 //
-// It lives in this file because this is where the shared art primitives and
-// the cross-language contract machinery already are, not because the hand
-// belongs to the frog.
+// The drawing is not generated. It is `Art/source/wash-hands.svg`, drawn by the
+// owner, read at build time and re-coloured. Three passes tried to generate a
+// hand from parameters — a frog paw, then a human hand, then a human hand with
+// better creases — and the drawn one is better than all of them, so the
+// parameters are gone and this reads the art instead.
+//
+// It is a genuine left and right rather than one hand mirrored, which is worth
+// keeping: the previous version flipped a single drawing, and a mirrored hand
+// is subtly wrong in a way people notice without being able to say why.
 // ---------------------------------------------------------------------------
 
 /**
- * The close-up hand, in its own units: knuckles on the origin, fingers up, palm
- * and wrist below. The unflipped drawing is a left hand — thumb to the left —
- * and the right is the mirror, which is correct for a pair held up side by side.
+ * Hop's own greens, not the artwork's.
  *
- * Fingers are authored base-to-tip rather than as a fan from one point, because
- * that is the difference between a hand and a starfish: human fingers leave the
- * knuckles along a row, and the row is slightly arched (the middle knuckle sits
- * highest). Lengths run index < middle > ring > pinky, and the pinky is thinner
- * as well as shorter.
+ * `wash-hands.svg` ships a brighter lime with its own dark green; these are the
+ * mascot's `hopFill`, `hopOutline` and `hopFillDeep`, so the hands in the
+ * close-up games are recognisably *his* rather than a second green that is
+ * nearly but not quite the character's.
+ *
+ * One tone for both hands — they are one pair, and tinting one lighter reads as
+ * two different characters rather than as depth.
  */
 const HAND = {
-  palm: { x: -38, y: -10, w: 76, h: 80, r: 26 },
-  fingers: [
-    { base: [-25, 2], tip: [-34, -74], half: 12.5 },
-    { base: [-8, -4], tip: [-11, -88], half: 13 },
-    { base: [9, -3], tip: [14, -80], half: 12.5 },
-    { base: [24, 4], tip: [34, -60], half: 11 },
-  ],
-  thumb: { base: [-27, 28], tip: [-70, -28], half: 14.5 },
-  wrist: { from: [0, 58], to: [0, 96], half: 26 },
-  /** Tan. Two tones so the pair reads as two hands rather than one shape. */
-  /**
-   * Tan, and *one* tone for both hands. They are the same child's two hands, so
-   * tinting one lighter than the other reads as two different people rather
-   * than as depth; what separates a pair held side by side is the rim and the
-   * gap between them, not a colour change.
-   *
-   * `skinCrease` is a real step darker rather than a wash of the fill. The
-   * creases are the only thing distinguishing four fingers lying against each
-   * other, so they have to survive foam drawn over the top of them.
-   */
-  skin: '#E5A97C',
-  skinCrease: '#B2764A',
+  skin: T.fill,
+  outline: T.outline,
+  crease: T.fillDeep,
 };
 
-/**
- * The hand as shape descriptors, so `fillEl` draws it and `grownEls` grows it.
- *
- * Growing matters here: the rim has to run round the whole silhouette as one
- * clean edge. Stroking each piece separately draws a line between every finger
- * and the palm, which is what made an earlier version read as bars resting on
- * a blob.
- */
-function handShapes(h = HAND) {
-  const digit = (d) => ({
-    t: 'l', x1: d.base[0], y1: d.base[1], x2: d.tip[0], y2: d.tip[1], w: d.half * 2,
-  });
-  return [
-    { t: 'p', d: roundRectD(h.palm.x, h.palm.y, h.palm.w, h.palm.h, h.palm.r) },
-    { t: 'l', x1: h.wrist.from[0], y1: h.wrist.from[1], x2: h.wrist.to[0], y2: h.wrist.to[1], w: h.wrist.half * 2 },
-    ...h.fingers.map(digit),
-    digit(h.thumb),
-  ];
-}
-
-/**
- * The lines that separate the fingers, and the one that sets the thumb off from
- * the palm.
- *
- * Not decoration — they are the only thing doing the job. Four fingers held
- * together overlap along their *whole* length: there is no background between
- * them at any point, so the outline cannot help, because it runs round the
- * silhouette, and the silhouette of four touching fingers is one mitten with a
- * scalloped top. Everything below the tips is a single flat shape unless a line
- * divides it.
- *
- * So each crease runs the full gap — from just inside the notch between two
- * fingertips, down past the knuckles and a little into the palm, where a real
- * hand's creases also end. An earlier version drew a third of that, starting at
- * the knuckles and stopping in the middle, which marked the fingers without
- * separating them.
- */
-function handCreases(deep, h = HAND) {
-  const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
-  const out = [];
-  const line = (x1, y1, x2, y2) =>
-    `<line x1="${n2(x1)}" y1="${n2(y1)}" x2="${n2(x2)}" y2="${n2(y2)}" stroke="${deep}"
-      stroke-width="3.6" stroke-linecap="round" opacity="0.5"/>`;
-
-  for (let i = 0; i < h.fingers.length - 1; i++) {
-    const a = h.fingers[i];
-    const b = h.fingers[i + 1];
-    const [tx, ty] = mid(a.tip, b.tip);
-    const [bx, by] = mid(a.base, b.base);
-    const dx = bx - tx;
-    const dy = by - ty;
-    const len = Math.hypot(dx, dy) || 1;
-    // Start inside the notch, not at the tips' midpoint, which is out in the
-    // open air between them; finish a little past the knuckles.
-    const inset = (a.half + b.half) * 0.42;
-    out.push(line(
-      tx + (dx / len) * inset, ty + (dy / len) * inset,
-      bx + (dx / len) * 9, by + (dy / len) * 9
-    ));
+/** The artist's file, parsed once. */
+const WASH_HANDS = (() => {
+  const file = path.resolve(__dirname, '..', 'Art', 'source', 'wash-hands.svg');
+  const src = fs.readFileSync(file, 'utf8');
+  const paths = [...src.matchAll(/<path class="(cls-\d)" d="([^"]+)"/g)]
+    .map((m) => ({ cls: m[1], d: m[2] }));
+  if (paths.length !== 6) {
+    throw new Error(`wash-hands.svg: expected 6 paths (two hands, each a silhouette and two creases), found ${paths.length}`);
   }
+  // Measured from the file: each hand's own bounding box, so a caller can place
+  // a hand by its centre without knowing where it sits on the shared canvas.
+  const box = {
+    left: { x: 1.57, y: 2.51, w: 46.14, h: 69.59 },
+    right: { x: 67.6, y: 2.27, w: 46.03, h: 70.07 },
+  };
+  const hand = (from, b) => ({
+    silhouette: paths[from].d,
+    creases: [paths[from + 1].d, paths[from + 2].d],
+    box: b,
+    cx: b.x + b.w / 2,
+    cy: b.y + b.h / 2,
+  });
+  return { left: hand(0, box.left), right: hand(3, box.right) };
+})();
 
-  // The thumb's own boundary, offset onto the palm side of its axis. Without it
-  // the thumb is just a lobe of the palm.
-  const t = h.thumb;
-  const ax = t.tip[0] - t.base[0];
-  const ay = t.tip[1] - t.base[1];
-  const alen = Math.hypot(ax, ay) || 1;
-  const off = t.half * 0.74;
-  const nx = -ay / alen;
-  const ny = ax / alen;
-  out.push(line(
-    t.base[0] + nx * off, t.base[1] + ny * off,
-    t.base[0] + ax * 0.6 + nx * off, t.base[1] + ay * 0.6 + ny * off
-  ));
-
-  return out.join('');
+/**
+ * One hand, centred on the origin, in its own units.
+ *
+ * Centred rather than left at its position on the shared canvas: the two hands
+ * are placed independently by every caller, and one of them moves.
+ */
+function washHand(side, {
+  fill = HAND.skin,
+  outline = HAND.outline,
+  crease = HAND.crease,
+  outlineWidth = 1.5,
+  creaseWidth = 1.1,
+} = {}) {
+  const h = WASH_HANDS[side];
+  if (!h) throw new Error(`washHand: no hand "${side}"`);
+  const creases = h.creases.map((d) =>
+    `<path d="${d}" fill="none" stroke="${crease}" stroke-width="${creaseWidth}"
+      stroke-linecap="round" stroke-linejoin="round"/>`).join('');
+  return `<g transform="translate(${n2(-h.cx)} ${n2(-h.cy)})">
+    <path d="${h.silhouette}" fill="${fill}" stroke="${outline}" stroke-width="${outlineWidth}"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    ${creases}
+  </g>`;
 }
 
-/** How far the hand reaches from the palm centre, for callers sizing a box. */
-HAND.extent = Math.max(...[...HAND.fingers, HAND.thumb].map(
-  (d) => Math.hypot(d.tip[0], d.tip[1])
-));
+/**
+ * The two hands as standalone drawings, so the app can ship them.
+ *
+ * The renders inline `washHand()`; the app cannot — it has no SVG engine and
+ * draws from the asset catalog. Rather than port the path data into Swift and
+ * keep two copies of a drawing in step, the same parse writes the same shapes
+ * out as two keyed assets, and `check-art.sh` and `build-assets.sh` then hold
+ * them to the same contract as every other illustration.
+ */
+function washHandAsset(side) {
+  const h = WASH_HANDS[side];
+  // A little room for the outline, which is centred on the edge.
+  const pad = 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n2(h.box.w + pad * 2)} ${n2(h.box.h + pad * 2)}" width="${n2(h.box.w + pad * 2)}" height="${n2(h.box.h + pad * 2)}">
+<g transform="translate(${n2(pad - h.box.x)} ${n2(pad - h.box.y)})">
+${washHand(side).replace(/^<g[^>]*>|<\/g>$/g, '').trim()}
+</g>
+</svg>
+`;
+}
+
+/** The asset's file name for a side, which is `icon.wash.hand<Side>`'s basename. */
+function washHandFile(side) {
+  return `wash-hand${side[0].toUpperCase()}${side.slice(1)}.svg`;
+}
+
+function writeWashHands(dir) {
+  return ['left', 'right'].map((side) => {
+    const name = washHandFile(side);
+    fs.writeFileSync(path.join(dir, name), washHandAsset(side));
+    return name;
+  });
+}
+
+/** The drawn hand's height, for callers sizing a box. */
+HAND.extent = Math.max(WASH_HANDS.left.box.h, WASH_HANDS.right.box.h);
 
 // ---------------------------------------------------------------------------
 // The scene graph
@@ -1180,7 +1168,7 @@ const POSE_NAMES = [...Object.keys(poses), 'face'];
 module.exports = {
   T, OUTLINE, CANVAS, STAGE, GROUND, ANKLE, SCALE, OX, OY, FEET_FRACTION,
   poses, POSE_PARAMS, POSE_NAMES, poseSVG,
-  HAND, handShapes, handCreases, fillEl, grownEls,
+  HAND, WASH_HANDS, washHand, washHandAsset, washHandFile, writeWashHands, fillEl, grownEls,
 };
 
 // ---------------------------------------------------------------------------
