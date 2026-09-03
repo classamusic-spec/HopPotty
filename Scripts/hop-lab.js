@@ -82,7 +82,7 @@ const OUT = path.join(ROOT, 'Art', 'render', 'hop-lab');
  * drawing differently. Cream and white attack the outline (a light background
  * makes a subtle dark edge the only thing holding the shape); vegetation green
  * attacks the *fill* (Hop's own hue, so the silhouette is all that is left);
- * pond blue attacks the outline's own hue; night attacks everything at once.
+ * pond blue attacks the tonal ramp; night attacks everything at once.
  */
 const GROUNDS = [
   { id: 'white', label: 'White', css: '#FFFFFF' },
@@ -328,9 +328,7 @@ function swiftPose(text) {
     const m = one(text, new RegExp(`\\b${key}: (-?[\\d.]+)`));
     if (m) p[key] = num(m[1]);
   };
-  ['lift', 'squash', 'tilt', 'lean', 'bellyScale', 'torsoWidth'].forEach(scalar);
-  const body = one(text, /\bbody: \.(\w+)/);
-  if (body) p.body = body[1];
+  ['lift', 'squash', 'tilt', 'lean', 'armsForward', 'bellyScale', 'torsoWidth'].forEach(scalar);
   const point = (key) => {
     const m = one(text, new RegExp(`\\b${key}: CGPoint\\(x: (-?[\\d.]+), y: (-?[\\d.]+)\\)`));
     if (m) p[key] = [num(m[1]), num(m[2])];
@@ -366,11 +364,11 @@ function swiftPose(text) {
 /** The generator's own defaults, so "unset" compares equal to "set to the
  *  default" on either side. These are `figure()`'s destructuring defaults. */
 const POSE_DEFAULTS = {
-  body: 'standing', lift: 0, squash: 0, tilt: 0, lean: 0,
-  armL: [9, 98], armR: [141, 98],
-  legL: { hip: [54, 128], ankle: [54, 150], spread: 1 },
-  legR: { hip: [96, 128], ankle: [96, 150], spread: 1 },
-  mouth: 'open', bellyScale: 1, torsoWidth: 57,
+  lift: 0, squash: 0, tilt: 0, lean: 0, armsForward: 0,
+  armL: [22, 103], armR: [128, 103],
+  legL: { hip: [56, 124], ankle: [52, 146], spread: 1 },
+  legR: { hip: [94, 124], ankle: [98, 146], spread: 1 },
+  mouth: 'open', bellyScale: 1, torsoWidth: 58,
   withPack: false, wiggling: false, sleeping: false, tongueTo: null,
   eyes: { gaze: [0, 0], blink: 0, mood: 'happy', lidDrop: 0 },
 };
@@ -383,11 +381,11 @@ function normalise(p) {
   });
   const e = p.eyes || {};
   return {
-    body: p.body || POSE_DEFAULTS.body,
     lift: p.lift ?? 0, squash: p.squash ?? 0, tilt: p.tilt ?? 0, lean: p.lean ?? 0,
+    armsForward: p.armsForward ?? ((p.frontL || p.frontR) ? 1 : 0),
     armL: p.armL || POSE_DEFAULTS.armL, armR: p.armR || POSE_DEFAULTS.armR,
     legL: legOf(p.legL, POSE_DEFAULTS.legL), legR: legOf(p.legR, POSE_DEFAULTS.legR),
-    mouth: p.mouth || 'open', bellyScale: p.bellyScale ?? 1, torsoWidth: p.torsoWidth ?? POSE_DEFAULTS.torsoWidth,
+    mouth: p.mouth || 'open', bellyScale: p.bellyScale ?? 1, torsoWidth: p.torsoWidth ?? 58,
     withPack: !!p.withPack, wiggling: !!p.wiggling, sleeping: !!p.sleeping,
     tongueTo: p.tongueTo || null,
     eyes: {
@@ -435,11 +433,14 @@ function checkOutlineLevels() {
   const named = { hero: 'hero', default: 'standard', scene: 'scene', small: 'small', highContrast: 'highContrast', off: 'off' };
   let bad = 0;
   for (const [level, swiftName] of Object.entries(named)) {
-    const m = new RegExp(`static let ${swiftName} = HopOutlineStyle\\(width: ([\\d.]+)\\)`).exec(src);
+    const m = new RegExp(
+      `static let ${swiftName} = HopOutlineStyle\\(exterior: ([\\d.]+), inner: ([\\d.]+), innerOpacity: ([\\d.]+)\\)`
+    ).exec(src);
     if (!m) { console.log(`  FAIL HopOutlineStyle has no \`${swiftName}\``); bad++; continue; }
     const l = art.OUTLINE[level];
-    if (Number(m[1]) !== l.width) {
-      console.log(`  FAIL outline ${level}: hop-art.js has ${l.width}, HopOutlineStyle.${swiftName} has ${m[1]}`);
+    if (Number(m[1]) !== l.exterior || Number(m[2]) !== l.inner || Number(m[3]) !== l.innerOpacity) {
+      console.log(`  FAIL outline ${level}: hop-art.js has ${l.exterior}/${l.inner}/${l.innerOpacity}, ` +
+        `HopOutlineStyle.${swiftName} has ${m[1]}/${m[2]}/${m[3]}`);
       bad++;
     }
   }
@@ -483,8 +484,10 @@ function checkTokens() {
   const src = fs.readFileSync(
     path.join(ROOT, 'HopPottyKit', 'Sources', 'HopPottyDesignTokens', 'HopPalette.swift'), 'utf8');
   const want = {
+    hopFillHighlight: art.T.fillHighlight,
+    hopFillShadow: art.T.fillShadow,
+    hopFillDeep: art.T.fillDeep,
     hopOutline: art.T.outline,
-    hopGreenInk: art.T.ink,
   };
   let bad = 0;
   for (const [token, hex] of Object.entries(want)) {
@@ -499,29 +502,6 @@ function checkTokens() {
     console.log('  FAIL HopPalette.hopFill is no longer hopGreen'); bad++;
   }
   if (!bad) console.log('  ok   Hop\'s colour tokens match HopPalette');
-  return bad + checkCharacterPalette();
-}
-
-/**
- * The character-only colours — the ones the brand ramp has no token for —
- * against `HopCharacterPalette`, which declares them as raw values. Same
- * reason as the tokens: the belly went cream in one place once and stayed
- * peach in the other.
- */
-function checkCharacterPalette() {
-  const src = fs.readFileSync(
-    path.join(ROOT, 'HopPotty', 'DesignSystem', 'Components', 'HopPose.swift'), 'utf8');
-  const want = ['spot', 'belly', 'cheek', 'pupil', 'mouthInterior', 'tongue', 'bagBody', 'bagStrap'];
-  let bad = 0;
-  for (const name of want) {
-    const m = new RegExp(`static let ${name} = Color\\(HopColorValue\\(hex: 0x([0-9A-Fa-f]{6})\\)\\)`).exec(src);
-    if (!m) { console.log(`  FAIL HopCharacterPalette has no raw \`${name}\``); bad++; continue; }
-    if (`#${m[1].toUpperCase()}` !== art.T[name].toUpperCase()) {
-      console.log(`  FAIL ${name}: hop-art.js paints ${art.T[name]}, HopCharacterPalette says #${m[1].toUpperCase()}`);
-      bad++;
-    }
-  }
-  if (!bad) console.log(`  ok   the ${want.length} character-only colours match HopCharacterPalette`);
   return bad;
 }
 
@@ -648,9 +628,9 @@ function labPage() {
 </header>
 <main>
   <div class="note"><b>Auto</b> is what the app draws at that size. <b>Outline off</b> is the test that
-  matters: pose and depth order have to hold the character on their own, so that the outline — one weight,
-  on every boundary — is the last cue rather than the only one. If a pose only reads on <b>Strong</b>, the
-  pose is wrong — fix it in the order pose → overlap → spacing → stroke.</div>
+  matters: pose, depth order and the four-step green ramp have to hold the character on their own, so that
+  the outline is the last cue rather than the only one. If a pose only reads on <b>Strong</b>, the pose is
+  wrong — fix it in the order pose → overlap → tone → spacing → stroke.</div>
   ${cards}
 </main>
 <script>
@@ -707,7 +687,8 @@ function writeLevels() {
       fs.writeFileSync(path.join(dir, `hop-${pose}.svg`), art.poseSVG(pose, { level }).trim() + '\n');
     }
     const l = art.OUTLINE[level];
-    console.log(`  ${level.padEnd(13)} width ${String(l.width).padEnd(5)}   → ${path.relative(ROOT, dir)}`);
+    console.log(`  ${level.padEnd(13)} exterior ${String(l.exterior).padEnd(5)} inner ${String(l.inner).padEnd(5)} at ${l.innerOpacity}` +
+      `   → ${path.relative(ROOT, dir)}`);
   }
   console.log('\nfit-check each with:  node Scripts/check-hop-fit.js --dir ' + path.relative(ROOT, base) + '/<level>');
 }

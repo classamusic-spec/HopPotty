@@ -9,16 +9,20 @@ import HopPottyDesignTokens
 /// separate export, and the geometry stays in step with `Scripts/hop-art.js`,
 /// which generates the same character for the app icon and the marketing art.
 ///
-/// The style is flat sticker, from the owner's two reference drawings: one
-/// green, a cream belly, and **one outline on every boundary** — the exterior
-/// edge, the belly's edge, each arm, each hand and each of its fingers, each
-/// leg, each foot and each of its toes, the eye whites and the mouth — all at
-/// the same weight, in the same deep green, fully opaque. There is no tonal
-/// ramp and no lighter internal rim. Every part is drawn as *its outline, then
-/// its fill*, in depth order, so the outline lands exactly where that part
-/// crosses something already drawn. Its weight comes from ``HopOutlineStyle``
-/// and is chosen from what Hop has to survive (his size, his ground, the
-/// accessibility appearance), not from the screen he is on.
+/// The style is soft storybook, not comic book: no gradients and no sheen, and a
+/// **subtle dark-green structural outline** rather than a black keyline. Three
+/// levels of separation hold him together and none of them is allowed to carry
+/// it alone — the exterior silhouette (``silhouette``), the internal overlap
+/// rims (``part(_:_:)``), and the four-step green ramp in
+/// ``HopCharacterPalette``. Hop was one flat green for everything before this,
+/// and that single fact produced every complaint about him: arms disappearing
+/// into the head, hands into the torso, two legs mid-jump reading as one.
+///
+/// The outline is **anatomical** — head, body, each arm, each hand, each leg,
+/// each foot — and never per sub-path: outlining a cheek or an eye fragments him
+/// into a sticker sheet. Its weight comes from ``HopOutlineStyle`` and is chosen
+/// from what Hop has to survive (his size, his ground, the accessibility
+/// appearance), not from the screen he is on.
 ///
 /// ## Two layers, and why they are separate
 ///
@@ -193,7 +197,7 @@ public struct HopCharacterView: View {
     /// Points per reference unit — the conversion every stroke width needs.
     private var unit: CGFloat { HopCanvas.unit(for: size) }
 
-    /// How heavy Hop's outline is.
+    /// How strongly Hop is separated from his background and from himself.
     ///
     /// Resolved from three semantic facts and nothing else — how big he is, what
     /// kind of ground he is on, and whether the OS has asked for more contrast.
@@ -280,33 +284,25 @@ public struct HopCharacterView: View {
 
     // MARK: - Layers, in the order `figure()` stacks them
     //
-    // shadow, silhouette, pack, legs and toes, then — standing — arms, torso,
-    // belly; or — crouching — torso, belly, arms; then fingers, head, face,
-    // tongue, wiggle, zzz.
+    // shadow, silhouette, pack, legs, torso, belly, arms, head, face, tongue,
+    // wiggle, zzz.
     //
-    // The order is not stacking, it is depth, and depth is what the outline
-    // system runs on. Every part is drawn as an *outline then a fill*, so a
-    // part's outline lands exactly where it crosses something already drawn:
-    // the torso's over the legs, a haunch's under an arm, a finger's on the
-    // finger beside it, the head's over everything. Standing, the arms go
-    // behind the torso so its edge is their boundary and no shoulder seam lands
-    // on the chest; crouching, the front legs are in front of the belly, as a
-    // sitting frog's are. The hands come forward in both, so they can rest on
-    // the belly or the ground.
+    // The order is not stacking, it is depth, and depth is what the separation
+    // system runs on. Every part is drawn as a *rim then a fill*, so a part's
+    // rim lands exactly where it crosses something already drawn and nowhere
+    // else: the torso's rim over the legs, an arm's rim over the torso, the
+    // head's rim over the arms. The three failures this replaced — arms into the
+    // head, hands into the torso, legs into each other — are all boundaries that
+    // did not exist, and this is where they exist now.
 
     private var character: some View {
         ZStack {
             silhouette
             pack
             legs
-            if geometry.isCrouch {
-                trunk
-                arms
-            } else {
-                arms
-                trunk
-            }
-            hands
+            part(.torso, HopCharacterPalette.body)
+            fill(.belly, HopCharacterPalette.belly)
+            arms
             part(.head, HopCharacterPalette.body)
             face
             wiggleMarks
@@ -327,64 +323,52 @@ public struct HopCharacterView: View {
             shape(.silhouette)
                 .stroke(
                     HopCharacterPalette.outline,
-                    style: StrokeStyle(lineWidth: 2 * outline.width * unit, lineCap: .round, lineJoin: .round)
+                    style: StrokeStyle(lineWidth: 2 * outline.exterior * unit, lineCap: .round, lineJoin: .round)
                 )
             shape(.silhouette).fill(HopCharacterPalette.outline)
         }
         .frame(width: size, height: size)
-        .opacity(outline.width > 0 ? 1 : 0)
+        .opacity(outline.exterior > 0 ? 1 : 0)
     }
 
-    /// One whole leg, then the other — the column or the haunch, then its three
-    /// toes in the body's own order — so each toe carries an outline against
-    /// its leg and against the toe beside it.
+    /// One whole leg, then the other — shin, then that foot, then that foot's
+    /// two darker creases — because that is the order `figure()` draws them in,
+    /// and it is the order that keeps a crease under the far foot when a pose
+    /// brings the feet together.
+    ///
+    /// The legs are the deepest green in the character and the feet come back up
+    /// a step, which is the tonal half of "the legs did not merge with the body,
+    /// or with each other, mid-jump".
     private var legs: some View {
         ZStack {
-            limb(.left)
-            limb(.right)
+            part(.shinLeft, HopCharacterPalette.leg)
+            part(.footLeft, HopCharacterPalette.foot)
+            stroke(.toeCreasesLeft, HopCharacterPalette.bodyDeep.opacity(0.8), width: HopAnatomy.creaseStroke)
+            part(.shinRight, HopCharacterPalette.leg)
+            part(.footRight, HopCharacterPalette.foot)
+            stroke(.toeCreasesRight, HopCharacterPalette.bodyDeep.opacity(0.8), width: HopAnatomy.creaseStroke)
         }
     }
 
-    private func limb(_ side: HopSide) -> some View {
-        ZStack {
-            part(.leg(side), HopCharacterPalette.body)
-            ForEach(0..<3, id: \.self) { index in
-                part(.toe(side, index), HopCharacterPalette.body)
-            }
-        }
-    }
-
+    /// One whole arm, then the other, each with its hand drawn after it so the
+    /// hand has a boundary against its own forearm and against the other hand.
+    ///
+    /// The green comes from ``HopPoseGeometry/armsForward``, which travels in the
+    /// animation vector: an arm that moves in front of the tummy brightens as it
+    /// arrives rather than switching colour under itself.
     private var arms: some View {
-        ZStack {
-            part(.arm(.left), HopCharacterPalette.body)
-            part(.arm(.right), HopCharacterPalette.body)
-        }
-    }
-
-    /// The torso, then the belly on it with its own outline.
-    private var trunk: some View {
-        ZStack {
-            part(.torso, HopCharacterPalette.body)
-            part(.belly, HopCharacterPalette.belly)
-        }
-    }
-
-    /// Three fingers a hand, each with its own outline, drawn after the belly
-    /// so a hand can rest on it.
-    private var hands: some View {
-        ZStack {
-            ForEach(0..<3, id: \.self) { index in
-                part(.finger(.left, index), HopCharacterPalette.body)
-            }
-            ForEach(0..<3, id: \.self) { index in
-                part(.finger(.right, index), HopCharacterPalette.body)
-            }
+        let tone = HopCharacterPalette.arm(forward: geometry.armsForward)
+        return ZStack {
+            part(.armLeft, tone)
+            part(.handLeft, tone)
+            part(.armRight, tone)
+            part(.handRight, tone)
         }
     }
 
     private var face: some View {
         ZStack {
-            fill(.spots, HopCharacterPalette.spot)
+            fill(.spots, HopCharacterPalette.bodyDeep)
             eyes
             fill(.cheeks, HopCharacterPalette.cheek)
             fill(.nostrils, HopCharacterPalette.ink)
@@ -396,12 +380,12 @@ public struct HopCharacterView: View {
         }
     }
 
-    /// The outlined white, then everything inside it clipped to it, then the
-    /// line a shut eye leaves. The clip is what keeps a lowered lid inside the
-    /// eye — unclipped it read as a pair of ears above the head.
+    /// The white, then everything inside it clipped to it, then the line a shut
+    /// eye leaves. The clip is what keeps a lowered lid inside the eye —
+    /// unclipped it read as a pair of ears above the head.
     private var eyes: some View {
         ZStack {
-            part(.eyeWhites, HopCharacterPalette.eyeWhite)
+            fill(.eyeWhites, HopCharacterPalette.eyeWhite)
             ZStack {
                 fill(.pupils, HopCharacterPalette.pupil)
                 fill(.highlights, HopCharacterPalette.highlight)
@@ -416,14 +400,13 @@ public struct HopCharacterView: View {
         }
     }
 
-    /// The open mouth — outlined, dark red, tongue at the bottom — and the
-    /// smile line cross-fade rather than swap, so a pose change that opens
-    /// Hop's mouth is one continuous movement. The open mouth also scales about
-    /// the face centre, so it shrinks into the face as it goes.
+    /// The open mouth and the smile line cross-fade rather than swap, so a pose
+    /// change that opens Hop's mouth is one continuous movement. The open mouth
+    /// also scales about the face centre, so it shrinks into the face as it goes.
     private var mouth: some View {
         ZStack {
             ZStack {
-                part(.mouthInterior, HopCharacterPalette.mouthInterior)
+                fill(.mouthInterior, HopCharacterPalette.mouthInterior)
                 fill(.mouthTongue, HopCharacterPalette.tongue)
                     .frame(width: size, height: size)
                     .clipShape(shape(.mouthInterior))
@@ -448,7 +431,7 @@ public struct HopCharacterView: View {
     }
 
     private var wiggleMarks: some View {
-        stroke(.wiggle, HopCharacterPalette.spot, width: HopAnatomy.wiggleStroke)
+        stroke(.wiggle, HopCharacterPalette.bodyDeep, width: HopAnatomy.wiggleStroke)
             .opacity(geometry.wiggling ? 0.6 : 0)
     }
 
@@ -511,22 +494,21 @@ public struct HopCharacterView: View {
             .frame(width: size, height: size)
     }
 
-    /// One outlined part: its outline, then its fill.
+    /// One anatomical part: its own rim, then its fill.
     ///
-    /// The outline is a stroke centred on the part's edge at twice the outline
-    /// width, so the fill drawn over it covers the inner half and leaves exactly
-    /// ``HopOutlineStyle/width`` units showing on the outside — the same
-    /// construction the generator uses, where a shape is grown by stroking it
-    /// at twice the amount it should grow by. Being underneath is what makes it
-    /// land only where it should: on Hop's outside edge it disappears into the
-    /// identical silhouette, and it only becomes visible where this part
-    /// crosses something already drawn.
+    /// The rim is a stroke centred on the part's edge, so the fill drawn over it
+    /// covers the inner half and leaves exactly ``HopOutlineStyle/inner`` units
+    /// showing on the outside — the same construction the generator uses, where
+    /// a shape is grown by stroking it at twice the amount it should grow by.
+    /// Being underneath is what makes it *internal* separation: on Hop's outside
+    /// edge it disappears into the darker silhouette and costs nothing, and it
+    /// only becomes visible where this part crosses something already drawn.
     private func part(_ part: HopFigureShape.Part, _ color: Color) -> some View {
         ZStack {
             shape(part)
                 .stroke(
-                    HopCharacterPalette.outline,
-                    style: StrokeStyle(lineWidth: 2 * outline.width * unit, lineCap: .round, lineJoin: .round)
+                    HopCharacterPalette.outline.opacity(outline.innerOpacity),
+                    style: StrokeStyle(lineWidth: 2 * outline.inner * unit, lineCap: .round, lineJoin: .round)
                 )
             shape(part).fill(color)
         }

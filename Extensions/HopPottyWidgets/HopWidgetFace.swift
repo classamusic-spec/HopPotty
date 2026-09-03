@@ -209,7 +209,7 @@ struct HopWidgetFace: View {
             let path = HopWidgetFacePath(data: shape.d)
             Group {
                 if shape.strokeWidth > 0 {
-                    path.stroke(paint, style: StrokeStyle(lineWidth: strokeWidth(shape), lineCap: .round, lineJoin: .round))
+                    path.stroke(paint, style: StrokeStyle(lineWidth: strokeWidth(shape), lineCap: .round))
                 } else {
                     path.fill(paint)
                 }
@@ -287,26 +287,26 @@ struct HopWidgetFace: View {
         return palette(role)
     }
 
-    /// The artwork's palette. Eight of the thirteen roles are a `HopPalette` token
-    /// by value, and the other five — the spots' green, the pupils' navy, the
-    /// cheeks' pink, the mouth's red and the tongue — are the reference drawing's
-    /// own colours, which the brand ramp has no token for and which
-    /// `HopCharacterPalette` declares in the app the same way. `Scripts/widget-face.js`
-    /// asserts every line of this switch against the art each time it runs, so
-    /// none of them can drift from the drawing.
+    /// The artwork's palette. Eleven of the thirteen roles are a `HopPalette` token
+    /// by value — `Scripts/widget-face.js` asserts that against
+    /// `HopPalette.swift` every time it runs, so these cannot drift from the
+    /// drawing. The two that are not are character-only colours the brand ramp
+    /// has no token for, exactly as `HopCharacterPalette` declares them in the
+    /// app: a value step between `hopGreen` and `hopGreenDeep`, and a pink
+    /// brighter than any brand hue.
     private func palette(_ role: HopWidgetFaceRole) -> Color {
         switch role {
         case .outline: Color(HopPalette.hopOutline)
         case .head: Color(HopPalette.hopGreen)
         case .spot: Color(HopColorValue(hex: 0x45A971))
         case .eyeWhite: Color(HopPalette.white)
-        case .pupil: Color(HopColorValue(hex: 0x0D1B3E))
+        case .pupil: Color(HopPalette.midnight)
         case .highlight: Color(HopPalette.white)
         case .closedEye: Color(HopPalette.hopGreenInk)
-        case .cheek: Color(HopColorValue(hex: 0xF4A0A0))
+        case .cheek: Color(HopPalette.peachPop)
         case .nostril: Color(HopPalette.hopGreenInk)
-        case .mouthInterior: Color(HopColorValue(hex: 0x8B1A1A))
-        case .tongue: Color(HopColorValue(hex: 0xE84A5F))
+        case .mouthInterior: Color(HopPalette.peachInk)
+        case .tongue: Color(HopColorValue(hex: 0xFF6F7D))
         case .smile: Color(HopPalette.hopGreenInk)
         case .sleepMark: Color(HopPalette.hopGreenInk)
         }

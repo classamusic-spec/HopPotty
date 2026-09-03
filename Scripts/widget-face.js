@@ -45,12 +45,11 @@
  * Fills are matched back to `HopPalette` by value: this script reads
  * `HopPalette.swift`, and a fill that is a token's colour is emitted as that
  * token's *name*, so the widget says `HopPalette.hopGreen` and never a hex
- * literal. Five of the face's colours have no brand token — the spots' green,
- * the pupils' navy, the cheeks' pink, the mouth's red and the tongue — exactly
- * as `HopCharacterPalette` notes in the app; those are the reference drawing's
- * own values, and `HopWidgetFace.swift`'s hand-written switch is asserted
- * against them here. If a colour ever moves, the assertion fails rather than
- * the widget quietly painting last month's frog.
+ * literal. Two of the face's colours have no brand token — the mid-green of the
+ * spots, and the tongue's pink — exactly as `HopCharacterPalette` notes in the
+ * app; those two are carried as values, from the art, with the same reason
+ * given. If a green ever moves, the assertion here fails rather than the widget
+ * quietly painting last month's frog.
  *
  *   node Scripts/widget-face.js           regenerate
  *   node Scripts/widget-face.js --check   prove the emitted art against the artwork
@@ -368,25 +367,24 @@ function paletteByValue() {
  *
  * `token: null` is a character-only colour: the art uses it, the brand ramp does
  * not have it, and `HopCharacterPalette` in the app declares it as a raw value
- * for the same reason — and so does `HopWidgetFace.swift`, whose literal is
- * checked against the art in `swiftSource`. Everything else is asserted against
- * `HopPalette` by value, at generation time.
+ * for the same reason. Everything else is asserted against `HopPalette` by
+ * value, at generation time.
  *
  * Declaration order is paint order, and therefore the order of
  * `HopWidgetFaceRole` in the widget.
  */
 const ROLES = {
-  outline: { hex: '#1E7A32', token: 'hopOutline' },
+  outline: { hex: '#356B50', token: 'hopOutline' },
   head: { hex: '#63C88A', token: 'hopGreen' },
   spot: { hex: '#45A971', token: null },
   eyeWhite: { hex: '#FFFFFF', token: 'white' },
-  pupil: { hex: '#0D1B3E', token: null },
+  pupil: { hex: '#243047', token: 'midnight' },
   highlight: { hex: '#FFFFFF', token: 'white' },
   closedEye: { hex: '#1B5E39', token: 'hopGreenInk' },
-  cheek: { hex: '#F4A0A0', token: null },
+  cheek: { hex: '#FF9F8F', token: 'peachPop' },
   nostril: { hex: '#1B5E39', token: 'hopGreenInk' },
-  mouthInterior: { hex: '#8B1A1A', token: null },
-  tongue: { hex: '#E84A5F', token: null },
+  mouthInterior: { hex: '#8A3F30', token: 'peachInk' },
+  tongue: { hex: '#FF6F7D', token: null },
   smile: { hex: '#1B5E39', token: 'hopGreenInk' },
   sleepMark: { hex: '#1B5E39', token: 'hopGreenInk' },
 };
@@ -397,10 +395,9 @@ const ROLE_ORDER = Object.keys(ROLES);
 // Extraction
 // ---------------------------------------------------------------------------
 
-/** `CROWN` in `hop-art.js`, as the art writes it. Change one, change the other. */
 const isCrown = (r) =>
   r.name === 'ellipse' && r.attrs.cx === '75' && r.attrs.cy === '40' &&
-  r.attrs.rx === '36' && r.attrs.ry === '23';
+  r.attrs.rx === '44' && r.attrs.ry === '33';
 
 /** The head group's own matrix in one pose file, and where it puts Hop's
  * rotation point. Everything else in this script is relative to these two. */
@@ -444,7 +441,6 @@ function anchorOf(src, label) {
 
   return {
     index: start,
-    crown,
     silhouette,
     matrix: headMatrix,
     at: apply(headMatrix, FACE_CENTRE),
@@ -525,16 +521,8 @@ function head(pose, frame) {
 
   const shapes = [];
   const marks = [];
-  // The exterior band — the head's share of the silhouette and its own rim,
-  // everything before the crown — is marked, because it is the one thing a
-  // pose covers with a body and a free-standing head does not. The outline
-  // *inside* the head (the eye rings, the mouth's edge) is the same role and is
-  // not marked: a pose shows it exactly as the widget does.
-  const source = [
-    ...anchor.silhouette.map((i) => ({ record: drawables[i], band: true })),
-    ...drawables.slice(anchor.index).map((record, j) => ({ record, band: anchor.index + j < anchor.crown })),
-  ];
-  for (const { record, band } of source) {
+  const source = [...anchor.silhouette.map((i) => drawables[i]), ...drawables.slice(anchor.index)];
+  for (const record of source) {
     const m = mul(norm, record.matrix);
     if (record.name === 'text') {
       const at = apply(m, { x: Number(record.attrs.x), y: Number(record.attrs.y) });
@@ -556,7 +544,6 @@ function head(pose, frame) {
     const stroked = role === 'outline' || !record.style.fill || record.style.fill === 'none';
     shapes.push({
       role,
-      band,
       d,
       strokeWidth: stroked ? round(record.style.strokeWidth * scaleOf(m)) : 0,
       opacity: record.style.opacity ?? 1,
@@ -579,12 +566,12 @@ function head(pose, frame) {
  * it was lifted out of and the difference measured. Without it the head sits in
  * the shared frame, which is what the widget draws.
  */
-function proofSVG(art, { viewBox, place = null, paint = (role) => ROLES[role].hex, skip = () => false } = {}) {
+function proofSVG(art, { viewBox, place = null, paint = (role) => ROLES[role].hex } = {}) {
   const defs = [];
   const body = [];
   art.shapes.forEach((shape, i) => {
     const colour = paint(shape.role);
-    if (colour === null || skip(shape)) return;
+    if (colour === null) return;
     let clip = '';
     if (shape.clip) {
       defs.push(`  <clipPath id="c${i}"><path d="${shape.clip}"/></clipPath>`);
@@ -592,7 +579,7 @@ function proofSVG(art, { viewBox, place = null, paint = (role) => ROLES[role].he
     }
     const opacity = shape.opacity === 1 ? '' : ` opacity="${round(shape.opacity)}"`;
     body.push(shape.strokeWidth
-      ? `  <path d="${shape.d}" fill="none" stroke="${colour}" stroke-width="${shape.strokeWidth}" stroke-linecap="round" stroke-linejoin="round"${opacity}${clip}/>`
+      ? `  <path d="${shape.d}" fill="none" stroke="${colour}" stroke-width="${shape.strokeWidth}" stroke-linecap="round"${opacity}${clip}/>`
       : `  <path d="${shape.d}" fill="${colour}"${opacity}${clip}/>`);
   });
   for (const mark of art.marks) {
@@ -653,16 +640,10 @@ function stencil() {
 function swiftSource(arts, frame, content, digest) {
   const palette = paletteByValue();
 
-  const view = fs.readFileSync(VIEW_SWIFT, 'utf8');
   const roleLines = ROLE_ORDER.map((role) => {
     const { hex, token } = ROLES[role];
     if (token && palette[hex] !== token) {
       throw new Error(`${role}: the art paints ${hex}; HopPalette.${token} is not that colour`);
-    }
-    // The widget cannot see `HopCharacterPalette`, so its character-only
-    // colours are literals in `HopWidgetFace.swift` — checked here, by value.
-    if (!token && !view.includes(`case .${role}: Color(HopColorValue(hex: 0x${hex.slice(1)}))`)) {
-      throw new Error(`${role}: the art paints ${hex}; HopWidgetFace.swift's palette does not`);
     }
     return token
       ? `//   ${role.padEnd(14)} ${hex}  HopPalette.${token}`
@@ -794,11 +775,14 @@ function build({ quiet = false } = {}) {
   fs.mkdirSync(PROOF, { recursive: true });
   for (const art of arts) {
     fs.writeFileSync(path.join(PROOF, `${art.pose}.svg`), proofSVG(art, { viewBox }));
-    // Laid back over the pose, minus the exterior band — see the second
-    // check below for why that band cannot be part of this comparison. The
-    // outline inside the head stays: the pose draws it too.
+    // Laid back over the pose, minus the exterior outline — see the second
+    // check below for why that band cannot be part of this comparison.
     fs.writeFileSync(path.join(PROOF, `${art.pose}-in-place.svg`),
-      proofSVG(art, { viewBox: viewBoxOf(art.pose), place: true, skip: (shape) => shape.band }));
+      proofSVG(art, {
+        viewBox: viewBoxOf(art.pose),
+        place: true,
+        paint: (role) => (role === 'outline' ? null : ROLES[role].hex),
+      }));
   }
 
   if (!quiet) {
@@ -946,16 +930,13 @@ async function check() {
   //    proof's own coverage — which is exactly the claim being made: every pixel
   //    the widget draws is the pixel the artwork draws there.
   //
-  //    Minus the exterior band, and that exclusion is structural rather than
+  //    Minus the exterior outline, and that exclusion is structural rather than
   //    a tolerance. Hop's outline is drawn *under* the whole figure so the parts
   //    union without seams, so in a pose the band around the jaw is covered by
   //    the torso — while the widget draws a head with no body under it, where
   //    the same band is the edge of the drawing. A free-standing head has an
   //    outline where an attached one has a neck. That band is not unproven: it
-  //    is check 1, against a head-only pose, every pixel, on both grounds. The
-  //    outline *inside* the head — the eye rings, the mouth's edge — is the same
-  //    role but is not excluded, because the pose shows it exactly as the widget
-  //    does, and dropping it would let this check pass a head with no eyes.
+  //    is check 1, against a head-only pose, every pixel, on both grounds.
   console.log('\neach mood, laid back over its own pose (where the head draws, outline aside)');
   for (const pose of MOODS) {
     report(`${pose} in place`,

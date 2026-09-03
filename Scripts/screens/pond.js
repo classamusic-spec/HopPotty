@@ -72,7 +72,7 @@ function hopOnHisPad(w, h) {
       </g>
     </svg>
     <div data-hop style="position:absolute;left:${cx}px;top:${cy - side * FEET}px;transform:translateX(-50%)">
-      ${svg('Art/character/hop-sit.svg', { width: side })}
+      ${svg('Art/character/hop-idle.svg', { width: side })}
     </div>`;
 }
 
