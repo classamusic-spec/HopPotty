@@ -202,8 +202,11 @@ public struct HopGaze: Equatable, Sendable {
     static let headFollowDelay: Double = 0.09
 
     /// Reference units of eye travel per unit of frame, and the ceiling on it.
-    private static let reach: CGFloat = 7
-    private static let ceiling: CGFloat = 4.5
+    /// The pupil is 83% of the white (`HopAnatomy.pupilRadius`), which leaves
+    /// 1.9 units before it is cut off by the eye's edge; the ceiling sits just
+    /// inside that.
+    private static let reach: CGFloat = 3
+    private static let ceiling: CGFloat = 1.8
     private static let tiltCeiling: Double = 2.4
 
     var expression: HopExpression {

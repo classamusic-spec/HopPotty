@@ -72,43 +72,24 @@ public enum HopPalette {
 
     // MARK: Hop
     //
-    // Hop is the brand's most important visual asset, and the thing that decides
-    // whether he reads is not his hue — it is whether one part of him can be
-    // told from another. These are the tokens that answer that, and they are the
-    // *same* values `Scripts/hop-art.js` emits, under the same names, so the
-    // shipped SVGs and the live SwiftUI drawing cannot describe different frogs.
+    // Hop is the brand's most important visual asset, and the owner's reference
+    // drawings are flat sticker art: one green, a cream belly, and one deep
+    // green outline on every boundary. These two tokens are the *same* values
+    // `Scripts/hop-art.js` emits, under the same names, so the shipped SVGs, the
+    // widget's head and the live SwiftUI drawing cannot describe different
+    // frogs; `node Scripts/hop-lab.js --contracts` checks them.
     //
-    // They are separation tokens, not decoration. Three levels do the work
-    // together and no one of them is allowed to carry it alone:
-    //
-    //  1. the exterior silhouette, in ``hopOutline``, so Hop holds his shape on
-    //     cream, pond blue, vegetation green, white and night;
-    //  2. internal overlap separation, the same colour at ``hopOutlineSoft`` or
-    //     ``hopOutlineSubtle``, only where similarly coloured parts cross;
-    //  3. tonal separation, the four fills below, assigned by depth — which is
-    //     what keeps the character readable when the outline is turned down.
-    //
-    // ``hopOutline`` is deliberately a dark *green*, not black or grey: a black
-    // keyline turns a soft storybook character into a sticker.
+    // There is deliberately no tonal ramp here any more. Hop used to carry four
+    // greens and a lighter internal rim, and every part of him is now the one
+    // brand green with the outline doing all of the separating, exactly as the
+    // reference does. The belly, cheeks, pupils, mouth and tongue are the
+    // reference's own colours and live with the character
+    // (`HopCharacterPalette`), not in the brand ramp.
 
-    /// Front surfaces — Hop's head and torso. The same value as ``hopGreen``,
+    /// Hop's body — head, torso, every limb. The same value as ``hopGreen``,
     /// named for its role in the drawing rather than for the brand hue.
     public static let hopFill = hopGreen
-    /// A limb crossing in front of the body. One step up, so the nearer thing is
-    /// the lit one; the old `hopGreenLight` was so far up that a hand in front of
-    /// the tummy read as a reflection rather than as a hand.
-    public static let hopFillHighlight = HopColorValue(hex: 0x71D397)
-    /// Arms and hands at rest, and the top of a foot. One step back from the head.
-    public static let hopFillShadow = HopColorValue(hex: 0x52B77A)
-    /// Legs, and the forehead spots and toe creases. The deepest body value.
-    public static let hopFillDeep = HopColorValue(hex: 0x45A971)
-
-    /// Hop's structural outline.
-    public static let hopOutline = HopColorValue(hex: 0x356B50)
-    /// The outline where two similarly coloured parts overlap: lighter and
-    /// thinner than the exterior edge, because an internal boundary as strong as
-    /// the outside one reads as a cut-out rather than as an arm in front.
-    public static let hopOutlineSoft = hopOutline.opacity(0.62)
-    /// The faintest separation the system uses.
-    public static let hopOutlineSubtle = hopOutline.opacity(0.38)
+    /// Hop's outline, on every boundary. A saturated deep green, not black:
+    /// a black keyline turns a soft storybook character into a sticker sheet.
+    public static let hopOutline = HopColorValue(hex: 0x1E7A32)
 }

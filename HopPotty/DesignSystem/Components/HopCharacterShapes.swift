@@ -2,26 +2,24 @@ import SwiftUI
 
 /// Hop's authoring spaces.
 ///
-/// He is drawn in the 150 × 160 space of the approved reference
-/// (`hop_mascot.svg`), exactly as `Scripts/hop-art.js` draws him, so every
-/// number in ``HopPoseGeometry`` and ``HopAnatomy`` can be checked against the
-/// generator line for line. That space is then placed onto the 512 × 512 canvas
-/// the art files ship in, and the canvas is fitted to whatever rectangle the
-/// view was given. Two steps, both at the edge, so nothing in between has to
+/// He is drawn in the 150-wide reference space `Scripts/hop-art.js` works in —
+/// the head is 122 units across, x 13.5…136.5 — exactly as the generator draws
+/// him, so every number in ``HopPoseGeometry`` and ``HopAnatomy`` can be checked
+/// against it line for line. That space is then placed onto the 512 × 512
+/// canvas the art files ship in, and the canvas is fitted to whatever rectangle
+/// the view was given. Two steps, both at the edge, so nothing in between has to
 /// know how big Hop is on screen.
 ///
 /// ## The placement is not a preference, it is a fit
 ///
 /// It used to be `scale 3.2, offset (16, 0)`, which was hand-written and wrong:
-/// the pose set actually draws 169 × 174 reference units, so at 3.2 it needed
-/// 542 × 558 of a 512 box. **Fourteen of the fifteen poses were clipped** —
-/// every one but `face` lost its ground shadow, `idle`/`blink`/`talk` were cut
-/// on both sides, and `jump` lost the top of its head, which is what a caregiver
-/// reported. `Scripts/check-hop-fit.js` now measures the rendered alpha bounds
-/// of every pose and fails on any content that touches an edge.
+/// fourteen of the fifteen poses were clipped, and `jump` lost the top of its
+/// head, which is what a caregiver reported. `Scripts/check-hop-fit.js` now
+/// measures the rendered alpha bounds of every pose and fails on any content
+/// that touches an edge.
 ///
 /// These numbers are the generator's, solved rather than chosen: the stage
-/// rectangle the pose set occupies is `x 5…145`, `y −3…164`, so a 512 canvas
+/// rectangle the pose set occupies is `x −6…156`, `y −3…164`, so a 512 canvas
 /// with a 12-unit margin gives `scale 2.9` and the origin that centres it. They
 /// must equal `wrap()` in `Scripts/hop-art.js`; if that file's stage changes,
 /// these change with it or the app and the shipped art draw different frogs.
@@ -34,12 +32,12 @@ enum HopCanvas {
     static let referenceScale: CGFloat = 2.9
     static let referenceOrigin = CGPoint(x: 38.5, y: 22.55)
 
-    /// The reference y a grounded pose's toes touch, and the ankle that puts
-    /// them there. `hop-art.js` sets `ankle = groundAnkle + lift` for every
-    /// grounded pose, which is what makes standing and sitting share one ground
-    /// line — and therefore lets a screen place any pose with one constant.
+    /// The reference y a grounded pose's toes touch, and the ankle of a
+    /// standing leg that puts them there. Every crouch pose in `hop-art.js`
+    /// carries `lift: -6` so its four contact points land on the same line —
+    /// which is what lets a screen place any pose with one constant.
     static let groundLine: CGFloat = 163.6
-    static let groundAnkle: CGFloat = 146
+    static let groundAnkle: CGFloat = 150
 
     /// Where Hop's feet sit in the canvas, as a fraction of its height. Screens
     /// position him by this rather than by guessing at his silhouette.
@@ -73,51 +71,44 @@ enum HopCanvas {
     }
 }
 
-/// How strongly Hop is separated from what is behind him, and from himself.
+/// How heavy Hop's outline is.
 ///
-/// Three levels of separation hold this character together and none of them is
-/// allowed to carry it alone: the exterior silhouette, the internal overlap
-/// rims, and the tonal ramp in ``HopCharacterPalette``. This type carries the
-/// two that are geometry.
+/// One number: the visible width of **every** boundary in the drawing, in
+/// reference units. The exterior edge, the belly's edge, each limb, each finger
+/// and toe, the eye whites and the mouth are all drawn at exactly this width in
+/// the same opaque colour. The reference is a flat sticker with one outline; an
+/// internal line lighter or thinner than the outside one is the thing it does
+/// not have, and the thing this type no longer carries.
 ///
-/// `exterior` is how far the silhouette underlay grows past the fill — the
-/// weight of the outside edge. `inner` is the same for a part's own rim, drawn
-/// at `innerOpacity` beneath its own fill so it only appears where that part
-/// crosses something already drawn. `inner` is always roughly half `exterior`,
-/// because an internal boundary as strong as the outside one reads as a
-/// cut-out rather than as an arm in front of a chest.
+/// The width is multiplied by ``HopCanvas/unit(for:)`` at the one place it is
+/// used, so the outline scales with Hop exactly as every other line in the
+/// drawing does. That is deliberate and it is why the SVG side rejects
+/// `vector-effect="non-scaling-stroke"`: a stroke pinned to device pixels would
+/// be eight times heavier relative to the body at 64pt than at 512pt.
 ///
-/// Both are in **reference units** and are multiplied by ``HopCanvas/unit(for:)``
-/// at the one place they are used, so the outline scales with Hop exactly as
-/// every other line in the drawing does. That is deliberate and it is why the
-/// SVG side rejects `vector-effect="non-scaling-stroke"`: a stroke pinned to
-/// device pixels would be eight times heavier relative to the body at 64pt than
-/// at 512pt, which is the "magnified sticker" failure inverted.
-///
-/// The numbers are `OUTLINE` in `Scripts/hop-art.js`, and `highContrast` is
-/// capped at 2.8 by the canvas rather than by taste: at 3.1 the `jump` pose's
-/// eye sockets come within 5.5 units of the top edge and `check-hop-fit.js`
-/// goes red.
+/// The numbers are `OUTLINE` in `Scripts/hop-art.js`. `hero` is the reference
+/// exactly — 14 px on a 765 px head is 2.24 units — and the others step up as
+/// Hop gets smaller, because a width that is right at 320pt is under a pixel
+/// on a chip. `highContrast` is capped at 3.0 by the canvas rather than by
+/// taste: `jump`'s domes and every standing pose's toes are the ink nearest an
+/// edge, and `check-hop-fit.js` fails below 6 units of air.
 struct HopOutlineStyle: Equatable, Sendable {
-    var exterior: CGFloat
-    var inner: CGFloat
-    var innerOpacity: Double
+    var width: CGFloat
 
-    /// No outline at all. Not a shipping state — it is the test that the pose,
-    /// the depth order and the green ramp hold Hop up on their own.
-    static let off = HopOutlineStyle(exterior: 0, inner: 0, innerOpacity: 0)
-    /// 200pt and up. A softer edge, because at hero size the tonal separation is
-    /// doing more of the work and a small Hop's outline looks like a sticker.
-    static let hero = HopOutlineStyle(exterior: 1.55, inner: 0.9, innerOpacity: 0.5)
+    /// No outline at all. Not a shipping state — it is the test that the pose
+    /// and the depth order hold Hop up on their own.
+    static let off = HopOutlineStyle(width: 0)
+    /// 200pt and up: the reference's own weight.
+    static let hero = HopOutlineStyle(width: 2.2)
     /// The everyday state, and what `Art/character/hop-*.svg` ships with.
-    static let standard = HopOutlineStyle(exterior: 2.0, inner: 1.15, innerOpacity: 0.62)
+    static let standard = HopOutlineStyle(width: 2.4)
     /// Over illustration — pond water, vegetation green, a dark sky — where the
     /// background is Hop's own hue and the silhouette is all that is left.
-    static let scene = HopOutlineStyle(exterior: 2.35, inner: 1.25, innerOpacity: 0.72)
+    static let scene = HopOutlineStyle(width: 2.6)
     /// 96pt and below, where the everyday edge is under a pixel.
-    static let small = HopOutlineStyle(exterior: 2.6, inner: 1.35, innerOpacity: 0.78)
+    static let small = HopOutlineStyle(width: 2.8)
     /// Increase Contrast, and any accessibility appearance.
-    static let highContrast = HopOutlineStyle(exterior: 2.8, inner: 1.75, innerOpacity: 0.95)
+    static let highContrast = HopOutlineStyle(width: 3.0)
 
     /// The responsive rule, and the only place it is written on this side.
     ///
@@ -154,47 +145,109 @@ public enum HopCharacterGround: Equatable, Sendable {
     case scenery
 }
 
+/// Which of the owner's two reference bodies a pose is drawn on.
+///
+/// The head is identical on both. `standing` is reference 2 — a rounded torso,
+/// a circle belly, ta-da arms, two leg columns. `crouch` is reference 1 — a
+/// tall oval belly, a haunch either side of it, back feet at the outer corners
+/// and the front arms straight down to hands on the ground. Every pose on the
+/// ground or a lily pad uses the crouch.
+enum HopBodyKind: Equatable, Sendable {
+    case standing
+    case crouch
+}
+
+/// Hop's left or right, from the viewer's side: `left` is the viewer's left.
+enum HopSide: Hashable, Sendable {
+    case left
+    case right
+
+    /// −1 for the viewer's left, +1 for the right: the direction "outward".
+    var sign: Double {
+        self == .left ? -1 : 1
+    }
+}
+
 /// The fixed numbers of Hop's body — the ones a pose never changes.
 ///
 /// Transcribed from the constants and part functions at the top of
-/// `Scripts/hop-art.js`. A pose sets where the hands and feet are; this sets
-/// what a hand and a foot *are*.
+/// `Scripts/hop-art.js`, which converted the owner's reference drawings at
+/// 6.25 px per unit. A pose sets where the hands and feet are; this sets what
+/// a hand and a foot *are*.
 enum HopAnatomy {
-    static let eyeL = CGPoint(x: 42.4, y: 25.7)
-    static let eyeR = CGPoint(x: 108.4, y: 25.7)
-    /// The socket is the bump in the head silhouette, drawn in body green.
-    static let socketRadius: CGFloat = 20.5
-    static let whiteRadius: CGFloat = 16.5
-    static let pupilRadius: CGFloat = 12.3
-    static let highlightRadius: CGFloat = 3.4
-    /// The pupil sits a unit below the socket centre; the catchlight above it.
-    static let pupilOffset = CGSize(width: 0, height: 1)
-    static let highlightOffset = CGSize(width: 3.2, height: -4)
+    // The head: two big domes on a wide jaw, with the crown between them well
+    // below the domes' tops — that dip is the "M" of the silhouette.
+    static let eyeL = CGPoint(x: 41.5, y: 27)
+    static let eyeR = CGPoint(x: 108.5, y: 27)
+    static let domeRadius: CGFloat = 21.5
+    static let crownCentre = CGPoint(x: 75, y: 40)
+    static let crownRadii = CGSize(width: 36, height: 23)
+    static let jawCentre = CGPoint(x: 75, y: 55)
+    static let jawRadii = CGSize(width: 61.5, height: 30)
 
-    /// Shoulders are fixed: the pose moves the hand and the arm follows.
-    static let shoulderL = CGPoint(x: 48, y: 86)
-    static let shoulderR = CGPoint(x: 102, y: 86)
-    static let armWidth: CGFloat = 15
-    static let palmRadius: CGFloat = 9.5
-    static let fingerLength: CGFloat = 12
-    static let fingerWidth: CGFloat = 10.5
-    /// Three fingers, fanned about the arm's own direction.
-    static let fingerAngles: [Double] = [-50, 0, 50]
+    static let whiteRadius: CGFloat = 11.2
+    /// 83% of the white. Very large, and it leaves 1.9 units of gaze travel.
+    static let pupilRadius: CGFloat = 9.3
+    /// The pupil sits slightly inward (`width`, toward the face's centre) and
+    /// slightly low (`height`) of the white's centre.
+    static let pupilOffset = CGSize(width: 0.6, height: 1)
+    /// One catchlight, top-left of the pupil, about 30% of its diameter.
+    static let highlightOffset = CGSize(width: -3, height: -3.2)
+    static let highlightRadius: CGFloat = 2.8
 
-    static let legWidth: CGFloat = 26
-    static let soleRadii = CGSize(width: 14, height: 8.5)
-    /// Toe angle (relative to the foot's outward direction) and half-width.
-    /// The generator strokes each toe at `r * 2`, so the radius *is* `r`.
-    static let toes: [(angle: Double, radius: CGFloat)] = [
-        (angle: -6, radius: 6), (angle: -44, radius: 6), (angle: -82, radius: 5.6),
-    ]
-    /// How far a toe reaches from the sole centre: the horizontal reach is
-    /// multiplied by the pose's toe spread, the vertical one is not.
-    static let toeReach = CGSize(width: 15, height: 11)
-    static let creaseAngles: [Double] = [-30, -70]
-    /// A crease runs from just inside the sole to just short of the toe tips.
-    static let creaseInnerReach: Double = 5
-    static let creaseReach = CGSize(width: 14, height: 12)
+    // Limbs.
+    static let armWidth: CGFloat = 11.2
+    /// Three fingers fan about the arm's own direction — up, out, down — and
+    /// are drawn in this order so the middle one lands on top with a clean
+    /// line either side.
+    static let fingerAngles: [Double] = [-60, 60, 0]
+    static let fingerLength: CGFloat = 9.5
+    static let fingerWidth: CGFloat = 9.6
+    static let legWidth: CGFloat = 15.2
+    static let toeLength: CGFloat = 7.5
+    static let toeWidth: CGFloat = 9.5
+    /// The toes fan from a point just outward (`width`) and below (`height`)
+    /// the ankle.
+    static let footOffset = CGSize(width: 2, height: 1)
+    /// The crouch haunch: a fat lobe centred on the pose's hip, tilted so its
+    /// bottom swings outward.
+    static let haunchRadii = CGSize(width: 18.5, height: 25)
+    static let haunchTilt: Double = 15
+
+    /// What differs between the two bodies besides the poses that use them.
+    struct Body {
+        var shoulderL: CGPoint
+        var shoulderR: CGPoint
+        /// Toe angles from straight down, outward positive, in draw order.
+        var toes: [Double]
+        /// Fixed torso sides, or `nil` to centre the pose's `torsoWidth`.
+        var torsoSides: (x0: CGFloat, x1: CGFloat)?
+        var torsoTop: CGFloat
+        var torsoBottom: CGFloat
+        var torsoRadius: CGFloat
+        /// Whether the arms are drawn over the torso and belly. Standing, they
+        /// attach behind the torso's sides so its edge is their boundary and no
+        /// shoulder seam lands on the chest; crouching, the front legs are in
+        /// front of the belly, as a sitting frog's are.
+        var armsInFront: Bool
+    }
+
+    static let standing = Body(
+        shoulderL: CGPoint(x: 50.5, y: 94.5), shoulderR: CGPoint(x: 99.5, y: 94.5),
+        toes: [-40, 70, 15],
+        torsoSides: nil, torsoTop: 70, torsoBottom: 139, torsoRadius: 16,
+        armsInFront: false
+    )
+    static let crouch = Body(
+        shoulderL: CGPoint(x: 44, y: 90), shoulderR: CGPoint(x: 106, y: 90),
+        toes: [0, 80, 40],
+        torsoSides: (x0: 51, x1: 99), torsoTop: 70, torsoBottom: 144, torsoRadius: 20,
+        armsInFront: true
+    )
+
+    static func body(_ kind: HopBodyKind) -> Body {
+        kind == .crouch ? crouch : standing
+    }
 
     /// The point the head rotates about, and the mouth scales about.
     static let faceCentre = CGPoint(x: 75, y: 50)
@@ -203,13 +256,8 @@ enum HopAnatomy {
     /// Where a tongue leaves the mouth.
     static let tongueOrigin = HopPoseGeometry.tongueOrigin
 
-    static let crownCentre = CGPoint(x: 75, y: 40)
-    static let crownRadii = CGSize(width: 44, height: 33)
-    static let jawCentre = CGPoint(x: 75, y: 56)
-    static let jawRadii = CGSize(width: 61, height: 27)
-
-    /// The top of Hop's head, in reference units.
-    static let crownTop: CGFloat = crownCentre.y - crownRadii.height
+    /// The top of Hop's head, in reference units: the domes.
+    static let crownTop: CGFloat = eyeL.y - domeRadius
 
     /// The floor Hop stands on, in reference units — the line the ground shadow
     /// is centred on in `figure()`, which is ``HopCanvas/groundLine`` less the
@@ -220,33 +268,33 @@ enum HopAnatomy {
     static let groundLine: CGFloat = HopCanvas.groundLine - shadowRadii.height
 
     /// The head's bounding box in reference space: the jaw sets the width, the
-    /// eye sockets the top, the jaw the bottom.
+    /// domes the top, the jaw the bottom.
     static let headBoundsInReference = CGRect(
         x: jawCentre.x - jawRadii.width,
-        y: eyeL.y - socketRadius,
+        y: eyeL.y - domeRadius,
         width: jawRadii.width * 2,
-        height: (jawCentre.y + jawRadii.height) - (eyeL.y - socketRadius)
+        height: (jawCentre.y + jawRadii.height) - (eyeL.y - domeRadius)
     )
 
     /// The same box on the 512 canvas — what ``HopPoseGeometry/faceCrop`` is.
     static let headBoundsOnCanvas = headBoundsInReference.applying(HopCanvas.referenceTransform)
 
-    /// The three forehead spots, exactly where the reference puts them.
-    static let spots: [(centre: CGPoint, radii: CGSize)] = [
-        (centre: CGPoint(x: 75.3, y: 19.4), radii: CGSize(width: 4.4, height: 2.6)),
-        (centre: CGPoint(x: 72.8, y: 26.2), radii: CGSize(width: 2.6, height: 1.9)),
-        (centre: CGPoint(x: 80.6, y: 24.6), radii: CGSize(width: 3.0, height: 1.6)),
+    /// The three darker spots on the forehead. No outline.
+    static let spots: [(centre: CGPoint, radius: CGFloat)] = [
+        (centre: CGPoint(x: 75, y: 23), radius: 3.8),
+        (centre: CGPoint(x: 70.5, y: 28.5), radius: 2.4),
+        (centre: CGPoint(x: 79.5, y: 28.5), radius: 2.4),
     ]
-    static let nostrils = [CGPoint(x: 67.4, y: 41), CGPoint(x: 82.6, y: 41)]
-    static let nostrilRadius: CGFloat = 2.1
-    static let cheeks = [CGPoint(x: 32, y: 51), CGPoint(x: 118, y: 51)]
-    static let cheekRadius: CGFloat = 7.6
+    static let nostrils = [CGPoint(x: 66.5, y: 43.5), CGPoint(x: 83.5, y: 43.5)]
+    static let nostrilRadius: CGFloat = 1.9
+    /// Low and wide on the jaw. No outline.
+    static let cheeks = [CGPoint(x: 31.5, y: 54.5), CGPoint(x: 118.5, y: 54.5)]
+    static let cheekRadius: CGFloat = 7.2
 
     // Stroke widths, in reference units. Converted to points by
     // `HopCanvas.unit(for:)` at the one place they are used.
     static let closedEyeStroke: CGFloat = 3.2
     static let smileStroke: CGFloat = 3.4
-    static let creaseStroke: CGFloat = 1.6
     static let strapStroke: CGFloat = 4
     static let wiggleStroke: CGFloat = 2.4
     static let tongueStroke: CGFloat = 7
@@ -301,6 +349,17 @@ extension Path {
         closeSubpath()
     }
 
+    /// An ellipse rotated about its own centre by `degrees`, as the generator's
+    /// `ellipseD(…, deg)` draws the haunches.
+    mutating func addHopEllipse(centre: CGPoint, radii: CGSize, rotated degrees: Double) {
+        var local = Path()
+        local.addHopEllipse(centre: .zero, radii: radii)
+        addPath(local.applying(
+            CGAffineTransform(rotationAngle: degrees * .pi / 180)
+                .concatenating(CGAffineTransform(translationX: centre.x, y: centre.y))
+        ))
+    }
+
     mutating func addHopCircle(centre: CGPoint, radius: CGFloat) {
         addHopEllipse(centre: centre, radii: CGSize(width: radius, height: radius))
     }
@@ -351,6 +410,16 @@ extension Path {
         )
         addPath(placed)
     }
+
+    /// A round-capped segment from `start` toward `degrees`, `length` long.
+    mutating func addHopRay(from start: CGPoint, degrees: Double, length: CGFloat, radius: CGFloat) {
+        let angle = degrees * .pi / 180
+        addHopCapsule(
+            from: start,
+            to: CGPoint(x: start.x + cos(angle) * length, y: start.y + sin(angle) * length),
+            radius: radius
+        )
+    }
 }
 
 // MARK: - Pose transforms
@@ -384,6 +453,11 @@ extension HopPoseGeometry {
             .concatenating(CGAffineTransform(translationX: HopAnatomy.faceCentre.x, y: HopAnatomy.faceCentre.y))
             .concatenating(headTransform)
     }
+
+    /// Which body the drawing is on right now. `crouch` travels in the
+    /// animation vector, so a tween between a standing and a crouching pose
+    /// swaps bodies at its midpoint rather than at either end.
+    var isCrouch: Bool { crouch >= 0.5 }
 }
 
 // MARK: - The figure
@@ -392,29 +466,27 @@ extension HopPoseGeometry {
 ///
 /// Every layer is the same shape type carrying the same ``HopPoseGeometry``, so
 /// they all animate off one `animatableData` and cannot fall out of step with
-/// each other mid-transition. The layers exist only because the drawing changes
-/// colour: the generator emits one flat fill per value in the ramp, in a fixed
-/// order, and ``HopCharacterView`` stacks these in exactly that order.
+/// each other mid-transition. The layers exist because every part carries its
+/// own outline: ``HopCharacterView`` strokes and fills each one in the order
+/// `figure()` draws them, so a part's outline lands exactly where it crosses
+/// something already drawn.
 struct HopFigureShape: Shape {
     var geometry: HopPoseGeometry
     var part: Part
 
-    /// In `figure`'s draw order: shadow, silhouette, pack, legs, torso, belly,
-    /// arms, head, face, tongue, wiggle.
+    /// In `figure()`'s draw order: shadow, silhouette, pack, legs and toes,
+    /// then — standing — arms, torso, belly; or — crouching — torso, belly,
+    /// arms; then fingers, head, face, tongue, wiggle.
     ///
-    /// **The split is the separation system.** Every limb is its own case
-    /// because every limb has to carry its own rim, and a rim only appears
-    /// where that part crosses something already drawn. So the order of these
-    /// cases *is* the list of boundaries the drawing has: a foot after its own
-    /// shin gives foot-against-leg, a hand after its own arm gives
-    /// hand-against-arm and hand-against-hand, the torso after both legs gives
-    /// leg-against-body, and the head last gives arm-against-head — which is
-    /// the failure everybody could name.
-    ///
-    /// Each leg is finished before the other one starts, creases and all,
-    /// because a pose that crosses the feet (`full` brings them together)
-    /// otherwise draws both sets of creases over the far foot.
-    enum Part {
+    /// **The split is the outline system.** Every limb, finger and toe is its
+    /// own case because every one carries its own outline, and an outline only
+    /// appears where that part crosses something already drawn. So the list of
+    /// cases *is* the list of boundaries the drawing has: a toe after its leg
+    /// gives toe-against-leg and toe-against-toe, a finger after its arm gives
+    /// the wrist arc and the lines between fingers, the torso after both legs
+    /// gives leg-against-body, the belly after the torso gives the belly's
+    /// edge, and the head last gives head-against-everything.
+    enum Part: Hashable {
         case shadow
         /// Every body shape at once, in one path: the exterior edge. Drawn
         /// under everything and in one flat colour, so the union has no
@@ -422,18 +494,13 @@ struct HopFigureShape: Shape {
         case silhouette
         case pack
         case packStrap
-        case shinLeft
-        case footLeft
-        case toeCreasesLeft
-        case shinRight
-        case footRight
-        case toeCreasesRight
+        /// The leg column standing, the haunch crouching.
+        case leg(HopSide)
+        case toe(HopSide, Int)
         case torso
         case belly
-        case armLeft
-        case handLeft
-        case armRight
-        case handRight
+        case arm(HopSide)
+        case finger(HopSide, Int)
         case head
         case spots
         case eyeWhites
@@ -474,24 +541,22 @@ struct HopFigureShape: Shape {
 
     // MARK: Parts
 
+    private var anatomy: HopAnatomy.Body {
+        HopAnatomy.body(geometry.isCrouch ? .crouch : .standing)
+    }
+
     private func build(_ path: inout Path) {
         switch part {
         case .shadow: shadow(&path)
         case .silhouette: silhouette(&path)
         case .pack: pack(&path)
         case .packStrap: packStrap(&path)
-        case .shinLeft: shin(geometry.legL, into: &path)
-        case .footLeft: foot(geometry.legL, side: -1, into: &path)
-        case .toeCreasesLeft: toeCreases(geometry.legL, side: -1, into: &path)
-        case .shinRight: shin(geometry.legR, into: &path)
-        case .footRight: foot(geometry.legR, side: 1, into: &path)
-        case .toeCreasesRight: toeCreases(geometry.legR, side: 1, into: &path)
+        case .leg(let side): leg(side, into: &path)
+        case .toe(let side, let index): toe(side, index, into: &path)
         case .torso: torso(&path)
         case .belly: belly(&path)
-        case .armLeft: arm(to: geometry.armL, from: HopAnatomy.shoulderL, into: &path)
-        case .handLeft: hand(at: geometry.armL, from: HopAnatomy.shoulderL, into: &path)
-        case .armRight: arm(to: geometry.armR, from: HopAnatomy.shoulderR, into: &path)
-        case .handRight: hand(at: geometry.armR, from: HopAnatomy.shoulderR, into: &path)
+        case .arm(let side): arm(side, into: &path)
+        case .finger(let side, let index): finger(side, index, into: &path)
         case .head: head(&path)
         case .spots: spots(&path)
         case .eyeWhites: eyeWhites(&path)
@@ -545,84 +610,83 @@ struct HopFigureShape: Shape {
             // The strap is a stroke, not a fill; it contributes nothing the
             // pack's own body does not already cover on the outside.
         }
-        shin(geometry.legL, into: &path)
-        foot(geometry.legL, side: -1, into: &path)
-        shin(geometry.legR, into: &path)
-        foot(geometry.legR, side: 1, into: &path)
+        for side in [HopSide.left, .right] {
+            leg(side, into: &path)
+            for index in 0..<3 { toe(side, index, into: &path) }
+        }
+        for side in [HopSide.left, .right] {
+            arm(side, into: &path)
+            for index in 0..<3 { finger(side, index, into: &path) }
+        }
         torso(&path)
-        arm(to: geometry.armL, from: HopAnatomy.shoulderL, into: &path)
-        hand(at: geometry.armL, from: HopAnatomy.shoulderL, into: &path)
-        arm(to: geometry.armR, from: HopAnatomy.shoulderR, into: &path)
-        hand(at: geometry.armR, from: HopAnatomy.shoulderR, into: &path)
         var crown = Path()
         head(&crown)
         path.addPath(crown.applying(geometry.headTilt))
     }
 
-    /// The shin: hip to ankle, one capsule.
-    private func shin(_ shape: HopLegGeometry, into path: inout Path) {
-        path.addHopCapsule(from: shape.hip, to: shape.ankle, radius: HopAnatomy.legWidth / 2)
+    private func legGeometry(_ side: HopSide) -> HopLegGeometry {
+        side == .left ? geometry.legL : geometry.legR
     }
 
-    /// The foot: the sole, and three toes fanned outward and down. `side` −1 is
-    /// Hop's right, the viewer's left. It is a part of its own — not part of the
-    /// leg — because "the foot is distinguishable from the leg above it" is one
-    /// of the things the silhouette check asks, and the answer is this rim.
-    private func foot(_ shape: HopLegGeometry, side: Double, into path: inout Path) {
-        let foot = footCentre(for: shape, side: side)
-        let reachX = Double(HopAnatomy.toeReach.width)
-        let reachY = Double(HopAnatomy.toeReach.height)
-        path.addHopEllipse(centre: foot, radii: HopAnatomy.soleRadii)
-        for toe in HopAnatomy.toes {
-            let angle = toeAngle(toe.angle, side: side) * .pi / 180
-            path.addHopCapsule(
-                from: foot,
-                to: CGPoint(
-                    x: Double(foot.x) + cos(angle) * reachX * shape.toeSpread,
-                    y: Double(foot.y) + sin(angle) * reachY
-                ),
-                radius: toe.radius
+    private func hand(_ side: HopSide) -> CGPoint {
+        side == .left ? geometry.armL : geometry.armR
+    }
+
+    private func shoulder(_ side: HopSide) -> CGPoint {
+        side == .left ? anatomy.shoulderL : anatomy.shoulderR
+    }
+
+    /// Standing, a straight column from a hip inside the torso to the ankle.
+    /// Crouching, a haunch: a fat lobe centred on the hip, tilted so its bottom
+    /// swings outward.
+    private func leg(_ side: HopSide, into path: inout Path) {
+        let shape = legGeometry(side)
+        if geometry.isCrouch {
+            path.addHopEllipse(
+                centre: shape.hip,
+                radii: HopAnatomy.haunchRadii,
+                rotated: -side.sign * HopAnatomy.haunchTilt
             )
+        } else {
+            path.addHopCapsule(from: shape.hip, to: shape.ankle, radius: HopAnatomy.legWidth / 2)
         }
     }
 
-    /// The two creases between the toes. Stroked, and the only place in the
-    /// drawing where a second green appears on the body.
-    private func toeCreases(_ shape: HopLegGeometry, side: Double, into path: inout Path) {
+    /// One toe: a lobe from the foot point, fanned from straight down by the
+    /// body's own toe angles, outward positive. The foot has no sole and no
+    /// creases — three of these and nothing else.
+    private func toe(_ side: HopSide, _ index: Int, into path: inout Path) {
+        let shape = legGeometry(side)
         let foot = footCentre(for: shape, side: side)
-        let inner = HopAnatomy.creaseInnerReach
-        let reachX = Double(HopAnatomy.creaseReach.width)
-        let reachY = Double(HopAnatomy.creaseReach.height)
-        for crease in HopAnatomy.creaseAngles {
-            let angle = toeAngle(crease, side: side) * .pi / 180
-            path.move(to: CGPoint(
-                x: Double(foot.x) + cos(angle) * inner,
-                y: Double(foot.y) + sin(angle) * inner
-            ))
-            path.addLine(to: CGPoint(
-                x: Double(foot.x) + cos(angle) * reachX * shape.toeSpread,
-                y: Double(foot.y) + sin(angle) * reachY
-            ))
-        }
+        let degrees = 90 - side.sign * anatomy.toes[index]
+        let angle = degrees * .pi / 180
+        path.addHopCapsule(
+            from: foot,
+            to: CGPoint(
+                x: Double(foot.x) + cos(angle) * Double(HopAnatomy.toeLength) * shape.toeSpread,
+                y: Double(foot.y) + sin(angle) * Double(HopAnatomy.toeLength)
+            ),
+            radius: HopAnatomy.toeWidth / 2
+        )
     }
 
-    private func footCentre(for shape: HopLegGeometry, side: Double) -> CGPoint {
-        CGPoint(x: Double(shape.ankle.x) - side * 2, y: Double(shape.ankle.y) + 3)
+    private func footCentre(for shape: HopLegGeometry, side: HopSide) -> CGPoint {
+        CGPoint(
+            x: Double(shape.ankle.x) + side.sign * Double(HopAnatomy.footOffset.width),
+            y: Double(shape.ankle.y) + Double(HopAnatomy.footOffset.height)
+        )
     }
 
-    private func toeAngle(_ degrees: Double, side: Double) -> Double {
-        side < 0 ? 180 + degrees : -degrees
-    }
-
-    /// Straight sides that run up under the jaw, rounded only at the hips — the
-    /// reference has no neck, the body tucks up behind the head.
+    /// Straight sides that run up under the jaw, rounded at the hips — neither
+    /// reference has a neck; the body tucks up behind the head. Crouching it
+    /// is narrower than the belly's outline and all but hidden.
     private func torso(_ path: inout Path) {
-        let width = geometry.torsoWidth
-        let x0 = 75 - width / 2
-        let x1 = 75 + width / 2
-        let top = 58 + geometry.squash * 4
-        let bottom = 127 - geometry.squash * 4
-        let r = min(26, width / 2)
+        let body = anatomy
+        let x0 = body.torsoSides?.x0 ?? 75 - geometry.torsoWidth / 2
+        let x1 = body.torsoSides?.x1 ?? 75 + geometry.torsoWidth / 2
+        let top = body.torsoTop + geometry.squash * 4
+        let bottom = body.torsoBottom - geometry.squash * 4
+        let r = min(body.torsoRadius, (x1 - x0) / 2)
         guard bottom - top > r else { return }
         let radii = CGSize(width: r, height: r)
         path.move(to: CGPoint(x: x0, y: top))
@@ -634,55 +698,50 @@ struct HopFigureShape: Shape {
         path.closeSubpath()
     }
 
+    /// The cream belly: a circle standing, a tall oval crouching.
     private func belly(_ path: inout Path) {
         let scale = geometry.bellyScale
-        path.addHopEllipse(
-            centre: CGPoint(x: 75, y: 104 + (scale - 1) * 4),
-            radii: CGSize(width: 24 * scale, height: 23 * scale)
-        )
-    }
-
-    /// The upper arm: a capsule from a fixed shoulder to the pose's hand point.
-    ///
-    /// In the generator this is authored in the arm's own space and placed with
-    /// `translate(shoulder) rotate(θ)`; here the two ends are enough, because a
-    /// `Path` has no group to hang a transform on. The geometry is the same one.
-    private func arm(to hand: CGPoint, from shoulder: CGPoint, into path: inout Path) {
-        path.addHopCapsule(from: shoulder, to: hand, radius: HopAnatomy.armWidth / 2)
-    }
-
-    /// The hand: a palm and three fingers fanned about the direction the arm
-    /// ended up pointing. The fingers are what make a hand read as a hand — and
-    /// the hand is a part of its own so that it carries a rim against the arm,
-    /// against the belly, and against the other hand.
-    private func hand(at hand: CGPoint, from shoulder: CGPoint, into path: inout Path) {
-        path.addHopCircle(centre: hand, radius: HopAnatomy.palmRadius)
-        let direction = atan2(Double(hand.y - shoulder.y), Double(hand.x - shoulder.x))
-        let reach = Double(HopAnatomy.fingerLength)
-        for spread in HopAnatomy.fingerAngles {
-            let angle = direction + spread * .pi / 180
-            path.addHopCapsule(
-                from: hand,
-                to: CGPoint(
-                    x: Double(hand.x) + cos(angle) * reach,
-                    y: Double(hand.y) + sin(angle) * reach
-                ),
-                radius: HopAnatomy.fingerWidth / 2
+        if geometry.isCrouch {
+            path.addHopEllipse(
+                centre: CGPoint(x: 75, y: 114),
+                radii: CGSize(width: 22.5 * scale, height: 27.2 * scale)
             )
+        } else {
+            path.addHopCircle(centre: CGPoint(x: 75, y: 110 + (scale - 1) * 3), radius: 24 * scale)
         }
     }
 
-    /// Crown, jaw and the two eye sockets — one fill, no seams.
+    /// The arm: a capsule from the body's shoulder to the pose's hand point.
+    private func arm(_ side: HopSide, into path: inout Path) {
+        path.addHopCapsule(from: shoulder(side), to: hand(side), radius: HopAnatomy.armWidth / 2)
+    }
+
+    /// One finger, fanned about the direction the arm arrived from. A part of
+    /// its own so it carries an outline against its neighbour, against the arm
+    /// (the wrist arc) and against whatever the hand rests on.
+    private func finger(_ side: HopSide, _ index: Int, into path: inout Path) {
+        let at = hand(side)
+        let from = shoulder(side)
+        let direction = atan2(Double(at.y - from.y), Double(at.x - from.x)) * 180 / .pi
+        path.addHopRay(
+            from: at,
+            degrees: direction + HopAnatomy.fingerAngles[index],
+            length: HopAnatomy.fingerLength,
+            radius: HopAnatomy.fingerWidth / 2
+        )
+    }
+
+    /// Crown, jaw and the two domes — one fill, no seams.
     private func head(_ path: inout Path) {
         path.addHopEllipse(centre: HopAnatomy.crownCentre, radii: HopAnatomy.crownRadii)
         path.addHopEllipse(centre: HopAnatomy.jawCentre, radii: HopAnatomy.jawRadii)
-        path.addHopCircle(centre: HopAnatomy.eyeL, radius: HopAnatomy.socketRadius)
-        path.addHopCircle(centre: HopAnatomy.eyeR, radius: HopAnatomy.socketRadius)
+        path.addHopCircle(centre: HopAnatomy.eyeL, radius: HopAnatomy.domeRadius)
+        path.addHopCircle(centre: HopAnatomy.eyeR, radius: HopAnatomy.domeRadius)
     }
 
     private func spots(_ path: inout Path) {
         for spot in HopAnatomy.spots {
-            path.addHopEllipse(centre: spot.centre, radii: spot.radii)
+            path.addHopCircle(centre: spot.centre, radius: spot.radius)
         }
     }
 
@@ -703,24 +762,29 @@ struct HopFigureShape: Shape {
         }
     }
 
-    private func pupils(_ path: inout Path) {
-        for centre in [HopAnatomy.eyeL, HopAnatomy.eyeR] {
-            path.addHopCircle(
-                centre: CGPoint(
-                    x: centre.x + geometry.eyes.gaze.width,
-                    y: centre.y + HopAnatomy.pupilOffset.height + geometry.eyes.gaze.height
-                ),
-                radius: HopAnatomy.pupilRadius
+    /// Where each pupil sits: the white's centre, nudged inward and down, plus
+    /// the gaze. `inward` is toward the face's centre, so it flips per eye.
+    private func pupilCentres() -> [CGPoint] {
+        [(HopAnatomy.eyeL, 1.0), (HopAnatomy.eyeR, -1.0)].map { centre, inward in
+            CGPoint(
+                x: centre.x + inward * HopAnatomy.pupilOffset.width + geometry.eyes.gaze.width,
+                y: centre.y + HopAnatomy.pupilOffset.height + geometry.eyes.gaze.height
             )
         }
     }
 
+    private func pupils(_ path: inout Path) {
+        for centre in pupilCentres() {
+            path.addHopCircle(centre: centre, radius: HopAnatomy.pupilRadius)
+        }
+    }
+
     private func highlights(_ path: inout Path) {
-        for centre in [HopAnatomy.eyeL, HopAnatomy.eyeR] {
+        for centre in pupilCentres() {
             path.addHopCircle(
                 centre: CGPoint(
-                    x: centre.x + geometry.eyes.gaze.width + HopAnatomy.highlightOffset.width,
-                    y: centre.y + geometry.eyes.gaze.height + HopAnatomy.highlightOffset.height
+                    x: centre.x + HopAnatomy.highlightOffset.width,
+                    y: centre.y + HopAnatomy.highlightOffset.height
                 ),
                 radius: HopAnatomy.highlightRadius
             )
@@ -761,35 +825,36 @@ struct HopFigureShape: Shape {
         }
     }
 
-    /// The open mouth. Scaled about the face centre by the pose, so `talk` is
-    /// the same mouth at 72% and a mouth that is closing shrinks into the face
-    /// rather than blinking out.
+    /// The open mouth: corners high, a deep U. Scaled about the face centre by
+    /// the pose, so `talk` is the same mouth at 72% and a mouth that is closing
+    /// shrinks into the face rather than blinking out. This is `MOUTH_D` in the
+    /// generator.
     private func mouthInterior(_ path: inout Path) {
-        path.move(to: CGPoint(x: 53, y: 47.5))
-        path.addQuadCurve(to: CGPoint(x: 97, y: 47.5), control: CGPoint(x: 75, y: 52))
+        path.move(to: CGPoint(x: 49.5, y: 48.5))
+        path.addQuadCurve(to: CGPoint(x: 100.5, y: 48.5), control: CGPoint(x: 75, y: 52))
         path.addCurve(
-            to: CGPoint(x: 75, y: 69.5),
-            control1: CGPoint(x: 96, y: 60),
-            control2: CGPoint(x: 88, y: 69.5)
+            to: CGPoint(x: 75, y: 72.2),
+            control1: CGPoint(x: 100, y: 62),
+            control2: CGPoint(x: 90, y: 72.2)
         )
         path.addCurve(
-            to: CGPoint(x: 53, y: 47.5),
-            control1: CGPoint(x: 62, y: 69.5),
-            control2: CGPoint(x: 54, y: 60)
+            to: CGPoint(x: 49.5, y: 48.5),
+            control1: CGPoint(x: 60, y: 72.2),
+            control2: CGPoint(x: 50, y: 62)
         )
         path.closeSubpath()
     }
 
     /// The tongue inside an open mouth, clipped to the mouth by the view.
     private func mouthTongue(_ path: inout Path) {
-        path.addHopEllipse(centre: CGPoint(x: 75, y: 66), radii: CGSize(width: 15, height: 7.5))
+        path.addHopEllipse(centre: CGPoint(x: 75, y: 67.5), radii: CGSize(width: 16, height: 8.8))
     }
 
     private func smile(_ path: inout Path) {
-        path.move(to: CGPoint(x: 58, y: 50))
+        path.move(to: CGPoint(x: 56, y: 52))
         path.addQuadCurve(
-            to: CGPoint(x: 92, y: 50),
-            control: CGPoint(x: 75, y: 50 + geometry.mouthSmileDepth)
+            to: CGPoint(x: 94, y: 52),
+            control: CGPoint(x: 75, y: 52 + geometry.mouthSmileDepth)
         )
     }
 

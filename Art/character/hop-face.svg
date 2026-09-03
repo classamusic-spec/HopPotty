@@ -1,34 +1,35 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 290" width="512" height="290">
-<g transform="translate(16 8) scale(3.2)">
-<g id="hop-root"><g id="hop-silhouette" fill="#356B50" stroke="#356B50" stroke-linejoin="round" stroke-linecap="round"><g transform="rotate(0 75 50)"><path d="M 119 40 C 119 58.23 99.3 73 75 73 C 50.7 73 31 58.23 31 40 C 31 21.77 50.7 7 75 7 C 99.3 7 119 21.77 119 40 Z M 136 56 C 136 70.91 108.69 83 75 83 C 41.31 83 14 70.91 14 56 C 14 41.09 41.31 29 75 29 C 108.69 29 136 41.09 136 56 Z M 62.9 25.7 C 62.9 37.02 53.72 46.2 42.4 46.2 C 31.08 46.2 21.9 37.02 21.9 25.7 C 21.9 14.38 31.08 5.2 42.4 5.2 C 53.72 5.2 62.9 14.38 62.9 25.7 Z M 128.9 25.7 C 128.9 37.02 119.72 46.2 108.4 46.2 C 97.08 46.2 87.9 37.02 87.9 25.7 C 87.9 14.38 97.08 5.2 108.4 5.2 C 119.72 5.2 128.9 14.38 128.9 25.7 Z" stroke-width="4"/></g></g><g id="head" transform="rotate(0 75 50)"><g fill="#356B50" stroke="#356B50" stroke-linejoin="round" stroke-linecap="round" opacity="0.62"><path d="M 119 40 C 119 58.23 99.3 73 75 73 C 50.7 73 31 58.23 31 40 C 31 21.77 50.7 7 75 7 C 99.3 7 119 21.77 119 40 Z M 136 56 C 136 70.91 108.69 83 75 83 C 41.31 83 14 70.91 14 56 C 14 41.09 41.31 29 75 29 C 108.69 29 136 41.09 136 56 Z M 62.9 25.7 C 62.9 37.02 53.72 46.2 42.4 46.2 C 31.08 46.2 21.9 37.02 21.9 25.7 C 21.9 14.38 31.08 5.2 42.4 5.2 C 53.72 5.2 62.9 14.38 62.9 25.7 Z M 128.9 25.7 C 128.9 37.02 119.72 46.2 108.4 46.2 C 97.08 46.2 87.9 37.02 87.9 25.7 C 87.9 14.38 97.08 5.2 108.4 5.2 C 119.72 5.2 128.9 14.38 128.9 25.7 Z" stroke-width="2.3"/></g><ellipse cx="75" cy="40" rx="44" ry="33" fill="#63C88A"/><ellipse cx="75" cy="56" rx="61" ry="27" fill="#63C88A"/><circle cx="42.4" cy="25.7" r="20.5" fill="#63C88A"/><circle cx="108.4" cy="25.7" r="20.5" fill="#63C88A"/><g id="accent-details">
-    <ellipse cx="75.3" cy="19.4" rx="4.4" ry="2.6" fill="#45A971"/>
-    <ellipse cx="72.8" cy="26.2" rx="2.6" ry="1.9" fill="#45A971"/>
-    <ellipse cx="80.6" cy="24.6" rx="3.0" ry="1.6" fill="#45A971"/></g><g id="eyes-group"><g id="left-eye"><g>
-      <clipPath id="eyeClip42"><circle cx="42.4" cy="25.7" r="16.5"/></clipPath>
-      <circle cx="42.4" cy="25.7" r="16.5" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 296" width="512" height="296">
+<g transform="translate(16 4) scale(3.2)">
+<g id="hop-root"><g id="hop-silhouette" fill="#1E7A32" stroke="#1E7A32" stroke-linejoin="round" stroke-linecap="round"><g transform="rotate(0 75 50)"><path d="M 111 40 C 111 52.7 94.88 63 75 63 C 55.12 63 39 52.7 39 40 C 39 27.3 55.12 17 75 17 C 94.88 17 111 27.3 111 40 Z M 136.5 55 C 136.5 71.57 108.97 85 75 85 C 41.03 85 13.5 71.57 13.5 55 C 13.5 38.43 41.03 25 75 25 C 108.97 25 136.5 38.43 136.5 55 Z M 63 27 C 63 38.87 53.37 48.5 41.5 48.5 C 29.63 48.5 20 38.87 20 27 C 20 15.13 29.63 5.5 41.5 5.5 C 53.37 5.5 63 15.13 63 27 Z M 130 27 C 130 38.87 120.37 48.5 108.5 48.5 C 96.63 48.5 87 38.87 87 27 C 87 15.13 96.63 5.5 108.5 5.5 C 120.37 5.5 130 15.13 130 27 Z" stroke-width="4.8"/></g></g><g id="head" transform="rotate(0 75 50)"><g fill="#1E7A32" stroke="#1E7A32" stroke-linejoin="round" stroke-linecap="round"><path d="M 111 40 C 111 52.7 94.88 63 75 63 C 55.12 63 39 52.7 39 40 C 39 27.3 55.12 17 75 17 C 94.88 17 111 27.3 111 40 Z M 136.5 55 C 136.5 71.57 108.97 85 75 85 C 41.03 85 13.5 71.57 13.5 55 C 13.5 38.43 41.03 25 75 25 C 108.97 25 136.5 38.43 136.5 55 Z M 63 27 C 63 38.87 53.37 48.5 41.5 48.5 C 29.63 48.5 20 38.87 20 27 C 20 15.13 29.63 5.5 41.5 5.5 C 53.37 5.5 63 15.13 63 27 Z M 130 27 C 130 38.87 120.37 48.5 108.5 48.5 C 96.63 48.5 87 38.87 87 27 C 87 15.13 96.63 5.5 108.5 5.5 C 120.37 5.5 130 15.13 130 27 Z" stroke-width="4.8"/></g><ellipse cx="75" cy="40" rx="36" ry="23" fill="#63C88A"/><ellipse cx="75" cy="55" rx="61.5" ry="30" fill="#63C88A"/><circle cx="41.5" cy="27" r="21.5" fill="#63C88A"/><circle cx="108.5" cy="27" r="21.5" fill="#63C88A"/><g id="accent-details">
+    <circle cx="75" cy="23" r="3.8" fill="#45A971"/>
+    <circle cx="70.5" cy="28.5" r="2.4" fill="#45A971"/>
+    <circle cx="79.5" cy="28.5" r="2.4" fill="#45A971"/></g><g id="eyes-group"><g id="left-eye"><g>
+      <clipPath id="eyeClip42"><circle cx="41.5" cy="27" r="11.2"/></clipPath>
+      <circle cx="41.5" cy="27" r="11.2" fill="#1E7A32" stroke="#1E7A32" stroke-width="4.8"/>
+      <circle cx="41.5" cy="27" r="11.2" fill="#FFFFFF"/>
       <g clip-path="url(#eyeClip42)">
-        <circle id="left-pupil" cx="42.4" cy="26.7" r="12.3" fill="#243047"/>
-        <circle cx="45.6" cy="21.7" r="3.4" fill="#FFFFFF"/>
+        <circle id="left-pupil" cx="42.1" cy="28" r="9.3" fill="#0D1B3E"/>
+        <circle cx="39.1" cy="24.8" r="2.8" fill="#FFFFFF"/>
         
       </g>
     </g></g><g id="right-eye"><g>
-      <clipPath id="eyeClip108"><circle cx="108.4" cy="25.7" r="16.5"/></clipPath>
-      <circle cx="108.4" cy="25.7" r="16.5" fill="#FFFFFF"/>
-      <g clip-path="url(#eyeClip108)">
-        <circle id="right-pupil" cx="108.4" cy="26.7" r="12.3" fill="#243047"/>
-        <circle cx="111.60000000000001" cy="21.7" r="3.4" fill="#FFFFFF"/>
+      <clipPath id="eyeClip109"><circle cx="108.5" cy="27" r="11.2"/></clipPath>
+      <circle cx="108.5" cy="27" r="11.2" fill="#1E7A32" stroke="#1E7A32" stroke-width="4.8"/>
+      <circle cx="108.5" cy="27" r="11.2" fill="#FFFFFF"/>
+      <g clip-path="url(#eyeClip109)">
+        <circle id="right-pupil" cx="107.9" cy="28" r="9.3" fill="#0D1B3E"/>
+        <circle cx="104.9" cy="24.8" r="2.8" fill="#FFFFFF"/>
         
       </g>
-    </g></g></g><g id="cheeks">
-    <circle cx="32" cy="51" r="7.6" fill="#FF9F8F"/>
-    <circle cx="118" cy="51" r="7.6" fill="#FF9F8F"/></g>
-    <circle cx="67.4" cy="41" r="2.1" fill="#1B5E39"/>
-    <circle cx="82.6" cy="41" r="2.1" fill="#1B5E39"/><g id="mouth"><g transform="translate(75 50) scale(1) translate(-75 -50)">
+    </g></g></g><g id="cheeks"><circle cx="31.5" cy="54.5" r="7.2" fill="#F4A0A0"/><circle cx="118.5" cy="54.5" r="7.2" fill="#F4A0A0"/></g>
+    <circle cx="66.5" cy="43.5" r="1.9" fill="#1B5E39"/>
+    <circle cx="83.5" cy="43.5" r="1.9" fill="#1B5E39"/><g id="mouth"><g transform="translate(75 50) scale(1) translate(-75 -50)">
     <clipPath id="mouthClipopen">
-      <path d="M 53 47.5 Q 75 52 97 47.5 C 96 60 88 69.5 75 69.5 C 62 69.5 54 60 53 47.5 Z"/>
+      <path d="M 49.5 48.5 Q 75 52 100.5 48.5 C 100 62 90 72.2 75 72.2 C 60 72.2 50 62 49.5 48.5 Z"/>
     </clipPath>
-    <path d="M 53 47.5 Q 75 52 97 47.5 C 96 60 88 69.5 75 69.5 C 62 69.5 54 60 53 47.5 Z" fill="#8A3F30"/>
-    <ellipse cx="75" cy="66" rx="15" ry="7.5" fill="#FF6F7D" clip-path="url(#mouthClipopen)"/>
+    <path d="M 49.5 48.5 Q 75 52 100.5 48.5 C 100 62 90 72.2 75 72.2 C 60 72.2 50 62 49.5 48.5 Z" fill="#1E7A32" stroke="#1E7A32" stroke-width="4.8" stroke-linejoin="round"/>
+    <path d="M 49.5 48.5 Q 75 52 100.5 48.5 C 100 62 90 72.2 75 72.2 C 60 72.2 50 62 49.5 48.5 Z" fill="#8B1A1A"/>
+    <ellipse cx="75" cy="67.5" rx="16" ry="8.8" fill="#E84A5F" clip-path="url(#mouthClipopen)"/>
   </g></g></g></g>
 </g>
 </svg>
