@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { HopButton, HopCard, HopText } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
@@ -64,6 +65,14 @@ export function ParentHomeScreen({
     >
       {/* The pond band: Hop, the countdown, and the two ways to act on it. */}
       <View style={[styles.hero, { backgroundColor: theme.palette.pondBlueLight }]}>
+        {/*
+          The pond tint is a fixed brand hue with no dark variant, so on its own
+          it stays a bright band under dark-mode text — which made the countdown
+          and "Routine Mode" almost unreadable. The reference does not swap the
+          colour either; it lays a scrim over the same pond and turns it into a
+          night one. Same treatment here, same stops.
+        */}
+        {theme.isDark ? <HeroScrim /> : null}
         <View style={styles.heroRow}>
           <View
             style={[
@@ -146,6 +155,25 @@ export function ParentHomeScreen({
         )}
       </HopCard>
     </ScrollView>
+  );
+}
+
+/** Turns the day pond into a night one, rather than replacing it. */
+function HeroScrim(): React.ReactElement {
+  const theme = useHopTheme();
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <Svg width="100%" height="100%">
+        <Defs>
+          <LinearGradient id="parentHomeNight" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={theme.color.scrim} stopOpacity={0.72} />
+            <Stop offset="0.4" stopColor={theme.color.scrim} stopOpacity={0.54} />
+            <Stop offset="1" stopColor={theme.color.scrim} stopOpacity={0.68} />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#parentHomeNight)" />
+      </Svg>
+    </View>
   );
 }
 
