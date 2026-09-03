@@ -9,11 +9,15 @@
  * Everything here follows the same rule as the screens before it: colour,
  * radius, spacing and type come out of `Scripts/tokens.json`, the words come out
  * of `HopCopy*.swift` wherever a key exists, and no screen shows a number the
- * app could not actually know. Where a surface does not exist in the codebase
- * yet — widgets and the Live Activity — nothing is invented beyond what the
- * schedule and the routine already hold.
+ * app could not actually know. The widgets and the Live Activity go one step
+ * further: Hop's head there is not drawn here at all but read out of
+ * `HopWidgetFaceArt.swift`, the same shapes the extension ships, so the render
+ * cannot show a frog the widget does not.
  */
-const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation } = require('./ui');
+const fs = require('fs');
+const path = require('path');
+const { T, c, type, statusBar, homeIndicator, svg, alpha, mix, elevation, ROOT } = require('./ui');
+const { proofSVG, stencil } = require('../widget-face.js');
 const {
   listRow, listGroup, navBar, iosSwitch, iconTile, segmented, pageDots,
   MARK, columnChart, tints,
@@ -1116,29 +1120,116 @@ const ICON_TINTS = [P.pondBlueSoft, P.sunshineSoft, P.lavenderSoft, P.peachSoft,
   P.hopGreenSoft, P.sand100, P.pondBlueSoft, P.sunshineSoft];
 
 /**
- * Hop's widget face — a head, two eyes and a smile, at whatever size is asked.
+ * Hop's widget face — the real head, as the widget extension draws it.
  *
- * `Extensions/HopPottyWidgets/HopWidgetFace.swift` redraws Hop rather than
- * importing the design system into a memory-limited process, and the accessory
- * families composite into a single-colour vibrant layer, so the same face has a
- * monochrome form. Both are drawn here the way that file draws them.
+ * The widget cannot load the design system or the art, so
+ * `Scripts/widget-face.js` lifts the head out of the pose files and emits it as
+ * path data into `Extensions/HopPottyWidgets/HopWidgetFaceArt.swift`;
+ * `HopWidgetFace.swift` draws that data. Nothing about the face is drawn here:
+ * the Swift file is read at render time, role by role, and re-rendered through
+ * the generator's own `proofSVG`, so the render follows the art for free.
+ *
+ *  - **Colour** (home screen, Live Activity, expanded Dynamic Island) is the
+ *    palette the generator paints its proofs in — the same drawing as
+ *    `Art/render/widget-face/<mood>.svg`, and checked against it when that file
+ *    is present. The proofs live under `Art/render/`, which is a build product
+ *    and not in git; the Swift is, and it is what the app draws.
+ *  - **Monochrome** (the lock-screen accessories) is the same shapes painted
+ *    through the `MARK: Stencil` table in `HopWidgetFace.swift`: one colour, an
+ *    alpha per part, and the parts that table drops, dropped. `Color.primary`
+ *    on the lock screen is white.
+ *
+ * `size` is the width of the head, exactly as it is at the Swift call sites,
+ * and the crop is the one `HopWidgetFace` makes: `content` fitted to a frame
+ * `size` wide and `size × aspect` tall.
  */
-function widgetFace(size, { mono = false } = {}) {
-  const body = mono ? 'none' : P.hopGreen;
-  const line = mono ? '#FFFFFF' : P.hopGreenDeep;
-  const white = mono ? '#FFFFFF' : '#FFFFFF';
-  const s = size;
-  return `<svg width="${s}" height="${s}" viewBox="0 0 100 100" style="display:block;flex:0 0 auto">
-    <circle cx="50" cy="57" r="42" fill="${body}" stroke="${line}" stroke-width="${mono ? 5 : 4.5}"/>
-    <g>
-      <circle cx="30" cy="26" r="20" fill="${white}" stroke="${line}" stroke-width="${mono ? 4.5 : 4}"/>
-      <circle cx="70" cy="26" r="20" fill="${white}" stroke="${line}" stroke-width="${mono ? 4.5 : 4}"/>
-      ${mono
-        ? `<circle cx="32" cy="28" r="8" fill="${line}"/><circle cx="72" cy="28" r="8" fill="${line}"/>`
-        : `<circle cx="32" cy="28" r="9" fill="${P.midnight}"/><circle cx="72" cy="28" r="9" fill="${P.midnight}"/>`}
-    </g>
-    <path d="M 32 66 Q 50 84 68 66" fill="none" stroke="${line}" stroke-width="${mono ? 5 : 4.5}" stroke-linecap="round"/>
-  </svg>`;
+const FACE_ART = 'Extensions/HopPottyWidgets/HopWidgetFaceArt.swift';
+const FACE_PROOF = 'Art/render/widget-face';
+
+/**
+ * `HopWidgetFaceArt.swift`, read: its two boxes, and one mood's shapes and
+ * marks — the same list `HopWidgetFaceArt.shapes(for:)` returns, with the roles
+ * the stencil is keyed on. The proof SVGs carry colours, not roles, which is why
+ * both forms start here rather than there.
+ */
+const faceArtCache = new Map();
+function widgetFaceArt(mood) {
+  if (faceArtCache.has(mood)) return faceArtCache.get(mood);
+  const src = fs.readFileSync(path.join(ROOT, FACE_ART), 'utf8');
+  const rect = (name) => {
+    const m = new RegExp(`static let ${name} = CGRect\\(x: ([\\d.-]+), y: ([\\d.-]+), width: ([\\d.]+), height: ([\\d.]+)\\)`).exec(src);
+    if (!m) throw new Error(`${FACE_ART}: no "${name}" rect to read`);
+    return { x: +m[1], y: +m[2], width: +m[3], height: +m[4] };
+  };
+  const list = (name) => {
+    const m = new RegExp(`static let ${name}: \\[\\w+\\] = \\[([\\s\\S]*?)\\n    \\]`).exec(src);
+    return m ? m[1] : null;
+  };
+  const shapeSrc = list(mood);
+  if (shapeSrc === null) throw new Error(`${FACE_ART}: no shapes for mood "${mood}"`);
+  const shapes = [...shapeSrc.matchAll(
+    /HopWidgetFaceShape\(role: \.(\w+), d: "([^"]*)"(?:, strokeWidth: ([\d.]+))?(?:, opacity: ([\d.]+))?(?:, clip: "([^"]*)")?\)/g,
+  )].map((m) => ({
+    role: m[1], d: m[2],
+    strokeWidth: m[3] ? +m[3] : 0,
+    opacity: m[4] ? +m[4] : 1,
+    clip: m[5] || null,
+  }));
+  // The z's are type in the artwork and `Text(verbatim: "z")` in the widget.
+  const marks = [...(list(`${mood}Marks`) || '').matchAll(
+    /HopWidgetFaceMark\(x: ([\d.-]+), y: ([\d.-]+), size: ([\d.]+), opacity: ([\d.]+)\)/g,
+  )].map((m) => ({ text: 'z', x: +m[1], y: +m[2], size: +m[3], opacity: +m[4] }));
+
+  const art = { viewBox: rect('viewBox'), content: rect('content'), shapes, marks };
+
+  // The proof on disk is `proofSVG` over the list the generator emitted; the
+  // colour face below is `proofSVG` over the list read back out of the Swift.
+  // When both exist they are byte for byte the same file — and if they are
+  // not, either the read above has drifted from the generator's format or the
+  // proofs are older than the Swift, and someone should know.
+  const proof = path.join(ROOT, FACE_PROOF, `${mood}.svg`);
+  if (fs.existsSync(proof) && fs.readFileSync(proof, 'utf8') !== proofSVG(art, { viewBox: art.viewBox })) {
+    console.warn(`widgetFace: ${FACE_PROOF}/${mood}.svg is not what ${FACE_ART} carries — run node Scripts/widget-face.js`);
+  }
+  faceArtCache.set(mood, art);
+  return art;
+}
+
+function widgetFace(size, { mood = 'idle', mono = false } = {}) {
+  const art = widgetFaceArt(mood);
+  const { viewBox, content } = art;
+
+  let svgText;
+  if (mono) {
+    const alpha = stencil();
+    // `HopWidgetFace.strokeWidth(_:)`: a stencil stroke is never thinner than
+    // 5% of the head's width, which in artwork units is 5% of `content.width`
+    // whatever the size.
+    const floor = 0.05 * content.width;
+    svgText = proofSVG({
+      ...art,
+      shapes: art.shapes.map((s) => (s.strokeWidth ? { ...s, strokeWidth: Math.max(s.strokeWidth, floor) } : s)),
+    }, {
+      viewBox,
+      paint: (role) => (alpha[role] === null ? null : `rgba(255,255,255,${alpha[role]})`),
+    });
+  } else {
+    // The generator's default paint: each role's palette hex, which
+    // `widget-face.js` asserts against `HopPalette.swift` when it runs.
+    svgText = proofSVG(art, { viewBox });
+  }
+
+  // `HopWidgetFace` frames itself at `size × size * aspect` and
+  // `HopWidgetFaceArt.transform(fitting:)` maps `content` onto that frame, so
+  // one artwork unit is `size / content.width` points (`unit(for:)`). The proof
+  // is the whole artboard; scale it by that and show the content box of it.
+  const k = size / content.width;
+  const w = size, h = +(content.height * k).toFixed(2);
+  const b64 = Buffer.from(svgText).toString('base64');
+  return `<div style="width:${w}px;height:${h}px;overflow:hidden;flex:0 0 auto">
+    <img src="data:image/svg+xml;base64,${b64}" style="display:block;width:${+(viewBox.width * k).toFixed(2)}px;
+      height:${+(viewBox.height * k).toFixed(2)}px;margin-left:${-(+((content.x - viewBox.x) * k).toFixed(2))}px;
+      margin-top:${-(+((content.y - viewBox.y) * k).toFixed(2))}px"></div>`;
 }
 
 /**
@@ -1170,7 +1261,7 @@ function widgets(appearance = 'light') {
   // systemSmall — face top-left, then the words pinned to the bottom.
   const smallWidget = widgetCard(smallW, smallW, `
     <div style="display:flex;flex-direction:column;width:100%">
-      ${widgetFace(40)}
+      ${widgetFace(48)}
       <div style="flex:1"></div>
       ${headline(12.5)}
       <div style="height:2px"></div>
@@ -1180,7 +1271,7 @@ function widgets(appearance = 'light') {
   // systemMedium — the same words, beside a bigger face.
   const mediumWidget = widgetCard(mediumW, smallW, `
     <div style="display:flex;align-items:center;gap:16px;width:100%">
-      ${widgetFace(64)}
+      ${widgetFace(72)}
       <div style="display:flex;flex-direction:column;justify-content:center">
         ${headline(14.5)}
         <div style="height:3px"></div>
@@ -1198,7 +1289,7 @@ function widgets(appearance = 'light') {
   const accessoryCircular = `
     <div style="width:72px;height:72px;border-radius:36px;background:${alpha(P.midnight, .38)};
       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex:0 0 auto">
-      ${widgetFace(22, { mono: true })}
+      ${widgetFace(26, { mono: true })}
       <div style="${type('parentFootnote', { color: '#FFFFFF', weight: 'semibold' })};
         font-family:'HopRounded','HopStandard',sans-serif;font-size:13px;font-variant-numeric:tabular-nums">24:13</div>
     </div>`;
@@ -1206,7 +1297,7 @@ function widgets(appearance = 'light') {
   const accessoryRectangular = `
     <div style="width:176px;height:72px;border-radius:${T.radius.m}px;background:${alpha(P.midnight, .34)};
       padding:0 12px;display:flex;align-items:center;gap:9px;flex:0 0 auto">
-      ${widgetFace(26, { mono: true })}
+      ${widgetFace(30, { mono: true })}
       <div>
         <div style="${type('parentFootnote', { color: '#FFFFFF', weight: 'semibold' })};
           font-family:'HopRounded','HopStandard',sans-serif;font-size:12px">Next Potty Pause</div>
@@ -1216,10 +1307,11 @@ function widgets(appearance = 'light') {
     </div>`;
 
   // accessoryInline sits where the date does, above the clock, and is the one
-  // family that phrases the countdown in words.
+  // family that phrases the countdown in words. No face: `NextPauseWidget.swift`
+  // draws none there — the inline family is one line of text, and the widget
+  // puts no glyph of its own on it.
   const accessoryInline = `
-    <div style="display:flex;align-items:center;justify-content:center;gap:7px">
-      ${widgetFace(15, { mono: true })}
+    <div style="display:flex;align-items:center;justify-content:center">
       <span style="${type('parentCallout', { color: alpha('#FFFFFF', .88) })};font-size:14px">Next Potty Pause in 24 min</span>
     </div>`;
 
@@ -1307,7 +1399,7 @@ function liveActivity(appearance = 'light') {
     <div style="width:${W - M * 2}px;border-radius:${T.radius.xxl}px;background:#000000;padding:16px 18px 17px;
       border:1px solid ${alpha(P.hopGreen, .55)};box-shadow:0 10px 30px ${alpha('#000000', .5)}">
       <div style="display:flex;align-items:center;gap:14px">
-        ${widgetFace(40)}
+        ${widgetFace(46, { mood: 'cheer' })}
         <div style="flex:1;text-align:center;${type('parentHeadline', { color: '#FFFFFF', weight: 'semibold' })};
           font-family:'HopRounded','HopStandard',sans-serif;font-size:16px">Potty time!</div>
         <div style="${type('metric', { color: '#FFFFFF' })};font-size:22px;width:84px;text-align:right;
@@ -1325,7 +1417,7 @@ function liveActivity(appearance = 'light') {
   const activityCard = `
     <div style="width:${W - M * 2}px;border-radius:${T.radius.xl}px;background:${P.hopGreenSoft};
       padding:12px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 24px ${alpha(P.midnight, .3)}">
-      ${widgetFace(46)}
+      ${widgetFace(54, { mood: 'cheer' })}
       <div style="flex:1;min-width:0">
         <div style="${type('parentHeadline', { color: P.hopGreenInk, weight: 'semibold' })};
           font-family:'HopRounded','HopStandard',sans-serif;font-size:17px">Potty time!</div>
