@@ -61,7 +61,7 @@ struct BubbleWashGameView: View {
 
                 // Skin, not the brand colour: these are the child's hands.
                 hand(.left, in: layout.left, flipped: false, tint: HopCharacterPalette.skin)
-                hand(.right, in: layout.right, flipped: true, tint: HopCharacterPalette.skinLight)
+                hand(.right, in: layout.right, flipped: true, tint: HopCharacterPalette.skin)
 
                 if session.beat == .rinse || session.beat == .done {
                     rinseSparkle(layout)
@@ -232,9 +232,11 @@ private struct BubbleWashHand: View {
             ZStack {
                 WashHandShape()
                     .fill(fill)
-                WashHandShape()
-                    .fill(theme.color.textPrimary.opacity(0.08))
-                    .mask { palmPad(in: size) }
+                WashHandCreaseShape()
+                    .stroke(
+                        HopCharacterPalette.skinCrease.opacity(0.5),
+                        style: StrokeStyle(lineWidth: max(2, size.width * 0.022), lineCap: .round)
+                    )
                 // The rim runs round the fingers as well as the silhouette, so
                 // the four fingers stay countable against the palm and the
                 // boundary survives foam drawn over the top of it.
@@ -257,12 +259,6 @@ private struct BubbleWashHand: View {
         .accessibilityLabel(label)
     }
 
-    /// The palm, one shade deeper than the fingers.
-    private func palmPad(in size: CGSize) -> some View {
-        Ellipse()
-            .frame(width: size.width * 0.62, height: size.height * 0.42)
-            .position(x: size.width * 0.5, y: size.height * 0.66)
-    }
 }
 
 /// One patch of hand: the foam on it, or the fact that there is none yet.
@@ -352,6 +348,52 @@ private struct BubbleWashFoam: View {
 /// The design box is the drawing's own bounds — x −12…115, y −115…45 — mapped
 /// onto whatever rectangle the caller gives it, so no call site carries a magic
 /// number for the aspect.
+/// The lines that separate the fingers, and the one setting the thumb off from
+/// the palm. Stroked, not filled — the twin of `handCreases` in `hop-art.js`.
+///
+/// They are not decoration. Four fingers held together overlap along their
+/// whole length, so there is no background between them anywhere and the
+/// outline cannot help: it runs round the silhouette, and the silhouette of
+/// four touching fingers is one mitten with a scalloped top.
+struct WashHandCreaseShape: Shape {
+    private typealias H = HopAnatomy.Hand
+
+    func path(in rect: CGRect) -> Path {
+        let design = WashHandShape.designBounds
+        let scale = min(rect.width / design.width, rect.height / design.height)
+        let originX = rect.midX - design.midX * scale
+        let originY = rect.midY - design.midY * scale
+        func at(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: originX + x * scale, y: originY + y * scale)
+        }
+
+        var path = Path()
+        for index in 0..<(H.fingers.count - 1) {
+            let a = H.fingers[index]
+            let b = H.fingers[index + 1]
+            let tx = (a.tip.x + b.tip.x) / 2, ty = (a.tip.y + b.tip.y) / 2
+            let bx = (a.base.x + b.base.x) / 2, by = (a.base.y + b.base.y) / 2
+            let dx = bx - tx, dy = by - ty
+            let length = max((dx * dx + dy * dy).squareRoot(), 0.0001)
+            // Start inside the notch, not at the tips' midpoint, which is out
+            // in the open air between them; finish a little past the knuckles.
+            let inset = (a.half + b.half) * 0.42
+            path.move(to: at(tx + dx / length * inset, ty + dy / length * inset))
+            path.addLine(to: at(bx + dx / length * 9, by + dy / length * 9))
+        }
+
+        // The thumb's boundary, offset onto the palm side of its axis.
+        let t = H.thumb
+        let ax = t.tip.x - t.base.x, ay = t.tip.y - t.base.y
+        let alen = max((ax * ax + ay * ay).squareRoot(), 0.0001)
+        let off = t.half * 0.74
+        let nx = -ay / alen, ny = ax / alen
+        path.move(to: at(t.base.x + nx * off, t.base.y + ny * off))
+        path.addLine(to: at(t.base.x + ax * 0.6 + nx * off, t.base.y + ay * 0.6 + ny * off))
+        return path
+    }
+}
+
 /// The child's hand, drawn from `HopAnatomy.Hand`.
 ///
 /// Named for what it is. It was `HopHandShape` while it drew a green
@@ -362,7 +404,7 @@ struct WashHandShape: Shape {
 
     /// The drawing's natural bounds, derived from the anatomy so it cannot fall
     /// out of step with it.
-    private static var design: CGRect {
+    static var designBounds: CGRect {
         var box = H.palm
         for digit in H.fingers + [H.thumb] {
             box = box.union(CGRect(
@@ -379,7 +421,7 @@ struct WashHandShape: Shape {
     }
 
     func path(in rect: CGRect) -> Path {
-        let design = Self.design
+        let design = Self.designBounds
         // Uniform scale, centred: a hand stretched to fill a box whose aspect
         // does not match is a hand with the wrong fingers.
         let scale = min(rect.width / design.width, rect.height / design.height)

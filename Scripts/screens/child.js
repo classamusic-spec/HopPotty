@@ -491,7 +491,7 @@ function hopHand(cx, cy, s, { flip = false, rot = 0, fill = hopArt.HAND.skin, ri
     style="filter:drop-shadow(0 8px 12px ${alpha(INK, 0.22)})">
     <g fill="${rim}" stroke="${rim}" stroke-linejoin="round" stroke-linecap="round">${grown}</g>
     ${filled}
-    ${hopArt.handCreases(hopArt.HAND.skinDeep)}
+    ${hopArt.handCreases(hopArt.HAND.skinCrease)}
   </g>`;
 }
 
@@ -530,7 +530,7 @@ function unwashed(x, y, r) {
   return `<g transform="translate(${x} ${y})">
     <!-- Deeper skin, not green. When the hands were a green frog's a green
          patch read as shadow; on a tan hand it reads as something growing. -->
-    <ellipse rx="${r}" ry="${r * 0.86}" fill="${hopArt.HAND.skinDeep}" opacity="0.55"/>
+    <ellipse rx="${r}" ry="${r * 0.86}" fill="${hopArt.HAND.skinCrease}" opacity="0.55"/>
     <ellipse rx="${r}" ry="${r * 0.86}" fill="none" stroke="${P.cloud}" stroke-width="3.4"
       stroke-dasharray="8 9" opacity="0.95"/>
   </g>`;
@@ -692,7 +692,7 @@ function bubbleWashStage(appearance, { line, beat = 'rub' } = {}) {
 
   const hands = `
     ${hopHand(LEFT.x, LEFT.y, HAND_S, { rot: -7, fill: hopArt.HAND.skin })}
-    ${hopHand(RIGHT.x, RIGHT.y, HAND_S, { rot: -7, flip: true, fill: hopArt.HAND.skinLight })}`;
+    ${hopHand(RIGHT.x, RIGHT.y, HAND_S, { rot: -7, flip: true })}`;
 
   const onHands = soaping ? '' : `
     ${foamTrail(leftTrail, 23)}

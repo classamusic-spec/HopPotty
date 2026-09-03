@@ -401,9 +401,18 @@ const HAND = {
   thumb: { base: [-27, 28], tip: [-70, -28], half: 14.5 },
   wrist: { from: [0, 58], to: [0, 96], half: 26 },
   /** Tan. Two tones so the pair reads as two hands rather than one shape. */
-  skin: '#F0C39C',
-  skinLight: '#FBD8BC',
-  skinDeep: '#D9A176',
+  /**
+   * Tan, and *one* tone for both hands. They are the same child's two hands, so
+   * tinting one lighter than the other reads as two different people rather
+   * than as depth; what separates a pair held side by side is the rim and the
+   * gap between them, not a colour change.
+   *
+   * `skinCrease` is a real step darker rather than a wash of the fill. The
+   * creases are the only thing distinguishing four fingers lying against each
+   * other, so they have to survive foam drawn over the top of them.
+   */
+  skin: '#E5A97C',
+  skinCrease: '#B2764A',
 };
 
 /**
@@ -427,33 +436,61 @@ function handShapes(h = HAND) {
 }
 
 /**
- * The knuckle creases: one short line down from between each pair of fingers.
+ * The lines that separate the fingers, and the one that sets the thumb off from
+ * the palm.
  *
- * The one interior mark the drawing keeps. Without it four parallel fingers of
- * one colour merge into a mitten the moment they touch, and the outline cannot
- * help — it runs round the silhouette, not between two fingers that are side by
- * side. Kept short and faint: it is a seam, not a drawn-on line.
+ * Not decoration — they are the only thing doing the job. Four fingers held
+ * together overlap along their *whole* length: there is no background between
+ * them at any point, so the outline cannot help, because it runs round the
+ * silhouette, and the silhouette of four touching fingers is one mitten with a
+ * scalloped top. Everything below the tips is a single flat shape unless a line
+ * divides it.
+ *
+ * So each crease runs the full gap — from just inside the notch between two
+ * fingertips, down past the knuckles and a little into the palm, where a real
+ * hand's creases also end. An earlier version drew a third of that, starting at
+ * the knuckles and stopping in the middle, which marked the fingers without
+ * separating them.
  */
 function handCreases(deep, h = HAND) {
-  const gaps = [];
+  const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+  const out = [];
+  const line = (x1, y1, x2, y2) =>
+    `<line x1="${n2(x1)}" y1="${n2(y1)}" x2="${n2(x2)}" y2="${n2(y2)}" stroke="${deep}"
+      stroke-width="3.6" stroke-linecap="round" opacity="0.5"/>`;
+
   for (let i = 0; i < h.fingers.length - 1; i++) {
     const a = h.fingers[i];
     const b = h.fingers[i + 1];
-    const x = (a.base[0] + b.base[0]) / 2;
-    const y = (a.base[1] + b.base[1]) / 2;
-    // Up between the two fingers, a third of the shorter one's length.
-    const reach = Math.min(
-      Math.hypot(a.tip[0] - a.base[0], a.tip[1] - a.base[1]),
-      Math.hypot(b.tip[0] - b.base[0], b.tip[1] - b.base[1])
-    ) * 0.34;
-    const mx = (a.tip[0] + b.tip[0]) / 2 - x;
-    const my = (a.tip[1] + b.tip[1]) / 2 - y;
-    const len = Math.hypot(mx, my) || 1;
-    gaps.push(`<line x1="${n2(x)}" y1="${n2(y)}" x2="${n2(x + (mx / len) * reach)}"
-      y2="${n2(y + (my / len) * reach)}" stroke="${deep}" stroke-width="4"
-      stroke-linecap="round" opacity="0.3"/>`);
+    const [tx, ty] = mid(a.tip, b.tip);
+    const [bx, by] = mid(a.base, b.base);
+    const dx = bx - tx;
+    const dy = by - ty;
+    const len = Math.hypot(dx, dy) || 1;
+    // Start inside the notch, not at the tips' midpoint, which is out in the
+    // open air between them; finish a little past the knuckles.
+    const inset = (a.half + b.half) * 0.42;
+    out.push(line(
+      tx + (dx / len) * inset, ty + (dy / len) * inset,
+      bx + (dx / len) * 9, by + (dy / len) * 9
+    ));
   }
-  return gaps.join('');
+
+  // The thumb's own boundary, offset onto the palm side of its axis. Without it
+  // the thumb is just a lobe of the palm.
+  const t = h.thumb;
+  const ax = t.tip[0] - t.base[0];
+  const ay = t.tip[1] - t.base[1];
+  const alen = Math.hypot(ax, ay) || 1;
+  const off = t.half * 0.74;
+  const nx = -ay / alen;
+  const ny = ax / alen;
+  out.push(line(
+    t.base[0] + nx * off, t.base[1] + ny * off,
+    t.base[0] + ax * 0.6 + nx * off, t.base[1] + ay * 0.6 + ny * off
+  ));
+
+  return out.join('');
 }
 
 /** How far the hand reaches from the palm centre, for callers sizing a box. */

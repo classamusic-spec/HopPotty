@@ -763,14 +763,19 @@ enum HopCharacterPalette {
     /// The child's hand in the close-up games, and its pair.
     ///
     /// Character-only, like the tongue and the spots: skin is not a brand
-    /// colour and does not belong in `HopPalette`. Two tones so a pair of hands
-    /// side by side reads as two hands rather than one shape, and a third,
-    /// deeper, for the knuckle creases and for an unwashed patch — which used
-    /// to be tinted green, and on a tan hand a green patch reads as something
-    /// growing rather than as dirt.
-    static let skin = Color(HopColorValue(hex: 0xF0C39C))
-    static let skinLight = Color(HopColorValue(hex: 0xFBD8BC))
-    static let skinDeep = Color(HopColorValue(hex: 0xD9A176))
+    /// colour and does not belong in `HopPalette`.
+    ///
+    /// One tone for both hands. They are the same child's two hands, so tinting
+    /// one lighter reads as two different people rather than as depth; what
+    /// separates a pair held side by side is the rim and the gap between them.
+    ///
+    /// `skinCrease` is a real step darker rather than a wash of the fill,
+    /// because the creases are the only thing distinguishing four fingers lying
+    /// against each other and they have to survive foam over the top. It also
+    /// tints an unwashed patch — which used to be green, and on a tan hand a
+    /// green patch reads as something growing rather than as dirt.
+    static let skin = Color(HopColorValue(hex: 0xE5A97C))
+    static let skinCrease = Color(HopColorValue(hex: 0xB2764A))
     /// `HopPalette.peachPop` — cheeks.
     static let cheek = Color(HopPalette.peachPop)
     static let eyeWhite = Color(HopPalette.white)

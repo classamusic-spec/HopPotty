@@ -185,7 +185,7 @@ function hopHand(x, y, s, { rot = 0, flip = false, fill = hopArt.HAND.skin } = {
     style="filter:drop-shadow(0 8px 12px ${alpha(P.midnight, 0.26)})">
     <g fill="${P.cloud}" stroke="${P.cloud}" stroke-linejoin="round" stroke-linecap="round">${grown}</g>
     ${filled}
-    ${hopArt.handCreases(hopArt.HAND.skinDeep)}
+    ${hopArt.handCreases(hopArt.HAND.skinCrease)}
   </g>`;
 }
 
@@ -800,8 +800,7 @@ function gameMudOff(appearance = 'light') {
     svgLayer: `
       ${hopHand(f.x(196), f.y(430), f.s * 118 / hopArt.HAND.extent, { rot: -8 })}
       ${hopHand(f.x(444), f.y(430), f.s * 118 / hopArt.HAND.extent, {
-        rot: -8, flip: true, fill: hopArt.HAND.skinLight,
-      })}
+        rot: -8, flip: true, })}
       ${mudPatch(f.x(193), f.y(397), f.x(32), MUD.brown, { rot: 16 })}
       ${mudPatch(f.x(447), f.y(397), f.x(27), MUD.paint, { rot: -24 })}
       ${sparkleBurst(f.x(235), f.y(350), f.s * 1.3)}
