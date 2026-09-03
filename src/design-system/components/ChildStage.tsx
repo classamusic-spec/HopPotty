@@ -21,6 +21,7 @@ export function ChildStage({
   veilHeight = 432,
   veilStrength = 0.82,
   sceneStyle,
+  sceneLabel,
 }: {
   scene?: HopIllustrationKey;
   children?: React.ReactNode;
@@ -28,13 +29,28 @@ export function ChildStage({
   veilHeight?: number;
   veilStrength?: number;
   sceneStyle?: ViewStyle;
+  /**
+   * What the scene shows, when the picture carries meaning the words do not.
+   *
+   * Usually a scene is atmosphere and stays decorative. But a routine step's
+   * illustration *is* the instruction — "Toilet paper, front to back" — and
+   * `PottyRoutineContent` writes those labels precisely because of that. With
+   * no way to pass one through, every one of them was unreachable.
+   */
+  sceneLabel?: string;
 }): React.ReactElement {
   const theme = useHopTheme();
   return (
     <View style={[styles.root, { backgroundColor: theme.color.backgroundPrimary }]}>
       {scene ? (
         <View style={[StyleSheet.absoluteFill, sceneStyle]}>
-          <HopArtwork artwork={scene} fit="cover" decorative style={StyleSheet.absoluteFill} />
+          <HopArtwork
+            artwork={scene}
+            fit="cover"
+            decorative={!sceneLabel}
+            accessibilityLabel={sceneLabel}
+            style={StyleSheet.absoluteFill}
+          />
         </View>
       ) : null}
       <HopVeil from={veilFrom} height={veilHeight} strength={veilStrength} />

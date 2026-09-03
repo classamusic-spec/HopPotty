@@ -8,7 +8,7 @@ import { useHopTheme } from '../../design-system/theme';
 import { HopCharacter } from '../../mascot/HopCharacter';
 import type { HopAnimationState } from '../../mascot/hopStates';
 import type { RoutineStepId } from '../../navigation/types';
-import { DropGlyph, RingGlyph, SwirlGlyph } from '../child-hub/ChildGlyphs';
+import { DropGlyph, RingGlyph, SwirlGlyph } from '../../design-system/components/ChildGlyphs';
 import { RoutineTimerRing } from './RoutineTimerRing';
 
 /**
@@ -75,6 +75,12 @@ interface RoutineStepContent {
   /** The single thing to do, as a sentence. */
   readonly instruction: string;
   readonly scene: HopIllustrationKey;
+  /**
+   * What the picture shows. Not decoration: on these steps the illustration is
+   * the instruction, which is why `PottyRoutineContent` writes one per step.
+   * Verbatim from `routine.step.<id>.illustration`.
+   */
+  readonly sceneLabel: string;
   readonly hop: HopAnimationState;
   readonly hopLabel: string;
   readonly hopWidth: number;
@@ -94,6 +100,7 @@ const STEPS: Readonly<Record<RoutineStepId, RoutineStepContent>> = {
     title: 'Try',
     instruction: 'Give it a try.',
     scene: 'scene.routine.try',
+    sceneLabel: 'Hop sitting on the potty',
     hop: 'sit',
     hopLabel: 'Hop sits and waits with you',
     hopWidth: 232,
@@ -104,6 +111,7 @@ const STEPS: Readonly<Record<RoutineStepId, RoutineStepContent>> = {
     title: 'Wipe',
     instruction: 'Wipe from front to back.',
     scene: 'scene.routine.wipe',
+    sceneLabel: 'Toilet paper, front to back',
     hop: 'sit',
     hopLabel: 'Hop shows you how to wipe',
     hopWidth: 236,
@@ -116,6 +124,7 @@ const STEPS: Readonly<Record<RoutineStepId, RoutineStepContent>> = {
     title: 'Flush',
     instruction: 'Flush it away.',
     scene: 'scene.routine.flush',
+    sceneLabel: 'A hand on the flush handle',
     hop: 'wave',
     hopLabel: 'Hop waves goodbye to the flush',
     hopWidth: 250,
@@ -129,6 +138,7 @@ const STEPS: Readonly<Record<RoutineStepId, RoutineStepContent>> = {
     title: 'Wash',
     instruction: 'Wash those hands!',
     scene: 'scene.routine.wash',
+    sceneLabel: 'Bubbly hands under the tap',
     hop: 'wash',
     hopLabel: 'Hop scrubs his hands',
     hopWidth: 240,
@@ -139,6 +149,7 @@ const STEPS: Readonly<Record<RoutineStepId, RoutineStepContent>> = {
     title: 'High five',
     instruction: 'High five with Hop!',
     scene: 'scene.routine.highFive',
+    sceneLabel: 'Hop with his hand up for a high five',
     hop: 'celebrate',
     hopLabel: 'Hop has his hand up for a high five',
     hopWidth: 306,
@@ -211,6 +222,7 @@ export function PottyRoutineScreen({
   return (
     <ChildStage
       scene={content.scene}
+      sceneLabel={content.sceneLabel}
       sceneStyle={{
         top: bandTop,
         bottom: Math.max(0, height - bandBottom),

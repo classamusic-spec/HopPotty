@@ -4,7 +4,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { HopButton, HopText } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
 import { HopCharacter } from '../../mascot/HopCharacter';
-import { StarGlyph } from '../child-hub/ChildGlyphs';
+import { StarGlyph } from '../../design-system/components/ChildGlyphs';
 import { MeadowScene } from './MeadowScene';
 
 /**

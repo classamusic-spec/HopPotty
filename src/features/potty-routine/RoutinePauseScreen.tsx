@@ -71,7 +71,7 @@ export function RoutinePauseScreen({
         <View style={styles.headroom} />
 
         <View style={styles.mascot} pointerEvents="none">
-          <HopCharacter size={hopSide} state="hop" accessibilityLabel="Hop hops off to the potty" />
+          <HopCharacter size={hopSide} state="walk" accessibilityLabel="Hop walks up to the bathroom door" />
         </View>
 
         <View style={{ height: theme.spacing.l }} />

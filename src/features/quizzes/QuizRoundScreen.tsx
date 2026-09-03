@@ -6,7 +6,7 @@ import { HopArtwork, type HopIllustrationKey } from '../../art/HopArtwork';
 import { GrownUpButton, HopText } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
 import { HopCharacter } from '../../mascot/HopCharacter';
-import { SpeakerGlyph } from '../child-hub/ChildGlyphs';
+import { SpeakerGlyph } from '../../design-system/components/ChildGlyphs';
 
 /**
  * One of Hop's questions.
@@ -100,10 +100,12 @@ export function QuizRoundScreen({
               { backgroundColor: theme.color.surface, borderRadius: AVATAR / 2 },
             ]}
           >
-            {/* Hop, cropped to his face by the circle — the same drawing at the
-                same product state, not a second portrait of him. */}
+            {/* Hop's own portrait state — the rig's head, so the avatar is the
+                same character rather than a second drawing of him kept in sync
+                by hand. The circle crops it to fill; the pose's artboard leaves
+                room below the chin that a 62pt hole should not show. */}
             <View style={styles.avatarInner} pointerEvents="none">
-              <HopCharacter size={AVATAR_HOP} state="talk" decorative />
+              <HopCharacter size={AVATAR_HOP} state="portrait" decorative />
             </View>
           </View>
 
@@ -159,18 +161,19 @@ export function QuizRoundScreen({
   );
 }
 
-/** The avatar circle, and how large Hop is drawn inside it. */
+/** The avatar circle Hop's portrait sits in. */
 const AVATAR = 62;
+
 /**
- * Hop at this size puts his head, and only his head, in the circle.
+ * How the `portrait` pose is framed on its own artboard.
  *
- * The rig's head sits at (0.5, 0.282) of its canvas and is 0.69 of it wide, so
- * a 92pt Hop offset by the values below lands his face centred in a 62pt hole.
- * Cropping the character is deliberate: there is one Hop, drawn from one rig,
- * and a separate face drawing here would be a second character to keep in sync.
+ * The rig draws the head 0.76 of the canvas wide, centred at (0.5, 0.278), with
+ * empty space below the chin. Drawing it this large and offsetting by those
+ * fractions puts the face in the middle of the hole and the empty space outside
+ * it — the crop the design render makes with the same drawing.
  */
-const AVATAR_HOP = 92;
-const AVATAR_HEAD = { x: 0.5, y: 0.282 } as const;
+const AVATAR_HOP = AVATAR / 0.76;
+const AVATAR_FACE = { x: 0.5, y: 0.278 } as const;
 
 /** One picture answer, drawn exactly like its peers. */
 function AnswerCard({
@@ -259,8 +262,8 @@ const styles = StyleSheet.create({
   avatar: { width: AVATAR, height: AVATAR, overflow: 'hidden' },
   avatarInner: {
     position: 'absolute',
-    left: AVATAR / 2 - AVATAR_HOP * AVATAR_HEAD.x,
-    top: AVATAR / 2 - AVATAR_HOP * AVATAR_HEAD.y,
+    left: AVATAR / 2 - AVATAR_HOP * AVATAR_FACE.x,
+    top: AVATAR / 2 - AVATAR_HOP * AVATAR_FACE.y,
     width: AVATAR_HOP,
     height: AVATAR_HOP,
   },

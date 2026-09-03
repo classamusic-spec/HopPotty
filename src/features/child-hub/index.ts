@@ -9,5 +9,5 @@ export {
   HandGlyph,
   LockGlyph,
   ChevronGlyph,
-} from './ChildGlyphs';
-export type { ChildGlyphProps, ChevronGlyphProps } from './ChildGlyphs';
+} from '../../design-system/components/ChildGlyphs';
+export type { ChildGlyphProps, ChevronGlyphProps } from '../../design-system/components/ChildGlyphs';

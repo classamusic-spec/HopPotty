@@ -5,7 +5,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { HopArtwork } from '../../art/HopArtwork';
 import { HopText } from '../../design-system/components';
 import { useHopTheme } from '../../design-system/theme';
-import { ChevronGlyph, LockGlyph, StarGlyph } from '../child-hub/ChildGlyphs';
+import { ChevronGlyph, LockGlyph, StarGlyph } from '../../design-system/components/ChildGlyphs';
 import { PondScene } from './PondScene';
 import { pondArtwork, type PondItemId } from './pondLayout';
 

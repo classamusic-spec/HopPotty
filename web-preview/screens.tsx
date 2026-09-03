@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { ScreenEntry, ScreenGroup } from './ScreenBrowser';
-import { DeviceViewport, type DeviceName } from './DeviceViewport';
+import { DeviceViewport, type DeviceName, type PreviewScheme } from './DeviceViewport';
 
 import { palette } from '../src/design-system/tokens.generated';
 import type { AuthorizationStatus, SelectionSummary } from '../src/services/screen-time/types';
@@ -238,16 +238,23 @@ function screen(
   id: string,
   label: string,
   element: React.ReactNode,
-  options: { render?: string; device?: DeviceName } = {},
+  options: { render?: string; device?: DeviceName; scheme?: PreviewScheme } = {},
 ): ScreenEntry {
   const device: DeviceName = options.device ?? 'phone';
+  // Light unless the entry says otherwise, so a screen looks the same to every
+  // reviewer rather than following whoever's laptop is open.
+  const scheme: PreviewScheme = options.scheme ?? 'light';
   return {
     id,
     label,
     render: options.render,
     device,
     // The screen measures the frame the browser draws, not the browser window.
-    element: <DeviceViewport device={device}>{element}</DeviceViewport>,
+    element: (
+      <DeviceViewport device={device} scheme={scheme}>
+        {element}
+      </DeviceViewport>
+    ),
   };
 }
 
@@ -344,6 +351,7 @@ const ONBOARDING: ScreenGroup = {
         onContinue={noop}
         onBack={noop}
       />,
+      { render: '05-choose-apps.png' },
     ),
     screen(
       'onboarding-choose-apps-empty',
@@ -477,6 +485,20 @@ const PARENT: ScreenGroup = {
         onStartNow={noop}
       />,
       { render: '01-parent-home.png' },
+    ),
+    screen(
+      'parent-home-dark',
+      'Parent Home — dark',
+      <ParentHomeScreen
+        childName={CHILD}
+        stars={STARS}
+        nextPauseInSeconds={NEXT_PAUSE_SECONDS}
+        counts={TODAY}
+        entries={TODAY_ENTRIES}
+        onSkip={noop}
+        onStartNow={noop}
+      />,
+      { render: '14-parent-home-dark.png', scheme: 'dark' },
     ),
     screen(
       'parent-home-idle',
@@ -770,7 +792,7 @@ const ROUTINE: ScreenGroup = {
       'routine-pause',
       'Potty Pause',
       <RoutinePauseScreen childName={CHILD} onGo={noop} onAskForGrownUp={noop} />,
-      { render: '06-potty-pause-shield.png' },
+      { render: '07-routine-step1.png' },
     ),
     screen(
       'routine-pause-no-name',
@@ -781,7 +803,6 @@ const ROUTINE: ScreenGroup = {
       'routine-try',
       'Routine — Try',
       <PottyRoutineScreen step="try" onNext={noop} onSkip={noop} onGrownUp={noop} />,
-      { render: '07-routine-step1.png' },
     ),
     screen(
       'routine-try-timer',
@@ -928,6 +949,10 @@ const GAMES: ScreenGroup = {
   screens: [
     screen('games-hub', 'Games Hub', <GamesHubScreen onOpen={noop} onBack={noop} />, {
       render: '21-games-hub.png',
+    }),
+    screen('games-hub-dark', 'Games Hub — dark', <GamesHubScreen onOpen={noop} onBack={noop} />, {
+      render: '30-games-hub-dark.png',
+      scheme: 'dark',
     }),
     screen(
       'game-bubble-wash',

@@ -41,7 +41,19 @@ export interface WindowDimensions extends DeviceFrame {
   readonly fontScale: number;
 }
 
+/**
+ * The appearance a screen is drawn in.
+ *
+ * `useHopTheme()` takes it from `useColorScheme()`, so on the device it is the
+ * system setting. A review surface cannot leave it there: whether Parent Home
+ * matches `01-parent-home.png` or `14-parent-home-dark.png` would depend on the
+ * reviewer's own laptop. So the preview states it per screen, which is also
+ * what lets the two dark renders be reviewed at all.
+ */
+export type PreviewScheme = 'light' | 'dark';
+
 const DeviceViewportContext = createContext<WindowDimensions | null>(null);
+const PreviewSchemeContext = createContext<PreviewScheme | null>(null);
 
 /**
  * The device size in force, or `null` outside a frame — which is the honest
@@ -51,11 +63,18 @@ export function useDeviceViewport(): WindowDimensions | null {
   return useContext(DeviceViewportContext);
 }
 
+/** The appearance in force, or `null` to follow the browser. */
+export function usePreviewScheme(): PreviewScheme | null {
+  return useContext(PreviewSchemeContext);
+}
+
 export function DeviceViewport({
   device,
+  scheme,
   children,
 }: {
   device: DeviceName;
+  scheme: PreviewScheme;
   children: React.ReactNode;
 }): React.ReactElement {
   const frame = DEVICE_FRAME[device];
@@ -65,5 +84,9 @@ export function DeviceViewport({
     () => ({ width: frame.width, height: frame.height, scale: 1, fontScale: 1 }),
     [frame.width, frame.height],
   );
-  return <DeviceViewportContext.Provider value={value}>{children}</DeviceViewportContext.Provider>;
+  return (
+    <PreviewSchemeContext.Provider value={scheme}>
+      <DeviceViewportContext.Provider value={value}>{children}</DeviceViewportContext.Provider>
+    </PreviewSchemeContext.Provider>
+  );
 }

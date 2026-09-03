@@ -1,3 +1,16 @@
+/**
+ * The small marks child surfaces are built from — a star, a drop, a chevron,
+ * a padlock, a speaker.
+ *
+ * These are design-system pieces, not one feature's pieces: the hub, the pond,
+ * the routine and the quiz all draw them. They started life under `child-hub/`
+ * only because the workstream that needed them first could not write here.
+ *
+ * The path data is the render harness's own (`Scripts/screens/kit.js`), so a
+ * glyph in the app is the glyph in the reference render. They are not
+ * illustrations — nothing in `Art/` draws them, and SF Symbols cannot be
+ * redistributed — which is why they are drawn rather than keyed.
+ */
 import React from 'react';
 import Svg, { Circle, Path } from 'react-native-svg';
 

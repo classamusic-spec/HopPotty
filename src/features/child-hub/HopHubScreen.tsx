@@ -8,7 +8,7 @@ import { useHopTheme } from '../../design-system/theme';
 import { HopCharacter } from '../../mascot/HopCharacter';
 import { HOP_FEET_FRACTION } from '../../mascot/poses.generated';
 import { PondScene } from '../pond/PondScene';
-import { ChevronGlyph, HandGlyph, StarGlyph } from './ChildGlyphs';
+import { ChevronGlyph, HandGlyph, StarGlyph } from '../../design-system/components/ChildGlyphs';
 
 /**
  * Hop's hub — the child's home.

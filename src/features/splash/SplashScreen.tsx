@@ -222,7 +222,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shine: { position: 'absolute', left: '50%', top: '50%' },
+  // Explicitly behind the mark. On iOS subview order alone would put it there,
+  // but a positioned view paints *over* its in-flow siblings on the web, which
+  // buried Hop under the glow in the browser preview. Saying the depth out loud
+  // is the same drawing on both, and is what the artwork is: light behind him.
+  shine: { position: 'absolute', left: '50%', top: '50%', zIndex: -1 },
   wordmark: { flexDirection: 'row', marginTop: -26 },
   tagline: { flexDirection: 'row', alignItems: 'center' },
 });
