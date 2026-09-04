@@ -96,6 +96,14 @@ jobs:
       - name: Verify the art
         run: Scripts/check-art.sh
 
+      # A font the app cannot resolve does not throw, warn, or draw a
+      # placeholder — it falls back to the system face and looks almost right,
+      # which is how the app spent its life set in a different typeface from
+      # the design renders that specified it. Three files have to agree; this
+      # is what checks that they do.
+      - name: Verify the bundled typefaces
+        run: python3 Scripts/check-fonts.py
+
   app:
     name: App and extensions (Xcode)
     runs-on: macos-15

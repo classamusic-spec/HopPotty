@@ -13,29 +13,54 @@ else in the app holds a raw hex string.**
 
 ## 1. The font decision — stated plainly
 
-The brand direction references **Fredoka** (display) and **Nunito Sans** (text).
+The brand direction references **Fredoka** (display) and **Nunito** (text), and
+**the app now ships both**, under the SIL Open Font License. `HopFontFamily`
+maps `.rounded` to Fredoka for child and brand surfaces and `.standard` to
+Nunito for parent surfaces and dense data.
 
-**The app bundles no third-party fonts.** HopPotty uses the **system font's
-rounded design** for display and child surfaces, and the system font's default
-design for parent surfaces (`HopFontFamily.rounded` / `.standard`).
+### It used to ship neither, and that was the wrong call
 
-Why:
+The app previously drew the system font's rounded design as a stand-in for
+Fredoka. The reasoning was real — Apple's optical sizing, full language
+coverage, native Dynamic Type curves, no licence to audit, nothing added to the
+download — and this document argued that the render harness's use of the real
+faces was "an approximation" of the app.
 
-| Reason | Detail |
+That had it backwards. The renders are the specification, and they are set in
+Fredoka and Nunito, so the argument amounted to shipping an app that did not
+match its own design on every screen. Opening the app next to a render made
+that obvious immediately. The typeface was the single largest visual
+difference between the two.
+
+### What it costs, honestly
+
+| Cost | Detail |
 | --- | --- |
-| Same warmth | The rounded system design gives the soft, friendly letterform the brand wants. |
-| Optical sizing | Apple's system font is optically sized per point size; a bundled static face is not. |
-| Language coverage | The system font covers every language iOS ships. A bundled face would degrade or fall back the moment HopPotty is localised. |
-| Dynamic Type | Text styles, scaling curves and the accessibility sizes come for free and stay correct across OS releases. |
-| Licensing | No embedding licence to audit, renew, or get wrong. |
-| Binary size | Nothing added to the download, on an app whose audience installs on a hand-me-down device. |
+| Binary size | ~743 KB across seven faces, on an app whose audience installs on hand-me-down devices. |
+| Optical sizing | Apple's system font is optically sized per point size; a static instance is not. A 12pt footnote and a 72pt countdown are now the same drawing scaled. |
+| Language coverage | Fredoka and Nunito are Latin-first. Any localisation beyond their coverage falls back to the system font mid-sentence. **This is the cost to revisit first when HopPotty is localised.** |
+| Dynamic Type | Preserved, but not for free — `Font.custom(_:size:)` does not scale at all, so every style resolves through `relativeTo:` with a per-style anchor. See `HopFontFamily.dynamicTypeAnchor(forSize:)`. |
 
-**The render harness is different, and deliberately so.** `Scripts/screens/` runs
-in a browser with no access to the iOS system font, so it uses **Nunito** and
-**Fredoka** (both SIL Open Font License) purely to approximate the rounded system
-design outside iOS. A render is a picture of the design system, not a simulator
-screenshot; the fonts in it are an approximation and the app ships neither.
-`Scripts/screens/README.md` says the same thing at the other end of the pipeline.
+### Static instances, not the variable fonts
+
+`Scripts/fonts/` holds the variable originals the harness embeds. The app cannot
+bundle them directly: **their weight axis defaults to the lightest instance**
+(Fredoka `wght` 300–700 defaults to 300; Nunito 200–1000 defaults to 200), and
+`Font.custom("Fredoka", size:)` resolves that default, so every heading would
+render Light. A browser sidesteps this because CSS declares the axis range.
+`Scripts/build-fonts.py` therefore writes one static face per weight the scale
+asks for, and `Scripts/check-fonts.py` — in CI and in bootstrap — fails the
+build if the code, the files on disk and `UIAppFonts` ever disagree.
+
+Fredoka's axis stops at 700, so the scale's `heavy` (800) clamps to Bold. The
+harness clamps identically, because its `@font-face` declares
+`font-weight: 300 700`. The app and the render land on the same instance.
+
+Neither face carries `tnum`. That is safe rather than lucky: the styles that
+show *changing* numbers — `timer` and `timerHero` — are Nunito, whose digits
+are already uniformly 600/1000em, so the countdown cannot twitch. Fredoka's
+digits are proportional, which only reaches `metric`, and that shows counts
+that do not tick.
 
 ---
 

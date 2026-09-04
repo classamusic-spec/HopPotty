@@ -156,6 +156,15 @@ if ! "$(dirname "$0")/build-assets.sh"; then
 fi
 ok "illustration assets built from Art/"
 
+# The same failure mode as the assets above, one layer over: a face the app
+# cannot resolve falls back to the system font silently, so the app looks
+# almost right and nobody finds out until they open it.
+if ! python3 "$(dirname "$0")/check-fonts.py"; then
+    die "The bundled typefaces do not match what the app asks for." \
+        "Scripts/build-fonts.py regenerates them from Scripts/fonts/."
+fi
+ok "bundled typefaces resolve"
+
 # ---------------------------------------------------------------------------
 step "Generating HopPotty.xcodeproj"
 # ---------------------------------------------------------------------------

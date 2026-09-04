@@ -40,6 +40,9 @@ simulator exists in this environment, so nothing here is evidence that the
 SwiftUI code compiles or lays out identically. They are a faithful picture of
 the intended design, built from the real token values and the real vector art.
 
-The typefaces used here are Nunito and Fredoka (SIL Open Font License), which
-approximate the system rounded design the app actually uses. **The app bundles
-no third-party fonts** — see `Docs/DesignSystem.md`.
+The typefaces used here are Nunito and Fredoka (SIL Open Font License), and
+**the app now ships the same two faces**, instanced from these very files by
+`Scripts/build-fonts.py`. They used to be an approximation of the system
+rounded design the app drew instead, which meant a render and the screen it
+specified were set in different typefaces — the single largest visual
+difference between the two. See `Docs/DesignSystem.md`.

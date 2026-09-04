@@ -90,6 +90,9 @@ targets:
           - "App/Info.plist"
           - "App/HopPotty.entitlements"
           - "**/.DS_Store"
+          # Internal notes for whoever regenerates the faces; the .ttf and the
+          # OFL licence files beside it DO ship, because the licence has to.
+          - "Resources/Fonts/README.md"
       - path: HopPotty/Resources/HopPotty.storekit
         # Visible in the navigator, member of no build phase.
         buildPhase: none

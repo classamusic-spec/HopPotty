@@ -8,15 +8,57 @@ public enum HopFontWeight: String, Sendable, CaseIterable {
 
 /// The typographic family a style belongs to.
 ///
-/// HopPotty ships no third-party fonts. The display face is the system rounded
-/// design, which gives the Fredoka-like warmth the brand wants while inheriting
-/// every optical size, language and Dynamic Type behaviour Apple maintains.
-/// See `Docs/DesignSystem.md` for the licensing rationale.
+/// HopPotty ships **Fredoka** for display and child surfaces and **Nunito** for
+/// parent surfaces, both under the SIL Open Font License. The app previously
+/// used the system font's rounded design as a stand-in for Fredoka, which was a
+/// defensible trade until it met the design renders: those are set in the real
+/// faces, so every screen in the app was a different typeface from its own
+/// specification. See `HopPotty/Resources/Fonts/README.md` and
+/// `Docs/DesignSystem.md`.
 public enum HopFontFamily: String, Sendable {
-    /// System font, rounded design. Child surfaces and brand moments.
+    /// Fredoka. Child surfaces and brand moments.
     case rounded
-    /// System font, default design. Parent surfaces and dense data.
+    /// Nunito. Parent surfaces and dense data.
     case standard
+
+    /// The bundled face for a weight, by PostScript name.
+    ///
+    /// Static instances, one per weight — see the fonts' README for why the
+    /// variable files cannot be bundled directly. A weight with no shipped face
+    /// resolves to the nearest heavier one rather than silently rendering at the
+    /// variable default, which is the lightest instance in both families.
+    public func postScriptName(for weight: HopFontWeight) -> String {
+        switch self {
+        case .rounded:
+            // Fredoka's axis stops at 700, so `heavy` clamps to Bold — exactly
+            // what the render harness gets from a `font-weight: 300 700` face.
+            switch weight {
+            case .regular, .medium, .semibold: return "Fredoka-SemiBold"
+            case .bold, .heavy: return "Fredoka-Bold"
+            }
+        case .standard:
+            switch weight {
+            case .regular: return "Nunito-Regular"
+            case .medium: return "Nunito-Medium"
+            case .semibold: return "Nunito-SemiBold"
+            case .bold: return "Nunito-Bold"
+            case .heavy: return "Nunito-ExtraBold"
+            }
+        }
+    }
+
+    /// Every face the app must bundle for this family to render.
+    public var bundledFaces: [String] {
+        HopFontWeight.allCases.map { postScriptName(for: $0) }.reduced()
+    }
+}
+
+private extension Array where Element == String {
+    /// Distinct, order-preserving — several weights share one face.
+    func reduced() -> [String] {
+        var seen = Set<String>()
+        return filter { seen.insert($0).inserted }
+    }
 }
 
 /// A named text style. Every piece of user-visible text in HopPotty uses one.

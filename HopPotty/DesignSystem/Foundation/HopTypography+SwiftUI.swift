@@ -19,10 +19,22 @@ public extension HopFontWeight {
 }
 
 public extension HopFontFamily {
-    var swiftUIDesign: Font.Design {
-        switch self {
-        case .rounded: .rounded
-        case .standard: .default
+    /// The Dynamic Type style a custom face scales against.
+    ///
+    /// `Font.custom(_:size:)` does not scale at all — it is a fixed point size
+    /// forever, which would have silently removed Dynamic Type from the entire
+    /// app the moment the bundled faces landed. `relativeTo:` restores it, and
+    /// needs an anchor per style. The anchor is chosen by base size so a 44pt
+    /// hero grows on the display curve and a 12pt footnote on the body curve.
+    static func dynamicTypeAnchor(forSize size: Double) -> Font.TextStyle {
+        switch size {
+        case 32...: .largeTitle
+        case 24..<32: .title
+        case 20..<24: .title2
+        case 17..<20: .body
+        case 14..<17: .subheadline
+        case 13..<14: .footnote
+        default: .caption
         }
     }
 }
@@ -77,8 +89,23 @@ public extension HopTextStyle {
     }
 
     /// The SwiftUI font, before any Dynamic Type bounding.
+    ///
+    /// A bundled face, resolved by PostScript name. The weight is baked into the
+    /// face rather than applied with `.weight()`: these are static instances of
+    /// variable fonts, so asking SwiftUI to re-weight one would either do
+    /// nothing or synthesise a smeared bold.
     var font: Font {
-        let base = Font.system(size: CGFloat(size), weight: weight.swiftUIWeight, design: family.swiftUIDesign)
+        let base = Font.custom(
+            family.postScriptName(for: weight),
+            size: CGFloat(size),
+            relativeTo: HopFontFamily.dynamicTypeAnchor(forSize: size)
+        )
+        // A no-op on both bundled faces, which carry no `tnum`. It stays because
+        // the intent is real and the styles that show *changing* numbers —
+        // `timer` and `timerHero` — are Nunito, whose digits are already all
+        // 600/1000em wide, so the countdown cannot twitch. Fredoka's digits are
+        // proportional, which only reaches `metric`, and that shows counts that
+        // do not tick.
         return usesMonospacedDigits ? base.monospacedDigit() : base
     }
 }
