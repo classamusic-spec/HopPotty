@@ -1,4 +1,5 @@
 import SwiftUI
+import HopPottyCore
 import HopPottyDesignTokens
 
 /// Hop's pond, drawn as the ground the dashboard stands on rather than as a
@@ -19,26 +20,34 @@ import HopPottyDesignTokens
 /// legible over water, so it is driven by ``HopSemanticPalette/scrim`` rather
 /// than by a hand-picked black.
 ///
-/// ## Two canvases, one clock
+/// ## The picture is `Art/pond/pond-scene.svg`
 ///
-/// The drawing is split by *whether it moves*, not by what it is:
+/// It is the *drawing*, not a SwiftUI impression of it — the same file
+/// `Scripts/screens/parent.js` and `Scripts/screens/splash.js` put behind these
+/// two screens, cropped the same way: the scene keeps its own 786 × 1704 aspect
+/// at the container's width and is hung so that ``PondSceneArt/bankRow`` — the
+/// bank Hop stands on, 53% down the drawing — lands on the row the layout
+/// reserved for him. Fitting it to the band instead would letterbox a portrait
+/// composition into a column with flat colour either side; stretching it would
+/// put the horizon wherever the phone happened to be tall.
 ///
-/// - **`pond-still`** holds everything fixed — the sky gradient, the sun, the
-///   far bank and its hills, the grass tufts, and the water gradient. These are
-///   the four expensive fills in the scene and they are rasterised exactly once,
-///   because this canvas sits outside the timeline and is never invalidated.
-/// - **`pond-drift`** holds everything that moves, in its original draw order,
-///   plus the near-shore band that has to cover the water layers. Only this
-///   canvas is redrawn, at most thirty times a second, and everything in it is
-///   a small path.
+/// The two canvases below are what the app drew before the export pipeline
+/// existed, and they are still the answer when the asset is not in the bundle —
+/// `Scripts/build-assets.sh` generates the catalog and the generated directory
+/// is git-ignored, so a checkout that has not run `Scripts/bootstrap.sh` has no
+/// drawings at all. A pond drawn in paths is a pond; ``HopArtwork``'s lilac blob
+/// behind a caregiver's countdown is not.
 ///
-/// One ``HopPondTimeline`` drives the whole drift layer, so a dozen moving
-/// things share one clock rather than owning a timer each — and that clock stops
-/// dead under Reduce Motion, off screen, and whenever the scene phase is not
-/// `.active`. Layer names mirror the ids the pond artwork exposes
-/// (`pond-ripples`, `pond-lily-N`, `pond-reeds`, `pond-fish`, `pond-clouds`,
-/// `pond-dragonfly`, `pond-shimmer`) so the SwiftUI pond and the SVG pond stay
-/// legible side by side.
+/// ## What still moves, and what stopped
+///
+/// The drawing carries its own clouds, reeds, pads, fish and dragonfly, so the
+/// drift layer's copies of them are gone: drawn again on top they would be a
+/// second cloud beside every cloud. What is left is the one piece of motion that
+/// is *light* rather than an object — `pond-shimmer`, a broad, very low band of
+/// sun sliding across the water, on the same ``HopPondTimeline`` and the same
+/// ``HopMotion/pondShimmerPeriod`` the web prototype breathes that group on. One
+/// clock, and it stops dead under Reduce Motion, off screen, and whenever the
+/// scene phase is not `.active`.
 struct PondBackdropView: View {
     @Environment(\.hopTheme) private var theme
 
@@ -51,22 +60,28 @@ struct PondBackdropView: View {
         let ink = PondInk(theme: theme)
         let box = sceneHeight
         return ZStack {
-            // pond-still. No timeline above it, so SwiftUI never re-runs this
-            // renderer: the gradients are paid for once.
-            Canvas(rendersAsynchronously: false) { context, size in
-                ink.drawStill(into: &context, size: size, sceneHeight: box)
-            }
-
-            // pond-drift. Redrawn on the clock; small paths only.
-            HopPondTimeline { clock in
+            if HopArtwork.hasAsset(for: .pondScene) {
+                PondSceneArtworkLayer(sceneHeight: box, ink: ink)
+            } else {
+                // pond-still. No timeline above it, so SwiftUI never re-runs this
+                // renderer: the gradients are paid for once.
                 Canvas(rendersAsynchronously: false) { context, size in
-                    ink.drawDrift(into: &context, size: size, sceneHeight: box, clock: clock)
+                    ink.drawStill(into: &context, size: size, sceneHeight: box)
+                }
+
+                // pond-drift. Redrawn on the clock; small paths only.
+                HopPondTimeline { clock in
+                    Canvas(rendersAsynchronously: false) { context, size in
+                        ink.drawDrift(into: &context, size: size, sceneHeight: box, clock: clock)
+                    }
                 }
             }
         }
         // The strip behind the status bar is the sky's own top colour with the
         // scrim already composited into it, so it matches the first stop of the
-        // gradient below and the bleed has no seam. The scrim itself stays
+        // gradient below and the bleed has no seam. It matches the drawing too:
+        // at the row the crop opens on, `pond-scene.svg`'s sky under its haze is
+        // within three units a channel of this colour. The scrim itself stays
         // inside the drawing's frame — laying it over the strip as well would
         // darken that strip twice.
         .background { ink.bleed.ignoresSafeArea(edges: .top) }
@@ -102,6 +117,174 @@ struct PondBackdropView: View {
 
     private func scrim(_ opacity: Double) -> Color {
         Color(theme.color.values.scrim.opacity(opacity))
+    }
+}
+
+// MARK: - The drawing's own measurements
+
+/// Where things are inside `Art/pond/pond-scene.svg`, in the drawing's own unit
+/// coordinates.
+///
+/// Every number is read off the generator (`pondScene()` in
+/// `Scripts/scene-art.js`, whose `PS` constant is `786 × 1704` with the water at
+/// centre `(393, 1290)` and radii `600 × 330`) and mirrors what the render
+/// harness uses: `BANK_FRACTION` in `Scripts/screens/parent.js` is
+/// ``bankRow``. They live here rather than in the layout because they are
+/// properties of the *picture* — change the drawing and these change with it,
+/// and `HomePondMetrics` should not have to know.
+enum PondSceneArt {
+    /// The drawing's own aspect, width over height.
+    static let aspect: CGFloat = 786.0 / 1704.0
+
+    /// The bank Hop stands on, as a fraction of the drawing's height.
+    ///
+    /// `Scripts/screens/parent.js` solves its crop from exactly this: the box is
+    /// always the drawing's natural size for the width given, and the *offset*
+    /// comes from the one thing the layout cares about — the screen row the bank
+    /// has to land on, because that is where Hop's feet go.
+    static let bankRow: CGFloat = 0.53
+
+    /// The row inside the *band* that the bank has to land on, as a fraction of
+    /// ``PondBackdropView/sceneHeight``.
+    ///
+    /// The same number ``HomePondMetrics/padPoint`` places Hop at, declared once
+    /// so the drawing and the frog cannot disagree about where the ground is.
+    static let padRow: CGFloat = 0.508
+
+    /// Where along the bank he stands, as a fraction of the container's width.
+    ///
+    /// The drawing is symmetric about its own centre and the render puts him on
+    /// that axis (`PAD_X` in `Scripts/screens/parent.js`, and
+    /// `Art/render/screens/01-parent-home.png`). It used to be 0.56 because the
+    /// canvas drew a big lily pad there and he had to be on it; the pad is in
+    /// the picture now, and the picture does not have one at that row.
+    static let padColumn: CGFloat = 0.5
+
+    /// The water's surface, as a centre and radii in unit coordinates. The
+    /// ellipse is wider than the drawing and the artwork clips it; nothing here
+    /// needs to, because the frame does the same job.
+    static let waterCentre = CGPoint(x: 0.5, y: 1290.0 / 1704.0)
+    static let waterRadiusX: CGFloat = 600.0 / 786.0
+    static let waterRadiusY: CGFloat = 330.0 / 1704.0
+
+    /// Where the drawing's box sits, for a container `width` and a band of
+    /// `band` points to fill.
+    ///
+    /// The box keeps the drawing's own aspect at the width given — that is the
+    /// whole reason the crop is honest — and is hung so ``bankRow`` lands on
+    /// ``padRow`` of the band, which is the row the layout put Hop's feet on.
+    /// `Scripts/screens/parent.js` solves its crop the same way and calls the
+    /// result `pondCrop`.
+    ///
+    /// Two clamps, and both earn their place. The top never goes below zero, so
+    /// the crop cannot open on blank space above the sky. And the box always
+    /// reaches the bottom of the *band* — not of the frame: on Home the band is
+    /// the drawing's own box and the near-shore colour continues below it, while
+    /// on the splash the band is the whole screen and an unclamped solve would
+    /// leave a nineteen-point sliver of launch colour along the bottom edge.
+    static func box(width: CGFloat, band: CGFloat) -> CGRect {
+        let boxWidth = max(1, width)
+        let bandHeight = max(1, band)
+        let boxHeight = boxWidth / aspect
+        let wanted = bandHeight * padRow - boxHeight * bankRow
+        let top = min(0, max(bandHeight - boxHeight, wanted))
+        return CGRect(x: 0, y: top, width: boxWidth, height: boxHeight)
+    }
+
+    /// The water's surface in a frame's own points, for a box from ``box(width:band:)``.
+    static func water(in box: CGRect) -> CGRect {
+        CGRect(
+            x: box.minX + (waterCentre.x - waterRadiusX) * box.width,
+            y: box.minY + (waterCentre.y - waterRadiusY) * box.height,
+            width: waterRadiusX * 2 * box.width,
+            height: waterRadiusY * 2 * box.height
+        )
+    }
+}
+
+// MARK: - The drawing
+
+/// `pond-scene.svg`, cropped to the band, with the sun still moving on the water.
+///
+/// Three layers and no composition of its own: the drawing's own top colour
+/// above the box, the drawing, and the near-shore colour below it. The two
+/// strips are what let a crop that starts above the drawing or ends below it
+/// have no seam — they are the colours the artwork's own gradients open and
+/// close on, which is the same trick `pondBackdrop` plays in the render harness.
+private struct PondSceneArtworkLayer: View {
+    let sceneHeight: CGFloat
+    let ink: PondInk
+
+    var body: some View {
+        GeometryReader { proxy in
+            let size = proxy.size
+            let box = PondSceneArt.box(width: size.width, band: sceneHeight)
+            ZStack(alignment: .topLeading) {
+                ink.skyTop
+
+                // Started a point early and drawn behind the picture, so a
+                // rounded box height cannot leave a hairline of nothing between
+                // the drawing's last row and the colour continuing it.
+                Rectangle()
+                    .fill(ink.sceneFoot)
+                    .frame(width: max(1, size.width), height: max(0, size.height - box.maxY) + 1)
+                    .offset(y: box.maxY - 1)
+
+                HopArtwork(.pondScene)
+                    .frame(width: box.width, height: box.height)
+                    .offset(y: box.minY)
+
+                PondSurfaceLight(box: box, sheen: ink.ripple)
+            }
+            .frame(width: max(1, size.width), height: max(1, size.height))
+            .clipped()
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+/// `pond-shimmer`: a broad, very low band of sun sliding across the water.
+///
+/// The only thing left moving over the drawing, and deliberately so — every
+/// other layer the old canvas animated is *in* the picture now, and a second
+/// copy of it drifting on top would read as a duplicate rather than as motion.
+/// Light is the exception: it belongs to no object, so it can be added without
+/// doubling one. Well under a tenth of the water's own contrast
+/// (``HopPondMotion/shimmerOpacity``), and it stops with the clock.
+private struct PondSurfaceLight: View {
+    let box: CGRect
+    let sheen: Color
+
+    var body: some View {
+        HopPondTimeline { clock in
+            Canvas(rendersAsynchronously: false) { context, _ in
+                let water = PondSceneArt.water(in: box)
+                guard water.width > 0, water.height > 0 else { return }
+
+                var pond = context
+                pond.clip(to: Path(ellipseIn: water))
+
+                let travel = CGFloat(clock.wave(period: HopMotion.pondShimmerPeriod))
+                    * HopPondMotion.shimmerTravel * box.width
+                let centre = water.midX + travel
+                let reach = water.width * 0.55
+                pond.fill(
+                    Path(water),
+                    with: .linearGradient(
+                        Gradient(stops: [
+                            .init(color: sheen.opacity(0), location: 0),
+                            .init(color: sheen.opacity(HopPondMotion.shimmerOpacity), location: 0.5),
+                            .init(color: sheen.opacity(0), location: 1),
+                        ]),
+                        startPoint: CGPoint(x: centre - reach, y: 0),
+                        endPoint: CGPoint(x: centre + reach, y: 0)
+                    )
+                )
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 
@@ -151,7 +334,9 @@ private struct PondLayout {
 private struct PondInk {
     let bleed: Color
 
-    private let skyTop: Color
+    /// Also the colour the sky continues in above the drawing's box, which is
+    /// why this one is reachable from ``PondSceneArtworkLayer``.
+    fileprivate let skyTop: Color
     private let skyBottom: Color
     private let sun: Color
     private let cloud: Color
@@ -161,9 +346,20 @@ private struct PondInk {
     private let waterTop: Color
     private let waterMid: Color
     private let waterDeep: Color
-    private let ripple: Color
+    /// The sheen on the water. Read by ``PondSurfaceLight`` as well as by the
+    /// fallback canvas, so the two draw the pond the same light.
+    fileprivate let ripple: Color
     private let shoreTop: Color
-    private let shoreBottom: Color
+    fileprivate let shoreBottom: Color
+    /// The colour `pond-scene.svg`'s near ground ends on, for the strip below
+    /// the drawing when a frame is taller than the crop.
+    ///
+    /// Not `shoreBottom`: the *drawn* pond's near shore is a light meadow green
+    /// and the exported scene's is a deep one, and continuing the wrong one puts
+    /// a hard line across the grass exactly where the picture stops. Expressed
+    /// as a ratio between two brand tokens like everything else here, and within
+    /// five units a channel of the drawing's own `groundNear` end stop.
+    fileprivate let sceneFoot: Color
     private let padNear: Color
     private let padFar: Color
     private let padNotch: Color
@@ -193,6 +389,7 @@ private struct PondInk {
         ripple = Color(HopPalette.white)
         shoreTop = Color(HopPalette.hopGreenLight)
         shoreBottom = Color(PondInk.mix(HopPalette.hopGreenLight, HopPalette.hopGreen, 0.75))
+        sceneFoot = Color(PondInk.mix(HopPalette.hopGreen, HopPalette.hopGreenInk, 0.40))
         padNear = Color(PondInk.mix(HopPalette.hopGreen, HopPalette.hopGreenDeep, 0.3))
         padFar = Color(PondInk.mix(HopPalette.hopGreen, HopPalette.hopGreenLight, 0.35))
         padNotch = Color(HopPalette.pondBlueSoft).opacity(0.55)
@@ -449,7 +646,12 @@ private struct PondInk {
         // perfectly still. `HomePondMetrics.padPoint` is this exact point and
         // Hop is placed against it, so a pad that bobbed would leave him hanging
         // in the air a few points above his own feet.
-        drawLilyPad(into: &scene, at: CGPoint(x: w * 0.56, y: h * 0.508), scale: 1.6 * u, tone: padNear)
+        drawLilyPad(
+            into: &scene,
+            at: CGPoint(x: w * PondSceneArt.padColumn, y: h * PondSceneArt.padRow),
+            scale: 1.6 * u,
+            tone: padNear
+        )
 
         drawNearShore(into: &scene, layout: l, clock: clock)
     }

@@ -22,7 +22,16 @@ art_keys() {
     {
         # Written-down keys. Two or more segments after the family, so a sprite
         # key like "icon.games.fly.blue" is seen rather than silently skipped.
-        grep -rhoE '"(scene|icon|character)(\.[A-Za-z0-9]+){2,}"' "$content" \
+        #
+        # `pond` is deliberately *not* in this list even though two written-down
+        # keys draw from `Art/pond/`. This grep cannot tell an art key from a
+        # copy key, and thirteen copy keys in this same directory begin
+        # `pond.` — `pond.empty.title`, `pond.starCount.one` — so admitting the
+        # family here would invent thirteen drawings that were never meant to
+        # exist. The two backdrops are keyed `stage.` instead, which nothing else
+        # in the content layer claims; `HopIllustrationKey.artDirectory` routes
+        # the family back to `Art/pond/`, and this case statement agrees with it.
+        grep -rhoE '"(scene|icon|character|stage)(\.[A-Za-z0-9]+){2,}"' "$content" \
             | tr -d '"' \
             | while IFS= read -r key; do
                 local family="${key%%.*}" rest="${key#*.}"
@@ -30,6 +39,7 @@ art_keys() {
                     scene) printf 'scenes %s\n' "${rest//./-}" ;;
                     icon) printf 'icons %s\n' "${rest//./-}" ;;
                     character) printf 'character %s\n' "${rest//./-}" ;;
+                    stage) printf 'pond %s\n' "${rest//./-}" ;;
                 esac
             done
 

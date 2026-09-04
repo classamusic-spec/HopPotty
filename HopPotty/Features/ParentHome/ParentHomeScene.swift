@@ -43,9 +43,14 @@ struct HomePondMetrics {
         min(width * (isRegular ? 0.20 : 0.34), isRegular ? 190 : 170)
     }
 
-    /// The centre of the big lily pad, which is also where Hop's feet go.
+    /// The bank Hop sits on, which is also where his feet go.
+    ///
+    /// The row comes from ``PondSceneArt/padRow`` rather than a literal here:
+    /// `PondBackdropView` hangs `pond-scene.svg` so that the drawing's own bank
+    /// lands on exactly this line, and two copies of the number would be a frog
+    /// standing a few points above his own ground the first time either moved.
     var padPoint: CGPoint {
-        CGPoint(x: width * 0.56, y: sceneHeight * 0.508)
+        CGPoint(x: width * PondSceneArt.padColumn, y: sceneHeight * PondSceneArt.padRow)
     }
 
     /// The water the scroll content leaves open above the countdown.
@@ -77,9 +82,9 @@ struct HomePondMetrics {
 
 /// The pond, with Hop sitting in it.
 ///
-/// Hop is placed against ``HomePondMetrics/padPoint`` — the same point
-/// `PondBackdropView` draws the big lily pad at — so he is on the pad at every
-/// width rather than near it. His idle breath and blink come from
+/// Hop is placed against ``HomePondMetrics/padPoint`` — the row
+/// `PondBackdropView` lands the drawing's own bank on — so he is on the ground
+/// at every width rather than near it. His idle breath and blink come from
 /// ``HopCharacterStage``; passing `ambient: false` under Reduce Motion stops
 /// them at the source as well as inside the modifiers, because a pond that
 /// breathes behind a countdown is exactly the motion that setting removes.
