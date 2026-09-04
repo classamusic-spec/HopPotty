@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Hermes Owlet">
+  <title>Hermes Owlet</title>
+  <defs>
+    <clipPath id="clip-eye-left"><path d="M -29 -42 C -12 -50 8 -49 23 -40 C 40 -29 48 -12 48 5 C 48 28 27 48 0 48 C -27 48 -48 28 -48 5 C -48 -13 -41 -32 -29 -42 Z"/></clipPath>
+    <clipPath id="clip-eye-right"><path d="M 29 -42 C 12 -50 -8 -49 -23 -40 C -40 -29 -48 -12 -48 5 C -48 28 -27 48 0 48 C 27 48 48 28 48 5 C 48 -13 41 -32 29 -42 Z"/></clipPath>
+    <clipPath id="clip-iris"><circle cx="0" cy="0" r="40"/></clipPath>
+  </defs>
+  <g id="owlet-root" data-ho="owlet-root" stroke="#17265C" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" fill="none">
+
+    <g id="halo-group" data-ho="halo-group" transform="translate(0 0)">
+      <ellipse id="halo-bloom" data-ho="halo-bloom" cx="254" cy="111" rx="96" ry="26" stroke="#FFDE8C" stroke-width="23" opacity="0" style="mix-blend-mode:screen"/>
+      <ellipse id="halo" data-ho="halo" cx="254" cy="111" rx="96" ry="26" stroke="#FBBF45" stroke-width="11"/>
+      <path id="halo-spark" data-ho="halo-spark" fill="#FBBF45" stroke="none" transform="translate(254 111)" d="M 0 -13 C 0 -6 2 -3 10 0 C 2 3 0 6 0 13 C 0 6 -2 3 -10 0 C -2 -3 0 -6 0 -13 Z"/>
+    </g>
+
+    <g id="head-root" data-ho="head-root" transform="translate(0 0)">
+      <path id="crown-tuft" data-ho="crown-tuft" fill="#17265C" transform="rotate(0)" d="M 162 244 C 160 202 168 172 180 150 C 187 139 200 145 197 158 C 194 174 192 190 191 204 C 205 174 230 138 250 116 C 261 105 273 113 269 127 C 262 152 253 182 249 202 C 265 177 289 151 308 143 C 320 138 328 149 320 161 C 305 184 295 213 293 246 Z"/>
+
+      <g id="ear-wings-back">
+        <g id="left-wing" data-ho="left-wing" transform="rotate(0)">
+        <path fill="#FDF8EC" d="M 132 338 C 72 297 45 225 42 166 C 89 203 132 265 132 338 Z"/>
+        <path fill="#FDF8EC" d="M 126 348 C 65 329 30 275 18 224 C 66 243 115 285 126 348 Z"/>
+        <path fill="#FDF8EC" d="M 120 358 C 74 365 39 337 22 304 C 59 301 102 315 120 358 Z"/>
+        <path fill="#FBBF45" stroke-width="5" d="M 102 324 C 75 302 63 266 60 238 C 81 258 101 290 102 324 Z"/>
+        <path fill="#FBBF45" stroke-width="5" d="M 98 348 C 73 338 59 314 54 292 C 73 302 93 322 98 348 Z"/>
+        </g>
+        <g id="right-wing" data-ho="right-wing" transform="rotate(0)">
+          <g transform="translate(512 0) scale(-1 1)">
+        <path fill="#FDF8EC" d="M 132 338 C 72 297 45 225 42 166 C 89 203 132 265 132 338 Z"/>
+        <path fill="#FDF8EC" d="M 126 348 C 65 329 30 275 18 224 C 66 243 115 285 126 348 Z"/>
+        <path fill="#FDF8EC" d="M 120 358 C 74 365 39 337 22 304 C 59 301 102 315 120 358 Z"/>
+        <path fill="#FBBF45" stroke-width="5" d="M 102 324 C 75 302 63 266 60 238 C 81 258 101 290 102 324 Z"/>
+        <path fill="#FBBF45" stroke-width="5" d="M 98 348 C 73 338 59 314 54 292 C 73 302 93 322 98 348 Z"/>
+          </g>
+        </g>
+      </g>
+
+      <path id="head-base" data-ho="head-base" fill="#17265C" d="M 256 166 C 340 166 403 222 403 292 C 405 314 406 342 402 362 C 394 420 356 452 292 452 L 220 452 C 156 452 118 420 110 362 C 106 342 107 314 109 292 C 109 222 172 166 256 166 Z"/>
+      <path id="face-mask" data-ho="face-mask" fill="#FDF8EC" d="M 256 285 C 250 256 240 228 220 213 C 197 197 165 206 146 229 C 129 249 118 277 117 307 C 116 333 116 353 118 369 C 123 413 158 443 206 443 L 306 443 C 354 443 389 413 394 369 C 396 353 396 333 395 307 C 394 277 383 249 366 229 C 347 206 315 197 292 213 C 272 228 262 256 256 285 Z"/>
+
+      <g id="effects" data-ho="effects">
+        <path id="error-pulse" data-ho="error-pulse" fill="none" stroke="#E8836F" stroke-width="7" opacity="0" d="M 256 166 C 340 166 403 222 403 292 C 405 314 406 342 402 362 C 394 420 356 452 292 452 L 220 452 C 156 452 118 420 110 362 C 106 342 107 314 109 292 C 109 222 172 166 256 166 Z"/>
+        <g id="listening-glow" data-ho="listening-glow" fill="none" stroke="#7BD6FF" stroke-width="7" opacity="0">
+          <circle cx="86" cy="352" r="44"/>
+          <circle cx="426" cy="352" r="44"/>
+        </g>
+        <g id="speaking-pulse" data-ho="speaking-pulse" fill="none" stroke="#29A9F5" stroke-width="5" opacity="0">
+          <circle cx="86" cy="352" r="40"/>
+          <circle cx="426" cy="352" r="40"/>
+        </g>
+        <path id="thinking-spark" data-ho="thinking-spark" fill="#FFDE8C" stroke="none" opacity="0" transform="translate(254 111) scale(0.62)" d="M 0 -13 C 0 -6 2 -3 10 0 C 2 3 0 6 0 13 C 0 6 -2 3 -10 0 C -2 -3 0 -6 0 -13 Z"/>
+      </g>
+
+      <g id="forehead-star-group" data-ho="forehead-star-group" transform="translate(0 0)">
+        <path id="forehead-star-bloom" data-ho="forehead-star-bloom" fill="#FFDE8C" stroke="#FFDE8C" stroke-width="11" opacity="0" style="mix-blend-mode:screen" d="M 256 205 C 256 216 259 221 268 226 C 259 231 256 236 256 247 C 256 236 253 231 244 226 C 253 221 256 216 256 205 Z"/>
+        <path id="forehead-star" data-ho="forehead-star" fill="#FBBF45" stroke="none" d="M 256 205 C 256 216 259 221 268 226 C 259 231 256 236 256 247 C 256 236 253 231 244 226 C 253 221 256 216 256 205 Z"/>
+      </g>
+
+      <g id="eyes">
+      <g id="left-eye" data-ho="left-eye" transform="translate(190 322)">
+        <g clip-path="url(#clip-eye-left)">
+          <path fill="#FFFFFF" stroke="none" d="M -29 -42 C -12 -50 8 -49 23 -40 C 40 -29 48 -12 48 5 C 48 28 27 48 0 48 C -27 48 -48 28 -48 5 C -48 -13 -41 -32 -29 -42 Z"/>
+          <g id="left-pupil" data-ho="left-pupil" transform="translate(0 0)">
+            <g clip-path="url(#clip-iris)">
+              <circle fill="#29A9F5" stroke="none" cx="0" cy="0" r="40"/>
+              <circle id="left-pupil-core" data-ho="left-pupil-core" fill="#101B44" stroke="none" cx="11" cy="-13" r="40"/>
+            </g>
+            <circle id="left-highlight" fill="#FFFFFF" stroke="none" cx="16" cy="-18" r="8"/>
+          </g>
+          <g id="left-lid" data-ho="left-lid" transform="translate(0 -104)">
+            <path fill="#FDF8EC" stroke="#17265C" stroke-width="6" d="M -74 -104 L 74 -104 L 74 -12 C 46 6 -46 6 -74 -12 Z"/>
+          </g>
+          <g id="left-lower-lid" data-ho="left-lower-lid" transform="translate(0 104)">
+            <path fill="#FDF8EC" stroke="#17265C" stroke-width="6" d="M -74 104 L 74 104 L 74 12 C 46 -6 -46 -6 -74 12 Z"/>
+          </g>
+        </g>
+        <path fill="none" stroke="#17265C" stroke-width="7" d="M -29 -42 C -12 -50 8 -49 23 -40 C 40 -29 48 -12 48 5 C 48 28 27 48 0 48 C -27 48 -48 28 -48 5 C -48 -13 -41 -32 -29 -42 Z"/>
+      </g>
+      <g id="right-eye" data-ho="right-eye" transform="translate(322 322)">
+        <g clip-path="url(#clip-eye-right)">
+          <path fill="#FFFFFF" stroke="none" d="M 29 -42 C 12 -50 -8 -49 -23 -40 C -40 -29 -48 -12 -48 5 C -48 28 -27 48 0 48 C 27 48 48 28 48 5 C 48 -13 41 -32 29 -42 Z"/>
+          <g id="right-pupil" data-ho="right-pupil" transform="translate(0 0)">
+            <g clip-path="url(#clip-iris)">
+              <circle fill="#29A9F5" stroke="none" cx="0" cy="0" r="40"/>
+              <circle id="right-pupil-core" data-ho="right-pupil-core" fill="#101B44" stroke="none" cx="11" cy="-13" r="40"/>
+            </g>
+            <circle id="right-highlight" fill="#FFFFFF" stroke="none" cx="16" cy="-18" r="8"/>
+          </g>
+          <g id="right-lid" data-ho="right-lid" transform="translate(0 -104)">
+            <path fill="#FDF8EC" stroke="#17265C" stroke-width="6" d="M -74 -104 L 74 -104 L 74 -12 C 46 6 -46 6 -74 -12 Z"/>
+          </g>
+          <g id="right-lower-lid" data-ho="right-lower-lid" transform="translate(0 104)">
+            <path fill="#FDF8EC" stroke="#17265C" stroke-width="6" d="M -74 104 L 74 104 L 74 12 C 46 -6 -46 -6 -74 12 Z"/>
+          </g>
+        </g>
+        <path fill="none" stroke="#17265C" stroke-width="7" d="M 29 -42 C 12 -50 -8 -49 -23 -40 C -40 -29 -48 -12 -48 5 C -48 28 -27 48 0 48 C 27 48 48 28 48 5 C 48 -13 41 -32 29 -42 Z"/>
+      </g>
+      </g>
+
+      <g id="brows">
+        <g id="left-brow" data-ho="left-brow" transform="translate(190 262)" opacity="0">
+          <path fill="none" stroke="#17265C" stroke-width="8" d="M -30 0 C -14 -9 14 -9 30 0"/>
+        </g>
+        <g id="right-brow" data-ho="right-brow" transform="translate(322 262)" opacity="0">
+          <path fill="none" stroke="#17265C" stroke-width="8" d="M -30 0 C -14 -9 14 -9 30 0"/>
+        </g>
+      </g>
+
+      <g id="beak" data-ho="beak">
+        <rect id="beak-gap" data-ho="beak-gap" x="241" y="374" width="30" height="2" rx="3" fill="#101B44" stroke="none"/>
+        <g id="upper-beak" data-ho="upper-beak">
+          <path fill="#FBBF45" stroke="none" d="M 256 345 C 259 345 262 346 264 349 L 278 368 C 280 371 279 377 275 377 L 237 377 C 233 377 232 371 234 368 L 248 349 C 250 346 253 345 256 345 Z"/>
+          <path fill="none" stroke-width="6" d="M 237 376 C 233 376 232 371 234 368 L 248 349 C 250 346 253 345 256 345 C 259 345 262 346 264 349 L 278 368 C 280 371 279 376 275 376"/>
+        </g>
+        <g id="lower-beak" data-ho="lower-beak" transform="translate(0 0)">
+          <path fill="#FBBF45" stroke="none" d="M 237 375 L 275 375 C 279 375 280 379 278 382 L 261 402 C 258 405 254 405 251 402 L 234 382 C 232 379 233 375 237 375 Z"/>
+          <path fill="none" stroke-width="6" d="M 275 375 C 279 375 280 379 278 382 L 261 402 C 258 405 254 405 251 402 L 234 382 C 232 379 233 375 237 375"/>
+        </g>
+      </g>
+
+      <g id="headphones">
+      <g id="left-headphone" data-ho="left-headphone" transform="translate(86 352)">
+        <circle id="left-headphone-glow" data-ho="left-headphone-glow" r="45" fill="none" stroke="#7BD6FF" stroke-width="10" opacity="0"/>
+        <circle r="35" fill="#FBBF45"/>
+        <circle r="23" fill="#2A86C4" stroke-width="5"/>
+        <circle id="left-headphone-lit" data-ho="left-headphone-lit" r="23" fill="#29A9F5" stroke-width="5" opacity="1"/>
+        <circle r="11" fill="#101B44" stroke="none"/>
+      </g>
+      <g id="right-headphone" data-ho="right-headphone" transform="translate(426 352)">
+        <circle id="right-headphone-glow" data-ho="right-headphone-glow" r="45" fill="none" stroke="#7BD6FF" stroke-width="10" opacity="0"/>
+        <circle r="35" fill="#FBBF45"/>
+        <circle r="23" fill="#2A86C4" stroke-width="5"/>
+        <circle id="right-headphone-lit" data-ho="right-headphone-lit" r="23" fill="#29A9F5" stroke-width="5" opacity="1"/>
+        <circle r="11" fill="#101B44" stroke="none"/>
+      </g>
+      </g>
+    </g>
+  </g>
+</svg>

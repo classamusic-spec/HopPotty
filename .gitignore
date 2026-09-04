@@ -36,3 +36,10 @@ HopPotty/Resources/Assets.xcassets/Illustrations/
 # Web prototype build output and Vercel project link
 web/dist/
 .vercel/
+
+# Hermes Owlet character app (Node/Vite). The source of truth for the art is
+# src/character/svg/geometry.ts; Art/hermes-owlet/hermes-owlet.svg is generated
+# from it by `npm run export:svg` and is committed so designers can open it.
+hermes-owlet/node_modules/
+hermes-owlet/dist/
+hermes-owlet/tsconfig.tsbuildinfo
